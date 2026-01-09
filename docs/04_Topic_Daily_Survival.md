@@ -1,82 +1,88 @@
-# Topic: Daily Life Communication Survival Pack
-**Chủ đề**: Giao tiếp đời sống hàng ngày (Sân bay, Siêu thị, Đường phố)
-**Cấp độ**: Beginner - Intermediate
+# Topic: Daily Survival (60 Scenarios)
+**Chủ đề**: Sinh tồn nơi đất khách (Sân bay, Siêu thị, Đường phố)
+**Target**: Du lịch, công tác, định cư.
 
 ---
 
-## 1. Prompt "Vô Tận" (Infinite Practice)
-Huynh đệ dùng prompt này để AI tạo ra tình huống mới mỗi ngày:
-> "Create a roleplay scenario for learning English.
-> **Setting**: [Airport / Supermarket / Street / Coffee Shop].
-> **Situation**: [Example: I lost my luggage / I was overcharged / I am lost].
-> **Roles**: You are the [Staff/Stranger]. I am the Customer/Tourist.
-> **Level**: B1 (Intermediate).
-> **Objective**: I need to solve the problem politely but firmly.
-> Start by asking me 'How can I help you today?'"
+## 💡 Cách Sử Dụng
+Do chủ đề này rất rộng, đệ tử chia thành 3 nhóm lớn.
+Prompt:
+> "Roleplay Scenario: [Scenario Name]. You are the staff/local. I am the tourist."
 
 ---
 
-## 2. Kịch Bản Mẫu 1: At The Airport (Sân Bay) - "Lost Luggage"
+## ✈️ Group A: Airport & Flight (20 Kịch bản Sân Bay)
+*Mục tiêu: Xử lý sự cố và thủ tục.*
 
-### 📌 Context
-Huynh đệ vừa hạ cánh xuống sân bay JFK (New York) nhưng chờ mãi không thấy vali đâu. Phải ra quầy "Lost and Found" để trình báo. Đây là tình huống căng thẳng cần bình tĩnh.
-
-### 📜 Dialogue
-**Staff**: Good afternoon. How may I assist you?
-**You**: Hi. I have a problem. My flight arrived 45 minutes ago, but my checked luggage hasn't appeared on the **carousel** (băng chuyền).
-**Staff**: I’m sorry to hear that. Can I see your **boarding pass** and **baggage claim tag**, please?
-**You**: Sure, here they are. It's flight VN542 from Hanoi.
-**Staff**: Thank you. Let me check the system... (Typing)... Hmm, it seems your bag didn't make the connection in Tokyo. It is currently on the next flight.
-**You**: Oh no. When will that flight arrive? I have a meeting tomorrow morning and all my suits are in there.
-**Staff**: It will arrive at 8 PM tonight. We can **deliver** it to your hotel.
-**You**: That would be great. Do I need to fill out a **file** or a **form**?
-**Staff**: Yes, please fill out this **Property Irregularity Report (PIR)**. What is your hotel address?
-**You**: I'm staying at the Hilton Midtown. Here is the address. Will there be any **compensation** for the delay?
-**Staff**: Since the delay is under 12 hours, we provide an "Overnight Kit" with toiletries, but no cash compensation. I apologize for the inconvenience.
-
-### 🔑 Key Vocabulary
-- **Carousel / Conveyor belt**: Băng chuyền hành lý.
-- **Baggage Claim Tag**: Cái tem nhỏ dán vào vé máy bay để nhận đồ.
-- **Connecting flight / Layover**: Chuyến bay quá cảnh.
-- **Combensating / Reimbursement**: Bồi thường / Hoàn tiền.
-
----
-
-## 3. Kịch Bản Mẫu 2: Supermarket (Siêu Thị) - "Looking for Items"
-
-### 📌 Context
-Thành đang ở siêu thị Walmart, muốn tìm mua gia vị để nấu phở nhưng tìm không ra. Hỏi nhân viên.
-
-### 📜 Dialogue
-**You**: Excuse me, could you help me finding something?
-**Staff**: Sure, what are you looking for?
-**You**: I'm looking for **star anise** (hoa hồi) and **cinnamon sticks** (quế). Are they in the spice aisle?
-**Staff**: We usually keep them in the **International Aisle**, specifically the Asian section. Aisle 12.
-**You**: Aisle 12. Thanks. Also, do you guys carry **fresh herbs** like basil?
-**Staff**: Yes, those are in the **Produce section** (khu rau củ quả), right next to the salads.
-**You**: One last thing. Is this checkout counter **express**? I only have a few items.
-**Staff**: Yes, this lane is for "10 items or less". You can go ahead.
-**You**: Awesome. Thanks for your help! "Good Chop!" (Just kidding, have a nice day).
+1.  **Check-in & Seat Selection**: Xin ghế cạnh cửa sổ (Window seat) hoặc lối đi (Aisle seat).
+2.  **Overweight Baggage**: Hành lý quá cân, xin xỏ hoặc hỏi phí phạt (Excess baggage fee).
+3.  **Security Check**: Bị an ninh giữ lại vì có chai nước hoặc vật kim loại.
+4.  **Lost Clean/Gate Change**: Không tìm thấy cổng ra máy bay, nghe loa thông báo đổi cổng.
+5.  **Missed Connection**: Bị trễ chuyến bay nối chuyến do chuyến trước đến muộn.
+6.  **Lost Luggage Report**: Báo mất hành lý tại quầy Lost & Found.
+7.  **Visa & Immigration**: Trả lời câu hỏi của hải quan (Mục đích chuyến đi, ở bao lâu).
+8.  **Customs Declaration**: Khai báo hàng hóa (mang quá nhiều tiền/rượu/thuốc lá).
+9.  **Buying a SIM Card**: Mua SIM 4G tại sân bay.
+10. **Currency Exchange**: Đổi tiền, hỏi tỷ giá (Exchange rate).
+11. **Flight Delayed/Cancelled**: Yêu cầu khách sạn hoặc phiếu ăn (Meal voucher) khi hoãn chuyến.
+12. **Upgrading Class**: Hỏi giá nâng hạng thương gia (Business class upgrade).
+13. **Asking for Amenities**: Xin chăn, gối, tai nghe trên máy bay.
+14. **Sick Passenger**: Báo cáo viên mình bị mệt/đau bụng trên chuyến bay.
+15. **Taxi Queue**: Hỏi chỗ bắt Taxi/Uber tại sảnh đến.
+16. **Lounge Access**: Hỏi đường vào phòng chờ VIP.
+17. **Duty Free Shopping**: Mua hàng miễn thuế, hỏi quy định mang lên máy bay.
+18. **Helping Someone**: Giúp người già cất hành lý lên Kabin (Overhead bin).
+19. **Complaining about Service**: Phàn nàn ghế bị hỏng, màn hình không lên.
+20. **Final Boarding Call**: Chạy vội ra cửa máy bay khi nghe gọi tên lần cuối.
 
 ---
 
-## 4. Kịch Bản Mẫu 3: Street (Ngoài Đường) - "Asking for Directions"
+## 🛒 Group B: Supermarket & Shopping (20 Kịch bản Mua Sắm)
+*Mục tiêu: Mua đúng đồ, trả đúng giá.*
 
-### 📌 Context
-Đi lạc ở London. Điện thoại hết pin, không Google Maps. Hỏi đường người lạ.
-
-### 📜 Dialogue
-**You**: Excuse me, sorry to bother you. I think I'm a bit lost.
-**Stranger**: No worries. Where are you trying to go?
-**You**: I'm looking for the "Tech Museum". Is it within **walking distance**?
-**Stranger**: It's a bit of a hike (hơi xa đi bộ). Whatever, if you walk effectively, it takes about 20 minutes.
-**You**: Oh, I see. What is the best way to get there?
-**Stranger**: Go straight down this road for 2 blocks, then **take a left** at the traffic light. You'll see a big bank on the corner. The museum is right **across the street** from the bank.
-**You**: Straight 2 blocks, left at light, across from the bank. Got it.
-**Stranger**: Or you can just hop on the bus number 15 right here. It takes you straight there.
-**You**: That sounds easier. Does the bus accept cash?
-**Stranger**: No, you need an Oyster card or contactless payment.
-**You**: Perfect. Thanks a million!
+1.  **Asking for Location**: Hỏi món đồ nằm ở gian hàng nào (Aisle).
+2.  **Checking Freshness**: Hỏi nhân viên xem trái cây/thịt này có tươi không.
+3.  **Weighing Produce**: Cân rau quả tự chọn và dán tem.
+4.  **Asking about Ingredients**: Hỏi xem bánh này có chứa đậu phộng (dị ứng) không.
+5.  **Out of Stock Items**: Hỏi khi nào hàng mới về.
+6.  **Price Check**: Giá trên kệ và giá khi tít mã vạch khác nhau.
+7.  **Using Coupons/Vouchers**: Dùng mã giảm giá, thẻ thành viên.
+8.  **Payment Method**: Máy thẻ bị lỗi, hỏi trả tiền mặt hoặc Apple Pay.
+9.  **Return & Refund**: Trả lại áo bị chật, đòi hoàn tiền.
+10. **Fitting Room**: Xin vào phòng thử đồ.
+11. **Bargaining (Street Market)**: Mặc cả ở chợ trời (Can you give me a better price?).
+12. **Buying Electronics**: Hỏi về bảo hành (Warranty) và chính sách đổi trả.
+13. **Buying Souvenirs**: Nhờ tư vấn quà lưu niệm đặc sản.
+14. **Self-Checkout**: Gặp lỗi khi dùng máy tự thanh toán.
+15. **Asking for a Bag**: Xin túi ni-lông (thường phải trả tiền thêm).
+16. **Sampling Food**: Xin ăn thử đồ ăn trong siêu thị.
+17. **Buying Medicine (Pharmacy)**: Mua thuốc đau đầu, cảm cúm tại hiệu thuốc.
+18. **Ordering Delivery**: Yêu cầu giao hàng cồng kềnh về nhà.
+19. **Tax Refund for Tourists**: Làm thủ tục hoàn thuế khi mua sắm.
+20. **Reporting Theft**: Báo bảo vệ bị móc túi trong trung tâm thương mại.
 
 ---
-*Ghi chú: Với các tình huống này, hãy tưởng tượng mình đang thực sự ở đó. Đừng chỉ đọc, hãy diễn!*
+
+## 🏙️ Group C: Street & Getting Around (20 Kịch bản Đường Phố)
+*Mục tiêu: Không bị lạc và an toàn.*
+
+1.  **Asking for Directions**: Hỏi đường đến địa điểm nổi tiếng (Landmark).
+2.  **Taking the Bus**: Hỏi tuyến xe bus, giá vé, trạm dừng.
+3.  **Taking the Subway/Metro**: Mua vé tàu điện ngầm, hỏi bản đồ.
+4.  **Hailing a Taxi**: Gọi taxi, chỉ đường cho tài xế.
+5.  **Renting a Car/Bike**: Thuê xe tự lái, hỏi về bảo hiểm.
+6.  **Asking for a Photo**: Nhờ người lạ chụp hộ kiểu ảnh.
+7.  **Finding a Restroom**: Hỏi nhà vệ sinh công cộng gần nhất.
+8.  **Finding an ATM**: Hỏi ngân hàng/cây ATM.
+9.  **Reporting an Accident**: Báo cảnh sát về tai nạn giao thông.
+10. **Asking for Recommendations**: Hỏi người dân địa phương quán ăn ngon.
+11. **Lost & Confused**: Bị lạc, điện thoại hết pin, nhờ giúp đỡ.
+12. **Dealing with Beggars/Scams**: Từ chối lịch sự khi bị chèo kéo.
+13. **Buying Street Food**: Hỏi món này là gì, có cay không.
+14. **Crossing the Street**: Hỏi cảnh sát giao thông cách qua đường an toàn.
+15. **Using Public Wifi**: Hỏi pass wifi quán cafe ven đường.
+16. **Booking a Tour**: Mua tour tham quan thành phố tại quầy thông tin.
+17. **Hotel Check-in**: Nhận phòng, phàn nàn phòng bẩn/ồn.
+18. **Hotel Concierge**: Nhờ lễ tân đặt bàn nhà hàng.
+19. **Emergency (911)**: Gọi cấp cứu hoặc cứu hỏa.
+20. **Making Friends**: Bắt chuyện xã giao với người ngồi cùng băng ghế công viên.

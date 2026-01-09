@@ -1,94 +1,63 @@
-# Topic: Personal Life & Socializing
-**Chủ đề**: Giao tiếp đời tư, cá nhân, xã giao
-**Cấp độ**: Intermediate - Advanced (Yêu cầu sự tự nhiên, slang, idioms)
+# Topic: Personal Life & Daily Chat (40 Scenarios)
+**Chủ đề**: Đời sống cá nhân, tình cảm, bạn bè
+**Target**: Giao tiếp sâu (Deep talk), xây dựng mối quan hệ.
 
 ---
 
-## 1. Chiến Thuật "Deep Talk" Với AI
-Khác với IT hay công việc, giao tiếp đời tư cần cảm xúc (emotion) và sự thân mật (intimacy).
-Prompt để luyện tập:
-> "Act as my best friend from college. We haven't met in 5 years. We are meeting at a coffee shop in Seattle.
-> **My Persona**: I am an IT Engineer, single, working too much, feeling a bit burned out.
-> **Your Persona**: You are married with 2 kids, working as a Marketing Manager, happy but tired.
-> **Goal**: Catch up, ask about life, relationships, and hobbies.
-> **Tone**: Very casual, use slang (e.g., 'burned out', 'tie the knot', 'ghosted').
-> Start by saying: 'Oh my god, Thanh! Is that you? It's been ages!'"
+## 💡 Cách Sử Dụng
+Prompt:
+> "Let's have a casual conversation. Scenario: [Scenario Name].
+> Roleplay as [Friend/Family/Date].
+> Tone: Casual, Slang-heavy (if with friends), Respectful (if with elders)."
 
 ---
 
-## 2. Kịch Bản Mẫu 1: Venting About Work (Than vãn về công việc với bạn thân)
+## ☕ Group 1: Socializing & Friends (20 Kịch bản Bạn Bè)
+*Mục tiêu: Chém gió tự nhiên, dùng nhiều Slang.*
 
-### 📌 Context
-Thành đang ngồi bia hơi/pub với Mike (bạn thân Tây). Thành đang chán việc vì OT (Overtime) quá nhiều.
-
-### 📜 Dialogue
-**Mike**: Yo, you look exhausted, man. Rough week?
-**You**: **Rough** is an understatement. I’ve been pulling 12-hour shifts for the last 10 days straight. The deployment was a nightmare.
-**Mike**: Ouch. That sounds brutal. I thought you said the project was going smoothly?
-**You**: It was, until the client **changed their mind** at the last minute. We had to **scrap** half of the backend code. I'm totally **burned out**, bro.
-**Mike**: Did you talk to your manager? You can't keep running on fumes like that.
-**You**: I did try to **bring it up** during the 1-on-1, but he just said "Keep pushing, we are almost there". Honestly, I'm thinking about **quitting** (nghỉ việc).
-**Mike**: Whoa, don't make rash decisions when you're stressed. Why don't you take a few days off first? Just unplug.
-**You**: Yeah, maybe you're right. I need a vacation. Maybe a beach trip to Da Nang.
-**Mike**: Now you're talking! Let's order another round. This one is on me. **Cheers** to survival!
-**You**: Cheers, man. Thanks for listening.
-
-### 🔑 Slang & Idioms
-- **"Pulling 12-hour shifts"**: Làm việc 12 tiếng liên tục.
-- **"Burned out"**: Kiệt sức, cháy sạch năng lượng (bệnh nghề nghiệp IT).
-- **"Running on fumes"**: Chạy bằng hơi xăng cuối cùng (ý là quá mệt rồi).
-- **"Scrap"**: Vứt bỏ, làm lại từ đầu.
-- **"Unplug"**: Ngắt kết nối (tắt máy tính điện thoại để nghỉ ngơi).
-
----
-
-## 3. Kịch Bản Mẫu 2: Talking About Hobbies & Relationships (Sở thích & Tình cảm)
-
-### 📌 Context
-First date (Buổi hẹn hò đầu tiên) hoặc gặp bạn mới. Chủ đề là phim ảnh và gu du lịch.
-
-### 📜 Dialogue
-**Her**: So, besides staring at computer screens all day, what do you do for fun?
-**You**: Haha, good question. Actually, I’m a bit of a **movie buff** (mọt phim). I love Sci-Fi movies. Have you seen "Interstellar"?
-**Her**: Yes! I cried at the end. It was so emotional. I’m more into traveling though. I just came back from Bali.
-**You**: Bali? That’s on my **bucket list**! How was it? Was it as beautiful as on Instagram?
-**Her**: It was breathtaking. But the traffic was chaotic. Since you're into tech, do you like photography?
-**You**: I dabble a bit. I like taking landscape photos when I travel.
-**Her**: Nice. We should compare galleries sometime. By the way, are you a **cat person or a dog person**?
-**You**: Definitely a dog person. I have a Golden Retriever back home. He’s my **partner in crime**.
-**Her**: Aww, I love Goldens! You have to show me a picture right now.
+1.  **Catching Up**: Gặp lại bạn cũ sau 5 năm. (Kịch bản mẫu đã có).
+2.  **Venting about Work**: Than thở về sếp, OT, lương thưởng.
+3.  **Planning a Trip**: Rủ bạn đi phượt, bàn lịch trình, budget.
+4.  **Discussing Movies/Series**: Review phim mới xem trên Netflix (Spoilers alert!).
+5.  **Giving Advice**: Bạn thân bị "cắm sừng" (cheated on), đưa lời khuyên.
+6.  **Borrowing Money**: Hỏi vay tiền khéo léo và hứa trả.
+7.  **Inviting to a Party**: Mời bạn đến tân gia (Housewarming) hoặc sinh nhật.
+8.  **Declining an Invitation**: Từ chối đi nhậu khéo léo vì lý do sức khỏe/bận.
+9.  **Talking about Hobbies**: Khoe bộ PC mới build, hoặc bàn về game thủ.
+10. **Gossip**: "Tám" chuyện về một người bạn chung sắp cưới.
+11. **Sports Talk**: Bình luận trận bóng đá tối qua (Manchester vs Liverpool).
+12. **Tech Talk (Casual)**: Tranh luận iPhone vs Samsung, Mac vs Windows.
+13. **Talking about Food**: Khen/Chê quán ăn mới mở.
+14. **Fitness & Health**: Rủ đi tập Gym, bàn về chế độ Diet/Keto.
+15. **Sharing a Secret**: Kể một bí mật và dặn "Don't spill the beans".
+16. **Apologizing**: Xin lỗi vì đến muộn hoặc lỡ làm hỏng đồ của bạn.
+17. **Complimenting**: Khen bạn có áo mới, tóc mới.
+18. **Discussing News**: Bàn về sự kiện nóng hổi trên mạng xã hội.
+19. **Asking for a Favor**: Nhờ bạn trông hộ con chó vài ngày.
+20. **Saying Goodbye**: Tiễn bạn đi định cư nước ngoài (Xúc động).
 
 ---
 
-## 4. Kịch Bản Mẫu 3: Family Matters (Chuyện gia đình)
+## ❤️ Group 2: Personal & Family (20 Kịch bản Đời Tư)
+*Mục tiêu: Bộc lộ cảm xúc, tình cảm.*
 
-### 📌 Context
-Thành gọi điện về nhà thăm hỏi sức khỏe bố mẹ (Roleplay AI đóng vai Mẹ).
-
-### 📜 Dialogue
-**Mom (AI)**: Hello? Is that Thanh?
-**You**: Hi Mom! It's me. Can you hear me clearly?
-**Mom**: Yes, loud and clear. How are you, son? Have you eaten dinner yet?
-**You**: I just finished work. I’m ordering some food now. How is Dad’s back pain? Is he getting better?
-**Mom**: It's acting up again because of the cold weather. I told him not to carry heavy plant pots, but he represents handles stubborn as a mule.
-**You**: Tell him I said to take it easy! I sent some supplements yesterday, did you receive them?
-**Mom**: Not yet. Maybe tomorrow. When are you coming home? The Tet holiday is coming soon.
-**You**: I’m trying to book ticket for the 28th. I miss your homemade Banh Chung.
-**Mom**: Alright. Take care of yourself. Don't work too late. Love you.
-**You**: Love you too, Mom. Bye.
-
----
-
-## 5. Danh Sách Chủ Đề Gợi Ý Khác (20 Prompts)
-Dùng danh sách này để paste vào ChatGPT để tạo thêm bài tập:
-1.  Discussing a favorite book.
-2.  Planning a surprise birthday party.
-3.  Complaining about a noisy neighbor.
-4.  Asking for relationship advice (breakup).
-5.  Talking about childhood memories.
-6.  Debating which superhero is the best.
-7.  Discussing politics (Careful! Advanced topic).
-8.  Talking about finance/investing in stocks.
-9.  Describing a weird dream you had.
-10. Sharing a cooking recipe.
-11. ... (Hãy yêu cầu AI: "Give me 10 more topics for intimate conversations")
+1.  **First Date**: Buổi hẹn hò đầu tiên. Hỏi về sở thích, gia đình. (Gây ấn tượng).
+2.  **Confessing Feelings**: Tỏ tình với Crush (Hồi hộp, lo lắng).
+3.  **Breakup Conversation**: Chia tay êm đẹp hoặc cãi vã.
+4.  **Meeting the Parents**: Ra mắt bố mẹ người yêu.
+5.  **Marriage Proposal**: Cầu hôn (Lãng mạn).
+6.  **Couple Fight**: Cãi nhau về việc ai rửa bát/dọn nhà.
+7.  **Making Up**: Làm hòa sau khi cãi nhau.
+8.  **Talking to Parents**: Gọi điện về thăm nhà (như kịch bản mẫu).
+9.  **Teaching a Child**: Dạy con học bài hoặc giải thích vì sao bầu trời màu xanh.
+10. **Talking to a Sibling**: Cãi nhau với anh/chị em ruột hoặc tâm sự.
+11. **Dealing with Neighbors**: Phàn nàn hàng xóm ồn ào hoặc xin chút đường.
+12. **Medical Appointment**: Đi khám bác sĩ, mô tả triệu chứng bệnh.
+13. **Opening a Bank Account**: Ra ngân hàng mở thẻ, hỏi lãi suất.
+14. **Haircut Salon**: Chỉ dẫn thợ cắt tóc kiểu mình muốn (Undercut/Fade).
+15. **Renting an Apartment**: Xem nhà, hỏi chủ nhà về điện nước, hợp đồng.
+16. **Job Interview (HR Round)**: Phỏng vấn xin việc (giới thiệu bản thân, điểm mạnh/yếu).
+17. **Salary Negotiation**: Đàm phán lương với HR.
+18. **Resignation**: Xin nghỉ việc, nói chuyện với sếp.
+19. **Buying a House**: Bàn với môi giới bất động sản.
+20. **Mid-life Crisis**: Tâm sự về khủng hoảng tuổi trung niên, định hướng tương lai.

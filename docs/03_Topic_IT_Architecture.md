@@ -1,57 +1,53 @@
-# Topic: IT Architecture & System Design Meeting
-**Chủ đề**: Họp thiết kế kiến trúc hệ thống
-**Độ khó**: Advanced (Technical Jargon heavy)
+# Topic: IT Architecture & System Design (20 Scenarios)
+**Chủ đề**: Kiến trúc hệ thống, DevOps, Cloud
+**Target**: Senior Dev, Architect, CTO, DevOps Engineer.
 
 ---
 
-## 1. Prompt Luyện Tập
-> "Act as a CTO (Chief Technology Officer). I am the System Architect. We are debating whether to use a **Relational Database (PostgreSQL)** or a **NoSQL Database (MongoDB)** for the new logging system.
-> **Constraint**: We expect high write throughput but complex analytical queries later.
-> **Goal**: We need to reach a decision by the end of the discussion.
-> **Tone**: Professional, technical, constructive debate."
+## 💡 Cách Sử Dụng
+Prompt chung cho các bài tập này:
+> "Act as a CTO. I am a System Architect. We are in a design review meeting.
+> Topic: Scenario #[Number] - [Scenario Name].
+> Debating specific trade-offs (Cost vs Performance, Speed vs Stability).
+> Please ask tough technical questions."
 
 ---
 
-## 2. Kịch Bản Mẫu: "Choosing the Database for Audit Logs"
+## 📋 List 20 Kịch Bản Thiết Kế Hệ Thống
 
-### 📌 Context
-Team đang xây dựng hệ thống "Audit Log" để lưu lại mọi hành động của User. Dự kiến dữ liệu rất lớn (High Volume).
+### Group 1: Architecture Patterns (Mô hình kiến trúc)
+1.  **Monolith vs Microservices**: Tranh luận gay gắt việc có nên đập hệ thống ra Microservices không. (Classic debate).
+2.  **Event-Driven Architecture**: Thiết kế hệ thống xử lý bất đồng bộ dùng Kafka/RabbitMQ.
+3.  **Serverless vs Containers**: Chọn AWS Lambda hay Kubernetes (K8s) cho dự án mới.
+4.  **GraphQL vs REST API**: Team Mobile đòi dùng GraphQL, Team Backend muốn giữ REST.
+5.  **Multi-tenant Architecture**: Thiết kế Database cho SaaS (Chung DB hay tách DB cho mỗi khách hàng).
 
-### 👥 Characters
-- **Mark (CTO)**: Quan tâm chi phí, tốc độ develop, sự ổn định lâu dài.
-- **Thanh (You - Architect)**: Đề xuất giải pháp tối ưu về hiệu năng và mở rộng (Scaling).
+### Group 2: Database & Data (Dữ liệu)
+6.  **SQL vs NoSQL (Postgres vs MongoDB)**: *(Kịch bản mẫu đã có)*.
+7.  **Caching Strategy**: Chọn chiến lược cache (Write-through vs Write-back) dùng Redis/Memcached.
+8.  **Data Warehousing**: Thiết kế luồng Data Pipeline từ App sang Data Warehouse (Snowflake/BigQuery).
+9.  **Database Sharding**: Giải quyết bài toán Database quá lớn (10TB+), chia shard như thế nào.
+10. **Disaster Recovery (DR) Plan**: Kế hoạch khôi phục khi Data Center bị cháy/sập.
 
-### 📜 Dialogue (Excerpt)
+### Group 3: Cloud & DevOps (Hạ tầng)
+11. **CI/CD Pipeline Design**: Thiết kế luồng Deploy tự động. Bàn về Blue-Green Deployment vs Canary Release.
+12. **Container Orchestration**: Thảo luận về khó khăn khi vận hành Kubernetes.
+13. **Cloud Cost Optimization**: Sếp chửi vì bill AWS tháng này cao quá. Tìm cách giảm chi phí.
+14. **Infrastructure as Code (IaC)**: Chuyển đổi manual setup sang Terraform/Ansible.
+15. **Monitoring & Observability**: Chọn ELK Stack hay Prometheus/Grafana để theo dõi hệ thống.
 
-**Mark**: Okay Thanh, let's settle the database choice for the Audit Log service. I see you proposed **MongoDB** (NoSQL). Why not just stick to **PostgreSQL**? Our team is already familiar with it.
-
-**Thanh**: I understand the familiarity factor. However, for Audit Logs, we are dealing with a **write-heavy workload**. We might hit 10,000 requests per second during peak hours. MongoDB's **sharding** capabilities allow us to scale writes horizontally much easier than Postgres.
-
-**Mark**: True, but what about **data consistency**? And later on, the Data Team wants to run complex SQL queries to analyze user behavior. JSON queries in Mongo can be a pain.
-
-**Thanh**: That's a valid point. But remember, audit logs are mostly **unstructured data**. The payload varies for every event. If we use Postgres, we’d end up using a `JSONB` column anyway, which defeats the purpose of strong relational schemas.
-
-**Mark**: Good point regarding the schema-less nature. But I'm worried about **operational complexity**. Who is going to manage the Mongo cluster? We don't have a dedicated DBA for Mongo.
-
-**Thanh**: We could use a managed service like **MongoDB Atlas** or AWS DocumentDB. It offloads the maintenance burden. It might cost a bit more, but it saves engineering time.
-
-**Mark**: Hmm. What if we use **TimescaleDB**? It’s based on Postgres but optimized for time-series data.
-
-**Thanh**: I considered that. It's great for metrics (CPU, RAM usage), but for *event logs* with variable structures, I still think a Document Store is better. Plus, if we need to purge old data, Mongo's TTL (Time-To-Live) indexes are very convenient.
-
-**Mark**: Okay, you convinced me on the **write throughput** and **flexibility**. But let's agree on this: We will stream the logs to a Data Warehouse (like Snowflake) for the complex analytics. Mongo is just for ingestion and simple retrieval.
-
-**Thanh**: Absolutely. That follows the **CQRS pattern** (Command Query Responsibility Segregation). Mongo for writing, Data Warehouse for reading complex reports.
-
-**Mark**: Approved. Let's write up the **ADR (Architecture Decision Record)** and share it with the team. Good job on the research.
+### Group 4: Advanced Topics (Nâng cao)
+16. **Authentication System (OAuth2/OIDC)**: Tự build hệ thống login hay dùng Auth0/Cognito/Keycloak.
+17. **Real-time Chat Architecture**: Thiết kế backend cho ứng dụng chat hàng triệu user (như Zalo/Telegram).
+18. **Video Streaming Architecture**: Thiết kế hệ thống stream video như Netflix/YouTube (CDN, Transcoding).
+19. **Rate Limiting & Anti-DDoS**: Thiết kế Gateway để chặn spam request.
+20. **AI/ML Integration**: Tích hợp module AI vào hệ thống hiện tại (Latency concerns).
 
 ---
 
-## 3. Vocabulary & Concepts
-- **Write-heavy workload**: Tác vụ ghi dữ liệu nhiều (khác với Read-heavy).
-- **Horizontal Scaling (Scaling Out)**: Mở rộng bằng cách thêm nhiều server (dễ hơn với NoSQL).
-- **Vertical Scaling (Scaling Up)**: Mở rộng bằng cách nâng cấp CPU/RAM cho 1 server (đắt đỏ).
-- **Schema-less**: Không cần định nghĩa cấu trúc bảng trước.
-- **Operational Complexity**: Độ phức tạp khi vận hành/bảo trì.
-- **ADR (Architecture Decision Record)**: Tài liệu ghi lại vì sao chọn công nghệ này mà không chọn cái kia.
-- **Bottleneck**: Điểm nghẽn cổ chai (làm chậm cả hệ thống).
+## 🎙️ Sample Vocabulary for Architects
+- **Single Point of Failure (SPOF)**: Điểm chết duy nhất (nếu chết là sập cả hệ thống).
+- **Scalability (Vertical/Horizontal)**: Khả năng mở rộng.
+- **High Availability (HA)**: Tính sẵn sàng cao.
+- **Latency vs Throughput**: Độ trễ và Lưu lượng xử lý.
+- **Trade-off**: Sự đánh đổi (Được cái này mất cái kia).
