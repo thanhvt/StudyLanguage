@@ -1,6 +1,6 @@
 # TÀI LIỆU YÊU CẦU NGƯỜI DÙNG (USER REQUIREMENTS DOCUMENT)
 **Dự án:** App Luyện Thi Tiếng Anh Đa Nền Tảng (AI-Powered)
-**Phiên bản:** 3.0 (Supabase & New UI)
+**Phiên bản:** 3.1 (Final Tech Decisions)
 **Ngày:** 10/01/2026
 
 ---
@@ -104,6 +104,10 @@
     *   **Auth:** Supabase Auth (Quản lý User, Login Google/Email).
     *   **Storage:** Supabase Storage (Lưu file ghi âm của user, file audio AI sinh ra).
     *   **Realtime:** Supabase Realtime (Nếu cần tính năng chat/hội thoại thời gian thực mượt hơn).
+*   **AI Integration (OpenAI):**
+    *   **Speech-to-Text (STT):** Sử dụng **OpenAI Whisper API** qua Backend để chuyển đổi giọng nói user thành văn bản (chấm điểm Speaking). Lý do: Độ chính xác cao, hỗ trợ đa ngôn ngữ, không cần native module phức tạp trên Mobile.
+    *   **Text-to-Speech (TTS):** Sử dụng **OpenAI TTS API** (model `tts-1` hoặc `tts-1-hd`) để sinh giọng nói "Tây" tự nhiên cho các bài hội thoại và phát âm mẫu. Giọng đề xuất: `alloy`, `nova` (nữ) hoặc `onyx` (nam).
+    *   **LLM (Text Generation):** **GPT-4o-mini** để sinh nội dung hội thoại, bài đọc, câu hỏi, và phản hồi sửa lỗi. Cân bằng giữa chất lượng và chi phí.
 
 ### 4.2. Hạ tầng & Triển khai (Infrastructure & Deployment)
 *   **Supabase Cloud:**
@@ -135,6 +139,8 @@
 | **Auth** | **Supabase Auth (Google)** | Đăng nhập Google tiện lợi thay vì code JWT thủ công. |
 | **Storage** | **Supabase Storage** | Lưu file Audio dễ dàng, không tốn ổ cứng VPS. |
 | **Backend** | NestJS (Lightweight) | Vẫn giữ để gọi AI, nhưng code sẽ gọn hơn nhiều. |
-| **AI** | OpenAI (GPT-4o/Whisper) | Giữ nguyên. |
+| **AI - STT** | OpenAI Whisper API | Chuyển giọng nói user thành text (qua Backend). |
+| **AI - TTS** | OpenAI TTS API | Sinh giọng nói "native" cho hội thoại & phát âm mẫu. |
+| **AI - LLM** | GPT-4o-mini | Sinh nội dung, đánh giá, sửa lỗi. |
 
 *Phương án này giúp bạn tập trung hoàn toàn vào việc làm tính năng học tập (Logic & UI) thay vì mất thời gian setup server, database, login.*
