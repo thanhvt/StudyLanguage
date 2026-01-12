@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Headphones, History, Mic, Clock, Users, Tag, Sparkles, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
@@ -10,9 +11,10 @@ import { InteractiveListening } from '@/components/interactive-listening';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Listening Page - Module Luyện Nghe
+ * Listening Page - Module Luyện Nghe (Enhanced với StudyMate Hub style)
  *
  * Mục đích: UI cho tính năng luyện nghe hội thoại
  * Flow: Chọn topic → AI sinh hội thoại → Nghe audio + xem transcript
@@ -101,159 +103,216 @@ export default function ListeningPage() {
 
   return (
     <AppLayout>
-      {/* Header với History Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">🎧 Luyện Nghe - Smart Conversation</h1>
-        <HistoryButton onClick={() => setHistoryOpen(true)} />
-      </div>
-
-      {/* History Drawer */}
-      <HistoryDrawer
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        filterType="listening"
-        onOpenEntry={handleOpenHistoryEntry}
-      />
-
-      {/* Mode Toggle */}
-      {!conversation && !showInteractive && (
-        <div className="flex gap-3 mb-6">
-          <Button
-            variant={mode === 'passive' ? 'default' : 'outline'}
-            onClick={() => setMode('passive')}
-          >
-            🎧 Nghe thụ động
-          </Button>
-          <Button
-            variant={mode === 'interactive' ? 'default' : 'outline'}
-            onClick={() => setMode('interactive')}
-          >
-            🎤 Tham gia hội thoại
-          </Button>
-        </div>
-      )}
-
-      {/* Interactive Listening Mode */}
-      {showInteractive && (
-        <GlassCard className="p-6">
-          <InteractiveListening 
-            topic={topic} 
-            onBack={() => {
-              setShowInteractive(false);
-              setTopic('');
-            }} 
-          />
-        </GlassCard>
-      )}
-
-      {/* Form nhập thông tin - Passive mode */}
-      {!conversation && !showInteractive && mode === 'passive' && (
-        <GlassCard className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-primary">Tạo hội thoại mới</h2>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Chủ đề */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Chủ đề *</label>
-              <Input
-                placeholder="VD: Đặt phòng khách sạn, Mua sắm..."
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-              />
+      <PageTransition>
+        {/* Header với History Button - StudyMate Hub style */}
+        <FadeIn>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl skill-card-listening flex items-center justify-center shadow-lg">
+                <Headphones className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-display text-2xl font-bold text-foreground">
+                  Luyện Nghe
+                </h1>
+                <p className="text-sm text-muted-foreground">Smart Conversation</p>
+              </div>
             </div>
-
-            {/* Thời lượng */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Thời lượng (phút)</label>
-              <Input
-                type="number"
-                min={1}
-                max={15}
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-              />
-            </div>
-
-            {/* Số người */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Số người tham gia</label>
-              <Input
-                type="number"
-                min={2}
-                max={4}
-                value={numSpeakers}
-                onChange={(e) => setNumSpeakers(Number(e.target.value))}
-              />
-            </div>
-
-            {/* Từ khóa */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Từ khóa (tùy chọn)</label>
-              <Input
-                placeholder="VD: reservation, check-in, room service"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-              />
-            </div>
+            <HistoryButton onClick={() => setHistoryOpen(true)} />
           </div>
+        </FadeIn>
 
-          {error && (
-            <p className="text-red-500 text-sm mt-4">{error}</p>
-          )}
+        {/* History Drawer */}
+        <HistoryDrawer
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          filterType="listening"
+          onOpenEntry={handleOpenHistoryEntry}
+        />
 
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="mt-4 w-full md:w-auto"
-          >
-            {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo hội thoại'}
-          </Button>
-        </GlassCard>
-      )}
-
-      {/* Form nhập thông tin - Interactive mode */}
-      {!conversation && !showInteractive && mode === 'interactive' && (
-        <GlassCard className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-primary">🎤 Tham gia hội thoại</h2>
-          <p className="text-muted-foreground mb-4">
-            Chọn chủ đề và AI sẽ tạo một cuộc hội thoại để bạn tham gia. Bạn sẽ được lắng nghe và sau đó nói các câu của mình!
-          </p>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Chủ đề *</label>
-              <Input
-                placeholder="VD: Đặt phòng khách sạn, Mua cà phê, Hỏi đường..."
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-              />
+        {/* Mode Toggle - Tabs style */}
+        {!conversation && !showInteractive && (
+          <FadeIn delay={0.1}>
+            <div className="grid grid-cols-2 gap-2 mb-6 p-1 bg-muted/50 rounded-xl">
+              <Button
+                variant={mode === 'passive' ? 'default' : 'ghost'}
+                onClick={() => setMode('passive')}
+                className="gap-2"
+              >
+                <Headphones className="w-4 h-4" />
+                Nghe thụ động
+              </Button>
+              <Button
+                variant={mode === 'interactive' ? 'default' : 'ghost'}
+                onClick={() => setMode('interactive')}
+                className="gap-2"
+              >
+                <Mic className="w-4 h-4" />
+                Tham gia hội thoại
+              </Button>
             </div>
+          </FadeIn>
+        )}
 
-            <Button
-              onClick={() => setShowInteractive(true)}
-              disabled={!topic.trim()}
-              className="w-full md:w-auto"
-            >
-              🚀 Bắt đầu tham gia
-            </Button>
-          </div>
-        </GlassCard>
-      )}
+        {/* Interactive Listening Mode */}
+        {showInteractive && (
+          <GlassCard className="p-6">
+            <InteractiveListening 
+              topic={topic} 
+              onBack={() => {
+                setShowInteractive(false);
+                setTopic('');
+              }} 
+            />
+          </GlassCard>
+        )}
 
-      {/* Listening Player với Audio + Transcript */}
-      {conversation && (
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-primary">🎧 Nghe hội thoại</h2>
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              🔄 Tạo mới
-            </Button>
-          </div>
-          
-          <ListeningPlayer conversation={conversation} />
-        </GlassCard>
-      )}
+        {/* Form nhập thông tin - Passive mode */}
+        {!conversation && !showInteractive && mode === 'passive' && (
+          <FadeIn delay={0.2}>
+            <GlassCard className="p-6 mb-6">
+              <h2 className="font-display text-lg font-semibold mb-6">Tạo hội thoại mới</h2>
+              
+              <div className="space-y-4">
+                {/* Chủ đề */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    Chủ đề <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="VD: Đặt phòng khách sạn, Mua sắm, Hỏi đường..."
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Thời lượng */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <Clock className="w-4 h-4" />
+                      Thời lượng (phút)
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={15}
+                      value={duration}
+                      onChange={(e) => setDuration(Number(e.target.value))}
+                    />
+                  </div>
+
+                  {/* Số người */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <Users className="w-4 h-4" />
+                      Số người
+                    </label>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={4}
+                      value={numSpeakers}
+                      onChange={(e) => setNumSpeakers(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                {/* Từ khóa */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <Tag className="w-4 h-4" />
+                    Từ khóa (tùy chọn)
+                  </label>
+                  <Input
+                    placeholder="reservation, check-in, room service..."
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-destructive text-sm">{error}</p>
+                )}
+
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !topic.trim()}
+                  className="w-full mt-4"
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Tạo hội thoại
+                    </>
+                  )}
+                </Button>
+              </div>
+            </GlassCard>
+          </FadeIn>
+        )}
+
+        {/* Form nhập thông tin - Interactive mode */}
+        {!conversation && !showInteractive && mode === 'interactive' && (
+          <FadeIn delay={0.2}>
+            <GlassCard className="p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Mic className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-lg font-semibold">Tham gia hội thoại</h2>
+              </div>
+              <p className="text-muted-foreground text-sm mb-6">
+                Chọn chủ đề và AI sẽ tạo một cuộc hội thoại để bạn tham gia. Bạn sẽ được lắng nghe và sau đó nói các câu của mình!
+              </p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    Chủ đề <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="Đặt phòng khách sạn, Mua cà phê, Phỏng vấn xin việc..."
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  onClick={() => setShowInteractive(true)}
+                  disabled={!topic.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Mic className="w-5 h-5 mr-2" />
+                  Bắt đầu tham gia
+                </Button>
+              </div>
+            </GlassCard>
+          </FadeIn>
+        )}
+
+        {/* Listening Player với Audio + Transcript */}
+        {conversation && (
+          <FadeIn delay={0.1}>
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-lg font-semibold">🎧 Nghe hội thoại</h2>
+                <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Tạo mới
+                </Button>
+              </div>
+              
+              <ListeningPlayer conversation={conversation} />
+            </GlassCard>
+          </FadeIn>
+        )}
+      </PageTransition>
     </AppLayout>
   );
 }
-

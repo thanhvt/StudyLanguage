@@ -232,3 +232,100 @@
 .text-glow {
   text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
 }
+
+/* ============================
+   SKILL CARD GRADIENTS (từ StudyMate Hub)
+   ============================ */
+
+/* Skill Card - Listening (Blue) */
+.skill-card-listening {
+  background: var(--gradient-listening);
+}
+
+/* Skill Card - Speaking (Green) */
+.skill-card-speaking {
+  background: var(--gradient-speaking);
+}
+
+/* Skill Card - Reading (Purple) */
+.skill-card-reading {
+  background: var(--gradient-reading);
+}
+
+/* Skill Card - Writing (Orange) */
+.skill-card-writing {
+  background: var(--gradient-writing);
+}
+
+/* ============================
+   ENHANCED TEXT EFFECTS
+   ============================ */
+
+/* Gradient Text - Hero style */
+.gradient-text-hero {
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Font Display - cho headings */
+.font-display {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* ============================
+   NAV ITEM ACTIVE
+   ============================ */
+
+.nav-item-active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 4px 20px hsla(152, 76%, 36%, 0.3);
+}
+
+/* ============================
+   ANIMATIONS
+   ============================ */
+
+/* Float Animation - enhanced */
+@keyframes float-enhanced {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float-enhanced 6s ease-in-out infinite;
+}
+
+/* Pulse Soft */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ============================
+   SKILL BACKGROUND OVERLAYS
+   ============================ */
+
+.bg-listening-10 {
+  background-color: hsla(200, 90%, 50%, 0.1);
+}
+
+.bg-speaking-10 {
+  background-color: hsla(152, 76%, 40%, 0.1);
+}
+
+.bg-reading-10 {
+  background-color: hsla(280, 70%, 55%, 0.1);
+}
+
+.bg-writing-10 {
+  background-color: hsla(35, 90%, 55%, 0.1);
+}
+

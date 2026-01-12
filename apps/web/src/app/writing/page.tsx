@@ -1,16 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { PenTool, History, Search, RotateCcw, AlertCircle, Lightbulb, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Writing Page - Module Luyện Viết
+ * Writing Page - Module Luyện Viết (Enhanced với StudyMate Hub style)
  *
  * Mục đích: UI cho tính năng luyện viết với AI sửa lỗi
  * Flow: Chọn topic → Viết văn bản → AI sửa lỗi và gợi ý
@@ -48,6 +52,7 @@ export default function WritingPage() {
       setFeedback(entry.content.feedback);
     }
   };
+
   const handleAnalyze = async () => {
     if (!userText.trim()) {
       setError('Vui lòng nhập nội dung bài viết');
@@ -110,113 +115,166 @@ Chỉ trả về JSON.`,
     setTopic('');
   };
 
+  const wordCount = userText.trim().split(/\s+/).filter(Boolean).length;
+
   return (
     <AppLayout>
-      {/* Header với History Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">✍️ Luyện Viết - Writing Assistant</h1>
-        <HistoryButton onClick={() => setHistoryOpen(true)} />
-      </div>
-
-      {/* History Drawer */}
-      <HistoryDrawer
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        filterType="writing"
-        onOpenEntry={handleOpenHistoryEntry}
-      />
-
-      {/* Form viết bài */}
-      <GlassCard className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-primary">Viết bài của bạn</h2>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Chủ đề (tùy chọn)</label>
-            <Input
-              placeholder="VD: My favorite hobby, A memorable trip..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="bg-black/20"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Nội dung bài viết *</label>
-            <textarea
-              className="w-full min-h-[200px] p-4 border rounded-xl bg-black/20 resize-y focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-              placeholder="Viết bài tiếng Anh của bạn ở đây..."
-              value={userText}
-              onChange={(e) => setUserText(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              Số từ: {userText.trim().split(/\s+/).filter(Boolean).length}
-            </p>
-          </div>
-        </div>
-
-        {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-
-        <div className="flex gap-3 mt-4">
-          <Button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || !userText.trim()}
-          >
-            {isAnalyzing ? '⏳ Đang phân tích...' : '🔍 Phân tích và sửa lỗi'}
-          </Button>
-          {feedback && (
-            <Button variant="outline" onClick={handleReset}>
-              🔄 Viết bài mới
-            </Button>
-          )}
-        </div>
-      </GlassCard>
-
-      {/* Kết quả phân tích */}
-      {feedback && (
-        <>
-          {/* Các lỗi */}
-          {feedback.corrections.length > 0 && (
-            <GlassCard className="p-6 mb-6 border-red-500/20">
-              <h2 className="text-xl font-semibold mb-4 text-red-400">❌ Các lỗi cần sửa</h2>
-              <div className="space-y-4">
-                {feedback.corrections.map((c, i) => (
-                  <div key={i} className="p-4 bg-red-500/10 rounded-xl border border-red-500/10">
-                    <div className="flex flex-wrap gap-2 items-center mb-2">
-                      <span className="line-through text-red-400 opacity-70">{c.original}</span>
-                      <span>→</span>
-                      <span className="text-green-500 font-bold">{c.corrected}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      💡 {c.explanation}
-                    </p>
-                  </div>
-                ))}
+      <PageTransition>
+        {/* Header với History Button - StudyMate Hub style */}
+        <FadeIn>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl skill-card-writing flex items-center justify-center shadow-lg">
+                <PenTool className="w-6 h-6 text-white" />
               </div>
-            </GlassCard>
-          )}
+              <div>
+                <h1 className="font-display text-2xl font-bold text-foreground">
+                  Luyện Viết
+                </h1>
+                <p className="text-sm text-muted-foreground">Writing Assistant</p>
+              </div>
+            </div>
+            <HistoryButton onClick={() => setHistoryOpen(true)} />
+          </div>
+        </FadeIn>
 
-          {/* Gợi ý */}
-          {feedback.suggestions.length > 0 && (
-            <GlassCard className="p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">💡 Gợi ý cải thiện</h2>
-              <ul className="list-disc list-inside space-y-2">
-                {feedback.suggestions.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </GlassCard>
-          )}
+        {/* History Drawer */}
+        <HistoryDrawer
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          filterType="writing"
+          onOpenEntry={handleOpenHistoryEntry}
+        />
 
-          {/* Phiên bản cải thiện */}
-          <GlassCard className="p-6 border-green-500/20">
-            <h2 className="text-xl font-semibold mb-4 text-green-400">✨ Phiên bản cải thiện</h2>
-            <div className="p-6 bg-green-500/10 rounded-xl leading-relaxed border border-green-500/10">
-              {feedback.improvedVersion}
+        {/* Writing Form */}
+        <FadeIn delay={0.1}>
+          <GlassCard className="p-6 mb-6">
+            <h2 className="font-display text-lg font-semibold mb-6">Viết bài của bạn</h2>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="writingTopic">
+                  Chủ đề (tùy chọn)
+                </Label>
+                <Input
+                  id="writingTopic"
+                  placeholder="My favorite hobby, A trip I remember, My dream job..."
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="writingContent">
+                  Nội dung bài viết <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="writingContent"
+                  placeholder="Viết bài tiếng Anh của bạn tại đây..."
+                  value={userText}
+                  onChange={(e) => setUserText(e.target.value)}
+                  className="min-h-[200px] resize-none"
+                />
+                <div className="text-right text-sm text-muted-foreground">
+                  Số từ: {wordCount}
+                </div>
+              </div>
+
+              {error && <p className="text-destructive text-sm">{error}</p>}
+
+              <div className="flex gap-3">
+                <Button 
+                  className="flex-1" 
+                  size="lg"
+                  onClick={handleAnalyze}
+                  disabled={!userText.trim() || isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Search className="w-5 h-5 mr-2 animate-spin" />
+                      Đang phân tích...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-5 h-5 mr-2" />
+                      Phân tích và sửa lỗi
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" size="lg" onClick={handleReset}>
+                  <RotateCcw className="w-5 h-5 mr-2" />
+                  Viết bài mới
+                </Button>
+              </div>
             </div>
           </GlassCard>
-        </>
-      )}
+        </FadeIn>
+
+        {/* Analysis Results */}
+        {feedback && (
+          <>
+            {/* Errors */}
+            {feedback.corrections.length > 0 && (
+              <FadeIn delay={0.2}>
+                <GlassCard className="p-6 mb-6 border-l-4 border-destructive">
+                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-destructive">
+                    <AlertCircle className="w-5 h-5" />
+                    Các lỗi cần sửa
+                  </h3>
+                  <div className="space-y-4">
+                    {feedback.corrections.map((error, i) => (
+                      <div key={i} className="bg-destructive/10 p-4 rounded-xl">
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <span className="line-through text-muted-foreground">"{error.original}"</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="text-primary font-medium">"{error.corrected}"</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground flex items-start gap-2">
+                          <Lightbulb className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          {error.explanation}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </FadeIn>
+            )}
+
+            {/* Suggestions */}
+            {feedback.suggestions.length > 0 && (
+              <FadeIn delay={0.3}>
+                <GlassCard className="p-6 mb-6">
+                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-writing" />
+                    Gợi ý cải thiện
+                  </h3>
+                  <ul className="space-y-2">
+                    {feedback.suggestions.map((suggestion, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <span className="text-primary">•</span>
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </GlassCard>
+              </FadeIn>
+            )}
+
+            {/* Improved Version */}
+            <FadeIn delay={0.4}>
+              <GlassCard className="p-6 border-l-4 border-green-500">
+                <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-green-500">
+                  <Sparkles className="w-5 h-5" />
+                  Phiên bản cải thiện
+                </h3>
+                <p className="text-foreground leading-relaxed bg-speaking-10 p-4 rounded-xl">
+                  {feedback.improvedVersion}
+                </p>
+              </GlassCard>
+            </FadeIn>
+          </>
+        )}
+      </PageTransition>
     </AppLayout>
   );
 }

@@ -1,17 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { BookOpen, History, Sparkles, RotateCcw, Volume2, CheckCircle, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Reading Page - Module Luyện Đọc
+ * Reading Page - Module Luyện Đọc (Enhanced với StudyMate Hub style)
  *
  * Mục đích: UI cho tính năng đọc hiểu với câu hỏi AI
  * Flow: Chọn topic → AI sinh bài đọc → Làm quiz → Xem đáp án
@@ -57,6 +60,7 @@ export default function ReadingPage() {
     }
     setShowResults(false);
   };
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       setError('Vui lòng nhập chủ đề');
@@ -135,158 +139,225 @@ Chỉ trả về JSON, không có text khác.`,
       score + (userAnswers[i] === q.answer ? 1 : 0), 0);
   };
 
+  /**
+   * Reset
+   */
+  const reset = () => {
+    setArticle(null);
+    setQuestions(null);
+    setUserAnswers([]);
+    setShowResults(false);
+    setTopic('');
+    setSelectedWord(null);
+  };
+
   return (
     <AppLayout>
-      {/* Header với History Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">📖 Luyện Đọc - Active Reading</h1>
-        <HistoryButton onClick={() => setHistoryOpen(true)} />
-      </div>
-
-      {/* History Drawer */}
-      <HistoryDrawer
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        filterType="reading"
-        onOpenEntry={handleOpenHistoryEntry}
-      />
-
-      {/* Form nhập thông tin */}
-      <GlassCard className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-primary">Tạo bài đọc mới</h2>
-        
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Chủ đề *</label>
-            <Input
-              placeholder="VD: Technology, Environment, Travel..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Độ khó</label>
-            <div className="flex gap-2">
-              <Button
-                variant={difficulty === 'basic' ? 'default' : 'outline'}
-                onClick={() => setDifficulty('basic')}
-                size="sm"
-              >
-                Cơ bản
-              </Button>
-              <Button
-                variant={difficulty === 'advanced' ? 'default' : 'outline'}
-                onClick={() => setDifficulty('advanced')}
-                size="sm"
-              >
-                Nâng cao
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="mt-4"
-        >
-          {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo bài đọc'}
-        </Button>
-      </GlassCard>
-
-      {/* Bài đọc */}
-      {article && (
-        <GlassCard className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-primary">📝 Bài đọc</h2>
-          <p className="text-xs text-muted-foreground mb-2">
-            💡 Click vào từ để tra từ điển
-          </p>
-          <div className="p-6 bg-muted/40 rounded-lg leading-relaxed text-lg tracking-wide border border-white/5">
-            <ClickableText text={article} onWordClick={setSelectedWord} />
-          </div>
-        </GlassCard>
-      )}
-
-      {/* Dictionary Popup */}
-      {selectedWord && (
-        <DictionaryPopup word={selectedWord} onClose={() => setSelectedWord(null)} />
-      )}
-
-      {/* Câu hỏi */}
-      {questions && (
-        <GlassCard className="p-6">
-          <h2 className="text-xl font-semibold mb-4 text-primary">❓ Câu hỏi đọc hiểu</h2>
-          
-          <div className="space-y-6">
-            {questions.map((q, qIndex) => (
-              <div key={qIndex} className="space-y-2">
-                <p className="font-medium text-lg">
-                  {qIndex + 1}. {q.question}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {q.options.map((opt, oIndex) => {
-                    const isSelected = userAnswers[qIndex] === oIndex;
-                    const isCorrect = q.answer === oIndex;
-                    
-                    let bgClass = 'bg-muted/30 hover:bg-muted/50 border border-white/5';
-                    if (showResults) {
-                      if (isCorrect) bgClass = 'bg-green-500/20 border-green-500/50';
-                      else if (isSelected && !isCorrect) bgClass = 'bg-red-500/20 border-red-500/50';
-                    } else if (isSelected) {
-                      bgClass = 'bg-primary/20 border-primary/50';
-                    }
-
-                    return (
-                      <button
-                        key={oIndex}
-                        onClick={() => handleSelectAnswer(qIndex, oIndex)}
-                        className={`p-4 rounded-xl text-left transition-all ${bgClass}`}
-                        disabled={showResults}
-                      >
-                        <span className="font-bold mr-2 opacity-70">
-                          {String.fromCharCode(65 + oIndex)}.
-                        </span>
-                        {opt}
-                        {showResults && isCorrect && ' ✅'}
-                      </button>
-                    );
-                  })}
-                </div>
+      <PageTransition>
+        {/* Header với History Button - StudyMate Hub style */}
+        <FadeIn>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl skill-card-reading flex items-center justify-center shadow-lg">
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
-            ))}
-          </div>
-
-          {!showResults ? (
-            <Button
-              onClick={handleSubmit}
-              className="mt-8 w-full md:w-auto"
-              disabled={userAnswers.includes(-1)}
-            >
-              📊 Nộp bài
-            </Button>
-          ) : (
-            <div className="mt-8 p-6 bg-primary/10 rounded-xl text-center border border-primary/20">
-              <p className="text-3xl font-bold text-primary mb-2">
-                Điểm: {calculateScore()}/{questions.length}
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setArticle(null);
-                  setQuestions(null);
-                  setShowResults(false);
-                }}
-                className="mt-4"
-              >
-                🔄 Làm bài mới
-              </Button>
+              <div>
+                <h1 className="font-display text-2xl font-bold text-foreground">
+                  Luyện Đọc
+                </h1>
+                <p className="text-sm text-muted-foreground">Active Reading</p>
+              </div>
             </div>
-          )}
-        </GlassCard>
-      )}
+            <HistoryButton onClick={() => setHistoryOpen(true)} />
+          </div>
+        </FadeIn>
+
+        {/* History Drawer */}
+        <HistoryDrawer
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          filterType="reading"
+          onOpenEntry={handleOpenHistoryEntry}
+        />
+
+        {/* Form nhập thông tin */}
+        {!article && (
+          <FadeIn delay={0.1}>
+            <GlassCard className="p-6 mb-6">
+              <h2 className="font-display text-lg font-semibold mb-6">Tạo bài đọc mới</h2>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="readingTopic">
+                    Chủ đề <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="readingTopic"
+                    placeholder="Technology, Environment, Travel, Health..."
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Độ khó</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={difficulty === 'basic' ? 'default' : 'outline'}
+                      onClick={() => setDifficulty('basic')}
+                      className="flex-1"
+                    >
+                      Cơ bản (A1-A2)
+                    </Button>
+                    <Button
+                      variant={difficulty === 'advanced' ? 'default' : 'outline'}
+                      onClick={() => setDifficulty('advanced')}
+                      className="flex-1"
+                    >
+                      Nâng cao (B1-B2)
+                    </Button>
+                  </div>
+                </div>
+
+                {error && <p className="text-destructive text-sm">{error}</p>}
+
+                <Button 
+                  className="w-full mt-4" 
+                  size="lg"
+                  onClick={handleGenerate}
+                  disabled={!topic.trim() || isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Tạo bài đọc
+                    </>
+                  )}
+                </Button>
+              </div>
+            </GlassCard>
+          </FadeIn>
+        )}
+
+        {/* Bài đọc */}
+        {article && (
+          <FadeIn delay={0.1}>
+            <GlassCard className="p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-lg font-semibold">📝 Bài đọc</h3>
+                <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Làm bài mới
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground mb-4">
+                💡 Click vào từ để tra từ điển
+              </p>
+
+              <div className="p-6 bg-muted/40 rounded-xl leading-relaxed text-lg border border-white/5">
+                <ClickableText text={article} onWordClick={setSelectedWord} />
+              </div>
+
+              {selectedWord && (
+                <div className="mt-4 p-4 bg-muted rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-lg">{selectedWord}</span>
+                      <span className="text-muted-foreground text-sm ml-2">/word/</span>
+                    </div>
+                    <Button variant="ghost" size="icon">
+                      <Volume2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tra từ điển để xem nghĩa và ví dụ...
+                  </p>
+                </div>
+              )}
+            </GlassCard>
+          </FadeIn>
+        )}
+
+        {/* Dictionary Popup */}
+        {selectedWord && (
+          <DictionaryPopup word={selectedWord} onClose={() => setSelectedWord(null)} />
+        )}
+
+        {/* Câu hỏi */}
+        {questions && (
+          <FadeIn delay={0.2}>
+            <GlassCard className="p-6">
+              <h3 className="font-display text-lg font-semibold mb-6">❓ Câu hỏi đọc hiểu</h3>
+              
+              <div className="space-y-6">
+                {questions.map((q, qIndex) => (
+                  <div key={qIndex}>
+                    <p className="font-medium mb-3">
+                      {qIndex + 1}. {q.question}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {q.options.map((option, oIndex) => {
+                        const isSelected = userAnswers[qIndex] === oIndex;
+                        const isCorrect = q.answer === oIndex;
+                        
+                        let bgClass = 'bg-muted/30 hover:bg-muted/50 border border-transparent';
+                        if (showResults) {
+                          if (isCorrect) bgClass = 'bg-speaking-10 border-green-500/50';
+                          else if (isSelected && !isCorrect) bgClass = 'bg-destructive/20 border-destructive/50';
+                        } else if (isSelected) {
+                          bgClass = 'bg-primary text-primary-foreground border-primary';
+                        }
+
+                        return (
+                          <button
+                            key={oIndex}
+                            onClick={() => handleSelectAnswer(qIndex, oIndex)}
+                            className={`p-3 rounded-lg text-sm text-left transition-all ${bgClass}`}
+                            disabled={showResults}
+                          >
+                            <span className="flex items-center gap-2">
+                              {showResults && isCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
+                              {showResults && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-destructive" />}
+                              {String.fromCharCode(65 + oIndex)}. {option}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {!showResults ? (
+                <Button 
+                  className="w-full mt-6" 
+                  size="lg"
+                  onClick={handleSubmit}
+                  disabled={userAnswers.includes(-1)}
+                >
+                  📊 Nộp bài
+                </Button>
+              ) : (
+                <div className="mt-6 p-4 bg-primary/10 rounded-xl text-center">
+                  <p className="text-2xl font-bold text-primary">
+                    Điểm: {calculateScore()}/{questions.length}
+                  </p>
+                  <Button variant="outline" className="mt-4" onClick={reset}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Làm bài mới
+                  </Button>
+                </div>
+              )}
+            </GlassCard>
+          </FadeIn>
+        )}
+      </PageTransition>
     </AppLayout>
   );
 }

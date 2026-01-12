@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/glassmorphism.css";
@@ -7,7 +9,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -38,6 +41,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Skill colors - từ StudyMate Hub */
+  --color-listening: hsl(200, 90%, 50%);
+  --color-speaking: hsl(152, 76%, 40%);
+  --color-reading: hsl(280, 70%, 55%);
+  --color-writing: hsl(35, 90%, 55%);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -48,72 +56,84 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --background: hsl(220, 20%, 97%);
+  --foreground: hsl(220, 20%, 10%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 20%, 10%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 20%, 10%);
+  --primary: hsl(152, 76%, 36%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(220, 14%, 96%);
+  --secondary-foreground: hsl(220, 20%, 10%);
+  --muted: hsl(220, 14%, 96%);
+  --muted-foreground: hsl(220, 10%, 40%);
+  --accent: hsl(152, 76%, 95%);
+  --accent-foreground: hsl(152, 76%, 25%);
+  --destructive: hsl(0, 84%, 60%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --ring: hsl(152, 76%, 36%);
+  --chart-1: hsl(152, 76%, 40%);
+  --chart-2: hsl(200, 90%, 50%);
+  --chart-3: hsl(280, 70%, 55%);
+  --chart-4: hsl(35, 90%, 55%);
+  --chart-5: hsl(320, 70%, 55%);
+  --sidebar: hsl(220, 20%, 98%);
+  --sidebar-foreground: hsl(220, 20%, 25%);
+  --sidebar-primary: hsl(152, 76%, 36%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(152, 76%, 95%);
+  --sidebar-accent-foreground: hsl(152, 76%, 25%);
+  --sidebar-border: hsl(220, 13%, 91%);
+  --sidebar-ring: hsl(152, 76%, 36%);
+  /* Custom tokens từ StudyMate Hub */
+  --gradient-listening: linear-gradient(135deg, hsl(200, 90%, 50%), hsl(180, 80%, 45%));
+  --gradient-speaking: linear-gradient(135deg, hsl(152, 76%, 40%), hsl(160, 70%, 35%));
+  --gradient-reading: linear-gradient(135deg, hsl(280, 70%, 55%), hsl(320, 70%, 55%));
+  --gradient-writing: linear-gradient(135deg, hsl(35, 90%, 55%), hsl(45, 90%, 50%));
+  --gradient-hero: linear-gradient(135deg, hsl(152, 76%, 36%), hsl(180, 70%, 40%));
+  --glass-bg: hsla(0, 0%, 100%, 0.8);
+  --glass-border: hsla(220, 13%, 91%, 0.5);
+  --shadow-glow: 0 0 40px hsla(152, 76%, 36%, 0.15);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: hsl(220, 25%, 6%);
+  --foreground: hsl(0, 0%, 95%);
+  --card: hsl(220, 25%, 9%);
+  --card-foreground: hsl(0, 0%, 95%);
+  --popover: hsl(220, 25%, 9%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --primary: hsl(152, 76%, 45%);
+  --primary-foreground: hsl(220, 25%, 6%);
+  --secondary: hsl(220, 20%, 14%);
+  --secondary-foreground: hsl(0, 0%, 95%);
+  --muted: hsl(220, 20%, 14%);
+  --muted-foreground: hsl(220, 10%, 55%);
+  --accent: hsl(220, 20%, 14%);
+  --accent-foreground: hsl(152, 76%, 45%);
+  --destructive: hsl(0, 62%, 50%);
+  --border: hsl(220, 20%, 18%);
+  --input: hsl(220, 20%, 18%);
+  --ring: hsl(152, 76%, 45%);
+  --chart-1: hsl(152, 76%, 45%);
+  --chart-2: hsl(200, 90%, 55%);
+  --chart-3: hsl(280, 70%, 60%);
+  --chart-4: hsl(35, 90%, 60%);
+  --chart-5: hsl(320, 70%, 60%);
+  --sidebar: hsl(220, 25%, 8%);
+  --sidebar-foreground: hsl(0, 0%, 85%);
+  --sidebar-primary: hsl(152, 76%, 45%);
+  --sidebar-primary-foreground: hsl(220, 25%, 6%);
+  --sidebar-accent: hsl(220, 20%, 14%);
+  --sidebar-accent-foreground: hsl(152, 76%, 45%);
+  --sidebar-border: hsl(220, 20%, 15%);
+  --sidebar-ring: hsl(152, 76%, 45%);
+  --glass-bg: hsla(220, 25%, 10%, 0.8);
+  --glass-border: hsla(220, 20%, 20%, 0.5);
+  --shadow-glow: 0 0 60px hsla(152, 76%, 45%, 0.2);
 }
 
 @layer base {
@@ -122,5 +142,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   }
 }
