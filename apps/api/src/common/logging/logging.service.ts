@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -154,7 +155,8 @@ export class LoggingService extends ConsoleLogger {
     message: string | object,
     meta: LogMeta = {},
   ) {
-    const msgStr = typeof message === 'object' ? JSON.stringify(message) : message;
+    const msgStr =
+      typeof message === 'object' ? JSON.stringify(message) : message;
     super.log(`[HTTP:${action.toUpperCase()}] ${msgStr}`, meta.requestId);
     this.saveLog('info', msgStr, {
       ...meta,
@@ -167,7 +169,11 @@ export class LoggingService extends ConsoleLogger {
    * Log security events (auth failures, suspicious activity)
    */
   logSecurity(
-    action: 'auth_success' | 'auth_failure' | 'permission_denied' | 'rate_limit',
+    action:
+      | 'auth_success'
+      | 'auth_failure'
+      | 'permission_denied'
+      | 'rate_limit',
     message: string,
     meta: LogMeta = {},
   ) {
@@ -202,10 +208,7 @@ export class LoggingService extends ConsoleLogger {
   /**
    * Log errors với full stack trace
    */
-  logException(
-    error: Error | unknown,
-    meta: LogMeta = {},
-  ) {
+  logException(error: Error | unknown, meta: LogMeta = {}) {
     const errMessage = error instanceof Error ? error.message : String(error);
     const errStack = error instanceof Error ? error.stack : undefined;
 

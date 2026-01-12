@@ -10,17 +10,17 @@ const LOFI_TRACKS = [
   {
     id: 'lofi-1',
     name: 'Chill Study Beats',
-    url: 'https://cdn.pixabay.com/audio/2024/11/29/audio_a4fe4f4df8.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Reliable test source
   },
   {
     id: 'lofi-2', 
     name: 'Rainy Day Coffee',
-    url: 'https://cdn.pixabay.com/audio/2024/02/15/audio_fc5c44f715.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
   {
     id: 'lofi-3',
     name: 'Late Night Vibes',
-    url: 'https://cdn.pixabay.com/audio/2024/02/28/audio_8f506e80c0.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   },
 ];
 

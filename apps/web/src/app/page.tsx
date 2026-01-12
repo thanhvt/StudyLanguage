@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useLanguage } from '@/components/providers/language-provider';
 import { PageTransition, FadeIn, StaggerChildren, StaggerItem } from '@/components/animations';
 import { GlassCard, GradientText } from '@/components/ui/glass-card';
 
@@ -15,37 +17,38 @@ import { GlassCard, GradientText } from '@/components/ui/glass-card';
  */
 export default function HomePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { t } = useLanguage();
 
   const skills = [
     {
       id: 'listening',
-      name: 'Luyện Nghe',
+      name: t('skill.listening.name'),
       icon: '🎧',
-      description: 'Nghe hội thoại AI tạo theo chủ đề',
+      description: t('skill.listening.desc'),
       href: '/listening',
       gradient: 'from-blue-500 to-cyan-400',
     },
     {
       id: 'speaking',
-      name: 'Luyện Nói',
+      name: t('skill.speaking.name'),
       icon: '🎤',
-      description: 'Luyện phát âm với AI Coach',
+      description: t('skill.speaking.desc'),
       href: '/speaking',
       gradient: 'from-green-500 to-emerald-400',
     },
     {
       id: 'reading',
-      name: 'Luyện Đọc',
+      name: t('skill.reading.name'),
       icon: '📖',
-      description: 'Đọc hiểu với câu hỏi AI',
+      description: t('skill.reading.desc'),
       href: '/reading',
       gradient: 'from-purple-500 to-pink-400',
     },
     {
       id: 'writing',
-      name: 'Luyện Viết',
+      name: t('skill.writing.name'),
       icon: '✍️',
-      description: 'Viết và nhận phản hồi từ AI',
+      description: t('skill.writing.desc'),
       href: '/writing',
       gradient: 'from-orange-500 to-amber-400',
     },
@@ -57,22 +60,23 @@ export default function HomePage() {
       <header className="border-b glass-card border-transparent">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">
-            📚 <GradientText>AI Learning</GradientText>
+            📚 <GradientText>{t('app.title')}</GradientText>
           </h1>
           
           <div className="flex items-center gap-4">
+             <LanguageSwitcher />
             {loading ? (
-              <span className="text-muted-foreground">Đang tải...</span>
+              <span className="text-muted-foreground">{t('auth.loading')}</span>
             ) : user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm hidden md:inline">{user.email}</span>
                 <Button variant="outline" size="sm" onClick={signOut}>
-                  Đăng xuất
+                  {t('auth.logout')}
                 </Button>
               </div>
             ) : (
               <Button onClick={signInWithGoogle} className="glow-button">
-                🔑 Đăng nhập với Google
+                🔑 {t('auth.login')}
               </Button>
             )}
           </div>
@@ -86,10 +90,10 @@ export default function HomePage() {
           <FadeIn delay={0.1}>
             <div className="text-center mb-10">
               <h2 className="text-4xl md:text-5xl font-bold mb-3">
-                Smart <GradientText>AI Learning</GradientText> 🚀
+                Smart <GradientText>{t('app.title')}</GradientText> 🚀
               </h2>
               <p className="text-muted-foreground text-lg">
-                Luyện 4 kỹ năng: Nghe, Nói, Đọc, Viết với trợ lý AI thông minh
+                {t('app.subtitle')}
               </p>
             </div>
           </FadeIn>
@@ -119,7 +123,7 @@ export default function HomePage() {
           <FadeIn delay={0.5}>
             <div className="max-w-md mx-auto">
               <GlassCard variant="default" hover="none">
-                <h3 className="text-lg font-semibold mb-3 text-center">⚙️ Cài đặt giao diện</h3>
+                <h3 className="text-lg font-semibold mb-3 text-center">⚙️ {t('settings.theme')}</h3>
                 <ThemeSwitcher />
               </GlassCard>
             </div>
@@ -130,7 +134,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t mt-auto glass-card border-transparent">
         <div className="container mx-auto px-4 py-4 text-center text-muted-foreground text-sm">
-          AI Learning © 2026 - Powered by AI ✨
+          {t('footer.copyright')}
         </div>
       </footer>
     </div>
