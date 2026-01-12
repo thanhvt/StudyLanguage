@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "StudyLanguage - Học Tiếng Anh với AI",
+  title: "AI Learning",
   description: "Ứng dụng học tiếng Anh 4 kỹ năng (Nghe, Nói, Đọc, Viết) tích hợp AI",
 };
 

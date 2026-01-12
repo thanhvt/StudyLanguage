@@ -54,7 +54,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary">📚 StudyLanguage</h1>
+          <h1 className="text-2xl font-bold text-primary">📚 AI Learning</h1>
           
           <div className="flex items-center gap-4">
             {loading ? (
@@ -80,7 +80,7 @@ export default function HomePage() {
         {/* Welcome */}
         <div className="text-center mb-10">
           <h2 className="text-4xl font-bold mb-3">
-            Học Tiếng Anh với AI 🚀
+            Smart AI Learning 🚀
           </h2>
           <p className="text-muted-foreground text-lg">
             Luyện 4 kỹ năng: Nghe, Nói, Đọc, Viết với trợ lý AI thông minh
@@ -112,7 +112,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t mt-auto">
         <div className="container mx-auto px-4 py-4 text-center text-muted-foreground text-sm">
-          StudyLanguage © 2026 - Powered by AI
+          AI Learning © 2026 - Powered by AI
         </div>
       </footer>
     </div>

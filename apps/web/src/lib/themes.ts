@@ -1,5 +1,5 @@
 /**
- * Theme Configuration - StudyLanguage App
+ * Theme Configuration - AI Learning App
  * Bộ sưu tập 6 màu Green Nature cho giao diện
  * 
  * Mục đích: Định nghĩa các theme có thể chọn cho người dùng
