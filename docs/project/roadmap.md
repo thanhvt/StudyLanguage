@@ -27,12 +27,12 @@
 - [x] Config Tailwind, Shadcn/ui (Web)
 - [ ] Config NativeWind (Mobile)
 
-#### Task 0.2: Supabase Setup 🤖 ⏳
-- [ ] Tạo project trên Supabase Cloud
+#### Task 0.2: Supabase Setup 🤖 ✅
+- [x] Tạo project trên Supabase Cloud
 - [x] Thiết kế Database Schema (ERD)
-- [ ] Tạo các tables cơ bản: users, user_preferences, lessons, conversations
-- [ ] Enable Google OAuth Provider
-- [ ] Tạo Supabase Storage buckets (audio files)
+- [x] Tạo các tables cơ bản: users, user_preferences, lessons, conversations
+- [x] Enable Google OAuth Provider
+- [x] Tạo Supabase Storage buckets (audio files)
 
 ### ⏳ SEQUENTIAL (Phụ thuộc Group A)
 
