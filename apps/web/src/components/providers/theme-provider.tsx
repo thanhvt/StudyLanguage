@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { 
   AccentColorId, 
   DEFAULT_THEME, 
@@ -23,6 +24,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
+ * Helper để đọc giá trị từ localStorage an toàn
+ */
+function getStoredTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem('theme');
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function getStoredAccent(): AccentColorId {
+  if (typeof window === 'undefined') return DEFAULT_THEME;
+  const stored = localStorage.getItem('accentColor') as AccentColorId | null;
+  return stored || DEFAULT_THEME;
+}
+
+/**
  * ThemeProvider Component
  * 
  * Mục đích: Quản lý theme (light/dark) và accent color cho toàn app
@@ -30,38 +47,18 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
  * Khi nào sử dụng: Wrap ở root layout để áp dụng theme cho toàn bộ app
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // State cho Light/Dark mode
+  // Khởi tạo state với giá trị mặc định (sẽ được cập nhật sau hydration)
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
-  // State cho Accent Color (6 themes)
   const [accentColor, setAccentColorState] = useState<AccentColorId>(DEFAULT_THEME);
-  // Đánh dấu đã mount để tránh hydration mismatch
   const [mounted, setMounted] = useState(false);
 
-  // Đánh dấu đã mount
+  // Load preferences sau khi mount (chỉ chạy 1 lần)
+  // Đây là pattern chuẩn cho hydration - setState trong useEffect là cần thiết
   useEffect(() => {
     setMounted(true);
+    setThemeState(getStoredTheme());
+    setAccentColorState(getStoredAccent());
   }, []);
-
-  // Load preferences từ localStorage khi mount
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Lấy theme từ localStorage hoặc system preference
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const savedAccent = localStorage.getItem('accentColor') as AccentColorId | null;
-    
-    if (savedTheme) {
-      setThemeState(savedTheme);
-    } else {
-      // Kiểm tra system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(prefersDark ? 'dark' : 'light');
-    }
-    
-    if (savedAccent) {
-      setAccentColorState(savedAccent);
-    }
-  }, [mounted]);
 
   // Áp dụng theme lên document
   useEffect(() => {
@@ -83,42 +80,47 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     Object.entries(cssVars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
-    
-    // Lưu vào localStorage
-    localStorage.setItem('theme', theme);
-    localStorage.setItem('accentColor', accentColor);
-  }, [theme, accentColor, mounted]);
+  }, [mounted, theme, accentColor]);
 
-  // Hàm set theme
-  const setTheme = (newTheme: 'light' | 'dark') => {
+  // Toggle giữa light và dark
+  const toggleTheme = useCallback(() => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
     setThemeState(newTheme);
-  };
+    localStorage.setItem('theme', newTheme);
+  }, [theme]);
 
-  // Hàm set accent color
-  const setAccentColor = (color: AccentColorId) => {
+  // Set theme cụ thể
+  const setTheme = useCallback((newTheme: 'light' | 'dark') => {
+    setThemeState(newTheme);
+    localStorage.setItem('theme', newTheme);
+  }, []);
+
+  // Set accent color
+  const setAccentColor = useCallback((color: AccentColorId) => {
     setAccentColorState(color);
-  };
+    localStorage.setItem('accentColor', color);
+  }, []);
 
-  // Hàm toggle theme
-  const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  // Memoize context value
+  const value = useMemo(() => ({
+    theme,
+    accentColor,
+    setTheme,
+    setAccentColor,
+    toggleTheme,
+  }), [theme, accentColor, setTheme, setAccentColor, toggleTheme]);
 
-  // Tránh hydration mismatch
+  // Hiển thị placeholder trong khi chờ hydration
   if (!mounted) {
-    return <>{children}</>;
+    return (
+      <ThemeContext.Provider value={value}>
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </ThemeContext.Provider>
+    );
   }
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        accentColor,
-        setTheme,
-        setAccentColor,
-        toggleTheme,
-      }}
-    >
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
@@ -129,12 +131,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
  * 
  * Mục đích: Truy cập theme state và functions từ bất kỳ component nào
  * Tham số: Không có
- * Trả về: ThemeContextType object
+ * Trả về: ThemeContextType object (hoặc defaults nếu ngoài Provider)
  */
-export function useTheme() {
+export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
+  
+  // Trả về defaults nếu context chưa sẵn sàng (SSR hoặc ngoài Provider)
   if (context === undefined) {
-    throw new Error('useTheme phải được sử dụng bên trong ThemeProvider');
+    return {
+      theme: 'light',
+      accentColor: 'fresh-greens',
+      setTheme: () => {},
+      toggleTheme: () => {},
+      setAccentColor: () => {},
+    };
   }
+  
   return context;
 }
