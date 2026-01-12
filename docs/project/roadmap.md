@@ -153,9 +153,9 @@
 - [ ] Rung nhẹ khi hoàn thành bài học
 - [ ] Feedback rung khi bấm nút chính
 
-#### Task 3.4: Responsiveness 🤖
-- [ ] Test & fix UI trên các kích thước màn hình
-- [ ] Tablet layout optimization
+#### Task 3.4: Responsiveness 🤖 ✅
+- [x] Test & fix UI trên các kích thước màn hình
+- [x] Tablet layout optimization
 
 > 💡 **Gợi ý:** Toàn bộ Phase 3 có thể chạy SONG SONG! 4 tasks hoàn toàn độc lập.
 

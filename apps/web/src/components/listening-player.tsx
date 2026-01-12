@@ -49,7 +49,7 @@ export function TranscriptViewer({
   };
 
   return (
-    <div className="space-y-3 max-h-[400px] overflow-y-auto">
+    <div className="space-y-3 max-h-[300px] sm:max-h-[400px] overflow-y-auto mobile-scroll">
       <h3 className="font-medium text-foreground mb-4">Transcript</h3>
       {conversation.map((line, index) => {
         const isActive = index === activeIndex;
@@ -60,7 +60,7 @@ export function TranscriptViewer({
           <div
             key={index}
             className={`
-              p-3 rounded-xl max-w-[85%] transition-all duration-300
+              p-3 rounded-xl max-w-full sm:max-w-[85%] transition-all duration-300
               ${isLeft 
                 ? 'bg-blue-500/20 mr-auto' 
                 : 'bg-green-500/20 ml-auto text-right'

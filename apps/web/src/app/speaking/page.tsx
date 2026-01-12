@@ -193,9 +193,9 @@ export default function SpeakingPage() {
 
           {/* SESSION MODE */}
           {viewMode === 'session' && (
-            <div className="flex-1 flex gap-6 h-full overflow-hidden pb-20">
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 h-full overflow-hidden pb-24">
               {/* LEFT COLUMN: VISUALIZER */}
-              <div className="flex-1 flex flex-col gap-6">
+              <div className="flex-1 flex flex-col gap-4 lg:gap-6 min-h-[250px] lg:min-h-0">
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-xl skill-card-speaking flex items-center justify-center">
@@ -225,7 +225,7 @@ export default function SpeakingPage() {
               </div>
 
               {/* RIGHT COLUMN: TRANSCRIPT */}
-              <div className="w-[400px] flex flex-col h-full">
+              <div className="w-full lg:w-[400px] flex flex-col h-[280px] lg:h-full">
                  <SessionTranscript messages={messages} isThinking={isThinking} className="border-white/10 shadow-xl" />
               </div>
 

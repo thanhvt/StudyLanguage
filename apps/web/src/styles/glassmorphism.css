@@ -329,3 +329,83 @@
   background-color: hsla(35, 90%, 55%, 0.1);
 }
 
+/* ============================
+   RESPONSIVE UTILITIES
+   ============================ */
+
+/* Touch-friendly targets - minimum 44px cho iOS/Android accessibility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-safe padding cho notched phones */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Hide trên mobile (< 640px) */
+@media (max-width: 639px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Chỉ hiện trên mobile (< 640px) */
+.show-mobile {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .show-mobile {
+    display: block;
+  }
+}
+
+/* Responsive max-width cho transcript/content areas */
+.max-w-responsive {
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .max-w-responsive {
+    max-width: 85%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .max-w-responsive {
+    max-width: 75%;
+  }
+}
+
+/* Mobile-optimized scrolling */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Responsive text sizing */
+.text-responsive-xl {
+  font-size: 1.5rem; /* 24px */
+  line-height: 2rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-xl {
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-xl {
+    font-size: 2.25rem; /* 36px */
+    line-height: 2.5rem;
+  }
+}
+

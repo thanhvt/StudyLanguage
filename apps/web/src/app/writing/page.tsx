@@ -185,7 +185,7 @@ Chỉ trả về JSON.`,
 
               {error && <p className="text-destructive text-sm">{error}</p>}
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   className="flex-1" 
                   size="lg"

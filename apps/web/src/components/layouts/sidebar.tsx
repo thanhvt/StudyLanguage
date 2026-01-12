@@ -171,10 +171,7 @@ export function Sidebar() {
         </button>
       </aside>
 
-      {/* Mobile Sidebar - Slide-in overlay */}
-      <div className="lg:hidden">
-        {/* TODO: Implement mobile sidebar với slide-in animation */}
-      </div>
+      {/* Mobile: Không cần sidebar slide-in, đã có MobileNavBar ở bottom */}
     </>
   );
 }

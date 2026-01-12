@@ -299,7 +299,7 @@ Chỉ trả về JSON, không có text khác.`,
                     <p className="font-medium mb-3">
                       {qIndex + 1}. {q.question}
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {q.options.map((option, oIndex) => {
                         const isSelected = userAnswers[qIndex] === oIndex;
                         const isCorrect = q.answer === oIndex;
