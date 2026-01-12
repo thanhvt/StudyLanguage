@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
@@ -6,7 +9,7 @@ import { AiService } from './../src/ai/ai.service';
 
 describe('AiController (e2e)', () => {
   let app: INestApplication;
-  
+
   // Mock AI Service to avoid calling OpenAI API
   const mockAiService = {
     generateConversation: jest.fn().mockImplementation((topic, duration) => {
@@ -19,34 +22,36 @@ describe('AiController (e2e)', () => {
         ],
       };
     }),
-    transcribeAudio: jest.fn().mockResolvedValue('Hello world, this is a test transcription.'),
-    textToSpeech: jest.fn().mockResolvedValue(Buffer.from('mock-audio-content')),
+    transcribeAudio: jest
+      .fn()
+      .mockResolvedValue('Hello world, this is a test transcription.'),
+    textToSpeech: jest
+      .fn()
+      .mockResolvedValue(Buffer.from('mock-audio-content')),
     evaluatePronunciation: jest.fn().mockImplementation((original, user) => {
       return {
         overallScore: 85,
-        feedback: [
-          { word: 'world', error: 'mispronounced' }
-        ]
+        feedback: [{ word: 'world', error: 'mispronounced' }],
       };
     }),
     generateText: jest.fn().mockResolvedValue('This is generated text'),
     generateConversationAudio: jest.fn().mockResolvedValue({
       audioBuffer: Buffer.from('mock-conversation-audio'),
-      timestamps: [{ startTime: 0, endTime: 1000 }]
+      timestamps: [{ startTime: 0, endTime: 1000 }],
     }),
     generateInteractiveConversation: jest.fn().mockImplementation((topic) => {
-        return {
-            scenario: `Scenario for ${topic}`,
-            script: [
-                { speaker: 'AI', text: 'Hello' },
-                { speaker: 'User', text: '[YOUR TURN]', isUserTurn: true }
-            ]
-        }
+      return {
+        scenario: `Scenario for ${topic}`,
+        script: [
+          { speaker: 'AI', text: 'Hello' },
+          { speaker: 'User', text: '[YOUR TURN]', isUserTurn: true },
+        ],
+      };
     }),
     continueConversation: jest.fn().mockResolvedValue({
-        response: 'AI response to user',
-        shouldEnd: false
-    })
+      response: 'AI response to user',
+      shouldEnd: false,
+    }),
   };
 
   beforeEach(async () => {
@@ -58,12 +63,14 @@ describe('AiController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Validate Pipes must be enabled if they represent the actual app
-    app.useGlobalPipes(new ValidationPipe({
+    app.useGlobalPipes(
+      new ValidationPipe({
         whitelist: true,
         transform: true,
-    }));
+      }),
+    );
 
     await app.init();
   });
@@ -104,13 +111,13 @@ describe('AiController (e2e)', () => {
     });
 
     it('should fail if no file is provided', () => {
-        // NestJS FileInterceptor throws 400 if validation fails, or 500 if unhandled
-        // Here we just check it doesn't return 200
-        return request(app.getHttpServer())
-            .post('/ai/transcribe')
-            .expect((res) => {
-                expect(res.status).not.toBe(200);
-            });
+      // NestJS FileInterceptor throws 400 if validation fails, or 500 if unhandled
+      // Here we just check it doesn't return 200
+      return request(app.getHttpServer())
+        .post('/ai/transcribe')
+        .expect((res) => {
+          expect(res.status).not.toBe(200);
+        });
     });
   });
 
@@ -122,10 +129,10 @@ describe('AiController (e2e)', () => {
         .send({ text: 'Hello', voice: 'alloy' })
         .expect(200)
         .expect((res) => {
-            expect(res.body).toHaveProperty('audio');
-            expect(res.body.contentType).toBe('audio/mpeg');
-            // Base64 of 'mock-audio-content' is 'bW9jay1hdWRpby1jb250ZW50'
-            expect(res.body.audio).toBeDefined(); 
+          expect(res.body).toHaveProperty('audio');
+          expect(res.body.contentType).toBe('audio/mpeg');
+          // Base64 of 'mock-audio-content' is 'bW9jay1hdWRpby1jb250ZW50'
+          expect(res.body.audio).toBeDefined();
         });
     });
   });
@@ -138,42 +145,41 @@ describe('AiController (e2e)', () => {
         .send({ originalText: 'Hello world', userTranscript: 'Hello word' })
         .expect(200)
         .expect((res) => {
-            expect(res.body.overallScore).toBe(85);
-            expect(res.body.feedback).toHaveLength(1);
+          expect(res.body.overallScore).toBe(85);
+          expect(res.body.feedback).toHaveLength(1);
         });
     });
   });
 
   // --- 5. INTERACTIVE CONVERSATION ---
   describe('POST /ai/generate-interactive-conversation', () => {
-      it('should generate interactive scenario', () => {
-          return request(app.getHttpServer())
-            .post('/ai/generate-interactive-conversation')
-            .send({ topic: 'Shopping' })
-            .expect(200)
-            .expect((res) => {
-                expect(res.body.scenario).toContain('Shopping');
-                expect(res.body.script).toBeDefined();
-            })
-      })
-  })
+    it('should generate interactive scenario', () => {
+      return request(app.getHttpServer())
+        .post('/ai/generate-interactive-conversation')
+        .send({ topic: 'Shopping' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.scenario).toContain('Shopping');
+          expect(res.body.script).toBeDefined();
+        });
+    });
+  });
 
   // --- 6. CONTINUE CONVERSATION ---
   describe('POST /ai/continue-conversation', () => {
-      it('should return AI response', () => {
-          return request(app.getHttpServer())
-            .post('/ai/continue-conversation')
-            .send({ 
-                conversationHistory: [],
-                userInput: "How much is this?",
-                topic: "Shopping"
-            })
-            .expect(200)
-            .expect((res) => {
-                expect(res.body.response).toBeDefined();
-                expect(res.body.shouldEnd).toBe(false);
-            })
-      })
-  })
-
+    it('should return AI response', () => {
+      return request(app.getHttpServer())
+        .post('/ai/continue-conversation')
+        .send({
+          conversationHistory: [],
+          userInput: 'How much is this?',
+          topic: 'Shopping',
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.response).toBeDefined();
+          expect(res.body.shouldEnd).toBe(false);
+        });
+    });
+  });
 });
