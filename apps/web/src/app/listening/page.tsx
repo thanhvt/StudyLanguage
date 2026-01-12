@@ -13,6 +13,7 @@ import { InteractiveListening } from '@/components/interactive-listening';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
@@ -43,6 +44,9 @@ export default function ListeningPage() {
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
 
+  // Save lesson hook
+  const { saveLesson } = useSaveLesson();
+
   /**
    * Gọi API sinh hội thoại
    */
@@ -72,6 +76,18 @@ export default function ListeningPage() {
 
       const data = await response.json();
       setConversation(data.script);
+
+      // Lưu vào database để hiển thị trong History
+      await saveLesson({
+        type: 'listening',
+        topic,
+        content: { script: data.script },
+        durationMinutes: duration,
+        numSpeakers,
+        keywords: keywords || undefined,
+        mode: mode,
+        status: 'completed',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {

@@ -12,6 +12,7 @@ import { SessionTranscript } from '@/components/speaking/session-transcript';
 import { PronunciationAlert } from '@/components/speaking/pronunciation-alert';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
@@ -35,6 +36,9 @@ export default function SpeakingPage() {
 
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Save lesson hook
+  const { saveLesson } = useSaveLesson();
 
   /**
    * Xử lý khi mở entry từ history
@@ -60,6 +64,23 @@ export default function SpeakingPage() {
         timestamp: Date.now()
       }
     ]);
+  };
+
+  // Exit session and save to database
+  const exitSession = async () => {
+    // Lưu vào database nếu có messages
+    if (messages.length > 1) {
+      await saveLesson({
+        type: 'speaking',
+        topic,
+        content: { messages },
+        mode: 'interactive',
+        status: 'completed',
+      });
+    }
+    setViewMode('setup');
+    setMessages([]);
+    setTopic('');
   };
 
   // Mock function to handle recording toggle
@@ -233,7 +254,7 @@ export default function SpeakingPage() {
                    <Button 
                      variant="ghost" 
                      className="rounded-full h-12 w-12 bg-black/50 border border-white/10 hover:bg-white/10 text-red-400 hover:text-red-300"
-                     onClick={() => setViewMode('setup')}
+                     onClick={exitSession}
                    >
                      Exit
                    </Button>

@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { HistoryModule } from './history/history.module';
+import { LessonsModule } from './lessons/lessons.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -21,6 +22,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     LoggingModule,
     AiModule,
     HistoryModule, // Module quản lý lịch sử học tập
+    LessonsModule, // Module tạo bài học mới
   ],
   controllers: [AppController],
   providers: [

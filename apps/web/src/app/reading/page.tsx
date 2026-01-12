@@ -11,6 +11,7 @@ import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
@@ -40,6 +41,9 @@ export default function ReadingPage() {
 
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Save lesson hook
+  const { saveLesson } = useSaveLesson();
 
   const handleOpenHistoryEntry = (entry: HistoryEntry) => {
     setHistoryOpen(false);
@@ -112,8 +116,21 @@ Chỉ trả về JSON, không có text khác.`,
     setUserAnswers(newAnswers);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setShowResults(true);
+    
+    // Lưu vào database
+    if (article && questions) {
+      const score = questions.reduce((s, q, i) => 
+        s + (userAnswers[i] === q.answer ? 1 : 0), 0);
+      
+      await saveLesson({
+        type: 'reading',
+        topic,
+        content: { article, questions, userAnswers, score },
+        status: 'completed',
+      });
+    }
   };
 
   const calculateScore = () => {

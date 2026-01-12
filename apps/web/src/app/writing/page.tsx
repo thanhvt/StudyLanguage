@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
+import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
@@ -33,6 +34,9 @@ export default function WritingPage() {
 
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Save lesson hook
+  const { saveLesson } = useSaveLesson();
 
   const handleOpenHistoryEntry = (entry: HistoryEntry) => {
     setHistoryOpen(false);
@@ -90,7 +94,16 @@ Chỉ trả về JSON.`,
       const jsonMatch = data.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('Không thể parse kết quả');
       
-      setFeedback(JSON.parse(jsonMatch[0]));
+      const parsedFeedback = JSON.parse(jsonMatch[0]);
+      setFeedback(parsedFeedback);
+      
+      // Lưu vào database
+      await saveLesson({
+        type: 'writing',
+        topic: topic || 'Bài viết tự do',
+        content: { userText, feedback: parsedFeedback },
+        status: 'completed',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {

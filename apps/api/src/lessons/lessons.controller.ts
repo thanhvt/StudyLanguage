@@ -1,0 +1,85 @@
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { LessonsService, CreateLessonDto } from './lessons.service';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
+
+/**
+ * DTO với validation cho request tạo lesson
+ */
+class CreateLessonRequestDto implements CreateLessonDto {
+  @IsEnum(['listening', 'speaking', 'reading', 'writing'])
+  @IsNotEmpty()
+  type: 'listening' | 'speaking' | 'reading' | 'writing';
+
+  @IsString()
+  @IsNotEmpty()
+  topic: string;
+
+  @IsNotEmpty()
+  content: any;
+
+  @IsNumber()
+  @IsOptional()
+  durationMinutes?: number;
+
+  @IsNumber()
+  @IsOptional()
+  numSpeakers?: number;
+
+  @IsString()
+  @IsOptional()
+  keywords?: string;
+
+  @IsEnum(['passive', 'interactive'])
+  @IsOptional()
+  mode?: 'passive' | 'interactive';
+
+  @IsEnum(['draft', 'completed'])
+  @IsOptional()
+  status?: 'draft' | 'completed';
+}
+
+/**
+ * LessonsController - API endpoints cho lessons
+ * 
+ * Mục đích: CRUD operations cho lessons
+ * Base path: /api/lessons
+ */
+@ApiTags('Lessons')
+@ApiBearerAuth()
+@UseGuards(SupabaseAuthGuard)
+@Controller('lessons')
+export class LessonsController {
+  constructor(private readonly lessonsService: LessonsService) {}
+
+  /**
+   * POST /api/lessons
+   * 
+   * Mục đích: Tạo lesson mới (lưu bài học vào database)
+   * Body: { type, topic, content, durationMinutes?, numSpeakers?, keywords?, mode?, status? }
+   * Trả về: { success: true, lesson: { id, type, topic, createdAt } }
+   */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Tạo bài học mới' })
+  @ApiResponse({ status: 201, description: 'Tạo thành công' })
+  async createLesson(@Req() req: any, @Body() dto: CreateLessonRequestDto) {
+    const userId = req.user.id;
+    return this.lessonsService.createLesson(userId, dto);
+  }
+}
