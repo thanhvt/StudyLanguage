@@ -38,6 +38,10 @@ export default function SpeakingPage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  // TTS state for AI sample playback
+  const [sampleAudioUrl, setSampleAudioUrl] = useState<string | null>(null);
+  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
+
   /**
    * Sinh đoạn text mẫu để luyện nói
    */
@@ -155,6 +159,39 @@ export default function SpeakingPage() {
     setFeedback(null);
   };
 
+  /**
+   * Nghe AI đọc mẫu (TTS)
+   *
+   * Mục đích: Sinh audio từ sample text để user nghe trước khi luyện
+   */
+  const handleListenSample = async () => {
+    if (!sampleText) return;
+
+    setIsGeneratingTTS(true);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/ai/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: sampleText,
+          voice: 'nova', // Sử dụng giọng nova (female, clear)
+        }),
+      });
+
+      if (!response.ok) throw new Error('Lỗi sinh audio');
+
+      const data = await response.json();
+      const audioDataUrl = `data:audio/mpeg;base64,${data.audio}`;
+      setSampleAudioUrl(audioDataUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi sinh audio');
+    } finally {
+      setIsGeneratingTTS(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">🎤 Luyện Nói - AI Coach</h1>
@@ -198,6 +235,20 @@ export default function SpeakingPage() {
 
           <div className="p-4 bg-muted rounded-lg mb-4">
             <p className="text-lg leading-relaxed">{sampleText}</p>
+          </div>
+
+          {/* Nút nghe AI đọc mẫu */}
+          <div className="mb-4 flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleListenSample}
+              disabled={isGeneratingTTS}
+            >
+              {isGeneratingTTS ? '⏳ Đang tạo audio...' : '🔊 Nghe AI đọc mẫu'}
+            </Button>
+            {sampleAudioUrl && (
+              <audio controls src={sampleAudioUrl} className="flex-1 h-10" />
+            )}
           </div>
 
           <div className="flex gap-3 flex-wrap">
