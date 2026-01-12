@@ -34,13 +34,13 @@ class ConversationItemDto {
 }
 
 class ConversationHistoryItemDto {
-    @IsString()
-    @IsNotEmpty()
-    speaker: string;
-  
-    @IsString()
-    @IsNotEmpty()
-    text: string;
+  @IsString()
+  @IsNotEmpty()
+  speaker: string;
+
+  @IsString()
+  @IsNotEmpty()
+  text: string;
 }
 
 /**
@@ -222,9 +222,7 @@ export class AiController {
    */
   @Post('generate-text')
   @HttpCode(HttpStatus.OK)
-  async generateText(
-    @Body() dto: { prompt: string; systemPrompt?: string },
-  ) {
+  async generateText(@Body() dto: { prompt: string; systemPrompt?: string }) {
     // Note: Inline DTO here needs validation too practically, but for now specific DTOs are prioritized.
     // If strict whitelist is on, this might fail if not class-transformer validated or plain object.
     // Assuming 'ValidationPipe' allows plain objects or we better define a class.
@@ -232,7 +230,10 @@ export class AiController {
     // Actually, 'generateText' wasn't failing previously because it wasn't tested in the suite properly or
     // it was tested but whitelist: false saved it.
     // Let's leave it as is for now as it uses inline type.
-    const text = await this.aiService.generateText(dto.prompt, dto.systemPrompt);
+    const text = await this.aiService.generateText(
+      dto.prompt,
+      dto.systemPrompt,
+    );
     return { text };
   }
 
@@ -246,7 +247,9 @@ export class AiController {
   @Post('generate-conversation-audio')
   @HttpCode(HttpStatus.OK)
   async generateConversationAudio(@Body() dto: GenerateConversationAudioDto) {
-    const result = await this.aiService.generateConversationAudio(dto.conversation);
+    const result = await this.aiService.generateConversationAudio(
+      dto.conversation,
+    );
 
     // Trả về base64 audio + timestamps
     return {
@@ -291,5 +294,3 @@ export class AiController {
     );
   }
 }
-
-

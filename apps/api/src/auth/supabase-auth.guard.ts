@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Injectable,
   CanActivate,
@@ -27,6 +32,9 @@ export class SupabaseAuthGuard implements CanActivate {
       'SUPABASE_SERVICE_ROLE_KEY',
     );
 
+    console.log('--- SupabaseAuthGuard Init ---');
+    console.log('URL:', supabaseUrl);
+
     if (!supabaseUrl || !supabaseServiceKey) {
       console.warn(
         '⚠️ SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY chưa được cấu hình!',
@@ -47,6 +55,11 @@ export class SupabaseAuthGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+
+    // Allow CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      return true;
+    }
 
     // Lấy token từ header Authorization: Bearer <token>
     const authHeader = request.headers.authorization;
@@ -76,13 +89,37 @@ export class SupabaseAuthGuard implements CanActivate {
 
       // Gắn user info vào request để các handler khác có thể sử dụng
       request.user = user;
-      return true;
     } catch (error) {
+      // Debug logging to file
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = path.join(process.cwd(), 'auth-debug.log');
+      const logData =
+        JSON.stringify(
+          {
+            timestamp: new Date().toISOString(),
+            message: error.message,
+            tokenPrefix: token ? token.substring(0, 10) : 'none',
+            errorStack: error.stack,
+            isAuthException: error instanceof UnauthorizedException,
+          },
+          null,
+          2,
+        ) + '\n---\n';
+
+      try {
+        fs.appendFileSync(logPath, logData);
+      } catch (e) {
+        // ignore
+      }
+
       if (error instanceof UnauthorizedException) {
         throw error;
       }
       console.error('Lỗi xác thực:', error);
       throw new UnauthorizedException('Lỗi xác thực người dùng');
     }
+
+    return true;
   }
 }
