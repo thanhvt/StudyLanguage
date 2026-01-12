@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MusicProvider } from "@/components/providers/music-provider";
+import { MusicControlBar } from "@/components/music-control-bar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,10 +26,14 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <MusicProvider>
+              {children}
+              <MusicControlBar />
+            </MusicProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+

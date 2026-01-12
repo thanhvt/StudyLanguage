@@ -68,11 +68,11 @@
 - [ ] Sync user preferences (theme, language) vào DB
 - [ ] Protected routes / screens
 
-#### Task 1.4: Background Music 🤖
+#### Task 1.4: Background Music 🤖 ✅
 > **DEPENDS ON:** Task 0.1 (Projects ready)
-- [ ] Tích hợp Lofi audio player
-- [ ] Playlist nhạc nền (có thể dùng free Lofi tracks)
-- [ ] Implement Audio Ducking (giảm volume khi AI nói)
+- [x] Tích hợp Lofi audio player
+- [x] Playlist nhạc nền (có thể dùng free Lofi tracks)
+- [x] Implement Audio Ducking (giảm volume khi AI nói)
 
 ### 🔀 PARALLEL GROUP C (Sau khi Auth + AI Skeleton ready)
 
