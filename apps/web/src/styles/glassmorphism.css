@@ -1,0 +1,234 @@
+/**
+ * Glassmorphism CSS Utilities
+ * 
+ * Mục đích: Các class CSS cho hiệu ứng kính mờ, gradient, và shadow đẹp mắt
+ */
+
+/* ============================
+   GLASSMORPHISM CARDS
+   ============================ */
+
+/* Glass Card - Hiệu ứng kính mờ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card {
+  background: rgba(30, 30, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Card Hover */
+.glass-card-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.dark .glass-card-hover:hover {
+  background: rgba(40, 40, 40, 0.85);
+}
+
+/* ============================
+   GRADIENT BACKGROUNDS
+   ============================ */
+
+/* Gradient Mesh Background */
+.gradient-mesh {
+  background: 
+    radial-gradient(at 40% 20%, hsl(var(--primary) / 0.3) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(var(--accent) / 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(var(--primary) / 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(var(--accent) / 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(var(--primary) / 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsl(var(--accent) / 0.1) 0px, transparent 50%);
+}
+
+/* Gradient Glow */
+.gradient-glow {
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(var(--primary) / 0.8) 50%, 
+    hsl(var(--accent)) 100%
+  );
+}
+
+/* Gradient Border */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(var(--accent)) 100%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============================
+   BUTTON EFFECTS
+   ============================ */
+
+/* Ripple Effect Base */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), 
+    rgba(255, 255, 255, 0.3) 0%, 
+    transparent 60%
+  );
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 0.5s ease, opacity 0.3s ease;
+}
+
+.ripple-effect:active::after {
+  opacity: 1;
+  transform: scale(2);
+  transition: transform 0s, opacity 0s;
+}
+
+/* Glow Button */
+.glow-button {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-button:hover {
+  box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+}
+
+/* ============================
+   FLOATING ELEMENTS
+   ============================ */
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Subtle Float */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+/* ============================
+   SHADOWS
+   ============================ */
+
+/* Soft Shadow */
+.shadow-soft {
+  box-shadow: 
+    0 4px 24px -2px rgba(0, 0, 0, 0.08),
+    0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Lifted Shadow (card hover) */
+.shadow-lifted {
+  box-shadow: 
+    0 20px 40px -8px rgba(0, 0, 0, 0.12),
+    0 8px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+/* Glow Shadow */
+.shadow-glow {
+  box-shadow: 
+    0 0 20px hsl(var(--primary) / 0.2),
+    0 8px 24px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================
+   HOVER STATES
+   ============================ */
+
+/* Card Hover Lift */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 24px -4px rgba(0, 0, 0, 0.1),
+    0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Scale on Hover */
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Brightness on Hover */
+.hover-bright {
+  transition: filter 0.2s ease;
+}
+
+.hover-bright:hover {
+  filter: brightness(1.1);
+}
+
+/* ============================
+   TEXT EFFECTS
+   ============================ */
+
+/* Gradient Text */
+.text-gradient {
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(var(--accent)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glow Text */
+.text-glow {
+  text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+}
