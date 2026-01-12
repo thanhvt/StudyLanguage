@@ -123,10 +123,10 @@
 
 #### Task 2.3: Interactive Listening (Advanced)
 > **DEPENDS ON:** Task 1.2 (Listening MVP)
-- [ ] Mode "Tham gia hội thoại"
-- [ ] AI sinh hội thoại có chỗ trống cho user
-- [ ] AI dừng, chờ user nói
-- [ ] User nói -> AI tiếp tục hội thoại dựa trên input
+- [x] Mode "Tham gia hội thoại"
+- [x] AI sinh hội thoại có chỗ trống cho user
+- [x] AI dừng, chờ user nói
+- [x] User nói -> AI tiếp tục hội thoại dựa trên input
 
 > 💡 **Gợi ý:** Task 2.1, 2.2, 2.3 có thể làm SONG SONG hoàn toàn. Đây là cơ hội lớn nhất để tận dụng AI agents!
 
