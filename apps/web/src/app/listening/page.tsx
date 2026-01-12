@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,9 +46,8 @@ export default function ListeningPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-conversation', {
+      const response = await api('/ai/generate-conversation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic,
           durationMinutes: duration,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,9 +41,8 @@ export default function WritingPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-text', {
+      const response = await api('/ai/generate-text', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: `Phân tích và sửa lỗi bài viết tiếng Anh sau:
 

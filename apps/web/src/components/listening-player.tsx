@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { api } from '@/lib/api';
 import { AudioPlayer } from '@/components/audio-player';
 
 interface ConversationLine {
@@ -126,9 +127,8 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-conversation-audio', {
+      const response = await api('/ai/generate-conversation-audio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation }),
       });
 

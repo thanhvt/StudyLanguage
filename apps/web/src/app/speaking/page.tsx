@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,9 +57,8 @@ export default function SpeakingPage() {
     setFeedback(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-text', {
+      const response = await api('/ai/generate-text', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: `Tạo một đoạn văn ngắn (3-5 câu) bằng tiếng Anh về chủ đề "${topic}" để người học luyện nói. ${keywords ? `Sử dụng các từ khóa: ${keywords}` : ''} Chỉ trả về đoạn văn, không có gì khác.`,
         }),
@@ -123,7 +123,7 @@ export default function SpeakingPage() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const transcribeRes = await fetch('http://localhost:3001/api/ai/transcribe', {
+      const transcribeRes = await api('/ai/transcribe', {
         method: 'POST',
         body: formData,
       });
@@ -132,9 +132,8 @@ export default function SpeakingPage() {
       const { text: userTranscript } = await transcribeRes.json();
 
       // Bước 2: Đánh giá
-      const evalRes = await fetch('http://localhost:3001/api/ai/evaluate-pronunciation', {
+      const evalRes = await api('/ai/evaluate-pronunciation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           originalText: sampleText,
           userTranscript,
@@ -171,9 +170,8 @@ export default function SpeakingPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/text-to-speech', {
+      const response = await api('/ai/text-to-speech', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: sampleText,
           voice: 'nova', // Sử dụng giọng nova (female, clear)
