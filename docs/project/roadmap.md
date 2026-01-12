@@ -93,7 +93,7 @@
 - [x] Backend: Whisper transcribe user audio
 - [x] Backend: So sánh user text vs sample text, chấm điểm
 - [x] UI hiển thị Feedback (điểm, highlight từ sai)
-- [ ] Nút "Nghe AI đọc mẫu" (TTS)
+- [x] Nút "Nghe AI đọc mẫu" (TTS)
 - [x] Nút "Luyện lại" (Retry)
 
 > 💡 **Gợi ý:** Task 1.2 và Task 1.3 là 2 module ĐỘC LẬP, hoàn toàn có thể phát triển SONG SONG bởi 2 AI agents hoặc 2 developers.

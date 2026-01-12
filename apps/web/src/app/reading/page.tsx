@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
 
 /**
  * Reading Page - Module Luyện Đọc
@@ -29,6 +30,9 @@ export default function ReadingPage() {
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dictionary state
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   /**
    * Sinh bài đọc và câu hỏi
@@ -166,10 +170,18 @@ Chỉ trả về JSON, không có text khác.`,
       {article && (
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">📝 Bài đọc</h2>
-          <div className="p-4 bg-muted rounded-lg leading-relaxed">
-            {article}
+          <p className="text-xs text-muted-foreground mb-2">
+            💡 Click vào từ để tra từ điển
+          </p>
+          <div className="p-4 bg-muted rounded-lg leading-relaxed text-lg">
+            <ClickableText text={article} onWordClick={setSelectedWord} />
           </div>
         </Card>
+      )}
+
+      {/* Dictionary Popup */}
+      {selectedWord && (
+        <DictionaryPopup word={selectedWord} onClose={() => setSelectedWord(null)} />
       )}
 
       {/* Câu hỏi */}
