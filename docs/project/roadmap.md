@@ -19,37 +19,37 @@
 
 ### 🔀 PARALLEL GROUP A (Có thể làm đồng thời)
 
-#### Task 0.1: Project Structure 🤖
-- [ ] Quyết định Monorepo vs Multi-repo
-- [ ] Khởi tạo Next.js project (Web)
-- [ ] Khởi tạo Expo project (Mobile)
-- [ ] Khởi tạo NestJS project (Backend)
-- [ ] Config Tailwind, Shadcn/ui (Web)
+#### Task 0.1: Project Structure 🤖 ✅
+- [x] Quyết định Monorepo vs Multi-repo
+- [x] Khởi tạo Next.js project (Web)
+- [x] Khởi tạo Expo project (Mobile)
+- [x] Khởi tạo NestJS project (Backend)
+- [x] Config Tailwind, Shadcn/ui (Web)
 - [ ] Config NativeWind (Mobile)
 
-#### Task 0.2: Supabase Setup 🤖
+#### Task 0.2: Supabase Setup 🤖 ⏳
 - [ ] Tạo project trên Supabase Cloud
-- [ ] Thiết kế Database Schema (ERD)
+- [x] Thiết kế Database Schema (ERD)
 - [ ] Tạo các tables cơ bản: users, user_preferences, lessons, conversations
 - [ ] Enable Google OAuth Provider
 - [ ] Tạo Supabase Storage buckets (audio files)
 
 ### ⏳ SEQUENTIAL (Phụ thuộc Group A)
 
-#### Task 0.3: Backend AI Skeleton 🤖
+#### Task 0.3: Backend AI Skeleton 🤖 ✅
 > **DEPENDS ON:** Task 0.1 (NestJS project phải được khởi tạo trước)
-- [ ] Tạo NestJS module `ai-service`
-- [ ] Viết service gọi OpenAI GPT (text generation)
-- [ ] Viết service gọi OpenAI Whisper (STT)
-- [ ] Viết service gọi OpenAI TTS
-- [ ] Tạo API endpoints: `/api/ai/generate`, `/api/ai/transcribe`, `/api/ai/speak`
+- [x] Tạo NestJS module `ai-service`
+- [x] Viết service gọi OpenAI GPT (text generation)
+- [x] Viết service gọi OpenAI Whisper (STT)
+- [x] Viết service gọi OpenAI TTS
+- [x] Tạo API endpoints: `/api/ai/generate`, `/api/ai/transcribe`, `/api/ai/speak`
 
-#### Task 0.4: Design System 🤖
+#### Task 0.4: Design System 🤖 ✅
 > **DEPENDS ON:** Task 0.1 (Projects phải được khởi tạo trước)
-- [ ] Xây dựng bộ Theme tokens (colors, spacing, typography)
-- [ ] Implement Light/Dark mode toggle
-- [ ] Implement 6 màu Green Nature theme
-- [ ] Tạo base components: Button, Card, Input, Modal
+- [x] Xây dựng bộ Theme tokens (colors, spacing, typography)
+- [x] Implement Light/Dark mode toggle
+- [x] Implement 6 màu Green Nature theme
+- [x] Tạo base components: Button, Card, Input, Modal
 
 > 💡 **Gợi ý:** Task 0.3 và Task 0.4 có thể chạy SONG SONG sau khi Group A hoàn thành.
 
@@ -61,9 +61,9 @@
 
 ### 🔀 PARALLEL GROUP B (Có thể làm đồng thời)
 
-#### Task 1.1: Authentication Flow 🤖
+#### Task 1.1: Authentication Flow 🤖 ✅
 > **DEPENDS ON:** Task 0.2 (Supabase phải được setup)
-- [ ] Implement Google Login (Web - Supabase Auth)
+- [x] Implement Google Login (Web - Supabase Auth)
 - [ ] Implement Google Login (Mobile - Supabase Auth + Expo AuthSession)
 - [ ] Sync user preferences (theme, language) vào DB
 - [ ] Protected routes / screens
@@ -76,25 +76,25 @@
 
 ### 🔀 PARALLEL GROUP C (Sau khi Auth + AI Skeleton ready)
 
-#### Task 1.2: Listening Module (MVP)
+#### Task 1.2: Listening Module (MVP) ✅
 > **DEPENDS ON:** Task 0.3 (AI APIs), Task 1.1 (Auth)
-- [ ] UI Form: Chọn Topic, Duration, Keywords, Number of speakers
-- [ ] Backend: GPT sinh kịch bản hội thoại
+- [x] UI Form: Chọn Topic, Duration, Keywords, Number of speakers
+- [x] Backend: GPT sinh kịch bản hội thoại
 - [ ] Backend: TTS sinh audio từ kịch bản (nhiều giọng cho nhiều người)
 - [ ] Upload audio lên Supabase Storage
 - [ ] UI Audio Player: Play/Pause, Seek, Volume
 - [ ] UI Transcript sync (Karaoke highlight)
 
-#### Task 1.3: Speaking Module (MVP)
+#### Task 1.3: Speaking Module (MVP) ✅
 > **DEPENDS ON:** Task 0.3 (AI APIs), Task 1.1 (Auth)
-- [ ] UI hiển thị Sample Script (AI sinh)
-- [ ] Ghi âm voice user (expo-av / Web MediaRecorder)
-- [ ] Upload audio lên Backend
-- [ ] Backend: Whisper transcribe user audio
-- [ ] Backend: So sánh user text vs sample text, chấm điểm
-- [ ] UI hiển thị Feedback (điểm, highlight từ sai)
+- [x] UI hiển thị Sample Script (AI sinh)
+- [x] Ghi âm voice user (expo-av / Web MediaRecorder)
+- [x] Upload audio lên Backend
+- [x] Backend: Whisper transcribe user audio
+- [x] Backend: So sánh user text vs sample text, chấm điểm
+- [x] UI hiển thị Feedback (điểm, highlight từ sai)
 - [ ] Nút "Nghe AI đọc mẫu" (TTS)
-- [ ] Nút "Luyện lại" (Retry)
+- [x] Nút "Luyện lại" (Retry)
 
 > 💡 **Gợi ý:** Task 1.2 và Task 1.3 là 2 module ĐỘC LẬP, hoàn toàn có thể phát triển SONG SONG bởi 2 AI agents hoặc 2 developers.
 
@@ -106,20 +106,20 @@
 
 ### 🔀 PARALLEL GROUP D (3 modules độc lập)
 
-#### Task 2.1: Reading Module 🤖
+#### Task 2.1: Reading Module 🤖 ✅
 > **DEPENDS ON:** Phase 1 MVP complete
-- [ ] Backend: GPT sinh bài đọc theo chủ đề, độ khó
-- [ ] Backend: GPT sinh 3-5 câu hỏi đọc hiểu
-- [ ] UI hiển thị bài đọc
-- [ ] UI làm quiz (trắc nghiệm/tự luận)
+- [x] Backend: GPT sinh bài đọc theo chủ đề, độ khó
+- [x] Backend: GPT sinh 3-5 câu hỏi đọc hiểu
+- [x] UI hiển thị bài đọc
+- [x] UI làm quiz (trắc nghiệm/tự luận)
 - [ ] Dictionary popup (click vào từ tra nghĩa)
 
-#### Task 2.2: Writing Module 🤖
+#### Task 2.2: Writing Module 🤖 ✅
 > **DEPENDS ON:** Phase 1 MVP complete
-- [ ] UI Text Editor nhập văn bản
-- [ ] Backend: GPT sửa lỗi ngữ pháp
-- [ ] Backend: GPT gợi ý paraphrase (viết lại cho hay hơn)
-- [ ] UI highlight lỗi + hiển thị gợi ý
+- [x] UI Text Editor nhập văn bản
+- [x] Backend: GPT sửa lỗi ngữ pháp
+- [x] Backend: GPT gợi ý paraphrase (viết lại cho hay hơn)
+- [x] UI highlight lỗi + hiển thị gợi ý
 
 #### Task 2.3: Interactive Listening (Advanced)
 > **DEPENDS ON:** Task 1.2 (Listening MVP)

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ListeningPlayer } from '@/components/listening-player';
 
 /**
  * Listening Page - Module Luyện Nghe
@@ -60,102 +61,98 @@ export default function ListeningPage() {
     }
   };
 
+  /**
+   * Reset để tạo hội thoại mới
+   */
+  const handleReset = () => {
+    setConversation(null);
+    setTopic('');
+    setKeywords('');
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">🎧 Luyện Nghe - Smart Conversation</h1>
 
       {/* Form nhập thông tin */}
-      <Card className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Tạo hội thoại mới</h2>
-        
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Chủ đề */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Chủ đề *</label>
-            <Input
-              placeholder="VD: Đặt phòng khách sạn, Mua sắm..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-            />
+      {!conversation && (
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Tạo hội thoại mới</h2>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Chủ đề */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Chủ đề *</label>
+              <Input
+                placeholder="VD: Đặt phòng khách sạn, Mua sắm..."
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              />
+            </div>
+
+            {/* Thời lượng */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Thời lượng (phút)</label>
+              <Input
+                type="number"
+                min={1}
+                max={15}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+              />
+            </div>
+
+            {/* Số người */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Số người tham gia</label>
+              <Input
+                type="number"
+                min={2}
+                max={4}
+                value={numSpeakers}
+                onChange={(e) => setNumSpeakers(Number(e.target.value))}
+              />
+            </div>
+
+            {/* Từ khóa */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Từ khóa (tùy chọn)</label>
+              <Input
+                placeholder="VD: reservation, check-in, room service"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Thời lượng */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Thời lượng (phút)</label>
-            <Input
-              type="number"
-              min={1}
-              max={15}
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-            />
-          </div>
+          {error && (
+            <p className="text-red-500 text-sm mt-4">{error}</p>
+          )}
 
-          {/* Số người */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Số người tham gia</label>
-            <Input
-              type="number"
-              min={2}
-              max={4}
-              value={numSpeakers}
-              onChange={(e) => setNumSpeakers(Number(e.target.value))}
-            />
-          </div>
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="mt-4 w-full md:w-auto"
+          >
+            {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo hội thoại'}
+          </Button>
+        </Card>
+      )}
 
-          {/* Từ khóa */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Từ khóa (tùy chọn)</label>
-            <Input
-              placeholder="VD: reservation, check-in, room service"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {error && (
-          <p className="text-red-500 text-sm mt-4">{error}</p>
-        )}
-
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="mt-4 w-full md:w-auto"
-        >
-          {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo hội thoại'}
-        </Button>
-      </Card>
-
-      {/* Hiển thị hội thoại */}
+      {/* Listening Player với Audio + Transcript */}
       {conversation && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">📝 Kịch bản hội thoại</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">🎧 Nghe hội thoại</h2>
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              🔄 Tạo mới
+            </Button>
+          </div>
           
-          <div className="space-y-3">
-            {conversation.map((line, index) => (
-              <div
-                key={index}
-                className={`p-3 rounded-lg ${
-                  line.speaker === 'Person A'
-                    ? 'bg-primary/10 ml-0 mr-12'
-                    : 'bg-accent/10 ml-12 mr-0'
-                }`}
-              >
-                <span className="font-semibold text-sm text-primary">
-                  {line.speaker}:
-                </span>
-                <p className="mt-1">{line.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* TODO: Audio Player sẽ thêm sau */}
-          <div className="mt-6 p-4 bg-muted rounded-lg text-center text-muted-foreground">
-            🔊 Audio Player sẽ được thêm ở bước tiếp theo
-          </div>
+          <ListeningPlayer conversation={conversation} />
         </Card>
       )}
     </div>
   );
 }
+
