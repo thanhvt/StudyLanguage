@@ -7,12 +7,15 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { HistoryDrawer, HistoryButton } from '@/components/history';
+import { HistoryEntry } from '@/hooks/use-history';
 
 /**
  * Reading Page - Module Luyện Đọc
  *
  * Mục đích: UI cho tính năng đọc hiểu với câu hỏi AI
  * Flow: Chọn topic → AI sinh bài đọc → Làm quiz → Xem đáp án
+ * NEW: History - Xem lại các bài đọc đã làm
  */
 export default function ReadingPage() {
   // Form state
@@ -36,9 +39,24 @@ export default function ReadingPage() {
   // Dictionary state
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
+  // History drawer state
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   /**
-   * Sinh bài đọc và câu hỏi
+   * Xử lý khi mở entry từ history
    */
+  const handleOpenHistoryEntry = (entry: HistoryEntry) => {
+    setHistoryOpen(false);
+    setTopic(entry.topic);
+    if (entry.content?.article) {
+      setArticle(entry.content.article);
+    }
+    if (entry.content?.questions) {
+      setQuestions(entry.content.questions);
+      setUserAnswers(new Array(entry.content.questions.length).fill(-1));
+    }
+    setShowResults(false);
+  };
   const handleGenerate = async () => {
     if (!topic.trim()) {
       setError('Vui lòng nhập chủ đề');
@@ -119,7 +137,19 @@ Chỉ trả về JSON, không có text khác.`,
 
   return (
     <AppLayout>
-      <h1 className="text-3xl font-bold mb-6">📖 Luyện Đọc - Active Reading</h1>
+      {/* Header với History Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">📖 Luyện Đọc - Active Reading</h1>
+        <HistoryButton onClick={() => setHistoryOpen(true)} />
+      </div>
+
+      {/* History Drawer */}
+      <HistoryDrawer
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        filterType="reading"
+        onOpenEntry={handleOpenHistoryEntry}
+      />
 
       {/* Form nhập thông tin */}
       <GlassCard className="p-6 mb-6">

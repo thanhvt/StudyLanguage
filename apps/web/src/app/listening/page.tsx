@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { ListeningPlayer } from '@/components/listening-player';
 import { InteractiveListening } from '@/components/interactive-listening';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { HistoryDrawer, HistoryButton } from '@/components/history';
+import { HistoryEntry } from '@/hooks/use-history';
 
 /**
  * Listening Page - Module Luyện Nghe
@@ -15,6 +17,7 @@ import { AppLayout } from '@/components/layouts/app-layout';
  * Mục đích: UI cho tính năng luyện nghe hội thoại
  * Flow: Chọn topic → AI sinh hội thoại → Nghe audio + xem transcript
  * NEW: Interactive mode - User tham gia vào hội thoại
+ * NEW: History - Xem lại các bài đã học
  */
 export default function ListeningPage() {
   // Mode state
@@ -33,6 +36,9 @@ export default function ListeningPage() {
 
   // Interactive mode state
   const [showInteractive, setShowInteractive] = useState(false);
+
+  // History drawer state
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   /**
    * Gọi API sinh hội thoại
@@ -79,9 +85,35 @@ export default function ListeningPage() {
     setKeywords('');
   };
 
+  /**
+   * Xử lý khi mở entry từ history
+   */
+  const handleOpenHistoryEntry = (entry: HistoryEntry) => {
+    setHistoryOpen(false);
+    setTopic(entry.topic);
+    if (entry.content?.script) {
+      setConversation(entry.content.script);
+    }
+    if (entry.durationMinutes) setDuration(entry.durationMinutes);
+    if (entry.numSpeakers) setNumSpeakers(entry.numSpeakers);
+    if (entry.keywords) setKeywords(entry.keywords);
+  };
+
   return (
     <AppLayout>
-      <h1 className="text-3xl font-bold mb-6">🎧 Luyện Nghe - Smart Conversation</h1>
+      {/* Header với History Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">🎧 Luyện Nghe - Smart Conversation</h1>
+        <HistoryButton onClick={() => setHistoryOpen(true)} />
+      </div>
+
+      {/* History Drawer */}
+      <HistoryDrawer
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        filterType="listening"
+        onOpenEntry={handleOpenHistoryEntry}
+      />
 
       {/* Mode Toggle */}
       {!conversation && !showInteractive && (

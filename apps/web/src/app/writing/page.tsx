@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { HistoryDrawer, HistoryButton } from '@/components/history';
+import { HistoryEntry } from '@/hooks/use-history';
 
 /**
  * Writing Page - Module Luyện Viết
  *
  * Mục đích: UI cho tính năng luyện viết với AI sửa lỗi
  * Flow: Chọn topic → Viết văn bản → AI sửa lỗi và gợi ý
+ * NEW: History - Xem lại các bài viết đã làm
  */
 export default function WritingPage() {
   // Form state
@@ -29,9 +32,22 @@ export default function WritingPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // History drawer state
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   /**
-   * Gửi bài viết để AI phân tích
+   * Xử lý khi mở entry từ history
    */
+  const handleOpenHistoryEntry = (entry: HistoryEntry) => {
+    setHistoryOpen(false);
+    setTopic(entry.topic);
+    if (entry.content?.userText) {
+      setUserText(entry.content.userText);
+    }
+    if (entry.content?.feedback) {
+      setFeedback(entry.content.feedback);
+    }
+  };
   const handleAnalyze = async () => {
     if (!userText.trim()) {
       setError('Vui lòng nhập nội dung bài viết');
@@ -96,7 +112,19 @@ Chỉ trả về JSON.`,
 
   return (
     <AppLayout>
-      <h1 className="text-3xl font-bold mb-6">✍️ Luyện Viết - Writing Assistant</h1>
+      {/* Header với History Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">✍️ Luyện Viết - Writing Assistant</h1>
+        <HistoryButton onClick={() => setHistoryOpen(true)} />
+      </div>
+
+      {/* History Drawer */}
+      <HistoryDrawer
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        filterType="writing"
+        onOpenEntry={handleOpenHistoryEntry}
+      />
 
       {/* Form viết bài */}
       <GlassCard className="p-6 mb-6">

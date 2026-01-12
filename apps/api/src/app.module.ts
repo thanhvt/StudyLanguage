@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
+import { HistoryModule } from './history/history.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -19,6 +20,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     AuthModule, // [FIX API-AUTH-01] Module xác thực Supabase
     LoggingModule,
     AiModule,
+    HistoryModule, // Module quản lý lịch sử học tập
   ],
   controllers: [AppController],
   providers: [

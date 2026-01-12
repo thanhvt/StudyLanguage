@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/layouts/app-layout';
-import { GlassCard, GradientText } from '@/components/ui/glass-card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { WaveformVisualizer } from '@/components/speaking/waveform-visualizer';
 import { SessionTranscript } from '@/components/speaking/session-transcript';
 import { PronunciationAlert } from '@/components/speaking/pronunciation-alert';
-import { AnimatePresence, motion } from 'framer-motion';
+import { HistoryDrawer, HistoryButton } from '@/components/history';
+import { HistoryEntry } from '@/hooks/use-history';
 
 /**
  * Speaking Page - Module Luyện Nói (AI Coach Redesign)
+ * NEW: History - Xem lại các sessions đã thực hiện
  */
 export default function SpeakingPage() {
   // View State: 'setup' | 'session'
@@ -30,6 +31,21 @@ export default function SpeakingPage() {
   // Alert State
   const [alertOpen, setAlertOpen] = useState(false);
   const [currentMistake, setCurrentMistake] = useState<{userSaid: string, suggestion: string} | null>(null);
+
+  // History drawer state
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  /**
+   * Xử lý khi mở entry từ history
+   */
+  const handleOpenHistoryEntry = (entry: HistoryEntry) => {
+    setHistoryOpen(false);
+    setTopic(entry.topic);
+    if (entry.content?.messages) {
+      setMessages(entry.content.messages);
+      setViewMode('session');
+    }
+  };
 
   // Mock function to start session
   const startSession = () => {
@@ -91,11 +107,23 @@ export default function SpeakingPage() {
 
   return (
     <AppLayout>
+      {/* History Drawer */}
+      <HistoryDrawer
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        filterType="speaking"
+        onOpenEntry={handleOpenHistoryEntry}
+      />
+
       <div className="h-[calc(100vh-3rem)] flex flex-col relative">
         
         {/* SETUP MODE */}
         {viewMode === 'setup' && (
           <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full p-6">
+             <div className="flex items-center justify-between w-full mb-4">
+               <div />
+               <HistoryButton onClick={() => setHistoryOpen(true)} />
+             </div>
              <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold mb-4">
                   AI Speaking Coach <span className="text-4xl">🤖</span>
