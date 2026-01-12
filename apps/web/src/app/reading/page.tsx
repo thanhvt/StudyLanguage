@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, History, Sparkles, RotateCcw, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { BookOpen, Sparkles, RotateCcw, Volume2, CheckCircle, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { GlassCard } from '@/components/ui/glass-card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
@@ -14,11 +14,7 @@ import { HistoryEntry } from '@/hooks/use-history';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Reading Page - Module Luyện Đọc (Enhanced với StudyMate Hub style)
- *
- * Mục đích: UI cho tính năng đọc hiểu với câu hỏi AI
- * Flow: Chọn topic → AI sinh bài đọc → Làm quiz → Xem đáp án
- * NEW: History - Xem lại các bài đọc đã làm
+ * Reading Page - Module Luyện Đọc (matching live reference)
  */
 export default function ReadingPage() {
   // Form state
@@ -45,9 +41,6 @@ export default function ReadingPage() {
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  /**
-   * Xử lý khi mở entry từ history
-   */
   const handleOpenHistoryEntry = (entry: HistoryEntry) => {
     setHistoryOpen(false);
     setTopic(entry.topic);
@@ -98,7 +91,6 @@ Chỉ trả về JSON, không có text khác.`,
 
       const data = await response.json();
       
-      // Parse JSON từ response
       const jsonMatch = data.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('Không thể parse kết quả');
       
@@ -113,9 +105,6 @@ Chỉ trả về JSON, không có text khác.`,
     }
   };
 
-  /**
-   * Chọn đáp án
-   */
   const handleSelectAnswer = (questionIndex: number, optionIndex: number) => {
     if (showResults) return;
     const newAnswers = [...userAnswers];
@@ -123,25 +112,16 @@ Chỉ trả về JSON, không có text khác.`,
     setUserAnswers(newAnswers);
   };
 
-  /**
-   * Nộp bài và xem kết quả
-   */
   const handleSubmit = () => {
     setShowResults(true);
   };
 
-  /**
-   * Tính điểm
-   */
   const calculateScore = () => {
     if (!questions) return 0;
     return questions.reduce((score, q, i) => 
       score + (userAnswers[i] === q.answer ? 1 : 0), 0);
   };
 
-  /**
-   * Reset
-   */
   const reset = () => {
     setArticle(null);
     setQuestions(null);
@@ -154,7 +134,7 @@ Chỉ trả về JSON, không có text khác.`,
   return (
     <AppLayout>
       <PageTransition>
-        {/* Header với History Button - StudyMate Hub style */}
+        {/* Header với History Button */}
         <FadeIn>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -172,7 +152,6 @@ Chỉ trả về JSON, không có text khác.`,
           </div>
         </FadeIn>
 
-        {/* History Drawer */}
         <HistoryDrawer
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
@@ -183,7 +162,7 @@ Chỉ trả về JSON, không có text khác.`,
         {/* Form nhập thông tin */}
         {!article && (
           <FadeIn delay={0.1}>
-            <GlassCard className="p-6 mb-6">
+            <Card className="p-6 mb-6">
               <h2 className="font-display text-lg font-semibold mb-6">Tạo bài đọc mới</h2>
               
               <div className="space-y-4">
@@ -199,20 +178,23 @@ Chỉ trả về JSON, không có text khác.`,
                   />
                 </div>
 
+                {/* Difficulty selector - matching reference */}
                 <div className="space-y-2">
                   <Label>Độ khó</Label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
+                      type="button"
                       variant={difficulty === 'basic' ? 'default' : 'outline'}
                       onClick={() => setDifficulty('basic')}
-                      className="flex-1"
+                      className="w-full"
                     >
                       Cơ bản (A1-A2)
                     </Button>
                     <Button
+                      type="button"
                       variant={difficulty === 'advanced' ? 'default' : 'outline'}
                       onClick={() => setDifficulty('advanced')}
-                      className="flex-1"
+                      className="w-full"
                     >
                       Nâng cao (B1-B2)
                     </Button>
@@ -240,14 +222,14 @@ Chỉ trả về JSON, không có text khác.`,
                   )}
                 </Button>
               </div>
-            </GlassCard>
+            </Card>
           </FadeIn>
         )}
 
         {/* Bài đọc */}
         {article && (
           <FadeIn delay={0.1}>
-            <GlassCard className="p-6 mb-6">
+            <Card className="p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display text-lg font-semibold">📝 Bài đọc</h3>
                 <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
@@ -260,7 +242,7 @@ Chỉ trả về JSON, không có text khác.`,
                 💡 Click vào từ để tra từ điển
               </p>
 
-              <div className="p-6 bg-muted/40 rounded-xl leading-relaxed text-lg border border-white/5">
+              <div className="p-6 bg-muted/40 rounded-xl leading-relaxed text-lg border border-border/50">
                 <ClickableText text={article} onWordClick={setSelectedWord} />
               </div>
 
@@ -280,11 +262,10 @@ Chỉ trả về JSON, không có text khác.`,
                   </p>
                 </div>
               )}
-            </GlassCard>
+            </Card>
           </FadeIn>
         )}
 
-        {/* Dictionary Popup */}
         {selectedWord && (
           <DictionaryPopup word={selectedWord} onClose={() => setSelectedWord(null)} />
         )}
@@ -292,7 +273,7 @@ Chỉ trả về JSON, không có text khác.`,
         {/* Câu hỏi */}
         {questions && (
           <FadeIn delay={0.2}>
-            <GlassCard className="p-6">
+            <Card className="p-6">
               <h3 className="font-display text-lg font-semibold mb-6">❓ Câu hỏi đọc hiểu</h3>
               
               <div className="space-y-6">
@@ -308,8 +289,8 @@ Chỉ trả về JSON, không có text khác.`,
                         
                         let bgClass = 'bg-muted/30 hover:bg-muted/50 border border-transparent';
                         if (showResults) {
-                          if (isCorrect) bgClass = 'bg-speaking-10 border-green-500/50';
-                          else if (isSelected && !isCorrect) bgClass = 'bg-destructive/20 border-destructive/50';
+                          if (isCorrect) bgClass = 'bg-green-100 dark:bg-green-900/30 border-green-500/50';
+                          else if (isSelected && !isCorrect) bgClass = 'bg-red-100 dark:bg-red-900/30 border-red-500/50';
                         } else if (isSelected) {
                           bgClass = 'bg-primary text-primary-foreground border-primary';
                         }
@@ -323,7 +304,7 @@ Chỉ trả về JSON, không có text khác.`,
                           >
                             <span className="flex items-center gap-2">
                               {showResults && isCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
-                              {showResults && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-destructive" />}
+                              {showResults && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
                               {String.fromCharCode(65 + oIndex)}. {option}
                             </span>
                           </button>
@@ -354,7 +335,7 @@ Chỉ trả về JSON, không có text khác.`,
                   </Button>
                 </div>
               )}
-            </GlassCard>
+            </Card>
           </FadeIn>
         )}
       </PageTransition>

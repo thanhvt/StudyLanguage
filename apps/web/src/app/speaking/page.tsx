@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Mic, History, MessageSquare, Phone, StopCircle, Keyboard } from 'lucide-react';
+import { Mic, MessageSquare, Phone, StopCircle, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppLayout } from '@/components/layouts/app-layout';
-import { GlassCard } from '@/components/ui/glass-card';
 import { WaveformVisualizer } from '@/components/speaking/waveform-visualizer';
 import { SessionTranscript } from '@/components/speaking/session-transcript';
 import { PronunciationAlert } from '@/components/speaking/pronunciation-alert';
@@ -16,8 +15,7 @@ import { HistoryEntry } from '@/hooks/use-history';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Speaking Page - Module Luyện Nói (AI Coach - Enhanced với StudyMate Hub style)
- * NEW: History - Xem lại các sessions đã thực hiện
+ * Speaking Page - Module Luyện Nói (AI Coach - matching live reference)
  */
 export default function SpeakingPage() {
   // View State: 'setup' | 'session'
@@ -54,7 +52,6 @@ export default function SpeakingPage() {
   const startSession = () => {
     if (!topic) return;
     setViewMode('session');
-    // Mock initial AI message
     setMessages([
       {
         id: '1',
@@ -68,11 +65,9 @@ export default function SpeakingPage() {
   // Mock function to handle recording toggle
   const toggleRecording = () => {
     if (isRecording) {
-      // Stop recording -> Mock processing
       setIsRecording(false);
       setIsThinking(true);
       
-      // Simulate processing delay
       setTimeout(() => {
         setIsThinking(false);
         const userMsg = {
@@ -84,13 +79,11 @@ export default function SpeakingPage() {
         };
         setMessages(prev => [...prev, userMsg]);
 
-        // Simulating mistake alert randomly
         if (Math.random() > 0.7) {
             setCurrentMistake({ userSaid: "im-por-tant", suggestion: "important /ɪmˈpɔːrtnt/" });
             setAlertOpen(true);
         }
 
-        // Mock AI response
         setTimeout(() => {
             setMessages(prev => [...prev, {
                 id: (Date.now() + 1).toString(),
@@ -103,7 +96,6 @@ export default function SpeakingPage() {
       }, 1500);
 
     } else {
-      // Start recording
       setIsRecording(true);
     }
   };
@@ -111,7 +103,6 @@ export default function SpeakingPage() {
   return (
     <AppLayout>
       <PageTransition>
-        {/* History Drawer */}
         <HistoryDrawer
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
@@ -123,7 +114,7 @@ export default function SpeakingPage() {
           
           {/* SETUP MODE */}
           {viewMode === 'setup' && (
-            <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full p-6">
+            <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full p-6">
               {/* Header với History Button */}
               <FadeIn>
                 <div className="flex items-center justify-between w-full mb-8">
@@ -142,9 +133,9 @@ export default function SpeakingPage() {
                 </div>
               </FadeIn>
 
-              {/* Setup Card */}
+              {/* Setup Card - Matching live reference */}
               <FadeIn delay={0.1}>
-                <GlassCard className="w-full p-8 text-center">
+                <Card className="w-full p-8 text-center">
                   <div className="w-20 h-20 rounded-3xl skill-card-speaking mx-auto flex items-center justify-center mb-6 shadow-lg">
                     <Mic className="w-10 h-10 text-white" />
                   </div>
@@ -162,12 +153,11 @@ export default function SpeakingPage() {
                       placeholder="VD: Daily Routine, My Dream Job, Environmental Issues..."
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
-                      className="text-center"
                     />
                   </div>
 
                   <Button 
-                    className="w-full shadow-glow" 
+                    className="w-full" 
                     size="lg"
                     onClick={startSession}
                     disabled={!topic.trim()}
@@ -175,7 +165,7 @@ export default function SpeakingPage() {
                     <Phone className="w-5 h-5 mr-2" />
                     Bắt đầu hội thoại
                   </Button>
-                </GlassCard>
+                </Card>
               </FadeIn>
             </div>
           )}
@@ -185,7 +175,6 @@ export default function SpeakingPage() {
             <div className="flex-1 flex gap-6 h-full overflow-hidden pb-20">
               {/* LEFT COLUMN: VISUALIZER */}
               <div className="flex-1 flex flex-col gap-6">
-                 {/* Header Info */}
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-xl skill-card-speaking flex items-center justify-center">
@@ -203,21 +192,15 @@ export default function SpeakingPage() {
                    </div>
                  </div>
 
-                 {/* Waveform Area */}
-                 <GlassCard className="flex-1 flex items-center justify-center relative overflow-hidden bg-black/60 border-white/10 shadow-inner">
-                   {/* Background Glow */}
+                 <Card className="flex-1 flex items-center justify-center relative overflow-hidden bg-black/60 border-white/10 shadow-inner">
                    <div className={`absolute inset-0 bg-primary/5 transition-opacity duration-500 ${isRecording ? 'opacity-100' : 'opacity-20'}`} />
-                   
-                   {/* Visualizer Component */}
                    <WaveformVisualizer isRecording={isRecording} className="z-10 scale-150" />
-                   
-                   {/* Status Indicator text on visualization */}
                    <div className="absolute bottom-8 text-center">
                      <p className={`text-sm font-medium transition-colors ${isRecording ? 'text-red-400 animate-pulse' : 'text-muted-foreground'}`}>
                         {isRecording ? '🔴 Recording...' : isThinking ? '🤔 AI is thinking...' : 'Tap Mic to Speak'}
                      </p>
                    </div>
-                 </GlassCard>
+                 </Card>
               </div>
 
               {/* RIGHT COLUMN: TRANSCRIPT */}
@@ -257,7 +240,6 @@ export default function SpeakingPage() {
                  </div>
               </div>
 
-              {/* ALERTS */}
               <PronunciationAlert 
                  isOpen={alertOpen}
                  userSaid={currentMistake?.userSaid || ''}

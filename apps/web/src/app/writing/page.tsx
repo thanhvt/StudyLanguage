@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { PenTool, History, Search, RotateCcw, AlertCircle, Lightbulb, Sparkles } from 'lucide-react';
+import { PenTool, Search, RotateCcw, AlertCircle, Lightbulb, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { GlassCard } from '@/components/ui/glass-card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,11 +14,7 @@ import { HistoryEntry } from '@/hooks/use-history';
 import { PageTransition, FadeIn } from '@/components/animations';
 
 /**
- * Writing Page - Module Luyện Viết (Enhanced với StudyMate Hub style)
- *
- * Mục đích: UI cho tính năng luyện viết với AI sửa lỗi
- * Flow: Chọn topic → Viết văn bản → AI sửa lỗi và gợi ý
- * NEW: History - Xem lại các bài viết đã làm
+ * Writing Page - Module Luyện Viết (matching live reference)
  */
 export default function WritingPage() {
   // Form state
@@ -39,9 +35,6 @@ export default function WritingPage() {
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  /**
-   * Xử lý khi mở entry từ history
-   */
   const handleOpenHistoryEntry = (entry: HistoryEntry) => {
     setHistoryOpen(false);
     setTopic(entry.topic);
@@ -106,9 +99,6 @@ Chỉ trả về JSON.`,
     }
   };
 
-  /**
-   * Reset để viết bài mới
-   */
   const handleReset = () => {
     setUserText('');
     setFeedback(null);
@@ -120,7 +110,7 @@ Chỉ trả về JSON.`,
   return (
     <AppLayout>
       <PageTransition>
-        {/* Header với History Button - StudyMate Hub style */}
+        {/* Header với History Button */}
         <FadeIn>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -138,7 +128,6 @@ Chỉ trả về JSON.`,
           </div>
         </FadeIn>
 
-        {/* History Drawer */}
         <HistoryDrawer
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
@@ -148,7 +137,7 @@ Chỉ trả về JSON.`,
 
         {/* Writing Form */}
         <FadeIn delay={0.1}>
-          <GlassCard className="p-6 mb-6">
+          <Card className="p-6 mb-6">
             <h2 className="font-display text-lg font-semibold mb-6">Viết bài của bạn</h2>
             
             <div className="space-y-4">
@@ -168,15 +157,17 @@ Chỉ trả về JSON.`,
                 <Label htmlFor="writingContent">
                   Nội dung bài viết <span className="text-destructive">*</span>
                 </Label>
-                <Textarea
-                  id="writingContent"
-                  placeholder="Viết bài tiếng Anh của bạn tại đây..."
-                  value={userText}
-                  onChange={(e) => setUserText(e.target.value)}
-                  className="min-h-[200px] resize-none"
-                />
-                <div className="text-right text-sm text-muted-foreground">
-                  Số từ: {wordCount}
+                <div className="relative">
+                  <Textarea
+                    id="writingContent"
+                    placeholder="Viết bài tiếng Anh của bạn tại đây..."
+                    value={userText}
+                    onChange={(e) => setUserText(e.target.value)}
+                    className="min-h-[200px] resize-none pb-8"
+                  />
+                  <div className="absolute bottom-2 right-3 text-xs text-muted-foreground">
+                    Số từ: {wordCount}
+                  </div>
                 </div>
               </div>
 
@@ -207,7 +198,7 @@ Chỉ trả về JSON.`,
                 </Button>
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </FadeIn>
 
         {/* Analysis Results */}
@@ -216,14 +207,14 @@ Chỉ trả về JSON.`,
             {/* Errors */}
             {feedback.corrections.length > 0 && (
               <FadeIn delay={0.2}>
-                <GlassCard className="p-6 mb-6 border-l-4 border-destructive">
-                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-destructive">
+                <Card className="p-6 mb-6 border-l-4 border-l-red-500">
+                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-red-500">
                     <AlertCircle className="w-5 h-5" />
                     Các lỗi cần sửa
                   </h3>
                   <div className="space-y-4">
                     {feedback.corrections.map((error, i) => (
-                      <div key={i} className="bg-destructive/10 p-4 rounded-xl">
+                      <div key={i} className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-sm mb-2">
                           <span className="line-through text-muted-foreground">"{error.original}"</span>
                           <span className="text-muted-foreground">→</span>
@@ -236,16 +227,16 @@ Chỉ trả về JSON.`,
                       </div>
                     ))}
                   </div>
-                </GlassCard>
+                </Card>
               </FadeIn>
             )}
 
             {/* Suggestions */}
             {feedback.suggestions.length > 0 && (
               <FadeIn delay={0.3}>
-                <GlassCard className="p-6 mb-6">
+                <Card className="p-6 mb-6">
                   <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-writing" />
+                    <Lightbulb className="w-5 h-5 text-amber-500" />
                     Gợi ý cải thiện
                   </h3>
                   <ul className="space-y-2">
@@ -256,21 +247,21 @@ Chỉ trả về JSON.`,
                       </li>
                     ))}
                   </ul>
-                </GlassCard>
+                </Card>
               </FadeIn>
             )}
 
             {/* Improved Version */}
             <FadeIn delay={0.4}>
-              <GlassCard className="p-6 border-l-4 border-green-500">
+              <Card className="p-6 border-l-4 border-l-green-500">
                 <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-green-500">
                   <Sparkles className="w-5 h-5" />
                   Phiên bản cải thiện
                 </h3>
-                <p className="text-foreground leading-relaxed bg-speaking-10 p-4 rounded-xl">
+                <p className="text-foreground leading-relaxed bg-green-50 dark:bg-green-900/20 p-4 rounded-xl">
                   {feedback.improvedVersion}
                 </p>
-              </GlassCard>
+              </Card>
             </FadeIn>
           </>
         )}

@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Headphones, Mic, BookOpen, PenTool, Sparkles, TrendingUp } from 'lucide-react';
+import { Headphones, Mic, BookOpen, PenTool, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { PageTransition, FadeIn, StaggerChildren, StaggerItem } from '@/components/animations';
-import { GlassCard, GradientText } from '@/components/ui/glass-card';
+import { GradientText } from '@/components/ui/glass-card';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { Card } from '@/components/ui/card';
 
 /**
  * Home Page - Dashboard chính
@@ -22,37 +23,37 @@ export default function HomePage() {
   const skills = [
     {
       id: 'listening',
-      name: t('skill.listening.name'),
+      name: 'Nghe',
       nameEn: 'Listening',
       icon: Headphones,
-      description: t('skill.listening.desc'),
+      description: 'Luyện nghe với các hội thoại thực tế được tạo bởi AI, có transcript và phát âm chuẩn.',
       href: '/listening',
       gradientClass: 'skill-card-listening',
     },
     {
       id: 'speaking',
-      name: t('skill.speaking.name'),
+      name: 'Nói',
       nameEn: 'Speaking',
       icon: Mic,
-      description: t('skill.speaking.desc'),
+      description: 'Hội thoại 1-1 với AI Coach, nhận phản hồi về phát âm và ngữ pháp ngay lập tức.',
       href: '/speaking',
       gradientClass: 'skill-card-speaking',
     },
     {
       id: 'reading',
-      name: t('skill.reading.name'),
+      name: 'Đọc',
       nameEn: 'Reading',
       icon: BookOpen,
-      description: t('skill.reading.desc'),
+      description: 'Bài đọc theo chủ đề với từ điển tích hợp và câu hỏi đọc hiểu tương tác.',
       href: '/reading',
       gradientClass: 'skill-card-reading',
     },
     {
       id: 'writing',
-      name: t('skill.writing.name'),
+      name: 'Viết',
       nameEn: 'Writing',
       icon: PenTool,
-      description: t('skill.writing.desc'),
+      description: 'Viết bài và nhận phân tích chi tiết về lỗi ngữ pháp, gợi ý cải thiện từ AI.',
       href: '/writing',
       gradientClass: 'skill-card-writing',
     },
@@ -85,7 +86,7 @@ export default function HomePage() {
 
         {/* Stats Bar */}
         <FadeIn delay={0.3}>
-          <GlassCard className="p-4 mb-10 flex items-center justify-center gap-8 flex-wrap">
+          <div className="glass-card p-4 mb-10 flex items-center justify-center gap-8 flex-wrap">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               <span className="text-sm text-muted-foreground">
@@ -100,21 +101,17 @@ export default function HomePage() {
             <div className="text-sm text-muted-foreground">
               Học <strong className="text-foreground">mọi lúc, mọi nơi</strong>
             </div>
-          </GlassCard>
+          </div>
         </FadeIn>
 
-        {/* Quick Start - 4 Skills Grid (Enhanced từ StudyMate Hub) */}
+        {/* Quick Start - 4 Skills Grid (Enhanced từ Live Reference) */}
         <StaggerChildren staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {skills.map((skill) => {
             const IconComponent = skill.icon;
             return (
               <StaggerItem key={skill.id}>
                 <Link href={skill.href}>
-                  <GlassCard 
-                    variant="default" 
-                    hover="lift"
-                    className="h-full cursor-pointer group p-6"
-                  >
+                  <Card className="h-full cursor-pointer group p-6 bg-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-border/50">
                     <div className="flex items-start gap-4">
                       {/* Icon với gradient background */}
                       <div className={`w-14 h-14 rounded-2xl ${skill.gradientClass} flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
@@ -126,10 +123,16 @@ export default function HomePage() {
                           <h3 className="font-display text-xl font-bold">{skill.name}</h3>
                           <span className="text-sm text-muted-foreground">{skill.nameEn}</span>
                         </div>
-                        <p className="text-muted-foreground text-sm leading-relaxed">{skill.description}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed mb-3">{skill.description}</p>
+                        
+                        {/* CTA Link - như reference */}
+                        <span className="inline-flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
+                          Bắt đầu học
+                          <ArrowRight className="w-4 h-4" />
+                        </span>
                       </div>
                     </div>
-                  </GlassCard>
+                  </Card>
                 </Link>
               </StaggerItem>
             );
