@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { PenTool, Search, RotateCcw, AlertCircle, Lightbulb, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -137,7 +136,7 @@ Chỉ trả về JSON.`,
 
         {/* Writing Form */}
         <FadeIn delay={0.1}>
-          <Card className="p-6 mb-6">
+          <div className="glass-card p-6 mb-6">
             <h2 className="font-display text-lg font-semibold mb-6">Viết bài của bạn</h2>
             
             <div className="space-y-4">
@@ -198,7 +197,7 @@ Chỉ trả về JSON.`,
                 </Button>
               </div>
             </div>
-          </Card>
+        </div>
         </FadeIn>
 
         {/* Analysis Results */}
@@ -207,7 +206,7 @@ Chỉ trả về JSON.`,
             {/* Errors */}
             {feedback.corrections.length > 0 && (
               <FadeIn delay={0.2}>
-                <Card className="p-6 mb-6 border-l-4 border-l-red-500">
+                <div className="glass-card p-6 mb-6 border-l-4 border-destructive">
                   <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-red-500">
                     <AlertCircle className="w-5 h-5" />
                     Các lỗi cần sửa
@@ -216,9 +215,9 @@ Chỉ trả về JSON.`,
                     {feedback.corrections.map((error, i) => (
                       <div key={i} className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-sm mb-2">
-                          <span className="line-through text-muted-foreground">"{error.original}"</span>
+                          <span className="line-through text-muted-foreground">&quot;{error.original}&quot;</span>
                           <span className="text-muted-foreground">→</span>
-                          <span className="text-primary font-medium">"{error.corrected}"</span>
+                          <span className="text-primary font-medium">&quot;{error.corrected}&quot;</span>
                         </div>
                         <p className="text-xs text-muted-foreground flex items-start gap-2">
                           <Lightbulb className="w-3 h-3 mt-0.5 flex-shrink-0" />
@@ -227,14 +226,14 @@ Chỉ trả về JSON.`,
                       </div>
                     ))}
                   </div>
-                </Card>
+                </div>
               </FadeIn>
             )}
 
             {/* Suggestions */}
             {feedback.suggestions.length > 0 && (
               <FadeIn delay={0.3}>
-                <Card className="p-6 mb-6">
+                <div className="glass-card p-6 mb-6">
                   <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
                     <Lightbulb className="w-5 h-5 text-amber-500" />
                     Gợi ý cải thiện
@@ -247,13 +246,13 @@ Chỉ trả về JSON.`,
                       </li>
                     ))}
                   </ul>
-                </Card>
+                </div>
               </FadeIn>
             )}
 
             {/* Improved Version */}
             <FadeIn delay={0.4}>
-              <Card className="p-6 border-l-4 border-l-green-500">
+              <div className="glass-card p-6 border-l-4 border-speaking">
                 <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2 text-green-500">
                   <Sparkles className="w-5 h-5" />
                   Phiên bản cải thiện
@@ -261,7 +260,7 @@ Chỉ trả về JSON.`,
                 <p className="text-foreground leading-relaxed bg-green-50 dark:bg-green-900/20 p-4 rounded-xl">
                   {feedback.improvedVersion}
                 </p>
-              </Card>
+              </div>
             </FadeIn>
           </>
         )}

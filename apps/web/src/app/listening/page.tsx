@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Headphones, Mic, Clock, Users, Tag, Sparkles, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -150,9 +150,8 @@ export default function ListeningPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Passive Mode Content */}
               <TabsContent value="passive">
-                <Card className="p-6">
+                <div className="glass-card p-6">
                   <h2 className="font-display text-lg font-semibold mb-6">Tạo hội thoại mới</h2>
                   
                   <div className="space-y-4">
@@ -240,12 +239,11 @@ export default function ListeningPage() {
                       )}
                     </Button>
                   </div>
-                </Card>
+                </div>
               </TabsContent>
 
-              {/* Interactive Mode Content */}
               <TabsContent value="interactive">
-                <Card className="p-6">
+                <div className="glass-card p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Mic className="w-5 h-5 text-primary" />
                     <h2 className="font-display text-lg font-semibold">Tham gia hội thoại</h2>
@@ -277,7 +275,7 @@ export default function ListeningPage() {
                       Bắt đầu tham gia
                     </Button>
                   </div>
-                </Card>
+                </div>
               </TabsContent>
             </Tabs>
           </FadeIn>
@@ -285,7 +283,7 @@ export default function ListeningPage() {
 
         {/* Interactive Listening Mode */}
         {showInteractive && (
-          <Card className="p-6">
+          <div className="glass-card p-6">
             <InteractiveListening 
               topic={topic} 
               onBack={() => {
@@ -293,13 +291,13 @@ export default function ListeningPage() {
                 setTopic('');
               }} 
             />
-          </Card>
+          </div>
         )}
 
         {/* Listening Player với Audio + Transcript */}
         {conversation && (
           <FadeIn delay={0.1}>
-            <Card className="p-6">
+            <div className="glass-card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-lg font-semibold">🎧 Nghe hội thoại</h2>
                 <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
@@ -309,7 +307,7 @@ export default function ListeningPage() {
               </div>
               
               <ListeningPlayer conversation={conversation} />
-            </Card>
+            </div>
           </FadeIn>
         )}
       </PageTransition>

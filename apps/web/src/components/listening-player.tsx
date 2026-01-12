@@ -37,43 +37,45 @@ export function TranscriptViewer({
       )
     : -1;
 
+  // Xác định speaker label (Person A → Speaker A)
+  const getSpeakerLabel = (speaker: string) => {
+    if (speaker === 'Person A' || speaker === 'A') return 'Person A';
+    if (speaker === 'Person B' || speaker === 'B') return 'Person B';
+    return speaker;
+  };
+
+  const isLeftSpeaker = (speaker: string) => {
+    return speaker === 'Person A' || speaker === 'A';
+  };
+
   return (
     <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      <h3 className="font-medium text-foreground mb-4">Transcript</h3>
       {conversation.map((line, index) => {
         const isActive = index === activeIndex;
         const isPast = audioTimestamps && index < activeIndex;
+        const isLeft = isLeftSpeaker(line.speaker);
 
         return (
           <div
             key={index}
             className={`
-              p-4 rounded-xl transition-all duration-300 border
-              ${line.speaker === 'Person A' 
-                ? 'bg-blue-500/10 border-blue-500/20 mr-12 rounded-tl-none' 
-                : 'bg-green-500/10 border-green-500/20 ml-12 rounded-tr-none'
+              p-3 rounded-xl max-w-[85%] transition-all duration-300
+              ${isLeft 
+                ? 'bg-blue-500/20 mr-auto' 
+                : 'bg-green-500/20 ml-auto text-right'
               }
               ${isActive 
-                ? 'ring-1 ring-primary shadow-[0_0_15px_rgba(16,185,129,0.1)] bg-opacity-20' 
-                : 'hover:bg-opacity-20 opacity-80'
+                ? 'ring-2 ring-primary shadow-lg' 
+                : ''
               }
-              ${isPast ? 'opacity-60 saturate-50' : ''}
+              ${isPast ? 'opacity-60' : ''}
             `}
           >
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`
-                text-xs font-bold px-2 py-0.5 rounded-full
-                ${line.speaker === 'Person A' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-accent text-accent-foreground'
-                }
-              `}>
-                {line.speaker}
-              </span>
-              {isActive && (
-                <span className="text-xs animate-pulse">🔊 Đang phát</span>
-              )}
-            </div>
-            <p className={`leading-relaxed ${isActive ? 'font-medium' : ''}`}>
+            <span className="text-xs font-medium text-muted-foreground block mb-1">
+              {getSpeakerLabel(line.speaker)}
+            </span>
+            <p className={`text-sm ${isActive ? 'font-medium' : ''}`}>
               {line.text}
             </p>
           </div>

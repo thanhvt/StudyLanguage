@@ -229,7 +229,7 @@ Chỉ trả về JSON, không có text khác.`,
         {/* Bài đọc */}
         {article && (
           <FadeIn delay={0.1}>
-            <Card className="p-6 mb-6">
+            <div className="glass-card p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display text-lg font-semibold">📝 Bài đọc</h3>
                 <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
@@ -262,7 +262,7 @@ Chỉ trả về JSON, không có text khác.`,
                   </p>
                 </div>
               )}
-            </Card>
+            </div>
           </FadeIn>
         )}
 
@@ -273,7 +273,7 @@ Chỉ trả về JSON, không có text khác.`,
         {/* Câu hỏi */}
         {questions && (
           <FadeIn delay={0.2}>
-            <Card className="p-6">
+            <div className="glass-card p-6">
               <h3 className="font-display text-lg font-semibold mb-6">❓ Câu hỏi đọc hiểu</h3>
               
               <div className="space-y-6">
@@ -335,7 +335,7 @@ Chỉ trả về JSON, không có text khác.`,
                   </Button>
                 </div>
               )}
-            </Card>
+            </div>
           </FadeIn>
         )}
       </PageTransition>
