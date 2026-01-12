@@ -5,40 +5,44 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
-import { GlassCard } from '@/components/ui/glass-card';
+import { User, Lightbulb, BookOpen, Clock } from 'lucide-react';
 
 /**
- * RightPanel - Panel bên phải hiển thị user info và settings
- * 
- * Mục đích: Hiển thị thông tin user, theme switcher, language switcher
- * Tham số đầu vào: Không có props
- * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: Được sử dụng trong AppLayout, hiển thị ở desktop (ẩn trên mobile)
+ * RightPanel - Panel bên phải (Updated để match reference)
+ *
+ * Mục đích: Hiển thị user info, settings, tips, và stats
+ * Features: Guest/Login section, theme/language, tips, stats counters
  */
 export function RightPanel() {
   const { user, loading, signOut, signInWithGoogle } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  // Mock stats - có thể fetch từ API sau
+  const stats = {
+    lessons: 0,
+    minutes: 0,
+  };
 
   return (
-    <aside className="hidden xl:flex w-80 border-l glass-card border-border flex-col">
+    <aside className="hidden xl:flex w-80 border-l border-border bg-muted/50 flex-col">
       {/* User Info Section */}
-      <div className="p-6 border-b border-border">
+      <div className="p-4 border-b border-border">
         {loading ? (
-          <div className="text-center text-muted-foreground">
+          <div className="text-center text-muted-foreground py-4">
             {t('auth.loading')}
           </div>
         ) : user ? (
-          <div className="space-y-4">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+          <div className="space-y-3">
+            {/* Avatar & Info */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md">
                 {user.email?.[0].toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold truncate">
+                <h3 className="font-semibold text-sm truncate">
                   {user.email?.split('@')[0] || 'User'}
                 </h3>
-                <p className="text-sm text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {user.email}
                 </p>
               </div>
@@ -51,17 +55,26 @@ export function RightPanel() {
               onClick={signOut}
               className="w-full"
             >
-              🚪 {t('auth.logout')}
+              {t('auth.logout')}
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t('auth.notLoggedIn')}
-            </p>
+          <div className="space-y-3">
+            {/* Guest Avatar */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <User className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Khách</h3>
+                <p className="text-xs text-muted-foreground">{t('auth.notLoggedIn')}</p>
+              </div>
+            </div>
+
+            {/* Login Button - Green like reference */}
             <Button
               onClick={signInWithGoogle}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-md transition-all duration-200"
+              className="w-full"
             >
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
@@ -78,36 +91,74 @@ export function RightPanel() {
                 />
                 <path
                   fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              {t('auth.loginWithGoogle')}
+              Đăng nhập
             </Button>
           </div>
         )}
       </div>
 
       {/* Settings Section */}
-      <div className="p-6 space-y-6">
-        <div>
-          <h3 className="text-sm font-semibold mb-3">⚙️ {t('settings.theme')}</h3>
+      <div className="p-4 space-y-4 border-b border-border">
+        {/* Interface Settings Header */}
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          ⚙️ Giao diện
+        </h3>
+        
+        {/* Theme Switcher */}
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">{t('settings.theme')}</p>
           <ThemeSwitcher />
-        </div>
-
-        <div>
-          <h3 className="text-sm font-semibold mb-3">🌍 {t('settings.language')}</h3>
-          <LanguageSwitcher />
         </div>
       </div>
 
-      {/* Tips Section (Optional) */}
-      <div className="flex-1 p-6">
-        <GlassCard variant="default" hover="none" className="p-4">
-          <h4 className="text-sm font-semibold mb-2">💡 {t('tips.title')}</h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t('tips.daily') || 'Practice 15 minutes daily for best results!'}
-          </p>
-        </GlassCard>
+      {/* Language Section */}
+      <div className="p-4 border-b border-border">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          🌍 Ngôn ngữ
+        </h3>
+        <LanguageSwitcher />
+      </div>
+
+      {/* Tips Section */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center gap-2 mb-2">
+          <Lightbulb className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Mẹo học tập</h3>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {language === 'vi' 
+            ? 'Viết nhật ký bằng tiếng Anh mỗi ngày để rèn luyện tư duy.'
+            : 'Write a diary in English every day to train your thinking.'}
+        </p>
+      </div>
+
+      {/* Stats Section - New! Matching reference */}
+      <div className="mt-auto p-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          📊 Bài học
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Lessons Counter */}
+          <div className="bg-background rounded-xl p-3 text-center border border-border">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <BookOpen className="w-4 h-4 text-primary" />
+            </div>
+            <p className="text-2xl font-bold text-primary">{stats.lessons}</p>
+            <p className="text-xs text-muted-foreground">Bài học</p>
+          </div>
+          
+          {/* Minutes Counter */}
+          <div className="bg-background rounded-xl p-3 text-center border border-border">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <p className="text-2xl font-bold text-primary">{stats.minutes}</p>
+            <p className="text-xs text-muted-foreground">Phút học</p>
+          </div>
+        </div>
       </div>
     </aside>
   );

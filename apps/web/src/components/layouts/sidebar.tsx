@@ -3,68 +3,75 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
-import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { Headphones, Mic, BookOpen, PenTool, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
- * Sidebar - Navigation menu component
- * 
+ * Sidebar - Navigation menu component (Updated để match reference)
+ *
  * Mục đích: Hiển thị navigation menu với 4 kỹ năng chính
- * Tham số đầu vào: Không có props (sử dụng hooks để lấy data)
- * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: Được sử dụng trong AppLayout, hiển thị ở tất cả pages
+ * Features: Bilingual labels, colored icons, green active state
  */
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Menu items cho 4 kỹ năng chính
+  // Menu items với icons và bilingual labels (VN / EN)
   const menuItems = [
     {
       id: 'listening',
-      name: t('skill.listening.name'),
-      icon: '🎧',
+      nameVi: 'Nghe',
+      nameEn: 'Listening',
+      icon: Headphones,
       href: '/listening',
+      iconBg: 'bg-blue-500',
     },
     {
       id: 'speaking',
-      name: t('skill.speaking.name'),
-      icon: '🎤',
+      nameVi: 'Nói',
+      nameEn: 'Speaking',
+      icon: Mic,
       href: '/speaking',
+      iconBg: 'bg-green-500',
     },
     {
       id: 'reading',
-      name: t('skill.reading.name'),
-      icon: '📖',
+      nameVi: 'Đọc',
+      nameEn: 'Reading',
+      icon: BookOpen,
       href: '/reading',
+      iconBg: 'bg-purple-500',
     },
     {
       id: 'writing',
-      name: t('skill.writing.name'),
-      icon: '✍️',
+      nameVi: 'Viết',
+      nameEn: 'Writing',
+      icon: PenTool,
       href: '/writing',
+      iconBg: 'bg-orange-500',
     },
   ];
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - Matching reference site */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col border-r glass-card border-border transition-all duration-300',
-          isCollapsed ? 'w-20' : 'w-60'
+          'hidden lg:flex flex-col border-r border-border bg-muted/50 transition-all duration-300',
+          isCollapsed ? 'w-20' : 'w-64'
         )}
       >
         {/* Logo Section */}
-        <div className="p-6 border-b border-border">
+        <div className="p-4 border-b border-border">
           <Link href="/" className="flex items-center gap-3">
-            <span className="text-2xl">📚</span>
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
             {!isCollapsed && (
               <div>
-                <h1 className="text-lg font-bold">{t('app.title')}</h1>
+                <h1 className="text-lg font-bold text-foreground">StudyLanguage</h1>
                 <p className="text-xs text-muted-foreground">Study Smart</p>
               </div>
             )}
@@ -72,24 +79,56 @@ export function Sidebar() {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-1">
           {menuItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
+            const IconComponent = item.icon;
+            
             return (
               <Link
                 key={item.id}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                  'hover:bg-accent/10',
-                  isActive && 'bg-primary text-primary-foreground shadow-md',
-                  !isActive && 'text-foreground'
+                  'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : 'hover:bg-accent/50 text-foreground'
                 )}
-                title={isCollapsed ? item.name : undefined}
+                title={isCollapsed ? item.nameVi : undefined}
               >
-                <span className="text-xl">{item.icon}</span>
+                {/* Icon với nền màu (ẩn khi active vì đã có nền xanh) */}
+                <div
+                  className={cn(
+                    'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                    isActive 
+                      ? 'bg-white/20' 
+                      : item.iconBg
+                  )}
+                >
+                  <IconComponent 
+                    className={cn(
+                      'w-5 h-5',
+                      isActive ? 'text-white' : 'text-white'
+                    )} 
+                  />
+                </div>
+                
+                {/* Bilingual Labels */}
                 {!isCollapsed && (
-                  <span className="font-medium">{item.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className={cn(
+                      'font-semibold text-sm',
+                      isActive ? 'text-white' : 'text-foreground'
+                    )}>
+                      {item.nameVi}
+                    </span>
+                    <span className={cn(
+                      'text-xs',
+                      isActive ? 'text-white/70' : 'text-muted-foreground'
+                    )}>
+                      {item.nameEn}
+                    </span>
+                  </div>
                 )}
               </Link>
             );
@@ -97,22 +136,20 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom Section - User Profile */}
-        {user && (
+        {user && !isCollapsed && (
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold shadow-md">
                 {user.email?.[0].toUpperCase() || 'U'}
               </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {user.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {user.email?.split('@')[0] || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -120,17 +157,23 @@ export function Sidebar() {
         {/* Collapse Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 m-2 text-muted-foreground hover:text-foreground hover:bg-accent/10 rounded-lg transition-colors"
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex items-center gap-2 p-3 m-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-xl transition-colors text-sm"
+          title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
         >
-          <span className="text-lg">{isCollapsed ? '→' : '←'}</span>
+          {isCollapsed ? (
+            <ChevronRight className="w-5 h-5" />
+          ) : (
+            <>
+              <ChevronLeft className="w-5 h-5" />
+              <span>Thu gọn</span>
+            </>
+          )}
         </button>
       </aside>
 
       {/* Mobile Sidebar - Slide-in overlay */}
       <div className="lg:hidden">
         {/* TODO: Implement mobile sidebar với slide-in animation */}
-        {/* Sẽ implement sau với hamburger menu button */}
       </div>
     </>
   );
