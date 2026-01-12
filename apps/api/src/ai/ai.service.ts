@@ -243,4 +243,74 @@ Chỉ trả về JSON.
       throw new Error('Không thể parse kết quả đánh giá');
     }
   }
+
+  /**
+   * Sinh audio cho toàn bộ hội thoại với nhiều giọng
+   *
+   * Mục đích: Tạo audio đầy đủ cho Listening module
+   * Tham số:
+   *   - conversation: Danh sách các câu với speaker
+   * Trả về: Audio buffer đã ghép + timestamps cho mỗi câu
+   */
+  async generateConversationAudio(
+    conversation: { speaker: string; text: string }[],
+  ): Promise<{
+    audioBuffer: Buffer;
+    timestamps: { startTime: number; endTime: number }[];
+  }> {
+    this.logger.log(`Đang sinh audio cho ${conversation.length} câu hội thoại...`);
+
+    const audioBuffers: Buffer[] = [];
+    const timestamps: { startTime: number; endTime: number }[] = [];
+    let currentTime = 0;
+
+    // Map speakers to voices
+    const speakerVoices: Record<string, 'nova' | 'onyx' | 'alloy' | 'shimmer'> = {};
+    const availableVoices: ('nova' | 'onyx' | 'alloy' | 'shimmer')[] = ['nova', 'onyx', 'alloy', 'shimmer'];
+    let voiceIndex = 0;
+
+    for (const line of conversation) {
+      // Gán giọng cho speaker nếu chưa có
+      if (!speakerVoices[line.speaker]) {
+        speakerVoices[line.speaker] = availableVoices[voiceIndex % availableVoices.length];
+        voiceIndex++;
+      }
+
+      const voice = speakerVoices[line.speaker];
+
+      try {
+        // Sinh audio cho câu này
+        const audioBuffer = await this.textToSpeech(line.text, voice);
+        audioBuffers.push(audioBuffer);
+
+        // Ước tính duration: ~150 words/minute avg for TTS
+        const wordCount = line.text.split(/\s+/).length;
+        const estimatedDuration = (wordCount / 150) * 60; // seconds
+        const duration = Math.max(estimatedDuration, 1); // minimum 1 second
+
+        timestamps.push({
+          startTime: currentTime,
+          endTime: currentTime + duration,
+        });
+
+        currentTime += duration + 0.3; // 0.3s gap between lines
+
+        this.logger.log(`Sinh audio line ${audioBuffers.length}/${conversation.length} - voice: ${voice}`);
+      } catch (error) {
+        this.logger.error(`Lỗi sinh audio line ${audioBuffers.length + 1}:`, error);
+        throw error;
+      }
+    }
+
+    // Concatenate all audio buffers
+    const combinedBuffer = Buffer.concat(audioBuffers);
+
+    this.logger.log(`Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`);
+
+    return {
+      audioBuffer: combinedBuffer,
+      timestamps,
+    };
+  }
 }
+

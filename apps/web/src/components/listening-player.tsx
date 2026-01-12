@@ -97,6 +97,8 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(audioUrl || null);
   const [error, setError] = useState<string | null>(null);
+  // Timestamps thật từ server (thay vì estimated)
+  const [realTimestamps, setRealTimestamps] = useState<{ startTime: number; endTime: number }[] | null>(null);
 
   // Estimate timestamps dựa trên độ dài text (rough approximation)
   // Trong thực tế, backend sẽ trả về timestamps chính xác
@@ -117,37 +119,30 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
 
   /**
    * Gọi API để sinh audio từ conversation
+   * Sử dụng endpoint mới /api/ai/generate-conversation-audio
    */
   const generateAudio = useCallback(async () => {
     setIsGeneratingAudio(true);
     setError(null);
 
     try {
-      // Sinh audio cho từng câu và concatenate
-      const audioUrls: string[] = [];
+      const response = await fetch('http://localhost:3001/api/ai/generate-conversation-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversation }),
+      });
+
+      if (!response.ok) throw new Error('Lỗi sinh audio');
+
+      const data = await response.json();
       
-      for (const line of conversation) {
-        const response = await fetch('http://localhost:3001/api/ai/text-to-speech', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: line.text,
-            voice: line.speaker === 'Person A' ? 'nova' : 'onyx',
-          }),
-        });
-
-        if (!response.ok) throw new Error('Lỗi sinh audio');
-
-        const data = await response.json();
-        // Tạo data URL từ base64
-        const audioDataUrl = `data:audio/mpeg;base64,${data.audio}`;
-        audioUrls.push(audioDataUrl);
-      }
-
-      // TODO: Trong production, backend sẽ concatenate audio và upload Supabase
-      // Hiện tại dùng audio đầu tiên để demo
-      if (audioUrls.length > 0) {
-        setGeneratedAudioUrl(audioUrls[0]);
+      // Tạo data URL từ base64
+      const audioDataUrl = `data:audio/mpeg;base64,${data.audio}`;
+      setGeneratedAudioUrl(audioDataUrl);
+      
+      // Cập nhật timestamps thật từ server (không dùng estimated nữa)
+      if (data.timestamps && data.timestamps.length > 0) {
+        setRealTimestamps(data.timestamps);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi sinh audio');
@@ -190,7 +185,7 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
       <TranscriptViewer
         conversation={conversation}
         currentTime={currentTime}
-        audioTimestamps={generatedAudioUrl ? estimatedTimestamps : undefined}
+        audioTimestamps={realTimestamps || (generatedAudioUrl ? estimatedTimestamps : undefined)}
       />
     </div>
   );

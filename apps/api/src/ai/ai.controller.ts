@@ -37,6 +37,13 @@ class EvaluatePronunciationDto {
 }
 
 /**
+ * DTO cho request sinh audio hội thoại
+ */
+class GenerateConversationAudioDto {
+  conversation: { speaker: string; text: string }[];
+}
+
+/**
  * AI Controller - API endpoints cho AI features
  *
  * Mục đích: Expose các AI services qua REST API
@@ -128,4 +135,25 @@ export class AiController {
     const text = await this.aiService.generateText(dto.prompt, dto.systemPrompt);
     return { text };
   }
+
+  /**
+   * POST /api/ai/generate-conversation-audio
+   *
+   * Mục đích: Sinh audio cho toàn bộ hội thoại với nhiều giọng
+   * Body: { conversation: [{ speaker, text }] }
+   * Trả về: { audio: base64, timestamps: [{ startTime, endTime }] }
+   */
+  @Post('generate-conversation-audio')
+  @HttpCode(HttpStatus.OK)
+  async generateConversationAudio(@Body() dto: GenerateConversationAudioDto) {
+    const result = await this.aiService.generateConversationAudio(dto.conversation);
+
+    // Trả về base64 audio + timestamps
+    return {
+      audio: result.audioBuffer.toString('base64'),
+      contentType: 'audio/mpeg',
+      timestamps: result.timestamps,
+    };
+  }
 }
+
