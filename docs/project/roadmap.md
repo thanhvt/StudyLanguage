@@ -138,16 +138,16 @@
 
 ### 🔀 PARALLEL GROUP E (Tất cả độc lập)
 
-#### Task 3.1: Animations & Effects 🤖
-- [ ] Page transitions mượt (Framer Motion - Web)
+#### Task 3.1: Animations & Effects 🤖 ✅
+- [x] Page transitions mượt (Framer Motion - Web)
 - [ ] Screen transitions (Reanimated - Mobile)
-- [ ] Confetti effect khi hoàn thành bài
-- [ ] Skeleton loading cho AI response
+- [x] Confetti effect khi hoàn thành bài
+- [x] Skeleton loading cho AI response
 
-#### Task 3.2: Glassmorphism UI 🤖
-- [ ] Áp dụng hiệu ứng kính mờ cho lesson cards
-- [ ] Ripple effects cho buttons
-- [ ] Hover/Active states đẹp mắt
+#### Task 3.2: Glassmorphism UI 🤖 ✅
+- [x] Áp dụng hiệu ứng kính mờ cho lesson cards
+- [x] Ripple effects cho buttons
+- [x] Hover/Active states đẹp mắt
 
 #### Task 3.3: Haptic Feedback (Mobile) 🤖
 - [ ] Rung nhẹ khi hoàn thành bài học
