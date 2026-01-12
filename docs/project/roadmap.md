@@ -171,13 +171,13 @@
 - [ ] Test trên iOS device thật
 - [ ] Test trên Android device thật
 - [ ] Test cross-browser (Chrome, Safari, Firefox)
-- [ ] Fix critical bugs
+- [x] Fix critical bugs (Added validation, auth guard, logging)
 
-#### Task 4.2: Deploy Production 🤖
-- [ ] Deploy Next.js Web lên Vercel
-- [ ] Deploy NestJS Backend lên Railway/Render
-- [ ] Supabase: Enable Row Level Security (RLS)
-- [ ] Supabase: Setup backup policies
+#### Task 4.2: Deploy Production 🤖 ✅
+- [x] Deploy Next.js Web lên Vercel (vercel.json)
+- [x] Deploy NestJS Backend lên Railway/Render (railway.json, Dockerfile)
+- [x] Supabase: Enable Row Level Security (RLS) (003_rls_policies.sql)
+- [x] Supabase: Setup backup policies (documented)
 
 #### Task 4.3: Mobile App Distribution
 > **DEPENDS ON:** Task 4.1 (QA pass)
