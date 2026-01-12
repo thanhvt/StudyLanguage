@@ -65,8 +65,8 @@
 > **DEPENDS ON:** Task 0.2 (Supabase phải được setup)
 - [x] Implement Google Login (Web - Supabase Auth)
 - [ ] Implement Google Login (Mobile - Supabase Auth + Expo AuthSession)
-- [ ] Sync user preferences (theme, language) vào DB
-- [ ] Protected routes / screens
+- [x] Sync user preferences (theme, language) vào DB
+- [x] Protected routes / screens
 
 #### Task 1.4: Background Music 🤖 ✅
 > **DEPENDS ON:** Task 0.1 (Projects ready)
@@ -112,7 +112,7 @@
 - [x] Backend: GPT sinh 3-5 câu hỏi đọc hiểu
 - [x] UI hiển thị bài đọc
 - [x] UI làm quiz (trắc nghiệm/tự luận)
-- [ ] Dictionary popup (click vào từ tra nghĩa)
+- [x] Dictionary popup (click vào từ tra nghĩa)
 
 #### Task 2.2: Writing Module 🤖 ✅
 > **DEPENDS ON:** Phase 1 MVP complete
