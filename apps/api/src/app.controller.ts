@@ -9,4 +9,20 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  /**
+   * Health check endpoint for Railway/deployment monitoring
+   *
+   * Mục đích: Check API đang chạy bình thường
+   * Khi nào sử dụng: Deployment health checks
+   */
+  @Get('health')
+  getHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '1.0.0',
+    };
+  }
 }
+
