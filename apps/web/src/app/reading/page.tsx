@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
+import { AppLayout } from '@/components/layouts/app-layout';
 
 /**
  * Reading Page - Module Luyện Đọc
@@ -117,7 +118,7 @@ Chỉ trả về JSON, không có text khác.`,
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <AppLayout>
       <h1 className="text-3xl font-bold mb-6">📖 Luyện Đọc - Active Reading</h1>
 
       {/* Form nhập thông tin */}
@@ -256,6 +257,6 @@ Chỉ trả về JSON, không có text khác.`,
           )}
         </Card>
       )}
-    </div>
+    </AppLayout>
   );
 }

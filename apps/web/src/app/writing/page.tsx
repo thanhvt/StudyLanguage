@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { AppLayout } from '@/components/layouts/app-layout';
 
 /**
  * Writing Page - Module Luyện Viết
@@ -94,7 +95,7 @@ Chỉ trả về JSON.`,
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <AppLayout>
       <h1 className="text-3xl font-bold mb-6">✍️ Luyện Viết - Writing Assistant</h1>
 
       {/* Form viết bài */}
@@ -187,6 +188,6 @@ Chỉ trả về JSON.`,
           </Card>
         </>
       )}
-    </div>
+    </AppLayout>
   );
 }

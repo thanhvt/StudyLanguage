@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { AppLayout } from '@/components/layouts/app-layout';
 
 /**
  * Speaking Page - Module Luyện Nói
@@ -191,7 +192,7 @@ export default function SpeakingPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <AppLayout>
       <h1 className="text-3xl font-bold mb-6">🎤 Luyện Nói - AI Coach</h1>
 
       {/* Form nhập topic */}
@@ -326,6 +327,6 @@ export default function SpeakingPage() {
       {error && (
         <p className="text-red-500 text-sm mt-4">{error}</p>
       )}
-    </div>
+    </AppLayout>
   );
 }
