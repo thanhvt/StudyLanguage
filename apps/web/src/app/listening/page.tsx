@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ListeningPlayer } from '@/components/listening-player';
 import { InteractiveListening } from '@/components/interactive-listening';
+import { AppLayout } from '@/components/layouts/app-layout';
 
 /**
  * Listening Page - Module Luyện Nghe
@@ -79,7 +80,7 @@ export default function ListeningPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <AppLayout>
       <h1 className="text-3xl font-bold mb-6">🎧 Luyện Nghe - Smart Conversation</h1>
 
       {/* Mode Toggle */}
@@ -220,7 +221,7 @@ export default function ListeningPage() {
           <ListeningPlayer conversation={conversation} />
         </Card>
       )}
-    </div>
+    </AppLayout>
   );
 }
 
