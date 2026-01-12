@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { DictionaryPopup, ClickableText } from '@/components/dictionary-popup';
 import { AppLayout } from '@/components/layouts/app-layout';
@@ -122,8 +122,8 @@ Chỉ trả về JSON, không có text khác.`,
       <h1 className="text-3xl font-bold mb-6">📖 Luyện Đọc - Active Reading</h1>
 
       {/* Form nhập thông tin */}
-      <Card className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Tạo bài đọc mới</h2>
+      <GlassCard className="p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-primary">Tạo bài đọc mới</h2>
         
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -165,19 +165,19 @@ Chỉ trả về JSON, không có text khác.`,
         >
           {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo bài đọc'}
         </Button>
-      </Card>
+      </GlassCard>
 
       {/* Bài đọc */}
       {article && (
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">📝 Bài đọc</h2>
+        <GlassCard className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-primary">📝 Bài đọc</h2>
           <p className="text-xs text-muted-foreground mb-2">
             💡 Click vào từ để tra từ điển
           </p>
-          <div className="p-4 bg-muted rounded-lg leading-relaxed text-lg">
+          <div className="p-6 bg-muted/40 rounded-lg leading-relaxed text-lg tracking-wide border border-white/5">
             <ClickableText text={article} onWordClick={setSelectedWord} />
           </div>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Dictionary Popup */}
@@ -187,40 +187,40 @@ Chỉ trả về JSON, không có text khác.`,
 
       {/* Câu hỏi */}
       {questions && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">❓ Câu hỏi đọc hiểu</h2>
+        <GlassCard className="p-6">
+          <h2 className="text-xl font-semibold mb-4 text-primary">❓ Câu hỏi đọc hiểu</h2>
           
           <div className="space-y-6">
             {questions.map((q, qIndex) => (
               <div key={qIndex} className="space-y-2">
-                <p className="font-medium">
+                <p className="font-medium text-lg">
                   {qIndex + 1}. {q.question}
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {q.options.map((opt, oIndex) => {
                     const isSelected = userAnswers[qIndex] === oIndex;
                     const isCorrect = q.answer === oIndex;
                     
-                    let bgClass = 'bg-muted hover:bg-muted/80';
+                    let bgClass = 'bg-muted/30 hover:bg-muted/50 border border-white/5';
                     if (showResults) {
-                      if (isCorrect) bgClass = 'bg-green-100 dark:bg-green-900/30';
-                      else if (isSelected && !isCorrect) bgClass = 'bg-red-100 dark:bg-red-900/30';
+                      if (isCorrect) bgClass = 'bg-green-500/20 border-green-500/50';
+                      else if (isSelected && !isCorrect) bgClass = 'bg-red-500/20 border-red-500/50';
                     } else if (isSelected) {
-                      bgClass = 'bg-primary/20';
+                      bgClass = 'bg-primary/20 border-primary/50';
                     }
 
                     return (
                       <button
                         key={oIndex}
                         onClick={() => handleSelectAnswer(qIndex, oIndex)}
-                        className={`p-3 rounded-lg text-left transition-colors ${bgClass}`}
+                        className={`p-4 rounded-xl text-left transition-all ${bgClass}`}
                         disabled={showResults}
                       >
-                        <span className="font-medium mr-2">
+                        <span className="font-bold mr-2 opacity-70">
                           {String.fromCharCode(65 + oIndex)}.
                         </span>
                         {opt}
-                        {showResults && isCorrect && ' ✓'}
+                        {showResults && isCorrect && ' ✅'}
                       </button>
                     );
                   })}
@@ -232,14 +232,14 @@ Chỉ trả về JSON, không có text khác.`,
           {!showResults ? (
             <Button
               onClick={handleSubmit}
-              className="mt-6"
+              className="mt-8 w-full md:w-auto"
               disabled={userAnswers.includes(-1)}
             >
               📊 Nộp bài
             </Button>
           ) : (
-            <div className="mt-6 p-4 bg-primary/10 rounded-lg text-center">
-              <p className="text-2xl font-bold text-primary">
+            <div className="mt-8 p-6 bg-primary/10 rounded-xl text-center border border-primary/20">
+              <p className="text-3xl font-bold text-primary mb-2">
                 Điểm: {calculateScore()}/{questions.length}
               </p>
               <Button
@@ -255,7 +255,7 @@ Chỉ trả về JSON, không có text khác.`,
               </Button>
             </div>
           )}
-        </Card>
+        </GlassCard>
       )}
     </AppLayout>
   );

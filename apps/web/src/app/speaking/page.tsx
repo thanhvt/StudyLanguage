@@ -1,332 +1,215 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { GlassCard, GradientText } from '@/components/ui/glass-card';
+import { WaveformVisualizer } from '@/components/speaking/waveform-visualizer';
+import { SessionTranscript } from '@/components/speaking/session-transcript';
+import { PronunciationAlert } from '@/components/speaking/pronunciation-alert';
+import { AnimatePresence, motion } from 'framer-motion';
 
 /**
- * Speaking Page - Module Luyện Nói
- *
- * Mục đích: UI cho tính năng luyện nói và đánh giá phát âm
- * Flow: Nhập topic → AI sinh text mẫu → User ghi âm → AI đánh giá
+ * Speaking Page - Module Luyện Nói (AI Coach Redesign)
  */
 export default function SpeakingPage() {
-  // Form state
+  // View State: 'setup' | 'session'
+  const [viewMode, setViewMode] = useState<'setup' | 'session'>('setup');
+
+  // Setup State
   const [topic, setTopic] = useState('');
-  const [keywords, setKeywords] = useState('');
-
-  // Content state
-  const [sampleText, setSampleText] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  // Recording state
+  
+  // Session State
   const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
+  
+  // Alert State
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [currentMistake, setCurrentMistake] = useState<{userSaid: string, suggestion: string} | null>(null);
 
-  // Feedback state
-  const [feedback, setFeedback] = useState<{
-    overallScore: number;
-    feedback: {
-      wrongWords: { word: string; userSaid: string; suggestion: string }[];
-      tips: string[];
-      encouragement: string;
-    };
-  } | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
-
-  // TTS state for AI sample playback
-  const [sampleAudioUrl, setSampleAudioUrl] = useState<string | null>(null);
-  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
-
-  /**
-   * Sinh đoạn text mẫu để luyện nói
-   */
-  const handleGenerateSample = async () => {
-    if (!topic.trim()) {
-      setError('Vui lòng nhập chủ đề');
-      return;
-    }
-
-    setIsGenerating(true);
-    setError(null);
-    setFeedback(null);
-
-    try {
-      const response = await api('/ai/generate-text', {
-        method: 'POST',
-        body: JSON.stringify({
-          prompt: `Tạo một đoạn văn ngắn (3-5 câu) bằng tiếng Anh về chủ đề "${topic}" để người học luyện nói. ${keywords ? `Sử dụng các từ khóa: ${keywords}` : ''} Chỉ trả về đoạn văn, không có gì khác.`,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Lỗi sinh text');
-
-      const data = await response.json();
-      setSampleText(data.text);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
-    } finally {
-      setIsGenerating(false);
-    }
+  // Mock function to start session
+  const startSession = () => {
+    if (!topic) return;
+    setViewMode('session');
+    // Mock initial AI message
+    setMessages([
+      {
+        id: '1',
+        role: 'ai',
+        text: `Hello! I'm your AI Coach. Let's talk about "${topic}". You can start by telling me what you think about it.`,
+        timestamp: Date.now()
+      }
+    ]);
   };
 
-  /**
-   * Bắt đầu ghi âm
-   */
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      const chunks: BlobPart[] = [];
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        setAudioBlob(blob);
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch {
-      setError('Không thể truy cập microphone');
-    }
-  };
-
-  /**
-   * Dừng ghi âm
-   */
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+  // Mock function to handle recording toggle
+  const toggleRecording = () => {
+    if (isRecording) {
+      // Stop recording -> Mock processing
       setIsRecording(false);
-    }
-  };
+      setIsThinking(true);
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        setIsThinking(false);
+        const userMsg = {
+          id: Date.now().toString(),
+          role: 'user',
+          text: "I think it is very important for our future.",
+          timestamp: Date.now(),
+          corrections: Math.random() > 0.5 ? [{ original: "it is", correction: "it's", explanation: "Use contraction for natural speech" }] : []
+        };
+        setMessages(prev => [...prev, userMsg]);
 
-  /**
-   * Đánh giá phát âm
-   */
-  const handleEvaluate = async () => {
-    if (!audioBlob || !sampleText) return;
+        // Simulating mistake alert randomly
+        if (Math.random() > 0.7) {
+            setCurrentMistake({ userSaid: "im-por-tant", suggestion: "important /ɪmˈpɔːrtnt/" });
+            setAlertOpen(true);
+        }
 
-    setIsEvaluating(true);
-    setError(null);
+        // Mock AI response
+        setTimeout(() => {
+            setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                role: 'ai',
+                text: "That's a great point! Can you elaborate on why?",
+                timestamp: Date.now()
+            }]);
+        }, 1000);
 
-    try {
-      // Bước 1: Transcribe audio
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      }, 1500);
 
-      const transcribeRes = await api('/ai/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!transcribeRes.ok) throw new Error('Lỗi nhận dạng giọng nói');
-      const { text: userTranscript } = await transcribeRes.json();
-
-      // Bước 2: Đánh giá
-      const evalRes = await api('/ai/evaluate-pronunciation', {
-        method: 'POST',
-        body: JSON.stringify({
-          originalText: sampleText,
-          userTranscript,
-        }),
-      });
-
-      if (!evalRes.ok) throw new Error('Lỗi đánh giá');
-      const feedbackData = await evalRes.json();
-      setFeedback(feedbackData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
-    } finally {
-      setIsEvaluating(false);
-    }
-  };
-
-  /**
-   * Reset để luyện lại
-   */
-  const handleRetry = () => {
-    setAudioBlob(null);
-    setFeedback(null);
-  };
-
-  /**
-   * Nghe AI đọc mẫu (TTS)
-   *
-   * Mục đích: Sinh audio từ sample text để user nghe trước khi luyện
-   */
-  const handleListenSample = async () => {
-    if (!sampleText) return;
-
-    setIsGeneratingTTS(true);
-    setError(null);
-
-    try {
-      const response = await api('/ai/text-to-speech', {
-        method: 'POST',
-        body: JSON.stringify({
-          text: sampleText,
-          voice: 'nova', // Sử dụng giọng nova (female, clear)
-        }),
-      });
-
-      if (!response.ok) throw new Error('Lỗi sinh audio');
-
-      const data = await response.json();
-      const audioDataUrl = `data:audio/mpeg;base64,${data.audio}`;
-      setSampleAudioUrl(audioDataUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi sinh audio');
-    } finally {
-      setIsGeneratingTTS(false);
+    } else {
+      // Start recording
+      setIsRecording(true);
     }
   };
 
   return (
     <AppLayout>
-      <h1 className="text-3xl font-bold mb-6">🎤 Luyện Nói - AI Coach</h1>
+      <div className="h-[calc(100vh-3rem)] flex flex-col relative">
+        
+        {/* SETUP MODE */}
+        {viewMode === 'setup' && (
+          <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full p-6">
+             <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold mb-4">
+                  AI Speaking Coach <span className="text-4xl">🤖</span>
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Chọn chủ đề và bắt đầu hội thoại 1-1 với AI Coach để cải thiện phát âm và phản xạ.
+                </p>
+             </div>
 
-      {/* Form nhập topic */}
-      <Card className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Bước 1: Chọn chủ đề</h2>
+             <Card className="w-full p-8 shadow-xl border-primary/20 bg-black/40 backdrop-blur-xl">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-lg font-medium">Bạn muốn nói về chủ đề gì?</label>
+                    <Input 
+                      placeholder="VD: Daily Routine, My Dream Job, Environmental Issues..." 
+                      className="text-lg py-6"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                    />
+                  </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Chủ đề *</label>
-            <Input
-              placeholder="VD: Giới thiệu bản thân, Du lịch..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+                  <Button 
+                    size="lg" 
+                    className="w-full text-lg py-6 font-semibold shadow-glow hover:scale-[1.02] transition-transform"
+                    onClick={startSession}
+                    disabled={!topic.trim()}
+                  >
+                    🚀 Bắt đầu hội thoại
+                  </Button>
+                </div>
+             </Card>
+          </div>
+        )}
+
+        {/* SESSION MODE */}
+        {viewMode === 'session' && (
+          <div className="flex-1 flex gap-6 h-full overflow-hidden pb-20">
+            {/* LEFT COLUMN: VISUALIZER */}
+            <div className="flex-1 flex flex-col gap-6">
+               {/* Header Info */}
+               <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <span className="text-primary">●</span> {topic}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">AI Speaking Coach Session</p>
+                  </div>
+                  <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
+                    Fluency: 85%
+                  </div>
+               </div>
+
+               {/* Waveform Area */}
+               <GlassCard className="flex-1 flex items-center justify-center relative overflow-hidden bg-black/60 border-white/10 shadow-inner">
+                  {/* Background Glow */}
+                  <div className={`absolute inset-0 bg-primary/5 transition-opacity duration-500 ${isRecording ? 'opacity-100' : 'opacity-20'}`} />
+                  
+                  {/* Visualizer Component */}
+                  <WaveformVisualizer isRecording={isRecording} className="z-10 scale-150" />
+                  
+                  {/* Status Indicator text on visualization */}
+                  <div className="absolute bottom-8 text-center">
+                    <p className={`text-sm font-medium transition-colors ${isRecording ? 'text-red-400 animate-pulse' : 'text-muted-foreground'}`}>
+                       {isRecording ? '🔴 Recording...' : isThinking ? '🤔 AI is thinking...' : 'Tap Mic to Speak'}
+                    </p>
+                  </div>
+               </GlassCard>
+            </div>
+
+            {/* RIGHT COLUMN: TRANSCRIPT */}
+            <div className="w-[400px] flex flex-col h-full">
+               <SessionTranscript messages={messages} isThinking={isThinking} className="border-white/10 shadow-xl" />
+            </div>
+
+            {/* BOTTOM CONTROLS (FIXED) */}
+            <div className="absolute bottom-0 left-0 right-0 h-20 flex items-center justify-center bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none z-10">
+               <div className="pointer-events-auto flex items-center gap-4 mb-4">
+                  <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 bg-black/50 border border-white/10 hover:bg-white/10 text-muted-foreground">
+                    ⌨️
+                  </Button>
+                  
+                  <Button 
+                    onClick={toggleRecording}
+                    className={`rounded-full h-16 w-16 shadow-2xl transition-all duration-300 ${
+                        isRecording 
+                        ? 'bg-red-500 hover:bg-red-600 scale-110 ring-4 ring-red-500/30' 
+                        : 'bg-primary hover:bg-primary/90 hover:scale-105'
+                    }`}
+                  >
+                    <span className="text-3xl">{isRecording ? '⏹️' : '🎤'}</span>
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="rounded-full h-12 w-12 bg-black/50 border border-white/10 hover:bg-white/10 text-red-400 hover:text-red-300"
+                    onClick={() => setViewMode('setup')}
+                  >
+                    Exit
+                  </Button>
+               </div>
+            </div>
+
+            {/* ALERTS */}
+            <PronunciationAlert 
+               isOpen={alertOpen}
+               userSaid={currentMistake?.userSaid || ''}
+               suggestion={currentMistake?.suggestion || ''}
+               onRetry={() => setAlertOpen(false)}
+               onIgnore={() => setAlertOpen(false)}
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Từ khóa (tùy chọn)</label>
-            <Input
-              placeholder="VD: hobby, travel, work"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <Button
-          onClick={handleGenerateSample}
-          disabled={isGenerating}
-          className="mt-4"
-        >
-          {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo bài mẫu'}
-        </Button>
-      </Card>
-
-      {/* Hiển thị text mẫu và ghi âm */}
-      {sampleText && (
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Bước 2: Đọc đoạn văn sau</h2>
-
-          <div className="p-4 bg-muted rounded-lg mb-4">
-            <p className="text-lg leading-relaxed">{sampleText}</p>
-          </div>
-
-          {/* Nút nghe AI đọc mẫu */}
-          <div className="mb-4 flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              onClick={handleListenSample}
-              disabled={isGeneratingTTS}
-            >
-              {isGeneratingTTS ? '⏳ Đang tạo audio...' : '🔊 Nghe AI đọc mẫu'}
-            </Button>
-            {sampleAudioUrl && (
-              <audio controls src={sampleAudioUrl} className="flex-1 h-10" />
-            )}
-          </div>
-
-          <div className="flex gap-3 flex-wrap">
-            {!isRecording ? (
-              <Button onClick={startRecording} disabled={!!audioBlob}>
-                🎙️ Bắt đầu ghi âm
-              </Button>
-            ) : (
-              <Button onClick={stopRecording} variant="destructive">
-                ⏹️ Dừng ghi âm
-              </Button>
-            )}
-
-            {audioBlob && !feedback && (
-              <Button onClick={handleEvaluate} disabled={isEvaluating}>
-                {isEvaluating ? '⏳ Đang đánh giá...' : '📊 Đánh giá phát âm'}
-              </Button>
-            )}
-
-            {audioBlob && (
-              <Button variant="outline" onClick={handleRetry}>
-                🔄 Luyện lại
-              </Button>
-            )}
-          </div>
-
-          {audioBlob && (
-            <audio controls className="mt-4 w-full" src={URL.createObjectURL(audioBlob)} />
-          )}
-        </Card>
-      )}
-
-      {/* Hiển thị feedback */}
-      {feedback && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">📊 Kết quả đánh giá</h2>
-
-          {/* Điểm tổng */}
-          <div className="text-center mb-6">
-            <div className="text-5xl font-bold text-primary">
-              {feedback.overallScore}/10
-            </div>
-            <p className="text-muted-foreground mt-2">{feedback.feedback.encouragement}</p>
-          </div>
-
-          {/* Từ sai */}
-          {feedback.feedback.wrongWords.length > 0 && (
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">❌ Từ cần cải thiện:</h3>
-              <ul className="space-y-2">
-                {feedback.feedback.wrongWords.map((w, i) => (
-                  <li key={i} className="p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                    <span className="font-medium">{w.word}</span>
-                    <span className="text-muted-foreground"> → Bạn nói: &ldquo;{w.userSaid}&rdquo;</span>
-                    <br />
-                    <span className="text-sm">💡 Gợi ý: {w.suggestion}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Tips */}
-          {feedback.feedback.tips.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2">💡 Mẹo cải thiện:</h3>
-              <ul className="list-disc list-inside space-y-1">
-                {feedback.feedback.tips.map((tip, i) => (
-                  <li key={i}>{tip}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {error && (
-        <p className="text-red-500 text-sm mt-4">{error}</p>
-      )}
+        )}
+      </div>
     </AppLayout>
   );
 }

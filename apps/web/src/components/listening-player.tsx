@@ -47,16 +47,16 @@ export function TranscriptViewer({
           <div
             key={index}
             className={`
-              p-4 rounded-lg transition-all duration-300
+              p-4 rounded-xl transition-all duration-300 border
               ${line.speaker === 'Person A' 
-                ? 'bg-primary/10 mr-8' 
-                : 'bg-accent/10 ml-8'
+                ? 'bg-blue-500/10 border-blue-500/20 mr-12 rounded-tl-none' 
+                : 'bg-green-500/10 border-green-500/20 ml-12 rounded-tr-none'
               }
               ${isActive 
-                ? 'ring-2 ring-primary scale-[1.02] shadow-lg' 
-                : ''
+                ? 'ring-1 ring-primary shadow-[0_0_15px_rgba(16,185,129,0.1)] bg-opacity-20' 
+                : 'hover:bg-opacity-20 opacity-80'
               }
-              ${isPast ? 'opacity-50' : ''}
+              ${isPast ? 'opacity-60 saturate-50' : ''}
             `}
           >
             <div className="flex items-center gap-2 mb-1">

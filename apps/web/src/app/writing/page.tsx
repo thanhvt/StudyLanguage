@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/layouts/app-layout';
 
@@ -99,8 +99,8 @@ Chỉ trả về JSON.`,
       <h1 className="text-3xl font-bold mb-6">✍️ Luyện Viết - Writing Assistant</h1>
 
       {/* Form viết bài */}
-      <Card className="p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Viết bài của bạn</h2>
+      <GlassCard className="p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-primary">Viết bài của bạn</h2>
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -109,18 +109,19 @@ Chỉ trả về JSON.`,
               placeholder="VD: My favorite hobby, A memorable trip..."
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
+              className="bg-black/20"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Nội dung bài viết *</label>
             <textarea
-              className="w-full min-h-[200px] p-3 border rounded-lg bg-background resize-y"
+              className="w-full min-h-[200px] p-4 border rounded-xl bg-black/20 resize-y focus:ring-2 focus:ring-primary/50 outline-none transition-all"
               placeholder="Viết bài tiếng Anh của bạn ở đây..."
               value={userText}
               onChange={(e) => setUserText(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-right">
               Số từ: {userText.trim().split(/\s+/).filter(Boolean).length}
             </p>
           </div>
@@ -141,22 +142,22 @@ Chỉ trả về JSON.`,
             </Button>
           )}
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Kết quả phân tích */}
       {feedback && (
         <>
           {/* Các lỗi */}
           {feedback.corrections.length > 0 && (
-            <Card className="p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">❌ Các lỗi cần sửa</h2>
+            <GlassCard className="p-6 mb-6 border-red-500/20">
+              <h2 className="text-xl font-semibold mb-4 text-red-400">❌ Các lỗi cần sửa</h2>
               <div className="space-y-4">
                 {feedback.corrections.map((c, i) => (
-                  <div key={i} className="p-4 bg-muted rounded-lg">
+                  <div key={i} className="p-4 bg-red-500/10 rounded-xl border border-red-500/10">
                     <div className="flex flex-wrap gap-2 items-center mb-2">
-                      <span className="line-through text-red-500">{c.original}</span>
+                      <span className="line-through text-red-400 opacity-70">{c.original}</span>
                       <span>→</span>
-                      <span className="text-green-600 font-medium">{c.corrected}</span>
+                      <span className="text-green-500 font-bold">{c.corrected}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       💡 {c.explanation}
@@ -164,28 +165,28 @@ Chỉ trả về JSON.`,
                   </div>
                 ))}
               </div>
-            </Card>
+            </GlassCard>
           )}
 
           {/* Gợi ý */}
           {feedback.suggestions.length > 0 && (
-            <Card className="p-6 mb-6">
+            <GlassCard className="p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">💡 Gợi ý cải thiện</h2>
               <ul className="list-disc list-inside space-y-2">
                 {feedback.suggestions.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
               </ul>
-            </Card>
+            </GlassCard>
           )}
 
           {/* Phiên bản cải thiện */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">✨ Phiên bản cải thiện</h2>
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg leading-relaxed">
+          <GlassCard className="p-6 border-green-500/20">
+            <h2 className="text-xl font-semibold mb-4 text-green-400">✨ Phiên bản cải thiện</h2>
+            <div className="p-6 bg-green-500/10 rounded-xl leading-relaxed border border-green-500/10">
               {feedback.improvedVersion}
             </div>
-          </Card>
+          </GlassCard>
         </>
       )}
     </AppLayout>

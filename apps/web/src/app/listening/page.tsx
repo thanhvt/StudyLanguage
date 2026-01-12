@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { ListeningPlayer } from '@/components/listening-player';
 import { InteractiveListening } from '@/components/interactive-listening';
@@ -103,7 +103,7 @@ export default function ListeningPage() {
 
       {/* Interactive Listening Mode */}
       {showInteractive && (
-        <Card className="p-6">
+        <GlassCard className="p-6">
           <InteractiveListening 
             topic={topic} 
             onBack={() => {
@@ -111,13 +111,13 @@ export default function ListeningPage() {
               setTopic('');
             }} 
           />
-        </Card>
+        </GlassCard>
       )}
 
       {/* Form nhập thông tin - Passive mode */}
       {!conversation && !showInteractive && mode === 'passive' && (
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Tạo hội thoại mới</h2>
+        <GlassCard className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-primary">Tạo hội thoại mới</h2>
           
           <div className="grid gap-4 md:grid-cols-2">
             {/* Chủ đề */}
@@ -176,13 +176,13 @@ export default function ListeningPage() {
           >
             {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo hội thoại'}
           </Button>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Form nhập thông tin - Interactive mode */}
       {!conversation && !showInteractive && mode === 'interactive' && (
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">🎤 Tham gia hội thoại</h2>
+        <GlassCard className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-primary">🎤 Tham gia hội thoại</h2>
           <p className="text-muted-foreground mb-4">
             Chọn chủ đề và AI sẽ tạo một cuộc hội thoại để bạn tham gia. Bạn sẽ được lắng nghe và sau đó nói các câu của mình!
           </p>
@@ -205,21 +205,21 @@ export default function ListeningPage() {
               🚀 Bắt đầu tham gia
             </Button>
           </div>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Listening Player với Audio + Transcript */}
       {conversation && (
-        <Card className="p-6">
+        <GlassCard className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">🎧 Nghe hội thoại</h2>
+            <h2 className="text-xl font-semibold text-primary">🎧 Nghe hội thoại</h2>
             <Button variant="outline" size="sm" onClick={handleReset}>
               🔄 Tạo mới
             </Button>
           </div>
           
           <ListeningPlayer conversation={conversation} />
-        </Card>
+        </GlassCard>
       )}
     </AppLayout>
   );
