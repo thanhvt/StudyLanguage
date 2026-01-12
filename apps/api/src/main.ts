@@ -6,9 +6,9 @@ import { LoggingService } from './common/logging/logging.service';
 async function bootstrap() {
   // Buffer logs during startup until logger is available (optional but good)
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  
-  // Use our custom logger
-  const logger = app.get(LoggingService);
+
+  // Use our custom logger (resolve() vì LoggingService có scope TRANSIENT)
+  const logger = await app.resolve(LoggingService);
   app.useLogger(logger);
 
   // Bật CORS để frontend có thể gọi API

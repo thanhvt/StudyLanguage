@@ -86,9 +86,8 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
     setIsAiSpeaking(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/text-to-speech', {
+      const response = await api('/ai/text-to-speech', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: line.text,
           voice: 'nova',
@@ -162,7 +161,7 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const transcribeRes = await fetch('http://localhost:3001/api/ai/transcribe', {
+      const transcribeRes = await api('/ai/transcribe', {
         method: 'POST',
         body: formData,
       });
@@ -174,9 +173,8 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       setConversationHistory(prev => [...prev, { speaker: 'YOU', text: userInput }]);
 
       // 2. AI tiếp tục hội thoại
-      const continueRes = await fetch('http://localhost:3001/api/ai/continue-conversation', {
+      const continueRes = await api('/ai/continue-conversation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationHistory: [...conversationHistory, { speaker: 'YOU', text: userInput }],
           userInput,
@@ -212,9 +210,8 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
     setIsAiSpeaking(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/text-to-speech', {
+      const response = await api('/ai/text-to-speech', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, voice: 'nova' }),
       });
 
