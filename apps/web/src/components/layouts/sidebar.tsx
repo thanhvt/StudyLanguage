@@ -56,10 +56,11 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar - Matching reference site */}
+      {/* Desktop Sidebar - Enhanced với aurora gradient và glow effects */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col border-r border-border bg-muted/50 transition-all duration-300',
+          'hidden lg:flex flex-col transition-all duration-300',
+          'sidebar-enhanced sidebar-glow-border',
           isCollapsed ? 'w-20' : 'w-64'
         )}
       >
@@ -90,16 +91,18 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200',
+                  'menu-item-glow',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    ? 'active-rainbow-glow text-white'
                     : 'hover:bg-accent/50 text-foreground'
                 )}
                 title={isCollapsed ? item.nameVi : undefined}
               >
-                {/* Icon với nền màu (ẩn khi active vì đã có nền xanh) */}
+                {/* Icon với nền màu và hiệu ứng float */}
                 <div
                   className={cn(
                     'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                    'icon-float',
                     isActive 
                       ? 'bg-white/20' 
                       : item.iconBg

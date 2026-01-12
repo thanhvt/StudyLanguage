@@ -409,3 +409,402 @@
   }
 }
 
+/* ============================
+   ENHANCED SIDEBAR EFFECTS
+   🌈 Aurora gradient, glow, và animations
+   ============================ */
+
+/* Sidebar Enhanced - Animated Aurora Background */
+.sidebar-enhanced {
+  position: relative;
+  background: 
+    linear-gradient(135deg, 
+      hsla(220, 25%, 8%, 0.95) 0%,
+      hsla(240, 30%, 12%, 0.9) 50%,
+      hsla(260, 25%, 10%, 0.95) 100%
+    );
+  overflow: hidden;
+}
+
+.sidebar-enhanced::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 0% 0%, hsla(180, 100%, 50%, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, hsla(280, 100%, 60%, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(200, 100%, 50%, 0.08) 0%, transparent 60%);
+  animation: aurora-shift 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Light mode sidebar (không apply cho dark mode) */
+:root:not(.dark) .sidebar-enhanced {
+  background: 
+    linear-gradient(135deg, 
+      hsla(220, 20%, 97%, 0.98) 0%,
+      hsla(200, 30%, 95%, 0.95) 50%,
+      hsla(180, 25%, 96%, 0.98) 100%
+    );
+}
+
+:root:not(.dark) .sidebar-enhanced::before {
+  background: 
+    radial-gradient(ellipse at 0% 0%, hsla(152, 80%, 50%, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, hsla(200, 90%, 60%, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(280, 70%, 60%, 0.06) 0%, transparent 60%);
+}
+
+@keyframes aurora-shift {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5%);
+  }
+}
+
+/* Sidebar Glow Border - Viền phát sáng */
+.sidebar-glow-border {
+  border-right: 1px solid transparent;
+  background-image: 
+    linear-gradient(var(--background), var(--background)),
+    linear-gradient(180deg, 
+      hsla(180, 100%, 50%, 0.5) 0%,
+      hsla(200, 100%, 60%, 0.3) 25%,
+      hsla(280, 100%, 60%, 0.4) 50%,
+      hsla(320, 100%, 50%, 0.3) 75%,
+      hsla(152, 100%, 50%, 0.5) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: border-glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes border-glow-pulse {
+  0%, 100% {
+    box-shadow: 2px 0 20px hsla(180, 100%, 50%, 0.2);
+  }
+  33% {
+    box-shadow: 2px 0 25px hsla(280, 100%, 60%, 0.25);
+  }
+  66% {
+    box-shadow: 2px 0 20px hsla(152, 100%, 50%, 0.2);
+  }
+}
+
+/* Menu Item Glow - Hover effect */
+.menu-item-glow {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-item-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    hsla(180, 100%, 50%, 0.1) 0%,
+    hsla(200, 100%, 60%, 0.1) 50%,
+    hsla(280, 100%, 60%, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.menu-item-glow:hover::before {
+  opacity: 1;
+}
+
+.menu-item-glow:hover {
+  transform: translateX(4px);
+  box-shadow: 
+    0 0 20px hsla(180, 100%, 50%, 0.15),
+    inset 0 0 15px hsla(200, 100%, 60%, 0.1);
+}
+
+/* Active Rainbow Glow - Trạng thái active lung linh */
+.active-rainbow-glow {
+  position: relative;
+  background: linear-gradient(135deg, 
+    hsl(152, 76%, 40%) 0%,
+    hsl(180, 70%, 45%) 100%
+  ) !important;
+  box-shadow: 
+    0 4px 20px hsla(152, 80%, 45%, 0.4),
+    0 0 30px hsla(180, 100%, 50%, 0.2),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.2);
+  animation: active-glow-pulse 2s ease-in-out infinite;
+}
+
+.active-rainbow-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    hsla(0, 0%, 100%, 0.15) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+@keyframes active-glow-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 20px hsla(152, 80%, 45%, 0.4),
+      0 0 30px hsla(180, 100%, 50%, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 6px 25px hsla(152, 80%, 45%, 0.5),
+      0 0 40px hsla(180, 100%, 50%, 0.3);
+  }
+}
+
+/* Icon Float Animation */
+.icon-float {
+  animation: icon-float-subtle 3s ease-in-out infinite;
+}
+
+@keyframes icon-float-subtle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.05); }
+}
+
+/* ============================
+   ENHANCED RIGHT PANEL EFFECTS
+   🔮 Gradient mesh, glow dividers, neon stats
+   ============================ */
+
+/* Panel Enhanced - Animated Gradient Mesh */
+.panel-enhanced {
+  position: relative;
+  background: 
+    linear-gradient(180deg, 
+      hsla(220, 25%, 8%, 0.95) 0%,
+      hsla(260, 30%, 10%, 0.9) 50%,
+      hsla(280, 25%, 12%, 0.95) 100%
+    );
+  overflow: hidden;
+}
+
+.panel-enhanced::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 100% 0%, hsla(320, 100%, 60%, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, hsla(200, 100%, 50%, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(152, 100%, 50%, 0.06) 0%, transparent 60%);
+  animation: mesh-shift 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Light mode panel (không apply cho dark mode) */
+:root:not(.dark) .panel-enhanced {
+  background: 
+    linear-gradient(180deg, 
+      hsla(220, 20%, 97%, 0.98) 0%,
+      hsla(280, 25%, 97%, 0.95) 50%,
+      hsla(320, 20%, 98%, 0.98) 100%
+    );
+}
+
+:root:not(.dark) .panel-enhanced::before {
+  background: 
+    radial-gradient(ellipse at 100% 0%, hsla(320, 80%, 70%, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, hsla(200, 80%, 60%, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(152, 70%, 50%, 0.04) 0%, transparent 60%);
+}
+
+@keyframes mesh-shift {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* Panel Glow Border - Viền trái phát sáng */
+.panel-glow-border {
+  border-left: 1px solid transparent;
+  background-image: 
+    linear-gradient(var(--background), var(--background)),
+    linear-gradient(180deg, 
+      hsla(320, 100%, 60%, 0.5) 0%,
+      hsla(280, 100%, 60%, 0.3) 25%,
+      hsla(200, 100%, 60%, 0.4) 50%,
+      hsla(180, 100%, 50%, 0.3) 75%,
+      hsla(152, 100%, 50%, 0.5) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: panel-border-glow 4s ease-in-out infinite;
+}
+
+@keyframes panel-border-glow {
+  0%, 100% {
+    box-shadow: -2px 0 20px hsla(320, 100%, 60%, 0.15);
+  }
+  50% {
+    box-shadow: -2px 0 30px hsla(200, 100%, 60%, 0.2);
+  }
+}
+
+/* Glow Divider - Section dividers */
+.glow-divider {
+  position: relative;
+  border-color: transparent !important;
+}
+
+.glow-divider::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    hsla(180, 100%, 50%, 0.5) 20%,
+    hsla(280, 100%, 60%, 0.6) 50%,
+    hsla(320, 100%, 60%, 0.5) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px hsla(280, 100%, 60%, 0.3);
+}
+
+/* Stat Card Neon - Cards với hiệu ứng neon */
+.stat-card-neon {
+  position: relative;
+  background: hsla(220, 20%, 10%, 0.6);
+  border: 1px solid hsla(180, 100%, 50%, 0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.stat-card-neon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 0%, hsla(180, 100%, 50%, 0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card-neon:hover {
+  border-color: hsla(180, 100%, 50%, 0.5);
+  box-shadow: 
+    0 0 20px hsla(180, 100%, 50%, 0.2),
+    inset 0 0 20px hsla(180, 100%, 50%, 0.05);
+  transform: translateY(-2px);
+}
+
+.stat-card-neon:hover::before {
+  opacity: 1;
+}
+
+/* Light mode stat card (không apply cho dark mode) */
+:root:not(.dark) .stat-card-neon {
+  background: hsla(0, 0%, 100%, 0.8);
+  border-color: hsla(152, 80%, 50%, 0.2);
+}
+
+:root:not(.dark) .stat-card-neon::before {
+  background: 
+    radial-gradient(ellipse at 50% 0%, hsla(152, 80%, 50%, 0.1) 0%, transparent 60%);
+}
+
+:root:not(.dark) .stat-card-neon:hover {
+  border-color: hsla(152, 80%, 50%, 0.5);
+  box-shadow: 
+    0 0 20px hsla(152, 80%, 50%, 0.15),
+    inset 0 0 15px hsla(152, 80%, 50%, 0.03);
+}
+
+/* Avatar Glow Ring */
+.avatar-glow {
+  position: relative;
+  box-shadow: 
+    0 0 0 3px hsla(152, 80%, 50%, 0.3),
+    0 0 20px hsla(152, 80%, 50%, 0.2);
+  animation: avatar-ring-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes avatar-ring-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 3px hsla(152, 80%, 50%, 0.3),
+      0 0 20px hsla(152, 80%, 50%, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 4px hsla(180, 100%, 50%, 0.4),
+      0 0 30px hsla(180, 100%, 50%, 0.3);
+  }
+}
+
+/* Section Title Glow */
+.section-title-glow {
+  text-shadow: 0 0 10px hsla(180, 100%, 50%, 0.3);
+  background: linear-gradient(90deg, 
+    hsl(var(--foreground)) 0%,
+    hsla(180, 80%, 60%, 0.9) 50%,
+    hsl(var(--foreground)) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: title-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes title-shimmer {
+  0%, 100% { background-position: -100% 0; }
+  50% { background-position: 200% 0; }
+}
+
+/* Tip Card Glow */
+.tip-card-glow {
+  position: relative;
+  background: 
+    linear-gradient(135deg, 
+      hsla(45, 100%, 50%, 0.08) 0%,
+      hsla(35, 100%, 55%, 0.05) 100%
+    );
+  border: 1px solid hsla(45, 100%, 50%, 0.2);
+  transition: all 0.3s ease;
+}
+
+.tip-card-glow:hover {
+  border-color: hsla(45, 100%, 50%, 0.4);
+  box-shadow: 0 0 20px hsla(45, 100%, 50%, 0.15);
+}
+
+/* Settings Section Glow */
+.settings-section-glow {
+  background: 
+    linear-gradient(135deg, 
+      hsla(220, 50%, 50%, 0.05) 0%,
+      hsla(280, 50%, 50%, 0.03) 100%
+    );
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.settings-section-glow:hover {
+  background: 
+    linear-gradient(135deg, 
+      hsla(220, 50%, 50%, 0.08) 0%,
+      hsla(280, 50%, 50%, 0.05) 100%
+    );
+}
+

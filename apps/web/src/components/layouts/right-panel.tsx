@@ -24,18 +24,18 @@ export function RightPanel() {
   };
 
   return (
-    <aside className="hidden xl:flex w-80 border-l border-border bg-muted/50 flex-col">
+    <aside className="hidden xl:flex w-80 flex-col panel-enhanced panel-glow-border">
       {/* User Info Section */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border glow-divider relative z-10">
         {loading ? (
           <div className="text-center text-muted-foreground py-4">
             {t('auth.loading')}
           </div>
         ) : user ? (
           <div className="space-y-3">
-            {/* Avatar & Info */}
+            {/* Avatar & Info với glow effect */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md avatar-glow">
                 {user.email?.[0].toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
@@ -60,9 +60,9 @@ export function RightPanel() {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Guest Avatar */}
+            {/* Guest Avatar với subtle glow */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center avatar-glow">
                 <User className="w-6 h-6 text-muted-foreground" />
               </div>
               <div>
@@ -100,8 +100,8 @@ export function RightPanel() {
         )}
       </div>
 
-      {/* Settings Section */}
-      <div className="p-4 space-y-4 border-b border-border">
+      {/* Settings Section với glow divider */}
+      <div className="p-4 space-y-4 border-b border-border glow-divider relative z-10 settings-section-glow">
         {/* Interface Settings Header */}
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           ⚙️ Giao diện
@@ -114,16 +114,16 @@ export function RightPanel() {
         </div>
       </div>
 
-      {/* Language Section */}
-      <div className="p-4 border-b border-border">
+      {/* Language Section với glow divider */}
+      <div className="p-4 border-b border-border glow-divider relative z-10">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
           🌍 Ngôn ngữ
         </h3>
         <LanguageSwitcher />
       </div>
 
-      {/* Tips Section */}
-      <div className="p-4 border-b border-border">
+      {/* Tips Section với glow border */}
+      <div className="p-4 border-b border-border glow-divider relative z-10 tip-card-glow rounded-xl mx-2 my-2">
         <div className="flex items-center gap-2 mb-2">
           <Lightbulb className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">Mẹo học tập</h3>
@@ -141,8 +141,8 @@ export function RightPanel() {
           📊 Bài học
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          {/* Lessons Counter */}
-          <div className="bg-background rounded-xl p-3 text-center border border-border">
+          {/* Lessons Counter với neon effect */}
+          <div className="rounded-xl p-3 text-center stat-card-neon">
             <div className="flex items-center justify-center gap-1 mb-1">
               <BookOpen className="w-4 h-4 text-primary" />
             </div>
@@ -150,8 +150,8 @@ export function RightPanel() {
             <p className="text-xs text-muted-foreground">Bài học</p>
           </div>
           
-          {/* Minutes Counter */}
-          <div className="bg-background rounded-xl p-3 text-center border border-border">
+          {/* Minutes Counter với neon effect */}
+          <div className="rounded-xl p-3 text-center stat-card-neon">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Clock className="w-4 h-4 text-primary" />
             </div>
