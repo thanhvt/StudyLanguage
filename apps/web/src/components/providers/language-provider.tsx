@@ -18,9 +18,11 @@ const DICTIONARY: Translations = {
     vi: 'Luyện 4 kỹ năng: Nghe, Nói, Đọc, Viết với trợ lý AI thông minh', 
     en: 'Master 4 skills: Listening, Speaking, Reading, Writing with Smart AI' 
   },
-  'auth.login': { vi: 'Đăng nhập với Google', en: 'Login with Google' },
+  'auth.login': { vi: 'Đăng nhập', en: 'Login' },
+  'auth.loginWithGoogle': { vi: 'Đăng nhập với Google', en: 'Login with Google' },
   'auth.logout': { vi: 'Đăng xuất', en: 'Logout' },
   'auth.loading': { vi: 'Đang tải...', en: 'Loading...' },
+  'auth.notLoggedIn': { vi: 'Bạn chưa đăng nhập', en: 'Not logged in' },
   'settings.theme': { vi: 'Cài đặt giao diện', en: 'Interface Settings' },
   'settings.language': { vi: 'Ngôn ngữ', en: 'Language' },
   'footer.copyright': { vi: 'AI Learning © 2026 - Powered by AI ✨', en: 'AI Learning © 2026 - Powered by AI ✨' },
@@ -49,11 +51,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const savedLang = localStorage.getItem('app-language') as Language;
     if (savedLang && (savedLang === 'vi' || savedLang === 'en')) {
       setLanguageState(savedLang);
     }
+    setMounted(true);
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -68,7 +70,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
+      <div className={!mounted ? "invisible" : ""}>
+        {children}
+      </div>
     </LanguageContext.Provider>
   );
 }
