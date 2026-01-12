@@ -5,14 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ListeningPlayer } from '@/components/listening-player';
+import { InteractiveListening } from '@/components/interactive-listening';
 
 /**
  * Listening Page - Module Luyện Nghe
  *
  * Mục đích: UI cho tính năng luyện nghe hội thoại
  * Flow: Chọn topic → AI sinh hội thoại → Nghe audio + xem transcript
+ * NEW: Interactive mode - User tham gia vào hội thoại
  */
 export default function ListeningPage() {
+  // Mode state
+  const [mode, setMode] = useState<'passive' | 'interactive'>('passive');
+
   // Form state
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(5);
@@ -23,6 +28,9 @@ export default function ListeningPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [conversation, setConversation] = useState<{ speaker: string; text: string }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Interactive mode state
+  const [showInteractive, setShowInteractive] = useState(false);
 
   /**
    * Gọi API sinh hội thoại
@@ -74,8 +82,39 @@ export default function ListeningPage() {
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">🎧 Luyện Nghe - Smart Conversation</h1>
 
-      {/* Form nhập thông tin */}
-      {!conversation && (
+      {/* Mode Toggle */}
+      {!conversation && !showInteractive && (
+        <div className="flex gap-3 mb-6">
+          <Button
+            variant={mode === 'passive' ? 'default' : 'outline'}
+            onClick={() => setMode('passive')}
+          >
+            🎧 Nghe thụ động
+          </Button>
+          <Button
+            variant={mode === 'interactive' ? 'default' : 'outline'}
+            onClick={() => setMode('interactive')}
+          >
+            🎤 Tham gia hội thoại
+          </Button>
+        </div>
+      )}
+
+      {/* Interactive Listening Mode */}
+      {showInteractive && (
+        <Card className="p-6">
+          <InteractiveListening 
+            topic={topic} 
+            onBack={() => {
+              setShowInteractive(false);
+              setTopic('');
+            }} 
+          />
+        </Card>
+      )}
+
+      {/* Form nhập thông tin - Passive mode */}
+      {!conversation && !showInteractive && mode === 'passive' && (
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Tạo hội thoại mới</h2>
           
@@ -136,6 +175,35 @@ export default function ListeningPage() {
           >
             {isGenerating ? '⏳ Đang tạo...' : '✨ Tạo hội thoại'}
           </Button>
+        </Card>
+      )}
+
+      {/* Form nhập thông tin - Interactive mode */}
+      {!conversation && !showInteractive && mode === 'interactive' && (
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">🎤 Tham gia hội thoại</h2>
+          <p className="text-muted-foreground mb-4">
+            Chọn chủ đề và AI sẽ tạo một cuộc hội thoại để bạn tham gia. Bạn sẽ được lắng nghe và sau đó nói các câu của mình!
+          </p>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Chủ đề *</label>
+              <Input
+                placeholder="VD: Đặt phòng khách sạn, Mua cà phê, Hỏi đường..."
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              />
+            </div>
+
+            <Button
+              onClick={() => setShowInteractive(true)}
+              disabled={!topic.trim()}
+              className="w-full md:w-auto"
+            >
+              🚀 Bắt đầu tham gia
+            </Button>
+          </div>
         </Card>
       )}
 

@@ -44,6 +44,23 @@ class GenerateConversationAudioDto {
 }
 
 /**
+ * DTO cho request sinh hội thoại tương tác
+ */
+class GenerateInteractiveConversationDto {
+  topic: string;
+  contextDescription?: string;
+}
+
+/**
+ * DTO cho request tiếp tục hội thoại
+ */
+class ContinueConversationDto {
+  conversationHistory: { speaker: string; text: string }[];
+  userInput: string;
+  topic: string;
+}
+
+/**
  * AI Controller - API endpoints cho AI features
  *
  * Mục đích: Expose các AI services qua REST API
@@ -155,5 +172,41 @@ export class AiController {
       timestamps: result.timestamps,
     };
   }
+
+  /**
+   * POST /api/ai/generate-interactive-conversation
+   *
+   * Mục đích: Sinh hội thoại tương tác với [YOUR TURN] markers
+   * Body: { topic, contextDescription? }
+   * Trả về: { scenario, script: [{ speaker, text, isUserTurn }] }
+   */
+  @Post('generate-interactive-conversation')
+  @HttpCode(HttpStatus.OK)
+  async generateInteractiveConversation(
+    @Body() dto: GenerateInteractiveConversationDto,
+  ) {
+    return this.aiService.generateInteractiveConversation(
+      dto.topic,
+      dto.contextDescription,
+    );
+  }
+
+  /**
+   * POST /api/ai/continue-conversation
+   *
+   * Mục đích: AI tiếp tục hội thoại dựa trên user input
+   * Body: { conversationHistory, userInput, topic }
+   * Trả về: { response, shouldEnd }
+   */
+  @Post('continue-conversation')
+  @HttpCode(HttpStatus.OK)
+  async continueConversation(@Body() dto: ContinueConversationDto) {
+    return this.aiService.continueConversation(
+      dto.conversationHistory,
+      dto.userInput,
+      dto.topic,
+    );
+  }
 }
+
 

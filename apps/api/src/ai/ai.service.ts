@@ -245,6 +245,112 @@ Chỉ trả về JSON.
   }
 
   /**
+   * Sinh hội thoại tương tác có chỗ trống cho user
+   *
+   * Mục đích: Tạo hội thoại với [YOUR_TURN] markers để user tham gia
+   * Tham số:
+   *   - topic: Chủ đề hội thoại
+   *   - contextDescription: Mô tả ngữ cảnh cuộc hội thoại
+   * Trả về: Script với YOUR_TURN markers
+   */
+  async generateInteractiveConversation(
+    topic: string,
+    contextDescription?: string,
+  ): Promise<{
+    script: { speaker: string; text: string; isUserTurn: boolean }[];
+    scenario: string;
+  }> {
+    this.logger.log(`Đang sinh hội thoại tương tác về: ${topic}`);
+
+    const contextInstr = contextDescription
+      ? `Ngữ cảnh: ${contextDescription}`
+      : '';
+
+    const prompt = `
+Tạo một cuộc hội thoại tiếng Anh TƯƠNG TÁC về chủ đề "${topic}".
+${contextInstr}
+
+Yêu cầu:
+- 2 người tham gia: AI Partner và YOU (người học)
+- Có 3-4 chỗ trống để người học tham gia nói (đánh dấu speaker = "YOU")
+- Với mỗi phần của YOU, gợi ý nội dung nên nói trong ngoặc vuông
+- Hội thoại tự nhiên, phù hợp giao tiếp hàng ngày
+
+Trả về JSON:
+{
+  "scenario": "Mô tả ngắn ngữ cảnh (VD: Bạn đang ở quầy check-in khách sạn)",
+  "script": [
+    { "speaker": "AI Partner", "text": "Hello! Welcome to our hotel. How can I help you?", "isUserTurn": false },
+    { "speaker": "YOU", "text": "[Chào và nói bạn muốn đặt phòng]", "isUserTurn": true },
+    { "speaker": "AI Partner", "text": "Sure! How many nights would you like to stay?", "isUserTurn": false }
+  ]
+}
+
+Chỉ trả về JSON.
+`;
+
+    const result = await this.generateText(prompt);
+
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      this.logger.error('Lỗi parse interactive conversation:', error);
+      throw new Error('Không thể parse kết quả hội thoại tương tác');
+    }
+  }
+
+  /**
+   * Tiếp tục hội thoại dựa trên input của user
+   *
+   * Mục đích: AI phản hồi tự nhiên dựa trên câu user vừa nói
+   * Tham số:
+   *   - conversationHistory: Lịch sử hội thoại đến thời điểm hiện tại
+   *   - userInput: Câu user vừa nói
+   *   - topic: Chủ đề để giữ context
+   * Trả về: Câu phản hồi tiếp theo của AI
+   */
+  async continueConversation(
+    conversationHistory: { speaker: string; text: string }[],
+    userInput: string,
+    topic: string,
+  ): Promise<{ response: string; shouldEnd: boolean }> {
+    this.logger.log('Đang tiếp tục hội thoại...');
+
+    const historyText = conversationHistory
+      .map((line) => `${line.speaker}: ${line.text}`)
+      .join('\n');
+
+    const prompt = `
+Bạn đang trong cuộc hội thoại tiếng Anh về "${topic}".
+
+Lịch sử:
+${historyText}
+
+User vừa nói: "${userInput}"
+
+Hãy phản hồi tự nhiên với 1-2 câu. Nếu hội thoại đã đến hồi kết tự nhiên, set shouldEnd = true.
+
+Trả về JSON:
+{ "response": "Câu phản hồi của bạn", "shouldEnd": false }
+
+Chỉ trả về JSON.
+`;
+
+    const result = await this.generateText(prompt);
+
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      // Fallback nếu không parse được
+      return { response: result.trim(), shouldEnd: false };
+    }
+  }
+
+  /**
    * Sinh audio cho toàn bộ hội thoại với nhiều giọng
    *
    * Mục đích: Tạo audio đầy đủ cho Listening module
