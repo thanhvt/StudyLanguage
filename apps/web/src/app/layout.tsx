@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { MusicProvider } from "@/components/providers/music-provider";
 import { MusicControlBar } from "@/components/music-control-bar";
+import { UserActionLogger } from "@/components/providers/user-action-logger";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <MusicProvider>
+              <UserActionLogger />
               {children}
               <MusicControlBar />
             </MusicProvider>

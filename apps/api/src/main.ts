@@ -1,8 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+import { LoggingService } from './common/logging/logging.service';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Buffer logs during startup until logger is available (optional but good)
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  
+  // Use our custom logger
+  const logger = app.get(LoggingService);
+  app.useLogger(logger);
 
   // Bật CORS để frontend có thể gọi API
   app.enableCors({

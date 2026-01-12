@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { api } from '@/lib/api';
 
 interface ScriptLine {
   speaker: string;
@@ -52,9 +53,9 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-interactive-conversation', {
+      // Sử dụng API client có xác thực
+      const response = await api('/ai/generate-interactive-conversation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic }),
       });
 
