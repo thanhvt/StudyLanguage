@@ -130,8 +130,9 @@ Chỉ trả về JSON, không có text khác.
     this.logger.log('Đang transcribe audio bằng Whisper...');
 
     try {
-      // Tạo File object từ Buffer
-      const audioFile = new File([audioBuffer], 'audio.webm', {
+      // Chuyển Buffer thành Uint8Array để tạo File
+      const uint8Array = new Uint8Array(audioBuffer);
+      const audioFile = new File([uint8Array], 'audio.webm', {
         type: 'audio/webm',
       });
 

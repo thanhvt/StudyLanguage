@@ -1,1 +1,67 @@
-node_modules
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.turbo/
+out/
+
+# Environment variables (CRITICAL - NEVER commit!)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Expo / React Native
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Native builds
+android/app/build/
+ios/Pods/
+ios/build/
+
+# Misc
+*.tsbuildinfo
+.cache/
+tmp/
+temp/
+
+# Supabase
+supabase/.temp/
+
+# Lock files (keep only pnpm-lock.yaml at root)
+apps/*/pnpm-lock.yaml
+apps/*/package-lock.json
+apps/*/yarn.lock
+packages/*/pnpm-lock.yaml
