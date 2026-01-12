@@ -80,10 +80,10 @@
 > **DEPENDS ON:** Task 0.3 (AI APIs), Task 1.1 (Auth)
 - [x] UI Form: Chọn Topic, Duration, Keywords, Number of speakers
 - [x] Backend: GPT sinh kịch bản hội thoại
-- [ ] Backend: TTS sinh audio từ kịch bản (nhiều giọng cho nhiều người)
-- [ ] Upload audio lên Supabase Storage
-- [ ] UI Audio Player: Play/Pause, Seek, Volume
-- [ ] UI Transcript sync (Karaoke highlight)
+- [x] Backend: TTS sinh audio từ kịch bản (nhiều giọng cho nhiều người)
+- [x] Upload audio lên Supabase Storage (StorageService ready)
+- [x] UI Audio Player: Play/Pause, Seek, Volume
+- [x] UI Transcript sync (Karaoke highlight)
 
 #### Task 1.3: Speaking Module (MVP) ✅
 > **DEPENDS ON:** Task 0.3 (AI APIs), Task 1.1 (Auth)
