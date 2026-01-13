@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 
@@ -27,10 +31,7 @@ export class AiService {
    *   - systemPrompt: Context/vai trò cho AI (optional)
    * Trả về: Văn bản được sinh ra
    */
-  async generateText(
-    prompt: string,
-    systemPrompt?: string,
-  ): Promise<string> {
+  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
     this.logger.log('Đang gọi GPT để sinh văn bản...');
 
     try {
@@ -68,10 +69,10 @@ export class AiService {
    *   - numSpeakers: Số người tham gia (mặc định 2)
    *   - keywords: Từ khóa cần có trong hội thoại (optional)
    * Trả về: JSON chứa script hội thoại
-   * 
+   *
    * Tính toán số từ:
-   *   - Tốc độ đọc trung bình: 130 từ/phút (conversational pace)
-   *   - 5 phút ≈ 650 từ, 10 phút ≈ 1300 từ, 15 phút ≈ 1950 từ
+   *   - Tốc độ TTS: khoảng 150-160 từ/phút
+   *   - 5 phút ≈ 800 từ, 10 phút ≈ 1600 từ, 15 phút ≈ 2400 từ
    */
   async generateConversation(
     topic: string,
@@ -82,10 +83,12 @@ export class AiService {
     this.logger.log(`Đang sinh hội thoại về chủ đề: ${topic}`);
 
     // Tính toán số từ mục tiêu dựa trên thời lượng
-    // Tốc độ đọc trung bình khi nghe tiếng Anh: 130 từ/phút
-    const WORDS_PER_MINUTE = 130;
+    // TTS đọc chậm hơn người thật: ~160 từ/phút
+    const WORDS_PER_MINUTE = 160;
     const targetWordCount = durationMinutes * WORDS_PER_MINUTE;
-    const minExchanges = Math.max(8, durationMinutes * 3); // Ít nhất 3 lượt/phút
+    const minWordCount = Math.floor(targetWordCount * 0.95); // Ít nhất 95%
+    const minExchanges = Math.max(10, durationMinutes * 4); // Ít nhất 4 lượt/phút
+    const avgWordsPerTurn = Math.ceil(targetWordCount / minExchanges);
 
     const keywordsInstruction = keywords
       ? `Hãy sử dụng các từ khóa sau trong hội thoại: ${keywords}`
@@ -93,15 +96,23 @@ export class AiService {
 
     const prompt = `
 Tạo một cuộc hội thoại tiếng Anh tự nhiên về chủ đề "${topic}".
+
+=== YÊU CẦU BẮT BUỘC ===
 - Số người tham gia: ${numSpeakers} (đặt tên là Person A, Person B, v.v.)
-- Độ dài: khoảng ${durationMinutes} phút (tương đương ${targetWordCount} từ)
-- QUAN TRỌNG: Hội thoại PHẢI có tổng cộng ít nhất ${targetWordCount} từ để đảm bảo đủ thời lượng khi phát audio
+- Thời lượng mục tiêu: ${durationMinutes} phút
+- TỔNG SỐ TỪ TỐI THIỂU: ${minWordCount} từ (QUAN TRỌNG - đây là yêu cầu bắt buộc!)
 - Số lượt thoại: ít nhất ${minExchanges} lượt trao đổi
-- Mỗi câu nói nên dài từ 2-4 câu, có chi tiết và ngữ cảnh rõ ràng
+- Mỗi lượt nói trung bình: ${avgWordsPerTurn} từ (2-4 câu với chi tiết đầy đủ)
 - Mức độ: Giao tiếp hàng ngày, dễ hiểu
 ${keywordsInstruction}
 
-Trả về JSON theo format:
+=== GỢI Ý ĐỂ ĐẠT ĐỦ THỜI LƯỢNG ===
+- Thêm chi tiết mô tả, cảm xúc, lý do trong mỗi câu nói
+- Sử dụng các câu hỏi follow-up để mở rộng hội thoại
+- Thêm các tình huống bất ngờ hoặc thay đổi trong cuộc trò chuyện
+- Mỗi người nói nên elaborate, không chỉ trả lời ngắn gọn
+
+=== FORMAT TRẢ VỀ ===
 {
   "script": [
     { "speaker": "Person A", "text": "..." },
@@ -109,7 +120,7 @@ Trả về JSON theo format:
   ]
 }
 
-Chỉ trả về JSON, không có text khác.
+CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
 `;
 
     const result = await this.generateText(prompt);
@@ -120,7 +131,20 @@ Chỉ trả về JSON, không có text khác.
       if (!jsonMatch) {
         throw new Error('Không tìm thấy JSON trong response');
       }
-      return JSON.parse(jsonMatch[0]);
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Log số từ thực tế để debug
+      const actualWordCount = parsed.script.reduce(
+        (sum: number, line: { text: string }) =>
+          sum + line.text.split(/\s+/).length,
+        0,
+      );
+      this.logger.log(
+        `Hội thoại sinh được: ${actualWordCount} từ / ${targetWordCount} mục tiêu`,
+      );
+
+      return parsed;
     } catch (error) {
       this.logger.error('Lỗi parse JSON:', error);
       throw new Error('Không thể parse kết quả hội thoại');
@@ -377,21 +401,30 @@ Chỉ trả về JSON.
     audioBuffer: Buffer;
     timestamps: { startTime: number; endTime: number }[];
   }> {
-    this.logger.log(`Đang sinh audio cho ${conversation.length} câu hội thoại...`);
+    this.logger.log(
+      `Đang sinh audio cho ${conversation.length} câu hội thoại...`,
+    );
 
     const audioBuffers: Buffer[] = [];
     const timestamps: { startTime: number; endTime: number }[] = [];
     let currentTime = 0;
 
     // Map speakers to voices
-    const speakerVoices: Record<string, 'nova' | 'onyx' | 'alloy' | 'shimmer'> = {};
-    const availableVoices: ('nova' | 'onyx' | 'alloy' | 'shimmer')[] = ['nova', 'onyx', 'alloy', 'shimmer'];
+    const speakerVoices: Record<string, 'nova' | 'onyx' | 'alloy' | 'shimmer'> =
+      {};
+    const availableVoices: ('nova' | 'onyx' | 'alloy' | 'shimmer')[] = [
+      'nova',
+      'onyx',
+      'alloy',
+      'shimmer',
+    ];
     let voiceIndex = 0;
 
     for (const line of conversation) {
       // Gán giọng cho speaker nếu chưa có
       if (!speakerVoices[line.speaker]) {
-        speakerVoices[line.speaker] = availableVoices[voiceIndex % availableVoices.length];
+        speakerVoices[line.speaker] =
+          availableVoices[voiceIndex % availableVoices.length];
         voiceIndex++;
       }
 
@@ -414,9 +447,14 @@ Chỉ trả về JSON.
 
         currentTime += duration + 0.3; // 0.3s gap between lines
 
-        this.logger.log(`Sinh audio line ${audioBuffers.length}/${conversation.length} - voice: ${voice}`);
+        this.logger.log(
+          `Sinh audio line ${audioBuffers.length}/${conversation.length} - voice: ${voice}`,
+        );
       } catch (error) {
-        this.logger.error(`Lỗi sinh audio line ${audioBuffers.length + 1}:`, error);
+        this.logger.error(
+          `Lỗi sinh audio line ${audioBuffers.length + 1}:`,
+          error,
+        );
         throw error;
       }
     }
@@ -424,7 +462,9 @@ Chỉ trả về JSON.
     // Concatenate all audio buffers
     const combinedBuffer = Buffer.concat(audioBuffers);
 
-    this.logger.log(`Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`);
+    this.logger.log(
+      `Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`,
+    );
 
     return {
       audioBuffer: combinedBuffer,
@@ -432,4 +472,3 @@ Chỉ trả về JSON.
     };
   }
 }
-

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useListenLater } from '@/hooks/use-listen-later';
+import { useListenLaterContext } from '@/components/providers/listen-later-provider';
 import { ConversationLine } from '@/types/listening-types';
 
 /**
@@ -18,6 +18,7 @@ import { ConversationLine } from '@/types/listening-types';
  *   - category: Category (it/daily/personal)
  *   - subCategory: SubCategory name
  *   - onSuccess: Callback khi thêm thành công
+ *   - variant: 'default' hiển thị text, 'icon' chỉ icon
  * Khi nào sử dụng: Trong Listening page sau khi tạo hội thoại
  */
 interface ListenLaterButtonProps {
@@ -41,7 +42,8 @@ export function ListenLaterButton({
   onSuccess,
   variant = 'default',
 }: ListenLaterButtonProps) {
-  const { addToListenLater, isAdding } = useListenLater();
+  // Dùng context để share state
+  const { addToListenLater, isAdding } = useListenLaterContext();
   const [isAdded, setIsAdded] = useState(false);
 
   /**
@@ -68,6 +70,7 @@ export function ListenLaterButton({
     }
   };
 
+  // Icon variant - chỉ icon, hiển thị cả trên mobile và desktop khi cần compact
   if (variant === 'icon') {
     return (
       <Button
@@ -92,9 +95,11 @@ export function ListenLaterButton({
     );
   }
 
+  // Default variant - có text, responsive trên cả mobile và web
   return (
     <Button
       variant={isAdded ? 'default' : 'outline'}
+      size="sm"
       onClick={handleClick}
       disabled={isAdding}
       className={`
@@ -105,17 +110,17 @@ export function ListenLaterButton({
       {isAdding ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
-          Đang lưu...
+          <span>Đang lưu...</span>
         </>
       ) : isAdded ? (
         <>
           <BookmarkCheck className="w-4 h-4" />
-          Đã lưu!
+          <span>Đã lưu!</span>
         </>
       ) : (
         <>
           <Bookmark className="w-4 h-4" />
-          Nghe Sau
+          <span>Nghe Sau</span>
         </>
       )}
     </Button>

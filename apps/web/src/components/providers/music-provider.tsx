@@ -3,31 +3,48 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, ReactNode } from 'react';
 
 /**
- * Danh sách nhạc nền Lofi miễn phí
- * Nguồn: Các track free-to-use từ internet
+ * Danh sách nhạc nền - Nhạc instrumental/ballad/country nhẹ nhàng
+ * Nguồn: Pixabay - Free to use, no attribution required
+ * 
+ * Mục đích: Background music thư giãn khi học tiếng Anh
  */
-const LOFI_TRACKS = [
+const RELAXING_TRACKS = [
   {
-    id: 'lofi-1',
-    name: 'Chill Study Beats',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Reliable test source
+    id: 'piano-1',
+    name: 'Peaceful Piano Dreams',
+    // Ambient piano - nhẹ nhàng, thư giãn
+    url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
   },
   {
-    id: 'lofi-2', 
-    name: 'Rainy Day Coffee',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    id: 'acoustic-1',
+    name: 'Gentle Acoustic Morning',
+    // Acoustic guitar nhẹ nhàng
+    url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
   },
   {
-    id: 'lofi-3',
-    name: 'Late Night Vibes',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    id: 'ambient-1',
+    name: 'Calm Study Vibes',
+    // Ambient chill
+    url: 'https://cdn.pixabay.com/download/audio/2022/02/22/audio_d1718ab41b.mp3',
+  },
+  {
+    id: 'piano-2',
+    name: 'Soft Piano Meditation',
+    // Piano meditation
+    url: 'https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02f9.mp3',
+  },
+  {
+    id: 'nature-1',
+    name: 'Forest Rain Ambience',
+    // Nature sounds với nhạc nhẹ
+    url: 'https://cdn.pixabay.com/download/audio/2022/03/24/audio_4a7c509a60.mp3',
   },
 ];
 
 interface MusicContextType {
   isPlaying: boolean;
   volume: number;
-  currentTrack: typeof LOFI_TRACKS[0] | null;
+  currentTrack: typeof RELAXING_TRACKS[0] | null;
   isDucking: boolean;
   play: () => void;
   pause: () => void;
@@ -37,6 +54,7 @@ interface MusicContextType {
   prevTrack: () => void;
   enableDucking: () => void;
   disableDucking: () => void;
+  shuffleTrack: () => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -59,7 +77,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Volume trước khi ducking (để restore)
   const volumeBeforeDucking = useRef(0.3);
   
-  const currentTrack = LOFI_TRACKS[trackIndex];
+  const currentTrack = RELAXING_TRACKS[trackIndex];
 
   // Load preferences sau khi mount
   useEffect(() => {
@@ -72,7 +90,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     
     if (savedVolume) setVolumeState(parseFloat(savedVolume));
     if (savedTrack) {
-      const idx = LOFI_TRACKS.findIndex(t => t.id === savedTrack);
+      const idx = RELAXING_TRACKS.findIndex(t => t.id === savedTrack);
       if (idx >= 0) setTrackIndex(idx);
     }
     if (savedPlaying === 'true') {
@@ -88,7 +106,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // Tạo audio element
     const audio = new Audio(currentTrack.url);
     audio.loop = true;
-    audio.volume = volume;
+    audio.volume = isDucking ? volume * 0.2 : volume;
     audioRef.current = audio;
 
     // Auto-play nếu đang playing
@@ -105,10 +123,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, [mounted, currentTrack.url]);
 
-  // Sync volume với audio
+  // Sync volume với audio - SỬA LỖI: Update audio.volume trực tiếp
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = isDucking ? volume * 0.2 : volume;
+      const actualVolume = isDucking ? volume * 0.2 : volume;
+      audioRef.current.volume = actualVolume;
     }
   }, [volume, isDucking]);
 
@@ -138,21 +157,39 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setIsPlaying(prev => !prev);
   }, []);
 
+  // SỬA LỖI: Update volume trực tiếp lên audio element
   const setVolume = useCallback((vol: number) => {
     setVolumeState(vol);
+    // Update trực tiếp lên audio element để phản hồi ngay lập tức
+    if (audioRef.current) {
+      audioRef.current.volume = vol;
+    }
     localStorage.setItem('music-volume', String(vol));
   }, []);
 
   const nextTrack = useCallback(() => {
-    const newIndex = (trackIndex + 1) % LOFI_TRACKS.length;
+    const newIndex = (trackIndex + 1) % RELAXING_TRACKS.length;
     setTrackIndex(newIndex);
-    localStorage.setItem('music-track', LOFI_TRACKS[newIndex].id);
+    localStorage.setItem('music-track', RELAXING_TRACKS[newIndex].id);
   }, [trackIndex]);
 
   const prevTrack = useCallback(() => {
-    const newIndex = (trackIndex - 1 + LOFI_TRACKS.length) % LOFI_TRACKS.length;
+    const newIndex = (trackIndex - 1 + RELAXING_TRACKS.length) % RELAXING_TRACKS.length;
     setTrackIndex(newIndex);
-    localStorage.setItem('music-track', LOFI_TRACKS[newIndex].id);
+    localStorage.setItem('music-track', RELAXING_TRACKS[newIndex].id);
+  }, [trackIndex]);
+
+  /**
+   * Shuffle - Chọn ngẫu nhiên track mới
+   */
+  const shuffleTrack = useCallback(() => {
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * RELAXING_TRACKS.length);
+    } while (newIndex === trackIndex && RELAXING_TRACKS.length > 1);
+    
+    setTrackIndex(newIndex);
+    localStorage.setItem('music-track', RELAXING_TRACKS[newIndex].id);
   }, [trackIndex]);
 
   /**
@@ -187,6 +224,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     prevTrack,
     enableDucking,
     disableDucking,
+    shuffleTrack,
   };
 
   return (
@@ -215,6 +253,7 @@ export function useMusic(): MusicContextType {
       prevTrack: () => {},
       enableDucking: () => {},
       disableDucking: () => {},
+      shuffleTrack: () => {},
     };
   }
   return context;

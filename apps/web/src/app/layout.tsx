@@ -7,6 +7,7 @@ import { MusicProvider } from "@/components/providers/music-provider";
 import { MusicControlBar } from "@/components/music-control-bar";
 import { LanguageProvider } from "@/components/providers/language-provider";
 import { UserActionLogger } from "@/components/providers/user-action-logger";
+import { ListenLaterProvider } from "@/components/providers/listen-later-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,17 +34,18 @@ export default function RootLayout({
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
-            <MusicProvider>
-              <LanguageProvider>
-                <UserActionLogger />
-                {children}
-                <MusicControlBar />
-              </LanguageProvider>
-            </MusicProvider>
+            <ListenLaterProvider>
+              <MusicProvider>
+                <LanguageProvider>
+                  <UserActionLogger />
+                  {children}
+                  <MusicControlBar />
+                </LanguageProvider>
+              </MusicProvider>
+            </ListenLaterProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-

@@ -22,10 +22,20 @@ async function getAccessToken(): Promise<string | null> {
  */
 async function refreshAndGetToken(): Promise<string | null> {
   const supabase = createClient();
+  
+  // Kiểm tra session hiện tại trước khi refresh
+  // Nếu không có session → user chưa login, không cần spam refresh
+  const { data: { session: currentSession } } = await supabase.auth.getSession();
+  if (!currentSession) {
+    console.debug('[API] Chưa đăng nhập, bỏ qua refresh session');
+    return null;
+  }
+  
   const { data: { session }, error } = await supabase.auth.refreshSession();
   
   if (error) {
-    console.warn('[API] Không thể refresh session:', error.message);
+    // Chỉ log warning nếu có session mà refresh thất bại
+    console.warn('[API] Refresh session thất bại:', error.message);
     return null;
   }
   

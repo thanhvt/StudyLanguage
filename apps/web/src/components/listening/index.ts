@@ -7,3 +7,6 @@ export { ListenLaterDrawer, ListenLaterBadge } from './listen-later-drawer';
 export { PlaylistManager } from './playlist-manager';
 export { AddToPlaylistModal } from './add-to-playlist-modal';
 export { PlaylistPlayer } from './playlist-player';
+
+// Provider export
+export { ListenLaterProvider, useListenLaterContext } from '@/components/providers/listen-later-provider';

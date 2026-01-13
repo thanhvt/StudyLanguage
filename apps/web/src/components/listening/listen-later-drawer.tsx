@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, Play, Trash2, Clock, Users, Loader2, BookmarkX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useListenLater } from '@/hooks/use-listen-later';
+import { useListenLaterContext } from '@/components/providers/listen-later-provider';
 import { ListenLaterItem } from '@/types/listening-types';
 
 /**
@@ -23,9 +23,11 @@ interface ListenLaterDrawerProps {
 }
 
 export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawerProps) {
-  const { items, count, isLoading, removeFromListenLater, clearAll } = useListenLater();
+  // Sử dụng context thay vì hook riêng để share state với Badge
+  const { items, count, isLoading, removeFromListenLater, clearAll } = useListenLaterContext();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
 
   /**
    * Xử lý xóa item
@@ -37,13 +39,21 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
   };
 
   /**
-   * Xử lý xóa tất cả
+   * Xử lý xóa tất cả - với confirm dialog custom
    */
   const handleClearAll = async () => {
-    if (!confirm('Bạn có chắc muốn xóa tất cả?')) return;
     setIsClearing(true);
     await clearAll();
     setIsClearing(false);
+    setShowConfirmClear(false);
+  };
+
+  /**
+   * Xử lý play item - đóng drawer và gọi callback
+   */
+  const handlePlay = (item: ListenLaterItem) => {
+    onPlay?.(item);
+    onClose(); // Đảm bảo đóng drawer sau khi play
   };
 
   /**
@@ -90,7 +100,7 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleClearAll}
+                onClick={() => setShowConfirmClear(true)}
                 disabled={isClearing}
                 className="text-destructive hover:text-destructive"
               >
@@ -106,6 +116,43 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
             </Button>
           </div>
         </div>
+
+        {/* Confirm Clear Dialog */}
+        {showConfirmClear && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <h3 className="font-display text-lg font-bold mb-2">Xác nhận xóa tất cả</h3>
+              <p className="text-muted-foreground text-sm mb-6">
+                Bạn có chắc muốn xóa tất cả {count} bản ghi trong danh sách Nghe Sau? Hành động này không thể hoàn tác.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowConfirmClear(false)}
+                  disabled={isClearing}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleClearAll}
+                  disabled={isClearing}
+                >
+                  {isClearing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Đang xóa...
+                    </>
+                  ) : (
+                    'Xóa tất cả'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 h-[calc(100%-64px)] mobile-scroll">
@@ -127,7 +174,7 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
             items.map((item) => (
               <div
                 key={item.id}
-                className="glass-card glass-card-hover p-4 space-y-3 listen-later-item"
+                className="glass-card glass-card-hover p-4 space-y-3 listen-later-item border border-border rounded-xl"
               >
                 {/* Topic */}
                 <div className="flex items-start justify-between gap-2">
@@ -173,7 +220,7 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
                 <Button
                   size="sm"
                   className="w-full gap-2"
-                  onClick={() => onPlay?.(item)}
+                  onClick={() => handlePlay(item)}
                 >
                   <Play className="w-4 h-4" />
                   Nghe ngay
@@ -189,13 +236,15 @@ export function ListenLaterDrawer({ isOpen, onClose, onPlay }: ListenLaterDrawer
 
 /**
  * ListenLaterBadge - Badge hiển thị số lượng trong header/sidebar
+ * Sử dụng context để đảm bảo count sync với drawer
  */
 interface ListenLaterBadgeProps {
   onClick?: () => void;
 }
 
 export function ListenLaterBadge({ onClick }: ListenLaterBadgeProps) {
-  const { count } = useListenLater();
+  // Dùng context để share state với drawer
+  const { count } = useListenLaterContext();
 
   return (
     <Button

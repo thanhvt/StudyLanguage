@@ -28,7 +28,7 @@ export function MusicControlBar() {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-20 left-4 z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:z-50">
       {/* Collapsed state - chỉ hiện nút play */}
       {!isExpanded ? (
         <div className="flex items-center gap-2">
@@ -36,10 +36,10 @@ export function MusicControlBar() {
             onClick={toggle}
             size="lg"
             className={`
-              w-14 h-14 rounded-full shadow-lg transition-all
+              w-14 h-14 rounded-full shadow-lg transition-all border-2
               ${isPlaying 
-                ? 'bg-primary animate-pulse' 
-                : 'bg-muted hover:bg-primary'
+                ? 'bg-primary border-primary-foreground/30 animate-pulse' 
+                : 'bg-card border-border hover:bg-primary hover:border-primary-foreground/30'
               }
             `}
             title={isPlaying ? 'Tạm dừng nhạc' : 'Phát nhạc nền'}
@@ -47,10 +47,11 @@ export function MusicControlBar() {
             {isPlaying ? '🎵' : '🎶'}
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setIsExpanded(true)}
-            className="rounded-full"
+            className="rounded-full bg-card shadow-md"
+            title="Cài đặt nhạc nền"
           >
             ⚙️
           </Button>

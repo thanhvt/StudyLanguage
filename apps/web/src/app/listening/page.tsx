@@ -241,7 +241,7 @@ export default function ListeningPage() {
               </TabsList>
 
               <TabsContent value="passive">
-                <div className="glass-card p-6 space-y-6">
+                <div className="glass-card p-6 space-y-6 border border-border rounded-2xl">
                   <h2 className="font-display text-lg font-semibold">Tạo hội thoại mới</h2>
                   
                   {/* Duration Selector */}
@@ -315,13 +315,13 @@ export default function ListeningPage() {
                 </div>
 
                 {/* Playlist Manager */}
-                <div className="glass-card p-6 mt-6">
+                <div className="glass-card p-6 mt-6 border border-border rounded-2xl">
                   <PlaylistManager onSelectPlaylist={handlePlayPlaylist} />
                 </div>
               </TabsContent>
 
               <TabsContent value="interactive">
-                <div className="glass-card p-6">
+                <div className="glass-card p-6 border border-border rounded-2xl">
                   <div className="flex items-center gap-3 mb-4">
                     <Mic className="w-5 h-5 text-primary" />
                     <h2 className="font-display text-lg font-semibold">Tham gia hội thoại</h2>
@@ -375,11 +375,14 @@ export default function ListeningPage() {
         {/* Listening Player với Audio + Transcript */}
         {conversation && (
           <FadeIn delay={0.1}>
-            <div className="glass-card p-6">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="glass-card p-6 border border-border rounded-2xl">
+              {/* Header - buttons cùng hàng với tiêu đề, có text labels */}
+              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <h2 className="font-display text-lg font-semibold">🎧 Nghe hội thoại</h2>
-                <div className="flex items-center gap-2">
-                  {/* Listen Later Button */}
+                
+                {/* Action buttons - nằm cùng hàng, có text */}
+                <div className="flex items-center gap-2 ml-auto flex-wrap">
+                  {/* Listen Later Button - variant default có text */}
                   <ListenLaterButton
                     topic={topic}
                     conversation={conversation}
@@ -387,23 +390,24 @@ export default function ListeningPage() {
                     numSpeakers={numSpeakers}
                     category={selectedCategory}
                     subCategory={selectedSubCategory}
-                    variant="icon"
+                    variant="default"
                   />
                   
-                  {/* Add to Playlist Button */}
+                  {/* Add to Playlist Button - có text */}
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setShowPlaylistModal(true)}
-                    title="Thêm vào Playlist"
+                    className="gap-2"
                   >
-                    <BookmarkPlus className="w-5 h-5" />
+                    <BookmarkPlus className="w-4 h-4" />
+                    <span>Playlist</span>
                   </Button>
 
                   {/* Reset Button */}
                   <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
                     <RotateCcw className="w-4 h-4" />
-                    Tạo mới
+                    <span>Tạo mới</span>
                   </Button>
                 </div>
               </div>
