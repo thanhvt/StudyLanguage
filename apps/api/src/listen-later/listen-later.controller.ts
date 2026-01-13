@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -10,13 +13,20 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
-import { ListenLaterService, AddListenLaterDto } from './listen-later.service';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
+import { ListenLaterService } from './listen-later.service';
+import type { AddListenLaterDto } from './listen-later.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 
 /**
  * ListenLaterController - Controller xử lý API cho tính năng Nghe Sau
- * 
+ *
  * Mục đích: Expose các endpoints cho CRUD Listen Later
  * Khi nào sử dụng: Frontend gọi API để quản lý danh sách Nghe Sau
  */
@@ -29,7 +39,7 @@ export class ListenLaterController {
 
   /**
    * Lấy danh sách Nghe Sau của user
-   * 
+   *
    * GET /listen-later
    */
   @Get()
@@ -53,7 +63,7 @@ export class ListenLaterController {
 
   /**
    * Thêm item vào Nghe Sau
-   * 
+   *
    * POST /listen-later
    */
   @Post()
@@ -63,7 +73,10 @@ export class ListenLaterController {
       type: 'object',
       properties: {
         topic: { type: 'string', example: 'Daily Stand-up Update' },
-        conversation: { type: 'array', example: [{ speaker: 'A', text: 'Hello' }] },
+        conversation: {
+          type: 'array',
+          example: [{ speaker: 'A', text: 'Hello' }],
+        },
         duration: { type: 'number', example: 5 },
         numSpeakers: { type: 'number', example: 2 },
         category: { type: 'string', example: 'it' },
@@ -91,7 +104,7 @@ export class ListenLaterController {
 
   /**
    * Xóa item khỏi Nghe Sau
-   * 
+   *
    * DELETE /listen-later/:id
    */
   @Delete(':id')
@@ -116,7 +129,7 @@ export class ListenLaterController {
 
   /**
    * Xóa tất cả items trong Nghe Sau
-   * 
+   *
    * DELETE /listen-later
    */
   @Delete()

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -11,9 +14,15 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
-  PlaylistsService,
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
+import { PlaylistsService } from './playlists.service';
+import type {
   CreatePlaylistDto,
   UpdatePlaylistDto,
   AddPlaylistItemDto,
@@ -23,7 +32,7 @@ import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 
 /**
  * PlaylistsController - Controller xử lý API cho Playlists
- * 
+ *
  * Mục đích: Expose các endpoints cho CRUD Playlists và Playlist Items
  * Khi nào sử dụng: Frontend gọi API để quản lý playlists
  */
@@ -36,7 +45,7 @@ export class PlaylistsController {
 
   /**
    * Lấy danh sách playlists của user
-   * 
+   *
    * GET /playlists
    */
   @Get()
@@ -60,7 +69,7 @@ export class PlaylistsController {
 
   /**
    * Tạo playlist mới
-   * 
+   *
    * POST /playlists
    */
   @Post()
@@ -94,7 +103,7 @@ export class PlaylistsController {
 
   /**
    * Lấy chi tiết playlist kèm items
-   * 
+   *
    * GET /playlists/:id
    */
   @Get(':id')
@@ -119,7 +128,7 @@ export class PlaylistsController {
 
   /**
    * Cập nhật playlist
-   * 
+   *
    * PUT /playlists/:id
    */
   @Put(':id')
@@ -148,7 +157,7 @@ export class PlaylistsController {
 
   /**
    * Xóa playlist
-   * 
+   *
    * DELETE /playlists/:id
    */
   @Delete(':id')
@@ -173,7 +182,7 @@ export class PlaylistsController {
 
   /**
    * Thêm item vào playlist
-   * 
+   *
    * POST /playlists/:id/items
    */
   @Post(':id/items')
@@ -190,7 +199,11 @@ export class PlaylistsController {
         throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
       }
 
-      return await this.playlistsService.addItemToPlaylist(userId, playlistId, dto);
+      return await this.playlistsService.addItemToPlaylist(
+        userId,
+        playlistId,
+        dto,
+      );
     } catch (error) {
       console.error('[PlaylistsController] POST items error:', error);
       throw new HttpException(
@@ -202,7 +215,7 @@ export class PlaylistsController {
 
   /**
    * Xóa item khỏi playlist
-   * 
+   *
    * DELETE /playlists/:id/items/:itemId
    */
   @Delete(':id/items/:itemId')
@@ -220,7 +233,11 @@ export class PlaylistsController {
         throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
       }
 
-      return await this.playlistsService.removeItemFromPlaylist(userId, playlistId, itemId);
+      return await this.playlistsService.removeItemFromPlaylist(
+        userId,
+        playlistId,
+        itemId,
+      );
     } catch (error) {
       console.error('[PlaylistsController] DELETE item error:', error);
       throw new HttpException(
@@ -232,7 +249,7 @@ export class PlaylistsController {
 
   /**
    * Sắp xếp lại items trong playlist
-   * 
+   *
    * PUT /playlists/:id/reorder
    */
   @Put(':id/reorder')

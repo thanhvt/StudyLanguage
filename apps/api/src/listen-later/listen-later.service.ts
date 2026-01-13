@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -15,7 +16,7 @@ export interface AddListenLaterDto {
 
 /**
  * ListenLaterService - Service xử lý CRUD cho Listen Later
- * 
+ *
  * Mục đích: Quản lý danh sách "Nghe Sau" của user trong Supabase
  * Tham số đầu vào: userId và DTO
  * Tham số đầu ra: Dữ liệu từ Supabase
@@ -34,7 +35,7 @@ export class ListenLaterService {
 
   /**
    * Lấy danh sách Listen Later của user
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @returns Danh sách items sắp xếp theo thời gian tạo mới nhất
    */
@@ -59,7 +60,7 @@ export class ListenLaterService {
 
   /**
    * Thêm item vào Listen Later
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param dto - Dữ liệu item cần thêm
    * @returns Item vừa thêm
@@ -92,7 +93,7 @@ export class ListenLaterService {
 
   /**
    * Xóa item khỏi Listen Later
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param itemId - ID của item cần xóa
    * @returns Kết quả xóa
@@ -117,7 +118,7 @@ export class ListenLaterService {
 
   /**
    * Xóa tất cả items trong Listen Later
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @returns Kết quả xóa
    */
