@@ -1,4 +1,5 @@
 'use client';
+import { useMemo } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useTheme } from '@/components/providers/theme-provider';
@@ -31,11 +32,25 @@ const learningTips = [
 ];
 
 /**
- * Initial tip index - được tính một lần khi module load
- * Đây là pattern phổ biến để tránh lint error về impure function trong component
+ * Tính tip index dựa vào ngày trong năm
+ * 
+ * Mục đích: Đảm bảo server và client render cùng 1 tip dựa vào date,
+ *           thay đổi mỗi ngày nhưng nhất quán trong cùng 1 ngày
+ * 
+ * Tham số: Không có
+ * Đầu ra: number - index của tip (0 đến learningTips.length - 1)
+ * Luồng: Được gọi bởi RightPanel component khi render
  */
-const getInitialTipIndex = () => Math.floor(Math.random() * learningTips.length);
-const initialTipIndex = typeof window !== 'undefined' ? getInitialTipIndex() : 0;
+const getDailyTipIndex = (): number => {
+  // Sử dụng day of year để chọn tip - đảm bảo consistency giữa server/client
+  // trong cùng 1 ngày, và thay đổi mỗi ngày để người dùng thấy tip mới
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - startOfYear.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  return dayOfYear % learningTips.length;
+};
 
 /**
  * RightPanel - Panel bên phải (Redesigned theo reference)
@@ -50,8 +65,15 @@ export function RightPanel() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   
-  // Sử dụng tip index đã được tính sẵn từ module scope
-  const tipIndex = initialTipIndex;
+  /**
+   * Tip Index - Sử dụng daily tip để tránh hydration mismatch
+   * 
+   * Mục đích: Đảm bảo server và client render cùng 1 tip
+   * useMemo đảm bảo không tính lại mỗi lần render
+   * 
+   * Luồng: getDailyTipIndex() → useMemo cache → currentTip
+   */
+  const tipIndex = useMemo(() => getDailyTipIndex(), []);
   const currentTip = learningTips[tipIndex];
 
   // Mock stats - có thể fetch từ API sau

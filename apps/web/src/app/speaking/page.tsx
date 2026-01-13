@@ -135,16 +135,16 @@ export default function SpeakingPage() {
           
           {/* SETUP MODE */}
           {viewMode === 'setup' && (
-            <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full p-6">
-              {/* Header với History Button */}
+            <div className="flex-1 flex flex-col h-full p-4 lg:p-6">
+              {/* Header - Full width với History Button góc phải */}
               <FadeIn>
-                <div className="flex items-center justify-between w-full mb-8">
+                <div className="flex items-center justify-between w-full mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl skill-card-speaking flex items-center justify-center shadow-lg">
-                      <Mic className="w-6 h-6 text-white" />
+                    <div className="w-10 h-10 rounded-xl skill-card-speaking flex items-center justify-center">
+                      <Mic className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h1 className="font-display text-2xl font-bold text-foreground">
+                      <h1 className="font-display text-xl font-bold text-foreground">
                         Luyện Nói
                       </h1>
                       <p className="text-sm text-muted-foreground">AI Speaking Coach</p>
@@ -154,40 +154,43 @@ export default function SpeakingPage() {
                 </div>
               </FadeIn>
 
-              {/* Setup Card - Matching live reference */}
-              <FadeIn delay={0.1}>
-                <Card className="w-full p-8 text-center">
-                  <div className="w-20 h-20 rounded-3xl skill-card-speaking mx-auto flex items-center justify-center mb-6 shadow-lg">
-                    <Mic className="w-10 h-10 text-white" />
-                  </div>
-                  <h2 className="font-display text-xl font-semibold mb-2">AI Speaking Coach 🤖</h2>
-                  <p className="text-muted-foreground text-sm mb-8">
-                    Chọn chủ đề và bắt đầu hội thoại 1-1 với AI Coach. Bạn sẽ nhận được phản hồi về phát âm và ngữ pháp ngay lập tức.
-                  </p>
+              {/* Setup Card - Centered content với background xám nhẹ */}
+              <div className="flex-1 flex items-center justify-center">
+                <FadeIn delay={0.1}>
+                  <Card className="w-full max-w-lg p-8 text-center bg-muted/30 backdrop-blur-sm border-muted/50">
+                    <div className="w-20 h-20 rounded-3xl skill-card-speaking mx-auto flex items-center justify-center mb-6 shadow-lg">
+                      <Mic className="w-10 h-10 text-white" />
+                    </div>
+                    <h2 className="font-display text-xl font-semibold mb-2">AI Speaking Coach 🤖</h2>
+                    <p className="text-muted-foreground text-sm mb-8">
+                      Chọn chủ đề và bắt đầu hội thoại 1-1 với AI Coach. Bạn sẽ nhận được phản hồi về phát âm và ngữ pháp ngay lập tức.
+                    </p>
 
-                  <div className="text-left mb-6">
-                    <Label htmlFor="speakingTopic" className="mb-2 block">
-                      Bạn muốn nói về chủ đề gì?
-                    </Label>
-                    <Input
-                      id="speakingTopic"
-                      placeholder="VD: Daily Routine, My Dream Job, Environmental Issues..."
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                    />
-                  </div>
+                    <div className="text-left mb-6">
+                      <Label htmlFor="speakingTopic" className="mb-2 block">
+                        Bạn muốn nói về chủ đề gì?
+                      </Label>
+                      <Input
+                        id="speakingTopic"
+                        placeholder="VD: Daily Routine, My Dream Job, Environmental Issues..."
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        className="bg-background"
+                      />
+                    </div>
 
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={startSession}
-                    disabled={!topic.trim()}
-                  >
-                    <Phone className="w-5 h-5 mr-2" />
-                    Bắt đầu hội thoại
-                  </Button>
-                </Card>
-              </FadeIn>
+                    <Button 
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-md" 
+                      size="lg"
+                      onClick={startSession}
+                      disabled={!topic.trim()}
+                    >
+                      <Phone className="w-5 h-5 mr-2" />
+                      Bắt đầu hội thoại
+                    </Button>
+                  </Card>
+                </FadeIn>
+              </div>
             </div>
           )}
 
