@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
+              "media-src 'self' https://cdn.pixabay.com", // Cho phép audio từ Pixabay cho nhạc nền
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:3001",
               "frame-ancestors 'none'",
               "base-uri 'self'",

@@ -28,7 +28,7 @@ export function MusicControlBar() {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:z-50">
+    <div className="fixed bottom-24 left-4 z-50 sm:bottom-4 sm:left-auto sm:right-4 pointer-events-auto touch-manipulation">
       {/* Collapsed state - chỉ hiện nút play */}
       {!isExpanded ? (
         <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export function MusicControlBar() {
             onClick={toggle}
             size="lg"
             className={`
-              w-14 h-14 rounded-full shadow-lg transition-all border-2
+              w-14 h-14 rounded-full shadow-lg transition-all border-2 touch-manipulation
               ${isPlaying 
                 ? 'bg-primary border-primary-foreground/30 animate-pulse' 
                 : 'bg-card border-border hover:bg-primary hover:border-primary-foreground/30'
@@ -50,7 +50,7 @@ export function MusicControlBar() {
             variant="outline"
             size="sm"
             onClick={() => setIsExpanded(true)}
-            className="rounded-full bg-card shadow-md"
+            className="rounded-full bg-card shadow-md touch-manipulation"
             title="Cài đặt nhạc nền"
           >
             ⚙️
@@ -76,7 +76,7 @@ export function MusicControlBar() {
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(false)}
-              className="rounded-full"
+              className="rounded-full touch-manipulation"
             >
               ✕
             </Button>
@@ -95,7 +95,7 @@ export function MusicControlBar() {
               variant="ghost"
               size="sm"
               onClick={prevTrack}
-              className="rounded-full"
+              className="rounded-full touch-manipulation"
             >
               ⏮️
             </Button>
@@ -103,7 +103,7 @@ export function MusicControlBar() {
               onClick={toggle}
               size="lg"
               className={`
-                w-12 h-12 rounded-full text-xl
+                w-12 h-12 rounded-full text-xl touch-manipulation
                 ${isPlaying ? 'bg-primary' : 'bg-muted'}
               `}
             >
@@ -113,7 +113,7 @@ export function MusicControlBar() {
               variant="ghost"
               size="sm"
               onClick={nextTrack}
-              className="rounded-full"
+              className="rounded-full touch-manipulation"
             >
               ⏭️
             </Button>
@@ -129,7 +129,7 @@ export function MusicControlBar() {
               step={0.05}
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-muted accent-primary"
+              className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-muted accent-primary touch-manipulation"
             />
             <span className="text-sm">🔊</span>
           </div>

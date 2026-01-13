@@ -55,12 +55,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Đăng nhập bằng Google OAuth
+   * 
+   * Mục đích: Xử lý đăng nhập qua Google OAuth
+   * Tham số đầu vào: Không có
+   * Tham số đầu ra: Promise<void>
+   * Khi nào sử dụng: Khi user click nút "Đăng nhập với Google"
    */
   const signInWithGoogle = async () => {
+    // Lấy base URL từ biến môi trường hoặc fallback về window.location.origin
+    // Điều này cho phép cấu hình redirect URL khác nhau giữa dev và production
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${baseUrl}/auth/callback`,
       },
     });
 

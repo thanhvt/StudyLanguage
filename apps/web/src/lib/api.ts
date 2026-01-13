@@ -78,27 +78,55 @@ export async function api(
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`[API] Gọi ${options.method || 'GET'} ${url}`);
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  // Tạo AbortController với timeout dài (60s cho AI generation)
+  // Mobile Safari có thể tự kill request sớm, nên xử lý timeout rõ ràng
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    console.warn('[API] Request timeout sau 60 giây');
+  }, 60000); // 60 giây timeout
 
-  // Xử lý 401 - thử refresh token và retry 1 lần
-  if (response.status === 401 && !_isRetry) {
-    console.warn('[API] Token hết hạn, đang thử refresh...');
-    
-    const newToken = await refreshAndGetToken();
-    
-    if (newToken) {
-      console.log('[API] Refresh thành công, đang retry request...');
-      return api(endpoint, options, true); // Retry với flag
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    // Xử lý 401 - thử refresh token và retry 1 lần
+    if (response.status === 401 && !_isRetry) {
+      console.warn('[API] Token hết hạn, đang thử refresh...');
+      
+      const newToken = await refreshAndGetToken();
+      
+      if (newToken) {
+        console.log('[API] Refresh thành công, đang retry request...');
+        return api(endpoint, options, true); // Retry với flag
+      }
+      
+      console.error('[API] Refresh thất bại, user cần đăng nhập lại');
     }
-    
-    console.error('[API] Refresh thất bại, user cần đăng nhập lại');
-  }
 
-  return response;
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    // Xử lý lỗi network cụ thể cho mobile
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('[API] Request bị hủy (timeout hoặc user cancel)');
+        throw new Error('Kết nối bị timeout. Vui lòng thử lại.');
+      }
+      if (error.message === 'Load failed' || error.message === 'Failed to fetch') {
+        console.error('[API] Lỗi kết nối mạng:', error.message);
+        throw new Error('Lỗi kết nối. Kiểm tra mạng và thử lại.');
+      }
+    }
+    throw error;
+  }
 }
 
 /**

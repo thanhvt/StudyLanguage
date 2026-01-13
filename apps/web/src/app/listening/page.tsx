@@ -113,6 +113,10 @@ export default function ListeningPage() {
       });
 
       if (!response.ok) {
+        // Kiểm tra 401 để hiển thị thông báo đăng nhập rõ ràng
+        if (response.status === 401) {
+          throw new Error('Vui lòng đăng nhập để sử dụng tính năng này');
+        }
         throw new Error('Lỗi sinh hội thoại');
       }
 
