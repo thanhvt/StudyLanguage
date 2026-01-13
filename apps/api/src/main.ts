@@ -1,5 +1,7 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 import { LoggingService } from './common/logging/logging.service';
@@ -11,6 +13,21 @@ async function bootstrap() {
   // Use our custom logger (resolve() vì LoggingService có scope TRANSIENT)
   const logger = await app.resolve(LoggingService);
   app.useLogger(logger);
+
+  // [SECURITY - OWASP A03] Helmet: Bảo vệ HTTP headers khỏi các lỗ hổng phổ biến
+  app.use(helmet());
+
+  // [SECURITY - OWASP A01/A03] Global Validation Pipe: Validate và sanitize tất cả input
+  // whitelist: Tự động loại bỏ các property không có trong DTO (chống Mass Assignment)
+  // forbidNonWhitelisted: Nếu có property lạ, ném lỗi BadRequest
+  // transform: Tự động chuyển đổi kiểu dữ liệu
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // Bật CORS để frontend có thể gọi API
   // Đọc từ biến môi trường CORS_ORIGINS, fallback về localhost cho development

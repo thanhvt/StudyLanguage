@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
@@ -20,6 +21,16 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
       isGlobal: true,
       envFilePath: '.env',
     }),
+    // [SECURITY - OWASP A04] Rate Limiting: Chống tấn công Brute Force, DOS
+    // Mặc định: 10 requests / 60 seconds (có thể tùy chỉnh theo API)
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // 60 giây
+          limit: 10, // 10 requests mỗi 60 giây
+        },
+      ],
+    }),
     AuthModule, // [FIX API-AUTH-01] Module xác thực Supabase
     LoggingModule,
     AiModule,
@@ -31,6 +42,11 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
   controllers: [AppController],
   providers: [
     AppService,
+    // [SECURITY - OWASP A04] Global ThrottlerGuard: Áp dụng rate limiting cho tất cả routes
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
