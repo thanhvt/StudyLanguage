@@ -1,21 +1,58 @@
 'use client';
-
 import { useAuth } from '@/components/providers/auth-provider';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
-import { User, Lightbulb, BookOpen, Clock } from 'lucide-react';
+import { User, Lightbulb, BookOpen, Clock, Sun, Moon, Monitor, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 /**
- * RightPanel - Panel bên phải (Updated để match reference)
+ * Learning Tips - Danh sách mẹo học tập
+ * 
+ * Mục đích: Hiển thị ngẫu nhiên mẹo học tập cho người dùng
+ */
+const learningTips = [
+  {
+    vi: 'Luyện nghe mỗi ngày 15 phút để cải thiện khả năng nhận biết âm.',
+    en: 'Practice listening 15 minutes daily to improve sound recognition.'
+  },
+  {
+    vi: 'Đừng ngại nói sai - sai lầm là cơ hội để học hỏi!',
+    en: "Don't be afraid to make mistakes - they're learning opportunities!"
+  },
+  {
+    vi: 'Đọc to thành tiếng giúp cải thiện cả kỹ năng đọc và phát âm.',
+    en: 'Reading aloud improves both reading skills and pronunciation.'
+  },
+  {
+    vi: 'Viết nhật ký bằng tiếng Anh mỗi ngày để rèn luyện tư duy.',
+    en: 'Write a diary in English every day to train your thinking.'
+  },
+];
+
+/**
+ * Initial tip index - được tính một lần khi module load
+ * Đây là pattern phổ biến để tránh lint error về impure function trong component
+ */
+const getInitialTipIndex = () => Math.floor(Math.random() * learningTips.length);
+const initialTipIndex = typeof window !== 'undefined' ? getInitialTipIndex() : 0;
+
+/**
+ * RightPanel - Panel bên phải (Redesigned theo reference)
  *
- * Mục đích: Hiển thị user info, settings, tips, và stats
- * Features: Guest/Login section, theme/language, tips, stats counters
+ * Mục đích: Hiển thị user info, theme/language toggles, tips, và stats
+ * Layout: Các card riêng biệt xếp dọc với bo góc lớn
+ * 
+ * Luồng sử dụng: Hiển thị trong app-layout cho màn hình XL+
  */
 export function RightPanel() {
   const { user, loading, signOut, signInWithGoogle } = useAuth();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
+  
+  // Sử dụng tip index đã được tính sẵn từ module scope
+  const tipIndex = initialTipIndex;
+  const currentTip = learningTips[tipIndex];
 
   // Mock stats - có thể fetch từ API sau
   const stats = {
@@ -24,18 +61,18 @@ export function RightPanel() {
   };
 
   return (
-    <aside className="hidden xl:flex w-80 flex-col panel-enhanced panel-glow-border">
-      {/* User Info Section */}
-      <div className="p-4 border-b border-border glow-divider relative z-10">
+    <aside className="hidden xl:flex w-80 flex-col gap-4 p-4 bg-background/50 backdrop-blur-sm border-l border-border/50">
+      {/* User Info Card */}
+      <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-4 shadow-sm">
         {loading ? (
           <div className="text-center text-muted-foreground py-4">
             {t('auth.loading')}
           </div>
         ) : user ? (
           <div className="space-y-3">
-            {/* Avatar & Info với glow effect */}
+            {/* Avatar & Info */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md avatar-glow">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md">
                 {user.email?.[0].toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
@@ -53,16 +90,16 @@ export function RightPanel() {
               variant="outline"
               size="sm"
               onClick={signOut}
-              className="w-full"
+              className="w-full rounded-lg"
             >
               {t('auth.logout')}
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Guest Avatar với subtle glow */}
+            {/* Guest Avatar */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center avatar-glow">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                 <User className="w-6 h-6 text-muted-foreground" />
               </div>
               <div>
@@ -71,87 +108,118 @@ export function RightPanel() {
               </div>
             </div>
 
-            {/* Login Button - Green like reference */}
+            {/* Login Button - Primary style với icon */}
             <Button
               onClick={signInWithGoogle}
-              className="w-full"
+              className="w-full rounded-lg gap-2"
             >
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
+              <Sparkles className="w-4 h-4" />
               Đăng nhập
             </Button>
           </div>
         )}
       </div>
 
-      {/* Settings Section với glow divider */}
-      <div className="p-4 space-y-4 border-b border-border glow-divider relative z-10 settings-section-glow">
-        {/* Interface Settings Header */}
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          ⚙️ Giao diện
+      {/* Theme Switcher Card */}
+      <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-4 shadow-sm">
+        <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+          <Sun className="w-4 h-4" />
+          Giao diện
         </h3>
-        
-        {/* Theme Switcher */}
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">{t('settings.theme')}</p>
-          <ThemeSwitcher />
+        <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+          {[
+            { icon: Sun, label: 'Sáng', value: 'light' as const },
+            { icon: Moon, label: 'Tối', value: 'dark' as const },
+            { icon: Monitor, label: 'Hệ thống', value: 'system' as const },
+          ].map(({ icon: Icon, label, value }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-lg text-xs transition-all font-medium',
+                theme === value
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-transparent text-muted-foreground hover:bg-muted/80'
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Language Section với glow divider */}
-      <div className="p-4 border-b border-border glow-divider relative z-10">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          🌍 Ngôn ngữ
-        </h3>
-        <LanguageSwitcher />
+      {/* Language Switcher Card */}
+      <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-4 shadow-sm">
+        <h3 className="text-sm font-medium text-foreground mb-3">Ngôn ngữ</h3>
+        <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+          <button
+            onClick={() => setLanguage('vi')}
+            className={cn(
+              'flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all',
+              language === 'vi'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-transparent text-muted-foreground hover:bg-muted/80'
+            )}
+          >
+            🇻🇳 Tiếng Việt
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={cn(
+              'flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all',
+              language === 'en'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-transparent text-muted-foreground hover:bg-muted/80'
+            )}
+          >
+            🇬🇧 English
+          </button>
+        </div>
       </div>
 
-      {/* Tips Section với glow border */}
-      <div className="p-4 border-b border-border glow-divider relative z-10 tip-card-glow rounded-xl mx-2 my-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Lightbulb className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">Mẹo học tập</h3>
+      {/* Learning Tips Card với gradient background nhẹ */}
+      <div className="bg-gradient-to-br from-primary/5 to-accent/10 rounded-2xl border border-primary/20 p-4 shadow-sm flex-1 flex flex-col">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Lightbulb className="w-4 h-4 text-primary" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">Mẹo học tập</h3>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {language === 'vi' 
-            ? 'Viết nhật ký bằng tiếng Anh mỗi ngày để rèn luyện tư duy.'
-            : 'Write a diary in English every day to train your thinking.'}
+        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+          {language === 'vi' ? currentTip.vi : currentTip.en}
         </p>
+        {/* Progress dots */}
+        <div className="mt-4 flex gap-1">
+          {learningTips.map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'h-1 rounded-full flex-1 transition-colors',
+                i === tipIndex ? 'bg-primary' : 'bg-muted'
+              )}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Stats Section - New! Matching reference */}
-      <div className="mt-auto p-4">
+      {/* Stats Section */}
+      <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-4 shadow-sm">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          📊 Bài học
+          📊 Thống kê
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          {/* Lessons Counter với neon effect */}
-          <div className="rounded-xl p-3 text-center stat-card-neon">
+          {/* Lessons Counter */}
+          <div className="rounded-xl bg-muted/30 p-3 text-center border border-border/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <BookOpen className="w-4 h-4 text-primary" />
             </div>
             <p className="text-2xl font-bold text-primary">{stats.lessons}</p>
             <p className="text-xs text-muted-foreground">Bài học</p>
           </div>
-          
-          {/* Minutes Counter với neon effect */}
-          <div className="rounded-xl p-3 text-center stat-card-neon">
+
+          {/* Minutes Counter */}
+          <div className="rounded-xl bg-muted/30 p-3 text-center border border-border/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Clock className="w-4 h-4 text-primary" />
             </div>

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Sparkles, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TOPIC_CATEGORIES, searchScenarios } from '@/data/topic-data';
 import { TopicCategory } from '@/types/listening-types';
+import { useFavoriteScenarios } from '@/hooks/use-favorite-scenarios';
 
 /**
  * TopicPicker - Component chọn chủ đề gợi ý
@@ -22,9 +23,29 @@ interface TopicPickerProps {
 }
 
 export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
-  const [activeCategory, setActiveCategory] = useState<TopicCategory['id']>('it');
+  const [activeCategory, setActiveCategory] = useState<TopicCategory['id'] | 'favorites'>('it');
   const [expandedSubCategories, setExpandedSubCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Hook quản lý favorites
+  const { isFavorite, toggleFavorite, favoriteCount } = useFavoriteScenarios();
+
+  // Lấy favorite scenarios để hiển thị trong tab Yêu thích
+  const favoriteScenarios = useMemo(() => {
+    const results: { category: (typeof TOPIC_CATEGORIES)[0]; subCategory: (typeof TOPIC_CATEGORIES)[0]['subCategories'][0]; scenario: (typeof TOPIC_CATEGORIES)[0]['subCategories'][0]['scenarios'][0] }[] = [];
+    
+    for (const category of TOPIC_CATEGORIES) {
+      for (const subCategory of category.subCategories) {
+        for (const scenario of subCategory.scenarios) {
+          if (isFavorite(scenario.id)) {
+            results.push({ category, subCategory, scenario });
+          }
+        }
+      }
+    }
+    
+    return results;
+  }, [isFavorite]);
 
   // Lọc scenarios theo search query
   const filteredResults = useMemo(() => {
@@ -45,9 +66,14 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
 
   /**
    * Xử lý khi chọn scenario
+   * Format: "Scenario Name: Description" để hiển thị đầy đủ trong ô Chủ đề
    */
-  const handleSelect = (scenarioName: string, categoryId?: string, subCategoryName?: string) => {
-    onSelect(scenarioName, categoryId, subCategoryName);
+  const handleSelect = (scenarioName: string, scenarioDescription: string, categoryId?: string, subCategoryName?: string) => {
+    // Ghép name + description để người dùng thấy đầy đủ thông tin
+    const fullTopic = scenarioDescription 
+      ? `${scenarioName}: ${scenarioDescription}` 
+      : scenarioName;
+    onSelect(fullTopic, categoryId, subCategoryName);
     setSearchQuery('');
   };
 
@@ -74,14 +100,16 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
           <p className="text-xs text-muted-foreground mb-2">
             Tìm thấy {filteredResults.length} kết quả
           </p>
-          {filteredResults.map(({ category, subCategory, scenario }) => (
+          {filteredResults.map(({ category, subCategory, scenario }) => {
+            const fullTopic = `${scenario.name}: ${scenario.description}`;
+            return (
             <button
               key={scenario.id}
-              onClick={() => handleSelect(scenario.name, category.id, subCategory.name)}
+              onClick={() => handleSelect(scenario.name, scenario.description, category.id, subCategory.name)}
               className={`
                 w-full text-left p-2 rounded-lg transition-all
                 hover:bg-primary/10 hover:border-primary/30
-                ${selectedTopic === scenario.name ? 'bg-primary/20 border border-primary/50' : ''}
+                ${selectedTopic === fullTopic || selectedTopic === scenario.name ? 'bg-primary/20 border border-primary/50' : ''}
               `}
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
@@ -93,7 +121,8 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
               <p className="font-medium text-sm">{scenario.name}</p>
               <p className="text-xs text-muted-foreground line-clamp-1">{scenario.description}</p>
             </button>
-          ))}
+          );
+          })}
         </div>
       )}
 
@@ -106,7 +135,29 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
       {/* Category Tabs - chỉ hiện khi không search */}
       {!searchQuery && (
         <>
-          <div className="flex gap-1 p-1 bg-muted/50 rounded-xl">
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-xl overflow-x-auto">
+            {/* Tab Yêu thích */}
+            <button
+              onClick={() => setActiveCategory('favorites')}
+              className={`
+                flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                text-sm font-medium transition-all duration-300 shrink-0
+                ${activeCategory === 'favorites'
+                  ? 'bg-background shadow-md topic-tab-active'
+                  : 'hover:bg-background/50'
+                }
+              `}
+            >
+              <Star className={`w-4 h-4 ${activeCategory === 'favorites' ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+              <span className="hidden sm:inline">Yêu thích</span>
+              {favoriteCount > 0 && (
+                <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">
+                  {favoriteCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Các category khác */}
             {TOPIC_CATEGORIES.map((category) => (
               <button
                 key={category.id}
@@ -126,14 +177,67 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
             ))}
           </div>
 
+          {/* Favorites Tab Content */}
+          {activeCategory === 'favorites' && (
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-2 mobile-scroll">
+              {favoriteScenarios.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">Chưa có scenario yêu thích</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Nhấn ⭐ bên cạnh một scenario để ghim
+                  </p>
+                </div>
+              ) : (
+                favoriteScenarios.map(({ category, subCategory, scenario }) => {
+                  const fullTopic = `${scenario.name}: ${scenario.description}`;
+                  const isSelected = selectedTopic === fullTopic || selectedTopic === scenario.name;
+                  
+                  return (
+                    <div
+                      key={scenario.id}
+                      className={`
+                        flex items-center gap-2 p-2 rounded-lg transition-all
+                        hover:bg-primary/10
+                        ${isSelected ? 'bg-primary/20 ring-1 ring-primary/50' : ''}
+                      `}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(scenario.id);
+                        }}
+                        className="text-yellow-500 hover:text-yellow-600 shrink-0"
+                      >
+                        <Star className="w-4 h-4 fill-yellow-500" />
+                      </button>
+                      <button
+                        className="flex-1 text-left min-w-0"
+                        onClick={() => handleSelect(scenario.name, scenario.description, category.id, subCategory.name)}
+                      >
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+                          <span>{category.icon}</span>
+                          <span>{subCategory.name}</span>
+                        </div>
+                        <p className="font-medium text-sm truncate">{scenario.name}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{scenario.description}</p>
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
           {/* Category Description */}
-          {currentCategory && (
+          {activeCategory !== 'favorites' && currentCategory && (
             <p className="text-sm text-muted-foreground">
               {currentCategory.description}
             </p>
           )}
 
           {/* SubCategories with Accordion */}
+          {activeCategory !== 'favorites' && (
           <div className="space-y-2 max-h-80 overflow-y-auto pr-2 mobile-scroll">
             {currentCategory?.subCategories.map((subCategory) => {
               const isExpanded = expandedSubCategories.includes(subCategory.id);
@@ -161,38 +265,62 @@ export function TopicPicker({ onSelect, selectedTopic }: TopicPickerProps) {
                   {/* Scenarios List */}
                   {isExpanded && (
                     <div className="p-2 space-y-1 bg-background/50">
-                      {subCategory.scenarios.map((scenario) => (
-                        <button
-                          key={scenario.id}
-                          onClick={() => handleSelect(scenario.name, currentCategory.id, subCategory.name)}
-                          className={`
-                            w-full text-left p-2 rounded-lg transition-all
-                            hover:bg-primary/10
-                            ${selectedTopic === scenario.name 
-                              ? 'bg-primary/20 ring-1 ring-primary/50' 
-                              : ''
-                            }
-                          `}
-                        >
-                          <div className="flex items-start gap-2">
-                            {selectedTopic === scenario.name && (
-                              <Sparkles className="w-4 h-4 text-primary mt-0.5 animate-pulse" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{scenario.name}</p>
-                              <p className="text-xs text-muted-foreground line-clamp-1">
-                                {scenario.description}
-                              </p>
-                            </div>
+                      {subCategory.scenarios.map((scenario) => {
+                        const fullTopic = `${scenario.name}: ${scenario.description}`;
+                        const isSelected = selectedTopic === fullTopic || selectedTopic === scenario.name;
+                        const isFav = isFavorite(scenario.id);
+                        
+                        return (
+                          <div
+                            key={scenario.id}
+                            className={`
+                              flex items-center gap-2 p-2 rounded-lg transition-all
+                              hover:bg-primary/10
+                              ${isSelected 
+                                ? 'bg-primary/20 ring-1 ring-primary/50' 
+                                : ''
+                              }
+                            `}
+                          >
+                            {/* Nút ghim yêu thích */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(scenario.id);
+                              }}
+                              className={`shrink-0 transition-colors ${isFav ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground/50 hover:text-yellow-500'}`}
+                              title={isFav ? 'Bỏ ghim' : 'Ghim yêu thích'}
+                            >
+                              <Star className={`w-4 h-4 ${isFav ? 'fill-yellow-500' : ''}`} />
+                            </button>
+                            
+                            {/* Nội dung scenario */}
+                            <button
+                              className="flex-1 text-left min-w-0"
+                              onClick={() => handleSelect(scenario.name, scenario.description, currentCategory.id, subCategory.name)}
+                            >
+                              <div className="flex items-start gap-2">
+                                {isSelected && (
+                                  <Sparkles className="w-4 h-4 text-primary mt-0.5 animate-pulse shrink-0" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{scenario.name}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {scenario.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
                           </div>
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
+          )}
         </>
       )}
 

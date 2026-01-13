@@ -10,13 +10,19 @@ import {
 } from '@/lib/themes';
 
 /**
+ * Theme Mode Type - Bao gồm 'system' để tự động theo OS
+ */
+type ThemeMode = 'light' | 'dark' | 'system';
+
+/**
  * Theme Context Interface
  * Chứa các giá trị và hàm để quản lý theme
  */
 interface ThemeContextType {
-  theme: 'light' | 'dark';
+  theme: ThemeMode;
+  resolvedTheme: 'light' | 'dark'; // Giá trị thực tế sau khi resolve 'system'
   accentColor: AccentColorId;
-  setTheme: (theme: 'light' | 'dark') => void;
+  setTheme: (theme: ThemeMode) => void;
   setAccentColor: (color: AccentColorId) => void;
   toggleTheme: () => void;
 }
@@ -26,11 +32,22 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 /**
  * Helper để đọc giá trị từ localStorage an toàn
  */
-function getStoredTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
+function getStoredTheme(): ThemeMode {
+  if (typeof window === 'undefined') return 'system';
   const stored = localStorage.getItem('theme');
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+  return 'system'; // Default là system
+}
+
+/**
+ * Helper để resolve theme mode thành light/dark
+ */
+function resolveTheme(mode: ThemeMode): 'light' | 'dark' {
+  if (mode === 'system') {
+    if (typeof window === 'undefined') return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return mode;
 }
 
 function getStoredAccent(): AccentColorId {
@@ -42,15 +59,18 @@ function getStoredAccent(): AccentColorId {
 /**
  * ThemeProvider Component
  * 
- * Mục đích: Quản lý theme (light/dark) và accent color cho toàn app
+ * Mục đích: Quản lý theme (light/dark/system) và accent color cho toàn app
  * Tham số: children - React nodes con
  * Khi nào sử dụng: Wrap ở root layout để áp dụng theme cho toàn bộ app
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // Khởi tạo state với giá trị mặc định (sẽ được cập nhật sau hydration)
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<ThemeMode>('system');
   const [accentColor, setAccentColorState] = useState<AccentColorId>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
+
+  // Resolved theme (actual light/dark)
+  const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
 
   // Load preferences sau khi mount (chỉ chạy 1 lần)
   // Đây là pattern chuẩn cho hydration - setState trong useEffect là cần thiết
@@ -60,14 +80,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setAccentColorState(getStoredAccent());
   }, []);
 
+  // Lắng nghe thay đổi system preference
+  useEffect(() => {
+    if (theme !== 'system') return;
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      // Force re-render khi system preference thay đổi
+      setThemeState('system');
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
   // Áp dụng theme lên document
   useEffect(() => {
     if (!mounted) return;
     
     const root = document.documentElement;
+    const actualTheme = resolveTheme(theme);
     
     // Toggle dark class
-    if (theme === 'dark') {
+    if (actualTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
@@ -82,15 +117,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, [mounted, theme, accentColor]);
 
-  // Toggle giữa light và dark
+  // Toggle giữa light và dark (bỏ qua system khi toggle)
   const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const current = resolveTheme(theme);
+    const newTheme = current === 'light' ? 'dark' : 'light';
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
   }, [theme]);
 
   // Set theme cụ thể
-  const setTheme = useCallback((newTheme: 'light' | 'dark') => {
+  const setTheme = useCallback((newTheme: ThemeMode) => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
   }, []);
@@ -104,11 +140,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Memoize context value
   const value = useMemo(() => ({
     theme,
+    resolvedTheme,
     accentColor,
     setTheme,
     setAccentColor,
     toggleTheme,
-  }), [theme, accentColor, setTheme, setAccentColor, toggleTheme]);
+  }), [theme, resolvedTheme, accentColor, setTheme, setAccentColor, toggleTheme]);
 
   // Hiển thị placeholder trong khi chờ hydration
   if (!mounted) {
@@ -139,7 +176,8 @@ export function useTheme(): ThemeContextType {
   // Trả về defaults nếu context chưa sẵn sàng (SSR hoặc ngoài Provider)
   if (context === undefined) {
     return {
-      theme: 'light',
+      theme: 'system',
+      resolvedTheme: 'light',
       accentColor: 'fresh-greens',
       setTheme: () => {},
       toggleTheme: () => {},

@@ -288,6 +288,16 @@ export function usePlaylist() {
     }
   }, [fetchPlaylistWithItems]);
 
+  /**
+   * Sắp xếp lại thứ tự playlists (client-side only)
+   * 
+   * @param reorderedPlaylists - Danh sách playlists đã sắp xếp lại
+   */
+  const reorderPlaylists = useCallback((reorderedPlaylists: Playlist[]) => {
+    setPlaylists(reorderedPlaylists);
+    // TODO: Nếu cần persist order lên server, thêm API call ở đây
+  }, []);
+
   // Fetch lần đầu khi mount
   useEffect(() => {
     fetchPlaylists();
@@ -307,6 +317,7 @@ export function usePlaylist() {
     addItemToPlaylist,
     removeItemFromPlaylist,
     reorderItems,
+    reorderPlaylists,
     setCurrentPlaylist,
   };
 }

@@ -64,10 +64,14 @@ export class AiService {
    * Mục đích: Tạo kịch bản hội thoại theo chủ đề cho module Listening
    * Tham số:
    *   - topic: Chủ đề hội thoại
-   *   - durationMinutes: Độ dài mong muốn
+   *   - durationMinutes: Độ dài mong muốn (phút)
    *   - numSpeakers: Số người tham gia (mặc định 2)
    *   - keywords: Từ khóa cần có trong hội thoại (optional)
    * Trả về: JSON chứa script hội thoại
+   * 
+   * Tính toán số từ:
+   *   - Tốc độ đọc trung bình: 130 từ/phút (conversational pace)
+   *   - 5 phút ≈ 650 từ, 10 phút ≈ 1300 từ, 15 phút ≈ 1950 từ
    */
   async generateConversation(
     topic: string,
@@ -77,6 +81,12 @@ export class AiService {
   ): Promise<{ script: { speaker: string; text: string }[] }> {
     this.logger.log(`Đang sinh hội thoại về chủ đề: ${topic}`);
 
+    // Tính toán số từ mục tiêu dựa trên thời lượng
+    // Tốc độ đọc trung bình khi nghe tiếng Anh: 130 từ/phút
+    const WORDS_PER_MINUTE = 130;
+    const targetWordCount = durationMinutes * WORDS_PER_MINUTE;
+    const minExchanges = Math.max(8, durationMinutes * 3); // Ít nhất 3 lượt/phút
+
     const keywordsInstruction = keywords
       ? `Hãy sử dụng các từ khóa sau trong hội thoại: ${keywords}`
       : '';
@@ -84,7 +94,10 @@ export class AiService {
     const prompt = `
 Tạo một cuộc hội thoại tiếng Anh tự nhiên về chủ đề "${topic}".
 - Số người tham gia: ${numSpeakers} (đặt tên là Person A, Person B, v.v.)
-- Độ dài: khoảng ${durationMinutes} phút khi đọc bình thường
+- Độ dài: khoảng ${durationMinutes} phút (tương đương ${targetWordCount} từ)
+- QUAN TRỌNG: Hội thoại PHẢI có tổng cộng ít nhất ${targetWordCount} từ để đảm bảo đủ thời lượng khi phát audio
+- Số lượt thoại: ít nhất ${minExchanges} lượt trao đổi
+- Mỗi câu nói nên dài từ 2-4 câu, có chi tiết và ngữ cảnh rõ ràng
 - Mức độ: Giao tiếp hàng ngày, dễ hiểu
 ${keywordsInstruction}
 
