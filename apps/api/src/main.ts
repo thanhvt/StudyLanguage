@@ -13,8 +13,13 @@ async function bootstrap() {
   app.useLogger(logger);
 
   // Bật CORS để frontend có thể gọi API
+  // Đọc từ biến môi trường CORS_ORIGINS, fallback về localhost cho development
+  const corsOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+    : ['http://localhost:3000', 'http://localhost:8081'];
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:8081'], // Web & Mobile
+    origin: corsOrigins, // Web & Mobile
     credentials: true,
   });
 
