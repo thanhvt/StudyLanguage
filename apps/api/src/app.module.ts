@@ -7,6 +7,8 @@ import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { HistoryModule } from './history/history.module';
 import { LessonsModule } from './lessons/lessons.module';
+import { ListenLaterModule } from './listen-later/listen-later.module';
+import { PlaylistsModule } from './playlists/playlists.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -23,6 +25,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     AiModule,
     HistoryModule, // Module quản lý lịch sử học tập
     LessonsModule, // Module tạo bài học mới
+    ListenLaterModule, // Module tính năng Nghe Sau
+    PlaylistsModule, // Module tính năng Playlists
   ],
   controllers: [AppController],
   providers: [

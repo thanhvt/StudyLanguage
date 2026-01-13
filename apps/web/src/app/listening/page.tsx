@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Headphones, Mic, Clock, Users, Tag, Sparkles, RotateCcw } from 'lucide-react';
+import { Headphones, Mic, Sparkles, RotateCcw, ListMusic, BookmarkPlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,12 +15,32 @@ import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
 
+// New Listening Components
+import {
+  DurationSelector,
+  SpeakersSelector,
+  TopicPicker,
+  ListenLaterButton,
+  ListenLaterDrawer,
+  ListenLaterBadge,
+  PlaylistManager,
+  AddToPlaylistModal,
+  PlaylistPlayer,
+} from '@/components/listening';
+import { usePlaylist } from '@/hooks/use-playlist';
+import { Playlist, ListenLaterItem, ConversationLine } from '@/types/listening-types';
+
 /**
- * Listening Page - Module Luyện Nghe (Enhanced với Live Reference style)
+ * Listening Page - Module Luyện Nghe (Enhanced với Topic Picker, Listen Later, Playlists)
  *
  * Mục đích: UI cho tính năng luyện nghe hội thoại
  * Flow: Chọn topic → AI sinh hội thoại → Nghe audio + xem transcript
- * NEW: Tabs UI giống live reference
+ * NEW: 
+ *   - Duration selector pills (5/10/15 hoặc custom max 20)
+ *   - Speakers selector (2/3/4)
+ *   - Topic picker với 140 scenarios
+ *   - Listen Later queue
+ *   - Playlist với continuous playback
  */
 export default function ListeningPage() {
   // Mode state - controlled by Tabs now
@@ -32,11 +51,14 @@ export default function ListeningPage() {
   const [duration, setDuration] = useState(5);
   const [numSpeakers, setNumSpeakers] = useState(2);
   const [keywords, setKeywords] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | undefined>();
 
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [conversation, setConversation] = useState<{ speaker: string; text: string }[] | null>(null);
+  const [conversation, setConversation] = useState<ConversationLine[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTopicPicker, setShowTopicPicker] = useState(false);
 
   // Interactive mode state
   const [showInteractive, setShowInteractive] = useState(false);
@@ -44,15 +66,35 @@ export default function ListeningPage() {
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // Save lesson hook
+  // Listen Later drawer state
+  const [listenLaterOpen, setListenLaterOpen] = useState(false);
+
+  // Playlist states
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
+
+  // Hooks
   const { saveLesson } = useSaveLesson();
+  const { playlists } = usePlaylist();
+
+  /**
+   * Xử lý khi chọn topic từ Topic Picker
+   */
+  const handleTopicSelect = (selectedTopic: string, category?: string, subCategory?: string) => {
+    setTopic(selectedTopic);
+    setSelectedCategory(category);
+    setSelectedSubCategory(subCategory);
+    if (selectedTopic) {
+      setShowTopicPicker(false);
+    }
+  };
 
   /**
    * Gọi API sinh hội thoại
    */
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      setError('Vui lòng nhập chủ đề');
+      setError('Vui lòng nhập hoặc chọn chủ đề');
       return;
     }
 
@@ -102,6 +144,8 @@ export default function ListeningPage() {
     setConversation(null);
     setTopic('');
     setKeywords('');
+    setSelectedCategory(undefined);
+    setSelectedSubCategory(undefined);
   };
 
   /**
@@ -118,10 +162,30 @@ export default function ListeningPage() {
     if (entry.keywords) setKeywords(entry.keywords);
   };
 
+  /**
+   * Xử lý khi play từ Listen Later
+   */
+  const handlePlayFromListenLater = (item: ListenLaterItem) => {
+    setTopic(item.topic);
+    setConversation(item.conversation);
+    setDuration(item.duration);
+    setNumSpeakers(item.num_speakers);
+    setSelectedCategory(item.category);
+    setSelectedSubCategory(item.sub_category);
+    setListenLaterOpen(false);
+  };
+
+  /**
+   * Xử lý khi chọn playlist để phát
+   */
+  const handlePlayPlaylist = (playlist: Playlist) => {
+    setActivePlaylist(playlist);
+  };
+
   return (
     <AppLayout>
       <PageTransition>
-        {/* Header với History Button - Matching Live Reference */}
+        {/* Header với History Button và Listen Later Badge */}
         <FadeIn>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -132,19 +196,29 @@ export default function ListeningPage() {
                 <h1 className="font-display text-2xl font-bold text-foreground">
                   Luyện Nghe
                 </h1>
-                <p className="text-sm text-muted-foreground">Smart Conversation</p>
+                <p className="text-sm text-muted-foreground">140 kịch bản • Smart Conversation</p>
               </div>
             </div>
-            <HistoryButton onClick={() => setHistoryOpen(true)} />
+            
+            <div className="flex items-center gap-2">
+              <ListenLaterBadge onClick={() => setListenLaterOpen(true)} />
+              <HistoryButton onClick={() => setHistoryOpen(true)} />
+            </div>
           </div>
         </FadeIn>
 
-        {/* History Drawer */}
+        {/* Drawers */}
         <HistoryDrawer
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
           filterType="listening"
           onOpenEntry={handleOpenHistoryEntry}
+        />
+        
+        <ListenLaterDrawer
+          isOpen={listenLaterOpen}
+          onClose={() => setListenLaterOpen(false)}
+          onPlay={handlePlayFromListenLater}
         />
 
         {/* Tabs - Matching live reference style */}
@@ -167,94 +241,82 @@ export default function ListeningPage() {
               </TabsList>
 
               <TabsContent value="passive">
-                <div className="glass-card p-6">
-                  <h2 className="font-display text-lg font-semibold mb-6">Tạo hội thoại mới</h2>
+                <div className="glass-card p-6 space-y-6">
+                  <h2 className="font-display text-lg font-semibold">Tạo hội thoại mới</h2>
                   
-                  <div className="space-y-4">
-                    {/* Chủ đề */}
-                    <div className="space-y-2">
+                  {/* Duration Selector */}
+                  <DurationSelector value={duration} onChange={setDuration} />
+
+                  {/* Speakers Selector */}
+                  <SpeakersSelector value={numSpeakers} onChange={setNumSpeakers} />
+
+                  {/* Topic Input với Toggle */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
                       <Label htmlFor="listeningTopic">
                         Chủ đề <span className="text-destructive">*</span>
                       </Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowTopicPicker(!showTopicPicker)}
+                        className="text-xs gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        {showTopicPicker ? 'Nhập thủ công' : 'Gợi ý 140 kịch bản'}
+                      </Button>
+                    </div>
+
+                    {showTopicPicker ? (
+                      <TopicPicker onSelect={handleTopicSelect} selectedTopic={topic} />
+                    ) : (
                       <Input
                         id="listeningTopic"
                         placeholder="VD: Đặt phòng khách sạn, Mua sắm, Hỏi đường..."
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                       />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Thời lượng */}
-                      <div className="space-y-2">
-                        <Label htmlFor="duration" className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          Thời lượng (phút)
-                        </Label>
-                        <Input
-                          id="duration"
-                          type="number"
-                          min={1}
-                          max={15}
-                          value={duration}
-                          onChange={(e) => setDuration(Number(e.target.value))}
-                        />
-                      </div>
-
-                      {/* Số người */}
-                      <div className="space-y-2">
-                        <Label htmlFor="numSpeakers" className="flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          Số người
-                        </Label>
-                        <Input
-                          id="numSpeakers"
-                          type="number"
-                          min={2}
-                          max={4}
-                          value={numSpeakers}
-                          onChange={(e) => setNumSpeakers(Number(e.target.value))}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Từ khóa */}
-                    <div className="space-y-2">
-                      <Label htmlFor="keywords" className="flex items-center gap-2">
-                        <Tag className="w-4 h-4" />
-                        Từ khóa (tùy chọn)
-                      </Label>
-                      <Input
-                        id="keywords"
-                        placeholder="reservation, check-in, room service..."
-                        value={keywords}
-                        onChange={(e) => setKeywords(e.target.value)}
-                      />
-                    </div>
-
-                    {error && (
-                      <p className="text-destructive text-sm">{error}</p>
                     )}
-
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={isGenerating || !topic.trim()}
-                      className="w-full mt-4"
-                      size="lg"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                          Đang tạo...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-5 h-5 mr-2" />
-                          Tạo hội thoại
-                        </>
-                      )}
-                    </Button>
                   </div>
+
+                  {/* Keywords (optional) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="keywords">Từ khóa (tùy chọn)</Label>
+                    <Input
+                      id="keywords"
+                      placeholder="reservation, check-in, room service..."
+                      value={keywords}
+                      onChange={(e) => setKeywords(e.target.value)}
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-destructive text-sm">{error}</p>
+                  )}
+
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !topic.trim()}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5 mr-2" />
+                        Tạo hội thoại
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Playlist Manager */}
+                <div className="glass-card p-6 mt-6">
+                  <PlaylistManager onSelectPlaylist={handlePlayPlaylist} />
                 </div>
               </TabsContent>
 
@@ -314,18 +376,63 @@ export default function ListeningPage() {
         {conversation && (
           <FadeIn delay={0.1}>
             <div className="glass-card p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h2 className="font-display text-lg font-semibold">🎧 Nghe hội thoại</h2>
-                <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-                  <RotateCcw className="w-4 h-4" />
-                  Tạo mới
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Listen Later Button */}
+                  <ListenLaterButton
+                    topic={topic}
+                    conversation={conversation}
+                    duration={duration}
+                    numSpeakers={numSpeakers}
+                    category={selectedCategory}
+                    subCategory={selectedSubCategory}
+                    variant="icon"
+                  />
+                  
+                  {/* Add to Playlist Button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowPlaylistModal(true)}
+                    title="Thêm vào Playlist"
+                  >
+                    <BookmarkPlus className="w-5 h-5" />
+                  </Button>
+
+                  {/* Reset Button */}
+                  <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
+                    <RotateCcw className="w-4 h-4" />
+                    Tạo mới
+                  </Button>
+                </div>
               </div>
               
               <ListeningPlayer conversation={conversation} />
             </div>
           </FadeIn>
         )}
+
+        {/* Add to Playlist Modal */}
+        <AddToPlaylistModal
+          isOpen={showPlaylistModal}
+          onClose={() => setShowPlaylistModal(false)}
+          topic={topic}
+          conversation={conversation || []}
+          duration={duration}
+          numSpeakers={numSpeakers}
+          category={selectedCategory}
+          subCategory={selectedSubCategory}
+          onSuccess={() => {
+            // Toast notification đã có trong modal
+          }}
+        />
+
+        {/* Playlist Player - cố định bottom */}
+        <PlaylistPlayer
+          playlist={activePlaylist}
+          onClose={() => setActivePlaylist(null)}
+        />
       </PageTransition>
     </AppLayout>
   );
