@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
 import { showError } from '@/lib/toast';
 
@@ -15,6 +18,9 @@ interface ScriptLine {
 interface InteractiveListeningProps {
   topic: string;
   onBack: () => void;
+  duration?: number;
+  autoPlay?: boolean;
+  handsOnlyMode?: boolean;
 }
 
 /**
@@ -27,7 +33,13 @@ interface InteractiveListeningProps {
  *   3. Dừng lại ở YOUR TURN để user nói
  *   4. AI phản hồi dựa trên user input
  */
-export function InteractiveListening({ topic, onBack }: InteractiveListeningProps) {
+export function InteractiveListening({ 
+  topic, 
+  onBack,
+  duration = 5,
+  autoPlay: initialAutoPlay = false,
+  handsOnlyMode: initialHandsOnlyMode = false
+}: InteractiveListeningProps) {
   // Script state
   const [scenario, setScenario] = useState<string | null>(null);
   const [script, setScript] = useState<ScriptLine[] | null>(null);
@@ -41,9 +53,14 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
+  // Settings state (inline controls)
+  const [autoPlay, setAutoPlay] = useState(initialAutoPlay);
+  const [handsOnlyMode, setHandsOnlyMode] = useState(initialHandsOnlyMode);
+
   // Audio refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasInitialized = useRef(false);
 
   /**
    * Sinh hội thoại tương tác từ AI
@@ -72,6 +89,16 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       setIsGenerating(false);
     }
   }, [topic]);
+
+  /**
+   * Auto-generate on mount (Improvement #2: loại bỏ double confirmation)
+   */
+  useEffect(() => {
+    if (!hasInitialized.current && topic) {
+      hasInitialized.current = true;
+      generateScript();
+    }
+  }, [generateScript, topic]);
 
   /**
    * AI đọc câu hiện tại bằng TTS
@@ -114,6 +141,61 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       setIsAiSpeaking(false);
     }
   }, [script, currentIndex]);
+
+  /**
+   * Auto-play mode (Improvement #6)
+   * Tự động đọc câu tiếp theo khi AI hoàn thành
+   */
+  useEffect(() => {
+    if (
+      autoPlay &&
+      script &&
+      !isComplete &&
+      !isAiSpeaking &&
+      !isRecording &&
+      !isProcessing &&
+      currentIndex < script.length &&
+      !script[currentIndex]?.isUserTurn
+    ) {
+      const timer = setTimeout(() => {
+        speakCurrentLine();
+      }, 500); // Delay nhỏ để tự nhiên hơn
+      return () => clearTimeout(timer);
+    }
+  }, [autoPlay, script, isComplete, isAiSpeaking, isRecording, isProcessing, currentIndex, speakCurrentLine]);
+
+  /**
+   * Hands-only mode (Improvement #7)
+   * Tự động skip user turn khi bật chế độ chỉ nghe
+   */
+  const skipUserTurn = useCallback(async () => {
+    if (!script) return;
+    
+    // AI tiếp tục thay vì user nói
+    setConversationHistory(prev => [...prev, { speaker: 'YOU', text: '(Bỏ qua lượt nói)' }]);
+    setCurrentIndex(prev => prev + 1);
+    
+    // Kiểm tra nếu đã hết script
+    if (currentIndex + 1 >= script.length) {
+      setIsComplete(true);
+    }
+  }, [script, currentIndex]);
+
+  useEffect(() => {
+    const currentLine = script?.[currentIndex];
+    if (
+      handsOnlyMode &&
+      currentLine?.isUserTurn &&
+      !isComplete &&
+      !isRecording &&
+      !isProcessing
+    ) {
+      const timer = setTimeout(() => {
+        skipUserTurn();
+      }, 1000); // Delay lâu hơn để user đọc gợi ý
+      return () => clearTimeout(timer);
+    }
+  }, [handsOnlyMode, script, currentIndex, isComplete, isRecording, isProcessing, skipUserTurn]);
 
   /**
    * Bắt đầu ghi âm user
@@ -237,17 +319,62 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       {/* Hidden audio element */}
       <audio ref={audioRef} />
 
-      {/* Scenario */}
+      {/* Header with topic and progress (Improvement #4) */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-display font-semibold text-lg">{topic}</h3>
+          <p className="text-sm text-muted-foreground">
+            Tham gia hội thoại • {conversationHistory.length} lượt
+          </p>
+        </div>
+        {script && !isComplete && (
+          <Badge variant="outline" className="text-sm">
+            {currentIndex + 1}/{script.length}
+          </Badge>
+        )}
+        {isGenerating && (
+          <Badge variant="secondary" className="animate-pulse">
+            Đang tạo...
+          </Badge>
+        )}
+      </div>
+
+      {/* Settings toggles (Improvement #6, #7) */}
+      <div className="flex items-center gap-6 p-3 rounded-lg bg-muted/50">
+        <div className="flex items-center gap-2">
+          <Switch 
+            id="autoPlay" 
+            checked={autoPlay} 
+            onCheckedChange={setAutoPlay}
+          />
+          <Label htmlFor="autoPlay" className="text-sm cursor-pointer">
+            Tự động phát
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch 
+            id="handsOnlyMode" 
+            checked={handsOnlyMode} 
+            onCheckedChange={setHandsOnlyMode}
+          />
+          <Label htmlFor="handsOnlyMode" className="text-sm cursor-pointer">
+            Chỉ nghe (không nói)
+          </Label>
+        </div>
+      </div>
+
+      {/* Scenario - Enhanced (Improvement #4) */}
       {scenario && (
-        <Card className="p-4 bg-primary/10">
-          <p className="text-sm font-medium">📍 Tình huống:</p>
-          <p>{scenario}</p>
+        <Card className="p-6 bg-primary/10 border-l-4 border-primary">
+          <p className="text-sm font-medium text-primary mb-2">📍 Tình huống</p>
+          <p className="text-lg">{scenario}</p>
         </Card>
       )}
 
       {/* Conversation history */}
       <div className="space-y-3 max-h-[400px] overflow-y-auto">
         {conversationHistory.map((line, index) => (
+
           <div
             key={index}
             className={`p-4 rounded-lg ${

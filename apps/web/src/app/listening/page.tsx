@@ -322,38 +322,56 @@ export default function ListeningPage() {
               </TabsContent>
 
               <TabsContent value="interactive">
-                <div className="glass-card p-6 border border-border rounded-2xl">
-                  <div className="flex items-center gap-3 mb-4">
+                <div className="glass-card p-6 border border-border rounded-2xl space-y-6">
+                  <div className="flex items-center gap-3">
                     <Mic className="w-5 h-5 text-primary" />
                     <h2 className="font-display text-lg font-semibold">Tham gia hội thoại</h2>
                   </div>
-                  <p className="text-muted-foreground text-sm mb-6">
+                  <p className="text-muted-foreground text-sm">
                     Chọn chủ đề và AI sẽ tạo một cuộc hội thoại để bạn tham gia. Bạn sẽ được lắng nghe và sau đó nói các câu của mình!
                   </p>
                   
-                  <div className="space-y-4">
-                    <div className="space-y-2">
+                  {/* Duration Selector - Improvement #5 */}
+                  <DurationSelector value={duration} onChange={setDuration} />
+                  
+                  {/* Topic Input với Toggle - Improvement #3 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
                       <Label htmlFor="interactiveTopic">
                         Chủ đề <span className="text-destructive">*</span>
                       </Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowTopicPicker(!showTopicPicker)}
+                        className="text-xs gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        {showTopicPicker ? 'Nhập thủ công' : 'Gợi ý 140 kịch bản'}
+                      </Button>
+                    </div>
+
+                    {showTopicPicker ? (
+                      <TopicPicker onSelect={handleTopicSelect} selectedTopic={topic} />
+                    ) : (
                       <Input
                         id="interactiveTopic"
                         placeholder="Đặt phòng khách sạn, Mua cà phê, Phỏng vấn xin việc..."
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                       />
-                    </div>
-
-                    <Button
-                      onClick={() => setShowInteractive(true)}
-                      disabled={!topic.trim()}
-                      className="w-full"
-                      size="lg"
-                    >
-                      <Mic className="w-5 h-5 mr-2" />
-                      Bắt đầu tham gia
-                    </Button>
+                    )}
                   </div>
+
+                  <Button
+                    onClick={() => setShowInteractive(true)}
+                    disabled={!topic.trim()}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Mic className="w-5 h-5 mr-2" />
+                    Bắt đầu tham gia
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
@@ -364,7 +382,8 @@ export default function ListeningPage() {
         {showInteractive && (
           <div className="glass-card p-6">
             <InteractiveListening 
-              topic={topic} 
+              topic={topic}
+              duration={duration}
               onBack={() => {
                 setShowInteractive(false);
                 setTopic('');
