@@ -890,7 +890,7 @@ Screen 1: Welcome
   "Xin chào! Sẵn sàng học tiếng Anh?"
 
 Screen 2: 4 Skills
-  "Luyện cả 4 kỹ năng với AI"
+  "Luyện cả 3 kỹ năng với AI"
 
 Screen 3: Anywhere
   "Học mọi lúc, mọi nơi - Online \u0026 Offline"

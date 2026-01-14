@@ -70,8 +70,117 @@ export function RightPanelContent() {
 
   return (
     <>
+      {/* NEW: Music Player Section */}
+      {/* NEW: Music Player Section - Enhanced Design */}
+      {currentTrack && (
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-900/40 via-purple-900/10 to-transparent border border-white/10 rounded-3xl p-4 shadow-xl backdrop-blur-md group">
+          {/* Subtle animated background glow */}
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          
+          <div className="relative z-10">
+            {/* Header / Track Info */}
+            <div className="flex items-center gap-4 mb-5">
+               <div className={cn(
+                 "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg border border-white/10 relative overflow-hidden", 
+                 isPlaying ? "shadow-[0_0_15px_rgba(139,92,246,0.5)]" : "bg-white/5"
+               )}>
+                 <div className={cn("absolute inset-0 bg-gradient-to-br from-violet-600 to-indigo-600 opacity-80", !isPlaying && "opacity-0")} />
+                 <span className="relative z-10">{isPlaying ? '🎧' : '🎵'}</span>
+               </div>
+               
+               <div className="flex-1 min-w-0 flex flex-col justify-center">
+                 <p className="text-sm font-bold truncate text-white tracking-wide">{currentTrack.name}</p>
+                 <p className="text-[11px] text-white/50 font-medium uppercase tracking-wider">Background Music</p>
+               </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between px-2 mb-4">
+               {/* Prev Button */}
+               <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={prevTrack}
+                  className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-back"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
+               </Button>
+               
+               {/* Play/Pause Button - Main Focus */}
+               <Button 
+                  onClick={toggle} 
+                  className={cn(
+                    "h-14 w-14 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all active:scale-95 flex items-center justify-center border border-white/20",
+                    isPlaying 
+                      ? "bg-white text-indigo-900 hover:bg-white/90" 
+                      : "bg-gradient-to-br from-violet-500 to-indigo-600 text-white hover:brightness-110"
+                  )}
+               >
+                  {isPlaying ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-0.5"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  )}
+               </Button>
+
+               {/* Next Button */}
+               <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={nextTrack}
+                  className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-forward"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+               </Button>
+            </div>
+
+            {/* Volume */}
+            <div className="bg-black/20 rounded-xl p-2.5 flex items-center gap-3 backdrop-blur-sm border border-white/5 mx-1">
+               <div className="w-5 h-5 flex items-center justify-center">
+                 {volume === 0 ? (
+                    <span className="text-white/40 text-xs">🔇</span>
+                 ) : volume < 0.5 ? (
+                    <span className="text-white/60 text-xs">🔉</span> 
+                 ) : (
+                    <span className="text-white/80 text-xs">🔊</span>
+                 )}
+               </div>
+               <div className="relative flex-1 h-6 flex items-center">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  {/* Custom Track */}
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" 
+                      style={{ width: `${volume * 100}%` }}
+                    />
+                  </div>
+                  {/* Thumb Indicator (Visual only) */}
+                  <div 
+                    className="absolute h-3 w-3 bg-white rounded-full shadow-md pointer-events-none transition-all duration-75"
+                    style={{ left: `calc(${volume * 100}% - 6px)` }}
+                  />
+               </div>
+            </div>
+
+            {isDucking && (
+              <p className="text-[10px] text-amber-300 text-center mt-2 animate-pulse font-medium tracking-wide">
+                 Voice Active - Ducking Music...
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 1. User Profile Enhanced */}
-      <div className="flex flex-col items-center text-center space-y-3 pt-1">
+      <div className={cn("flex flex-col items-center text-center space-y-3 pt-1", !user && "flex-1 justify-center")}>
          {user ? (
           <>
             <div className="relative">
@@ -128,64 +237,7 @@ export function RightPanelContent() {
 
       {/* <div className="glow-divider my-1" /> */}
 
-      {/* NEW: Music Player Section */}
-      {currentTrack && (
-        <div className="bg-card/40 border border-border/40 rounded-2xl p-3 shadow-inner">
-          <div className="flex items-center gap-3 mb-3">
-             <div className={cn(
-               "w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-md transition-all", 
-               isPlaying ? "bg-primary/20 animate-pulse" : "bg-muted"
-             )}>
-               {isPlaying ? '🎧' : '🎶'}
-             </div>
-             <div className="flex-1 min-w-0">
-               <p className="text-xs font-bold truncate text-primary">{currentTrack.name}</p>
-               <p className="text-[10px] text-muted-foreground">Background Music</p>
-             </div>
-          </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-between gap-1 mb-2">
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={prevTrack}>
-               <span className="text-lg">⏮️</span>
-             </Button>
-             
-             <Button 
-                onClick={toggle} 
-                className={cn(
-                  "h-10 w-10 rounded-full shadow-lg transition-all active:scale-95",
-                  isPlaying ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                )}
-             >
-                {isPlaying ? <span className="text-lg">⏸️</span> : <span className="text-lg ml-0.5">▶️</span>}
-             </Button>
-
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={nextTrack}>
-               <span className="text-lg">⏭️</span>
-             </Button>
-          </div>
-
-          {/* Volume */}
-          <div className="flex items-center gap-2 px-1">
-             <span className="text-[10px] opacity-70">🔈</span>
-             <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="flex-1 h-1.5 rounded-lg appearance-none cursor-pointer bg-muted/50 accent-primary"
-              />
-             <span className="text-[10px] opacity-70">🔊</span>
-          </div>
-          {isDucking && (
-            <p className="text-[10px] text-amber-500 text-center mt-1 animate-pulse">
-               AI đang nói (giảm âm lượng)
-            </p>
-          )}
-        </div>
-      )}
 
       {/* 2. Motivation Stats (Streak) */}
       {user && (
@@ -205,6 +257,7 @@ export function RightPanelContent() {
       )}
 
       {/* 3. Daily Goals */}
+      {user && (
       <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-3 min-h-[150px]">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-sm font-bold flex items-center gap-2">
@@ -253,6 +306,7 @@ export function RightPanelContent() {
             </div>
          </div>
       </div>
+      )}
       <div className="glow-divider my-1" />
       {/* 4. Compact Footer (Settings) */}
       <div className="mt-auto space-y-2">

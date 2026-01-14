@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 /**
  * Home Page - Dashboard chính
  *
- * Mục đích: Trang chủ với Quick Start cho 4 kỹ năng (UI cải tiến từ StudyMate Hub)
+ * Mục đích: Trang chủ với Quick Start cho 3 kỹ năng (UI cải tiến từ StudyMate Hub)
  * Tham số đầu vào: Không
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Root page của app, làm dashboard chính
@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/card';
 export default function HomePage() {
   const { t } = useLanguage();
 
-  // Danh sách 4 kỹ năng chính với icons và gradients từ StudyMate Hub
+  // Danh sách 3 kỹ năng chính với icons và gradients từ StudyMate Hub
   const skills = [
     {
       id: 'listening',
@@ -69,7 +69,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Làm chủ tiếng Anh với công nghệ AI tiên tiến. Luyện tập 4 kỹ năng 
+              Làm chủ tiếng Anh với công nghệ AI tiên tiến. Luyện tập 3 kỹ năng 
               Nghe - Nói - Đọc - Viết một cách hiệu quả và thú vị.
             </p>
           </div>

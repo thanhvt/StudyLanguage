@@ -16,7 +16,7 @@ type Translations = {
 const DICTIONARY: Translations = {
   'app.title': { vi: 'AI Learning', en: 'AI Learning' },
   'app.subtitle': { 
-    vi: 'Luyện 4 kỹ năng: Nghe, Nói, Đọc, Viết với trợ lý AI thông minh', 
+    vi: 'Luyện 3 kỹ năng: Nghe, Nói, Đọc, Viết với trợ lý AI thông minh', 
     en: 'Master 4 skills: Listening, Speaking, Reading, Writing with Smart AI' 
   },
   'auth.login': { vi: 'Đăng nhập', en: 'Login' },

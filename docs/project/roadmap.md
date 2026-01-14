@@ -102,7 +102,7 @@
 
 ## Phase 2: Complete 4 Skills
 **Thời gian:** 3-4 tuần
-**Mục tiêu:** Hoàn thiện đủ 4 kỹ năng học.
+**Mục tiêu:** Hoàn thiện đủ 3 kỹ năng học.
 
 ### 🔀 PARALLEL GROUP D (3 modules độc lập)
 

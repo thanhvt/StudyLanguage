@@ -21,7 +21,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "AI Learning",
-  description: "Ứng dụng học tiếng Anh 4 kỹ năng (Nghe, Nói, Đọc, Viết) tích hợp AI",
+  description: "Ứng dụng học tiếng Anh 3 kỹ năng (Nghe, Nói, Đọc, Viết) tích hợp AI",
 };
 
 export default function RootLayout({

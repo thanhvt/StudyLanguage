@@ -2,7 +2,7 @@
 
 ## Tổng quan tài liệu
 
-Tài liệu này mô tả chi tiết giao diện và trải nghiệm người dùng (UI/UX) của ứng dụng StudyLanguage - một ứng dụng học tiếng Anh với 4 kỹ năng chính: **Nghe (Listening)**, **Nói (Speaking)**, **Đọc (Reading)**, **Viết (Writing)**.
+Tài liệu này mô tả chi tiết giao diện và trải nghiệm người dùng (UI/UX) của ứng dụng StudyLanguage - một ứng dụng học tiếng Anh với 3 kỹ năng chính: **Nghe (Listening)**, **Nói (Speaking)**, **Đọc (Reading)**, **Viết (Writing)**.
 
 > [!NOTE]
 > Tài liệu này được tạo để team design có thể hiểu rõ cấu trúc hiện tại và redesign lại ứng dụng.

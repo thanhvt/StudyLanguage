@@ -10,7 +10,7 @@ import { Headphones, Mic, BookOpen, PenTool, GraduationCap, PanelLeftClose } fro
 /**
  * Sidebar - Navigation menu component (Updated để match reference)
  *
- * Mục đích: Hiển thị navigation menu với 4 kỹ năng chính
+ * Mục đích: Hiển thị navigation menu với 3 kỹ năng chính
  * Features: Bilingual labels, colored icons, green active state
  */
 export function Sidebar() {

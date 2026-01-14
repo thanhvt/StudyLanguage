@@ -6,7 +6,7 @@
 ---
 
 ## 1. TỔNG QUAN & PHẠM VI (OVERVIEW & SCOPE)
-*   **Mục tiêu:** Xây dựng hệ thống học tiếng Anh 4 kỹ năng (Nghe, Nói, Đọc, Viết) sử dụng công nghệ AI để tạo nội dung và phản hồi.
+*   **Mục tiêu:** Xây dựng hệ thống học tiếng Anh 3 kỹ năng (Nghe, Nói, Đọc, Viết) sử dụng công nghệ AI để tạo nội dung và phản hồi.
 *   **Nền tảng:**
     *   **Web App:** Quản lý, học tập trên màn hình lớn.
     *   **Mobile App (iOS/Android):** Học tập mọi lúc mọi nơi.
