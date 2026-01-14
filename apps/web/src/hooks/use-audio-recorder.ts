@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { showError } from '@/lib/toast';
 
 /**
  * Interface định nghĩa trạng thái của audio recorder
@@ -8,7 +9,6 @@ import { useState, useRef, useCallback } from 'react';
 export interface AudioRecorderState {
   isRecording: boolean;
   audioBlob: Blob | null;
-  error: string | null;
   duration: number;
 }
 
@@ -18,7 +18,6 @@ export interface AudioRecorderState {
 export interface UseAudioRecorderReturn {
   isRecording: boolean;
   audioBlob: Blob | null;
-  error: string | null;
   duration: number;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<Blob | null>;
@@ -42,7 +41,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   // State lưu trữ trạng thái ghi âm
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
   const [duration, setDuration] = useState(0);
 
   // Refs để lưu trữ các objects không cần re-render
@@ -62,7 +61,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const startRecording = useCallback(async () => {
     try {
       // Reset state trước khi ghi mới
-      setError(null);
       setAudioBlob(null);
       audioChunksRef.current = [];
 
@@ -118,7 +116,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       // Lắng nghe event lỗi
       mediaRecorder.onerror = (event) => {
         console.error('[useAudioRecorder] Lỗi MediaRecorder:', event);
-        setError('Lỗi khi ghi âm');
+        showError('Lỗi khi ghi âm');
       };
 
       // Bắt đầu ghi với timeslice 500ms để nhận data thường xuyên
@@ -136,14 +134,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       console.error('[useAudioRecorder] Lỗi khi bắt đầu ghi âm:', err);
       if (err instanceof DOMException) {
         if (err.name === 'NotAllowedError') {
-          setError('Vui lòng cấp quyền sử dụng microphone');
+          showError('Vui lòng cấp quyền sử dụng microphone');
         } else if (err.name === 'NotFoundError') {
-          setError('Không tìm thấy microphone');
+          showError('Không tìm thấy microphone');
         } else {
-          setError(`Lỗi: ${err.message}`);
+          showError(`Lỗi: ${err.message}`);
         }
       } else {
-        setError('Không thể bắt đầu ghi âm');
+        showError('Không thể bắt đầu ghi âm');
       }
     }
   }, []);
@@ -207,7 +205,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
    */
   const resetRecording = useCallback(() => {
     setAudioBlob(null);
-    setError(null);
+    setAudioBlob(null);
+    // setError(null);
     setDuration(0);
     audioChunksRef.current = [];
     console.log('[useAudioRecorder] Đã reset trạng thái');
@@ -216,7 +215,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   return {
     isRecording,
     audioBlob,
-    error,
     duration,
     startRecording,
     stopRecording,

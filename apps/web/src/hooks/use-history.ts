@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiJson } from '@/lib/api';
+import { showError, showSuccess } from '@/lib/toast';
 
 /**
  * Interface định nghĩa một entry trong lịch sử
@@ -62,7 +64,7 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
   // State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 20,
@@ -81,7 +83,6 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
    */
   const fetchHistory = useCallback(async (page = 1) => {
     setLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams();
@@ -105,7 +106,7 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
       setPagination(response.pagination);
     } catch (err) {
       console.error('[useHistory] Lỗi fetch lịch sử:', err);
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      // showError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
@@ -131,6 +132,7 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
       return response;
     } catch (err) {
       console.error('[useHistory] Lỗi toggle pin:', err);
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       throw err;
     }
   }, []);
@@ -155,6 +157,7 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
       return response;
     } catch (err) {
       console.error('[useHistory] Lỗi toggle favorite:', err);
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       throw err;
     }
   }, []);
@@ -169,9 +172,11 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
       // Remove từ local state (hoặc mark as deleted)
       setHistory(prev => prev.filter(entry => entry.id !== id));
 
+      showSuccess('Đã xóa bài học');
       return { success: true };
     } catch (err) {
       console.error('[useHistory] Lỗi delete:', err);
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       throw err;
     }
   }, []);
@@ -186,9 +191,11 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
       // Refresh list
       fetchHistory(pagination.page);
 
+      showSuccess('Đã khôi phục bài học');
       return { success: true };
     } catch (err) {
       console.error('[useHistory] Lỗi restore:', err);
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       throw err;
     }
   }, [fetchHistory, pagination.page]);
@@ -225,7 +232,6 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
     // Data
     history,
     loading,
-    error,
     pagination,
     filters,
     

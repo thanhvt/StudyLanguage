@@ -12,6 +12,7 @@ import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
+import { showError } from '@/lib/toast';
 
 /**
  * Writing Page - Module Luyện Viết (matching live reference)
@@ -30,7 +31,6 @@ export default function WritingPage() {
 
   // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // History drawer state
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -51,12 +51,11 @@ export default function WritingPage() {
 
   const handleAnalyze = async () => {
     if (!userText.trim()) {
-      setError('Vui lòng nhập nội dung bài viết');
+      showError('Vui lòng nhập nội dung bài viết');
       return;
     }
 
     setIsAnalyzing(true);
-    setError(null);
 
     try {
       const response = await api('/ai/generate-text', {
@@ -105,7 +104,7 @@ Chỉ trả về JSON.`,
         status: 'completed',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      showError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {
       setIsAnalyzing(false);
     }
@@ -183,7 +182,7 @@ Chỉ trả về JSON.`,
                 </div>
               </div>
 
-              {error && <p className="text-destructive text-sm">{error}</p>}
+
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 

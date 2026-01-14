@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { AudioPlayer } from '@/components/audio-player';
 import { createClient } from '@/lib/supabase/client';
+import { showError } from '@/lib/toast';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -102,7 +103,6 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
   const [currentTime, setCurrentTime] = useState(0);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(audioUrl || null);
-  const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -132,7 +132,6 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
    */
   const generateAudio = useCallback(async () => {
     setIsGeneratingAudio(true);
-    setError(null);
     setProgress(0);
     setProgressMessage('Đang khởi tạo...');
 
@@ -146,7 +145,9 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
       const token = session?.access_token;
 
       if (!token) {
-        throw new Error('Chưa đăng nhập');
+        showError('Chưa đăng nhập');
+        setIsGeneratingAudio(false);
+        return;
       }
 
       // Gọi SSE endpoint
@@ -196,12 +197,18 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
                 setProgress(100);
                 setProgressMessage('Hoàn thành!');
 
-                // Tạo data URL từ base64
-                const audioDataUrl = `data:audio/mpeg;base64,${event.audio}`;
+                // Tạo Blob URL từ base64 (robust hơn data URL cho audio lớn)
+                const binaryString = atob(event.audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                  bytes[i] = binaryString.charCodeAt(i);
+                }
+                const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+                const audioBlobUrl = URL.createObjectURL(audioBlob);
 
                 // Đợi xíu cho animation 100%
                 setTimeout(() => {
-                  setGeneratedAudioUrl(audioDataUrl);
+                  setGeneratedAudioUrl(audioBlobUrl);
                   if (event.timestamps && event.timestamps.length > 0) {
                     setRealTimestamps(event.timestamps);
                   }
@@ -222,7 +229,7 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
         console.log('[SSE] Request đã bị hủy');
         return;
       }
-      setError(err instanceof Error ? err.message : 'Lỗi sinh audio');
+      showError(err instanceof Error ? err.message : 'Lỗi sinh audio');
       setProgress(0);
       setProgressMessage('');
     } finally {
@@ -237,8 +244,12 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      // Cleanup Blob URL để tránh memory leak
+      if (generatedAudioUrl && generatedAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(generatedAudioUrl);
+      }
     };
-  }, []);
+  }, [generatedAudioUrl]);
 
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
@@ -346,10 +357,7 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
             </button>
           )}
 
-          {/* Error Message */}
-          {error && (
-            <p className="text-destructive text-sm mt-2 animate-pulse">{error}</p>
-          )}
+
         </div>
       )}
 

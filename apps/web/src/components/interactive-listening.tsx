@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import { showError } from '@/lib/toast';
 
 interface ScriptLine {
   speaker: string;
@@ -38,7 +39,6 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
 
   // Audio refs
@@ -50,7 +50,6 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
    */
   const generateScript = useCallback(async () => {
     setIsGenerating(true);
-    setError(null);
 
     try {
       // Sử dụng API client có xác thực
@@ -68,7 +67,7 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       setConversationHistory([]);
       setIsComplete(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi tạo hội thoại');
+      showError(err instanceof Error ? err.message : 'Lỗi tạo hội thoại');
     } finally {
       setIsGenerating(false);
     }
@@ -111,7 +110,7 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
         };
       }
     } catch {
-      setError('Lỗi phát audio');
+      showError('Lỗi phát audio');
       setIsAiSpeaking(false);
     }
   }, [script, currentIndex]);
@@ -136,7 +135,7 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
       mediaRecorder.start();
       setIsRecording(true);
     } catch {
-      setError('Không thể truy cập microphone');
+      showError('Không thể truy cập microphone');
     }
   };
 
@@ -197,7 +196,7 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
         setCurrentIndex(prev => prev + 1);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi xử lý');
+      showError(err instanceof Error ? err.message : 'Lỗi xử lý');
     } finally {
       setIsProcessing(false);
     }
@@ -330,8 +329,6 @@ export function InteractiveListening({ topic, onBack }: InteractiveListeningProp
           </Button>
         </Card>
       )}
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );
 }

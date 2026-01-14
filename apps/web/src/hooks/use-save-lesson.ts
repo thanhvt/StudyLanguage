@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { showError, showSuccess } from '@/lib/toast';
 
 /**
  * Interface cho việc tạo lesson
@@ -26,7 +28,7 @@ export interface CreateLessonPayload {
  */
 export function useSaveLesson() {
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
 
   /**
    * Lưu bài học vào database
@@ -36,7 +38,6 @@ export function useSaveLesson() {
    */
   const saveLesson = useCallback(async (data: CreateLessonPayload) => {
     setIsSaving(true);
-    setError(null);
 
     try {
       const response = await api('/lessons', {
@@ -53,7 +54,7 @@ export function useSaveLesson() {
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi lưu bài học';
-      setError(message);
+      showError(message);
       console.error('[useSaveLesson] Lỗi:', err);
       // Không throw error để không block UI, chỉ log
       return { success: false, error: message };
@@ -65,6 +66,5 @@ export function useSaveLesson() {
   return {
     saveLesson,
     isSaving,
-    error,
   };
 }

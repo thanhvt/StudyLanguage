@@ -75,7 +75,6 @@ export default function SpeakingPage() {
   const { saveLesson } = useSaveLesson();
   const { 
     isRecording, 
-    error: recordingError, 
     duration,
     startRecording, 
     stopRecording, 
@@ -451,9 +450,6 @@ export default function SpeakingPage() {
                        <p className={`text-sm font-medium transition-colors ${isRecording ? 'text-red-400 animate-pulse' : 'text-muted-foreground'}`}>
                           {isRecording ? '🔴 Recording...' : isThinking ? '🤔 AI is thinking...' : 'Tap Mic to Speak'}
                        </p>
-                       {recordingError && (
-                         <p className="text-sm text-red-400 mt-2">{recordingError}</p>
-                       )}
                      </div>
                    </Card>
                  )}

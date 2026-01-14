@@ -14,6 +14,7 @@ import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { PageTransition, FadeIn } from '@/components/animations';
+import { showError, showSuccess } from '@/lib/toast';
 
 // New Listening Components
 import {
@@ -57,7 +58,6 @@ export default function ListeningPage() {
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
   const [conversation, setConversation] = useState<ConversationLine[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
 
   // Interactive mode state
@@ -94,12 +94,11 @@ export default function ListeningPage() {
    */
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      setError('Vui lòng nhập hoặc chọn chủ đề');
+      showError('Vui lòng nhập hoặc chọn chủ đề');
       return;
     }
 
     setIsGenerating(true);
-    setError(null);
 
     try {
       const response = await api('/ai/generate-conversation', {
@@ -135,7 +134,7 @@ export default function ListeningPage() {
         status: 'completed',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      showError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {
       setIsGenerating(false);
     }
@@ -294,9 +293,7 @@ export default function ListeningPage() {
                     />
                   </div>
 
-                  {error && (
-                    <p className="text-destructive text-sm">{error}</p>
-                  )}
+
 
                   <Button
                     onClick={handleGenerate}

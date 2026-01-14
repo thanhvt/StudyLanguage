@@ -102,7 +102,6 @@ export function HistoryPanel({ filterType, onOpenEntry, height = '100%' }: Histo
   const {
     history,
     loading,
-    error,
     pagination,
     filters,
     setFilters,
@@ -179,14 +178,6 @@ export function HistoryPanel({ filterType, onOpenEntry, height = '100%' }: Histo
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-24 bg-muted/20 rounded-xl animate-pulse" />
             ))}
-          </div>
-        ) : error ? (
-          // Error state
-          <div className="text-center py-8">
-            <p className="text-destructive mb-2">❌ {error}</p>
-            <Button variant="outline" size="sm" onClick={refresh}>
-              🔄 Thử lại
-            </Button>
           </div>
         ) : history.length === 0 ? (
           // Empty state

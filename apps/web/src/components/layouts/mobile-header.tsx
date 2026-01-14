@@ -26,8 +26,11 @@ export function MobileHeader() {
       <div className="flex items-center justify-between h-14 px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <GraduationCap className="w-4 h-4 text-primary-foreground" />
+          <div 
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, hsl(152, 76%, 36%), hsl(160, 70%, 35%))' }}
+          >
+            <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-foreground">StudyLanguage</span>
         </Link>
@@ -49,7 +52,10 @@ export function MobileHeader() {
               {user ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                      style={{ background: 'linear-gradient(135deg, hsl(152, 76%, 36%), hsl(160, 70%, 35%))' }}
+                    >
                       {user.email?.[0].toUpperCase() || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">

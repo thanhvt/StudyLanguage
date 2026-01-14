@@ -178,7 +178,7 @@ export function MobileNavBar() {
       className={cn(
         'lg:hidden fixed bottom-4 left-4 right-4 z-50',
         // Pill-shaped container
-        'rounded-[28px]',
+        'rounded-[15px]',
         // Background với backdrop blur
         'bg-card/95 dark:bg-card/90 backdrop-blur-xl',
         // Shadow

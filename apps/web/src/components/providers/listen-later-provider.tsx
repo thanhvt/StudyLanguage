@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode,
 import { api } from '@/lib/api';
 import { ListenLaterItem, AddListenLaterDto } from '@/types/listening-types';
 import { useAuth } from '@/components/providers/auth-provider';
+import { showError, showSuccess } from '@/lib/toast';
 
 // ============================================================================
 // MODULE-LEVEL CACHE - Persist across component remounts
@@ -67,7 +68,7 @@ interface ListenLaterContextType {
   count: number;
   isLoading: boolean;
   isAdding: boolean;
-  error: string | null;
+  // error removed
   fetchListenLater: () => Promise<void>;
   addToListenLater: (dto: AddListenLaterDto) => Promise<ListenLaterItem | null>;
   removeFromListenLater: (itemId: string) => Promise<boolean>;
@@ -101,7 +102,7 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
   
   const isMountedRef = useRef(true);
 
@@ -169,7 +170,6 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
-    setError(null);
 
     pendingRequest = doFetch(userId);
 
@@ -185,8 +185,9 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
         if (listenLaterCache) {
           setItems(listenLaterCache.items);
           setCount(listenLaterCache.count);
+          setCount(listenLaterCache.count);
         }
-        setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+        // showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       }
     } finally {
       pendingRequest = null;
@@ -215,12 +216,11 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
    */
   const addToListenLater = useCallback(async (dto: AddListenLaterDto) => {
     if (!user) {
-      setError('Vui lòng đăng nhập để sử dụng tính năng này');
+      showError('Vui lòng đăng nhập để sử dụng tính năng này');
       return null;
     }
 
     setIsAdding(true);
-    setError(null);
 
     try {
       const response = await api('/listen-later', {
@@ -242,10 +242,11 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
       });
       setCount(prev => prev + 1);
 
+      showSuccess('Đã thêm vào Nghe Sau');
       return newItem;
     } catch (err) {
       console.error('[ListenLater] Lỗi add:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     } finally {
       setIsAdding(false);
@@ -272,10 +273,11 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
       });
       setCount(prev => Math.max(0, prev - 1));
 
+      showSuccess('Đã xóa khỏi Nghe Sau');
       return true;
     } catch (err) {
       console.error('[ListenLater] Lỗi remove:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, [user]);
@@ -297,10 +299,11 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
       setCount(0);
       if (user) updateCache([], 0, user.id);
 
+      showSuccess('Đã xóa tất cả Nghe Sau');
       return true;
     } catch (err) {
       console.error('[ListenLater] Lỗi clearAll:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, [user]);
@@ -341,7 +344,6 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
         count,
         isLoading,
         isAdding,
-        error,
         fetchListenLater,
         addToListenLater,
         removeFromListenLater,
@@ -380,7 +382,6 @@ export function useListenLaterSafe() {
     count: 0,
     isLoading: false,
     isAdding: false,
-    error: null,
     fetchListenLater: async () => {},
     addToListenLater: async () => null,
     removeFromListenLater: async () => false,

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/components/providers/auth-provider';
+import { showError, showSuccess, showWarning } from '@/lib/toast';
 import {
   Playlist,
   PlaylistItem,
@@ -96,7 +97,7 @@ export function usePlaylist() {
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
   
   // Track nếu component đã unmount
   const isMountedRef = useRef(true);
@@ -173,7 +174,6 @@ export function usePlaylist() {
     }
 
     setIsLoading(true);
-    setError(null);
 
     // Tạo promise và lưu vào pendingRequest
     pendingRequest = doFetch(userId);
@@ -189,9 +189,10 @@ export function usePlaylist() {
         // Nếu có cache cũ, vẫn dùng được
         if (playlistCache?.data) {
           setPlaylists(playlistCache.data);
-          setError('Không thể cập nhật. Đang hiển thị dữ liệu cũ.');
+          showWarning('Không thể cập nhật. Đang hiển thị dữ liệu cũ.');
         } else {
-          setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+          // Chỉ show toast error nếu không có data cũ (blocking error)
+          // showError(err instanceof Error ? err.message : 'Lỗi không xác định');
         }
       }
     } finally {
@@ -235,7 +236,7 @@ export function usePlaylist() {
       return data.playlist as Playlist;
     } catch (err) {
       console.error('[usePlaylist] Lỗi fetchWithItems:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     }
   }, []);
@@ -248,12 +249,11 @@ export function usePlaylist() {
    */
   const createPlaylist = useCallback(async (dto: CreatePlaylistDto) => {
     if (!user) {
-      setError('Vui lòng đăng nhập để tạo playlist');
+      showWarning('Vui lòng đăng nhập để tạo playlist');
       return null;
     }
 
     setIsCreating(true);
-    setError(null);
 
     try {
       const response = await api('/playlists', {
@@ -275,10 +275,11 @@ export function usePlaylist() {
         return updated;
       });
 
+      showSuccess('Đã tạo playlist mới');
       return data.playlist as Playlist;
     } catch (err) {
       console.error('[usePlaylist] Lỗi create:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     } finally {
       setIsCreating(false);
@@ -312,10 +313,11 @@ export function usePlaylist() {
         return updated;
       });
 
+      showSuccess('Đã cập nhật playlist');
       return data.playlist as Playlist;
     } catch (err) {
       console.error('[usePlaylist] Lỗi update:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     }
   }, [user]);
@@ -347,10 +349,11 @@ export function usePlaylist() {
         setCurrentPlaylist(null);
       }
 
+      showSuccess('Đã xóa playlist');
       return true;
     } catch (err) {
       console.error('[usePlaylist] Lỗi delete:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, [currentPlaylist?.id, user]);
@@ -395,10 +398,11 @@ export function usePlaylist() {
         );
       }
 
+      showSuccess('Đã thêm vào playlist');
       return data.item as PlaylistItem;
     } catch (err) {
       console.error('[usePlaylist] Lỗi addItem:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     }
   }, [currentPlaylist?.id, user]);
@@ -440,10 +444,11 @@ export function usePlaylist() {
         );
       }
 
+      showSuccess('Đã xóa khỏi playlist');
       return true;
     } catch (err) {
       console.error('[usePlaylist] Lỗi removeItem:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, [currentPlaylist?.id, user]);
@@ -475,7 +480,7 @@ export function usePlaylist() {
       return true;
     } catch (err) {
       console.error('[usePlaylist] Lỗi reorder:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, [fetchPlaylistWithItems]);
@@ -528,7 +533,6 @@ export function usePlaylist() {
     currentPlaylist,
     isLoading,
     isCreating,
-    error,
     fetchPlaylists,
     fetchPlaylistWithItems,
     createPlaylist,

@@ -8,6 +8,7 @@ import { MusicControlBar } from "@/components/music-control-bar";
 import { LanguageProvider } from "@/components/providers/language-provider";
 import { UserActionLogger } from "@/components/providers/user-action-logger";
 import { ListenLaterProvider } from "@/components/providers/listen-later-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,6 +45,7 @@ export default function RootLayout({
               </MusicProvider>
             </ListenLaterProvider>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

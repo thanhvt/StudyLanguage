@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { ListenLaterItem, AddListenLaterDto } from '@/types/listening-types';
+import { showError, showSuccess } from '@/lib/toast';
 
 /**
  * useListenLater - Hook quản lý danh sách Nghe Sau
@@ -16,14 +17,13 @@ export function useListenLater() {
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // error state removed in favor of toast
 
   /**
    * Lấy danh sách Listen Later từ API
    */
   const fetchListenLater = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const response = await api('/listen-later');
@@ -36,7 +36,7 @@ export function useListenLater() {
       setCount(data.count || 0);
     } catch (err) {
       console.error('[useListenLater] Lỗi fetch:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      // showError(err instanceof Error ? err.message : 'Lỗi không xác định');
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +50,6 @@ export function useListenLater() {
    */
   const addToListenLater = useCallback(async (dto: AddListenLaterDto) => {
     setIsAdding(true);
-    setError(null);
 
     try {
       const response = await api('/listen-later', {
@@ -68,10 +67,11 @@ export function useListenLater() {
       setItems(prev => [data.item, ...prev]);
       setCount(prev => prev + 1);
 
+      showSuccess('Đã thêm vào danh sách Nghe sau');
       return data.item as ListenLaterItem;
     } catch (err) {
       console.error('[useListenLater] Lỗi add:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     } finally {
       setIsAdding(false);
@@ -98,10 +98,11 @@ export function useListenLater() {
       setItems(prev => prev.filter(item => item.id !== itemId));
       setCount(prev => Math.max(0, prev - 1));
 
+      showSuccess('Đã xóa khỏi danh sách Nghe sau');
       return true;
     } catch (err) {
       console.error('[useListenLater] Lỗi remove:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, []);
@@ -125,10 +126,11 @@ export function useListenLater() {
       setItems([]);
       setCount(0);
 
+      showSuccess('Đã xóa tất cả danh sách Nghe sau');
       return true;
     } catch (err) {
       console.error('[useListenLater] Lỗi clearAll:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
   }, []);
@@ -143,7 +145,6 @@ export function useListenLater() {
     count,
     isLoading,
     isAdding,
-    error,
     fetchListenLater,
     addToListenLater,
     removeFromListenLater,

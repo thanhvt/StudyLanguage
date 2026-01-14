@@ -1,9 +1,21 @@
+/* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import ffmpeg from 'fluent-ffmpeg';
+import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import * as ffprobeInstaller from '@ffprobe-installer/ffprobe';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { randomUUID } from 'crypto';
+
+// Set path cho ffmpeg và ffprobe
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 /**
  * AI Service - Tích hợp OpenAI APIs
@@ -46,7 +58,7 @@ export class AiService {
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
+        temperature: 0.9,
         max_tokens: 2000,
       });
 
@@ -94,8 +106,13 @@ export class AiService {
       ? `Hãy sử dụng các từ khóa sau trong hội thoại: ${keywords}`
       : '';
 
+    // Random seed để đảm bảo mỗi lần sinh ra hội thoại khác nhau
+    const randomSeed = `[Seed: ${Date.now()}-${Math.random().toString(36).substring(2, 8)}]`;
+
     const prompt = `
+${randomSeed}
 Tạo một cuộc hội thoại tiếng Anh tự nhiên về chủ đề "${topic}".
+Lưu ý: Hãy sáng tạo nội dung độc đáo, không lặp lại các đoạn hội thoại trước đó.
 
 === YÊU CẦU BẮT BUỘC ===
 - Số người tham gia: ${numSpeakers} (đặt tên là Person A, Person B, v.v.)
@@ -388,6 +405,77 @@ Chỉ trả về JSON.
   }
 
   /**
+   * Helper: Xóa file tạm an toàn
+   */
+  private cleanupTempFiles(files: string[]) {
+    files.forEach((file) => {
+      if (fs.existsSync(file)) {
+        try {
+          fs.unlinkSync(file);
+        } catch (e) {
+          console.warn(`Không thể xóa file tạm ${file}:`, e);
+        }
+      }
+    });
+  }
+
+  /**
+   * Helper: Merge nhiều buffer MP3 thành 1 file MP3 hợp lệ bằng ffmpeg
+   * Sử dụng concat demuxer để nối các file MP3 đúng cách
+   */
+  private async mergeAudios(buffers: Buffer[]): Promise<Buffer> {
+    if (buffers.length === 0) return Buffer.from([]);
+    if (buffers.length === 1) return buffers[0];
+
+    const tempDir = os.tmpdir();
+    const sessionId = randomUUID();
+    const inputFiles: string[] = [];
+
+    // Ghi buffers ra file tạm
+    for (let i = 0; i < buffers.length; i++) {
+      const filePath = path.join(tempDir, `${sessionId}_part_${i}.mp3`);
+      fs.writeFileSync(filePath, buffers[i]);
+      inputFiles.push(filePath);
+    }
+
+    // Tạo file list cho concat demuxer
+    const listFilePath = path.join(tempDir, `${sessionId}_filelist.txt`);
+    const listContent = inputFiles
+      .map((f) => `file '${f.replace(/\\/g, '/')}'`)
+      .join('\n');
+    fs.writeFileSync(listFilePath, listContent);
+
+    const outputPath = path.join(tempDir, `${sessionId}_merged.mp3`);
+
+    return new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(listFilePath)
+        .inputOptions(['-f', 'concat', '-safe', '0'])
+        .outputOptions(['-acodec', 'libmp3lame', '-ab', '128k', '-ar', '44100']) // Re-encode thành MP3 chuẩn
+        .output(outputPath)
+        .on('error', (err: Error) => {
+          this.logger.error('Lỗi khi merge audio:', err);
+          this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
+          reject(err);
+        })
+        .on('end', () => {
+          try {
+            const mergedBuffer = fs.readFileSync(outputPath);
+            this.logger.log(
+              `Merge audio thành công: ${mergedBuffer.length} bytes`,
+            );
+            this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
+            resolve(mergedBuffer);
+          } catch (e) {
+            this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
+            reject(e);
+          }
+        })
+        .run();
+    });
+  }
+
+  /**
    * Sinh audio cho toàn bộ hội thoại với nhiều giọng
    *
    * Mục đích: Tạo audio đầy đủ cho Listening module
@@ -459,8 +547,8 @@ Chỉ trả về JSON.
       }
     }
 
-    // Concatenate all audio buffers
-    const combinedBuffer = Buffer.concat(audioBuffers);
+    // Merge audio buffers using ffmpeg
+    const combinedBuffer = await this.mergeAudios(audioBuffers);
 
     this.logger.log(
       `Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`,
@@ -553,8 +641,8 @@ Chỉ trả về JSON.
         );
       }
 
-      // Concatenate all audio buffers
-      const combinedBuffer = Buffer.concat(audioBuffers);
+      // Merge audio buffers using ffmpeg
+      const combinedBuffer = await this.mergeAudios(audioBuffers);
 
       this.logger.log(
         `[SSE] Hoàn thành sinh audio: ${combinedBuffer.length} bytes`,
