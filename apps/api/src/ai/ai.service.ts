@@ -95,12 +95,15 @@ export class AiService {
     this.logger.log(`Đang sinh hội thoại về chủ đề: ${topic}`);
 
     // Tính toán số từ mục tiêu dựa trên thời lượng
-    // TTS đọc chậm hơn người thật: ~160 từ/phút
-    const WORDS_PER_MINUTE = 240;
+    // Cấu hình cho hội thoại DÀI và CHI TIẾT
+    const WORDS_PER_MINUTE = 300; // Mục tiêu cao để sinh nhiều nội dung
     const targetWordCount = durationMinutes * WORDS_PER_MINUTE;
-    const minWordCount = Math.floor(targetWordCount * 0.95); // Ít nhất 95%
-    const minExchanges = Math.max(10, durationMinutes * 4); // Ít nhất 4 lượt/phút
-    const avgWordsPerTurn = Math.ceil(targetWordCount / minExchanges);
+    const minWordCount = Math.floor(targetWordCount * 1.1); // Thêm 10% buffer
+    const minExchanges = Math.max(30, durationMinutes * 10); // 10 lượt/phút - nhiều trao đổi
+    const avgWordsPerTurn = Math.max(
+      40,
+      Math.ceil(targetWordCount / minExchanges),
+    ); // Ít nhất 25 từ/lượt
 
     const keywordsInstruction = keywords
       ? `Hãy sử dụng các từ khóa sau trong hội thoại: ${keywords}`
@@ -119,15 +122,16 @@ Lưu ý: Hãy sáng tạo nội dung độc đáo, không lặp lại các đo�
 - Thời lượng mục tiêu: ${durationMinutes} phút
 - TỔNG SỐ TỪ TỐI THIỂU: ${minWordCount} từ (QUAN TRỌNG - đây là yêu cầu bắt buộc!)
 - Số lượt thoại: ít nhất ${minExchanges} lượt trao đổi
-- Mỗi lượt nói trung bình: ${avgWordsPerTurn} từ (2-4 câu với chi tiết đầy đủ)
+- MỖI LƯỢT NÓI: tối thiểu ${avgWordsPerTurn} từ (3-5 câu đầy đủ, chi tiết)
 - Mức độ: Giao tiếp hàng ngày, dễ hiểu
 ${keywordsInstruction}
 
-=== GỢI Ý ĐỂ ĐẠT ĐỦ THỜI LƯỢNG ===
-- Thêm chi tiết mô tả, cảm xúc, lý do trong mỗi câu nói
+=== YÊU CẦU VỀ ĐỘ DÀI MỖI CÂU ===
+- KHÔNG được trả lời ngắn gọn kiểu "Yes", "No", "Okay"
+- Mỗi lượt nói PHẢI có ít nhất 3 câu hoàn chỉnh
+- Thêm lý do, giải thích, cảm xúc, chi tiết trong mỗi phản hồi
 - Sử dụng các câu hỏi follow-up để mở rộng hội thoại
-- Thêm các tình huống bất ngờ hoặc thay đổi trong cuộc trò chuyện
-- Mỗi người nói nên elaborate, không chỉ trả lời ngắn gọn
+- Thêm các tình huống bất ngờ, thay đổi chủ đề phụ trong cuộc trò chuyện
 
 === FORMAT TRẢ VỀ ===
 {
