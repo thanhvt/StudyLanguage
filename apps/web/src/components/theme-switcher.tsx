@@ -1,78 +1,128 @@
 'use client';
 
+import { useState } from 'react';
 import { useTheme } from '@/components/providers/theme-provider';
-import { THEME_CONFIGS, AccentColorId } from '@/lib/themes';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { THEME_CONFIGS } from '@/lib/themes';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sun,
+  Moon,
+  Check,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-/**
- * ThemeSwitcher Component
- *
- * Mục đích: UI để chuyển đổi Light/Dark mode và chọn Accent Color
- * Khi nào sử dụng: Trong Settings page hoặc Header dropdown
- */
-export function ThemeSwitcher() {
-  const { theme, accentColor, toggleTheme, setAccentColor } = useTheme();
+interface ThemeSwitcherProps {
+  dropUp?: boolean;
+}
+
+export function ThemeSwitcher({ dropUp = false }: ThemeSwitcherProps) {
+  const { theme, setTheme, accentColor, setAccentColor } = useTheme();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const currentThemeConfig = THEME_CONFIGS.find(t => t.id === accentColor) || THEME_CONFIGS[0];
 
   return (
-    <Card className="p-4 space-y-4">
-      {/* Toggle Light/Dark */}
-      <div className="flex items-center justify-between">
-        <span className="font-medium">Chế độ giao diện</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleTheme}
-          className="min-w-[100px]"
+    <div className="space-y-2 relative">
+      {/* Row 1: Light/Dark Toggle + Theme Dropdown Trigger */}
+      <div className="flex items-center gap-2">
+        {/* Light / Dark Toggle - Compact */}
+        <div className="flex bg-muted/50 rounded-lg p-0.5">
+          <button
+            onClick={() => setTheme('light')}
+            className={cn(
+              "px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+              (theme === 'light' || theme === 'system')
+                ? "bg-background text-amber-500 shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="Sáng"
+          >
+            <Sun className="w-8 h-4" />
+            {/* <span className="text-xs">Sáng</span> */}
+          </button>
+          <button
+            onClick={() => setTheme('dark')}
+            className={cn(
+              "px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+              theme === 'dark'
+                ? "bg-background text-indigo-400 shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="Tối"
+          >
+            <Moon className="w-8 h-4" />
+            {/* <span className="text-xs">Tối</span> */}
+          </button>
+        </div>
+
+        {/* Theme Picker Trigger - Compact */}
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="flex-1 flex items-center justify-between px-2.5 py-1.5 rounded-lg border bg-card/50 hover:bg-accent/30 transition-colors"
         >
-          {theme === 'light' ? '☀️ Sáng' : '🌙 Tối'}
-        </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-1.5">
+              <div
+                className="w-4 h-4 rounded-full border border-background shadow-sm"
+                style={{ backgroundColor: currentThemeConfig.preview.primary }}
+              />
+              <div
+                className="w-4 h-4 rounded-full border border-background shadow-sm"
+                style={{ backgroundColor: currentThemeConfig.preview.accent }}
+              />
+            </div>
+            <span className="text-xs font-medium truncate">{currentThemeConfig.name}</span>
+          </div>
+          {isDropdownOpen ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+        </button>
       </div>
 
-      {/* Accent Color Picker */}
-      <div className="space-y-2">
-        <span className="font-medium">Màu chủ đạo</span>
-        <div className="grid grid-cols-3 gap-2">
-          {THEME_CONFIGS.map((themeConfig) => (
-            <button
-              key={themeConfig.id}
-              onClick={() => setAccentColor(themeConfig.id as AccentColorId)}
-              className={`
-                relative p-3 rounded-lg border-2 transition-all
-                hover:scale-105 active:scale-95
-                ${
-                  accentColor === themeConfig.id
-                    ? 'border-primary ring-2 ring-primary/50'
-                    : 'border-transparent hover:border-muted-foreground/30'
-                }
-              `}
-              title={themeConfig.description}
-            >
-              {/* Màu preview */}
-              <div className="flex gap-1 mb-1">
-                <div
-                  className="w-6 h-6 rounded-full"
-                  style={{ backgroundColor: themeConfig.preview.primary }}
-                />
-                <div
-                  className="w-6 h-6 rounded-full"
-                  style={{ backgroundColor: themeConfig.preview.accent }}
-                />
-              </div>
-              {/* Tên theme */}
-              <span className="text-xs font-medium line-clamp-1">
-                {themeConfig.name}
-              </span>
-              {/* Checkmark nếu đang chọn */}
-              {accentColor === themeConfig.id && (
-                <div className="absolute top-1 right-1 w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs">
-                  ✓
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-    </Card>
+      {/* Dropdown */}
+      <AnimatePresence>
+        {isDropdownOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: dropUp ? 10 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: dropUp ? 10 : -10 }}
+            className={cn(
+              "absolute z-50 inset-x-0 p-1 bg-popover border rounded-xl shadow-xl max-h-[250px] overflow-y-auto",
+              dropUp ? "bottom-full mb-1" : "top-full mt-1"
+            )}
+          >
+            {THEME_CONFIGS.map((config) => (
+              <button
+                key={config.id}
+                onClick={() => {
+                    setAccentColor(config.id);
+                    setIsDropdownOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center justify-between p-2 rounded-lg transition-colors",
+                  accentColor === config.id ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                )}
+              >
+                 <div className="flex items-center gap-2">
+                    <div className="flex -space-x-1">
+                        <div
+                        className="w-4 h-4 rounded-full border border-background shadow-sm"
+                        style={{ backgroundColor: config.preview.primary }}
+                        />
+                        <div
+                        className="w-4 h-4 rounded-full border border-background shadow-sm"
+                        style={{ backgroundColor: config.preview.accent }}
+                        />
+                    </div>
+                    <span className="text-xs font-medium">{config.name}</span>
+                 </div>
+                 {accentColor === config.id && <Check className="w-3.5 h-3.5 text-primary" />}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
+

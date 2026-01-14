@@ -4,9 +4,10 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useTheme } from '@/components/providers/theme-provider';
 import { useMusic } from '@/components/providers/music-provider';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { 
-  User, Sun, Moon, Monitor, 
+  User, 
   Flame, Target, CheckCircle2, 
   Zap, Settings, Sparkles, Trophy, 
   LogOut
@@ -34,7 +35,7 @@ export function RightPanel() {
 export function RightPanelContent() {
   const { user, signOut, signInWithGoogle } = useAuth();
   const { language, setLanguage } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  // const { theme, setTheme } = useTheme(); // Theme handled by ThemeSwitcher now
   
   // Music Hook
   const { 
@@ -258,29 +259,9 @@ export function RightPanelContent() {
       <div className="glow-divider my-1" />
       {/* 4. Compact Footer (Settings) */}
       <div className="mt-auto space-y-2">
-         {/* Theme Toggle */}
-         <div className="flex bg-muted/30 rounded-lg p-1">
-            <button 
-              onClick={() => setTheme('light')}
-              className={cn("flex-1 rounded-md py-1.5 flex items-center justify-center transition-all", theme === 'light' ? "bg-background shadow-sm text-amber-500" : "text-muted-foreground hover:text-foreground")}
-              title="Sáng"
-            >
-              <Sun className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setTheme('dark')}
-              className={cn("flex-1 rounded-md py-1.5 flex items-center justify-center transition-all", theme === 'dark' ? "bg-background shadow-sm text-indigo-400" : "text-muted-foreground hover:text-foreground")}
-              title="Tối"
-            >
-              <Moon className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setTheme('system')}
-              className={cn("flex-1 rounded-md py-1.5 flex items-center justify-center transition-all", theme === 'system' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
-              title="Hệ thống"
-            >
-              <Monitor className="w-4 h-4" />
-            </button>
+         {/* Theme Toggle > Replaced with Enhanced Switcher */}
+         <div className="mb-2">
+            <ThemeSwitcher dropUp />
          </div>
 
          <div className="grid grid-cols-2 gap-2 pt-3">
