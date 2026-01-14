@@ -468,9 +468,12 @@ Chỉ trả về JSON.
       ffmpeg()
         .input(inputPath)
         .inputOptions([
-          '-f', 's16le',      // Format: signed 16-bit little-endian
-          '-ar', '24000',     // Sample rate: 24kHz (OpenAI TTS default)
-          '-ac', '1',         // Channels: mono
+          '-f',
+          's16le', // Format: signed 16-bit little-endian
+          '-ar',
+          '24000', // Sample rate: 24kHz (OpenAI TTS default)
+          '-ac',
+          '1', // Channels: mono
         ])
         .audioCodec('libmp3lame')
         .audioBitrate('128k')
