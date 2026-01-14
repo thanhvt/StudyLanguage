@@ -96,7 +96,7 @@ export class AiService {
 
     // Tính toán số từ mục tiêu dựa trên thời lượng
     // TTS đọc chậm hơn người thật: ~160 từ/phút
-    const WORDS_PER_MINUTE = 160;
+    const WORDS_PER_MINUTE = 240;
     const targetWordCount = durationMinutes * WORDS_PER_MINUTE;
     const minWordCount = Math.floor(targetWordCount * 0.95); // Ít nhất 95%
     const minExchanges = Math.max(10, durationMinutes * 4); // Ít nhất 4 lượt/phút
