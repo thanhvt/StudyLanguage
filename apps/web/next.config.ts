@@ -1,8 +1,26 @@
 import type { NextConfig } from "next";
 
+// Lấy API URL từ env để thêm vào CSP (bỏ /api suffix nếu có)
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || '';
+
 const nextConfig: NextConfig = {
   // [SECURITY - OWASP A03] Security Headers: Bảo vệ khỏi XSS, Clickjacking, v.v.
   async headers() {
+    // Build connect-src với các domain cần thiết
+    // - 'self': Same origin
+    // - Supabase: Auth + Realtime
+    // - localhost:3001: Development API
+    // - Railway: Production API (lấy từ NEXT_PUBLIC_API_URL)
+    // - *.up.railway.app: Backup pattern cho Railway
+    const connectSources = [
+      "'self'",
+      "https://*.supabase.co",
+      "wss://*.supabase.co",
+      "http://localhost:3001",
+      "https://*.up.railway.app", // Railway production domains
+      apiUrl, // Dynamic từ env
+    ].filter(Boolean).join(' ');
+
     return [
       {
         // Áp dụng cho tất cả routes
@@ -18,7 +36,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
               "media-src 'self' https://cdn.pixabay.com", // Cho phép audio từ Pixabay cho nhạc nền
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:3001",
+              `connect-src ${connectSources}`,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
