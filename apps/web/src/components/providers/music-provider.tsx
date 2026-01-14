@@ -158,14 +158,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // SỬA LỖI: Update volume trực tiếp lên audio element
+  // Phải tính cả isDucking khi set volume trực tiếp
   const setVolume = useCallback((vol: number) => {
     setVolumeState(vol);
     // Update trực tiếp lên audio element để phản hồi ngay lập tức
+    // Tính cả trạng thái ducking để volume đúng
     if (audioRef.current) {
-      audioRef.current.volume = vol;
+      const actualVolume = isDucking ? vol * 0.2 : vol;
+      audioRef.current.volume = actualVolume;
+      console.log(`🎵 Volume được set: ${Math.round(vol * 100)}% (actual: ${Math.round(actualVolume * 100)}%)`);
     }
     localStorage.setItem('music-volume', String(vol));
-  }, []);
+  }, [isDucking]);
 
   const nextTrack = useCallback(() => {
     const newIndex = (trackIndex + 1) % RELAXING_TRACKS.length;

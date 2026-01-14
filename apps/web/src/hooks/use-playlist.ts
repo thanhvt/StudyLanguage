@@ -32,6 +32,9 @@ export function usePlaylist() {
   /**
    * Lấy danh sách playlists từ API
    */
+  /**
+   * Lấy danh sách playlists từ API
+   */
   const fetchPlaylists = useCallback(async () => {
     // Không có user = chưa đăng nhập
     if (!user) {
@@ -41,27 +44,49 @@ export function usePlaylist() {
 
     setIsLoading(true);
     setError(null);
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      const response = await api('/playlists');
+      const response = await api('/playlists', {
+        signal: controller.signal
+      });
       
+      clearTimeout(timeoutId);
+
       // Handle 401 specifically - token có thể đã hết hạn
       if (response.status === 401) {
-        console.warn('[usePlaylist] Token hết hạn, cần đăng nhập lại');
-        setPlaylists([]);
-        setError(null); // Không hiển thị lỗi nếu do chưa đăng nhập
+        // console.warn('[usePlaylist] Token hết hạn, đang xử lý refresh...');
+        // Không xóa playlists ngay để tránh flash loading nếu refresh thành công sau đó
+        // setPlaylists([]); 
         return;
       }
 
       if (!response.ok) {
-        throw new Error('Lỗi lấy danh sách playlists');
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error(`[usePlaylist] Lỗi ${response.status}: ${errorText}`);
+        setError(`Lỗi ${response.status}: Không thể lấy danh sách playlists`);
+        return;
       }
 
       const data = await response.json();
       setPlaylists(data.playlists || []);
     } catch (err) {
+      clearTimeout(timeoutId);
+      
+      // Ignore abort errors (component unmount or timeout)
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('[usePlaylist] Fetch aborted');
+        return;
+      }
+      
       console.error('[usePlaylist] Lỗi fetch:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      // Chỉ set error nếu không phải là lỗi network (để tránh báo lỗi khi offline tạm thời)
+      if (err instanceof Error && err.message !== 'Failed to fetch') {
+         setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
