@@ -51,8 +51,6 @@ export function HistoryCard({
         return entry.mode === 'interactive' ? 'Interactive Mode' : 'Practice Mode';
       case 'reading':
         return entry.keywords || 'Đọc hiểu';
-      case 'writing':
-        return `${entry.content?.wordCount || 0} từ`;
       default:
         return '';
     }

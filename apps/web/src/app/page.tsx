@@ -48,15 +48,6 @@ export default function HomePage() {
       href: '/reading',
       gradientClass: 'skill-card-reading',
     },
-    {
-      id: 'writing',
-      name: 'Viết',
-      nameEn: 'Writing',
-      icon: PenTool,
-      description: 'Viết bài và nhận phân tích chi tiết về lỗi ngữ pháp, gợi ý cải thiện từ AI.',
-      href: '/writing',
-      gradientClass: 'skill-card-writing',
-    },
   ];
 
   return (

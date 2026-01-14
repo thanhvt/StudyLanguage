@@ -34,7 +34,6 @@ function FilterTabs({
     { type: 'listening', icon: '🎧', label: 'Nghe' },
     { type: 'speaking', icon: '🎤', label: 'Nói' },
     { type: 'reading', icon: '📖', label: 'Đọc' },
-    { type: 'writing', icon: '✍️', label: 'Viết' },
   ];
 
   return (

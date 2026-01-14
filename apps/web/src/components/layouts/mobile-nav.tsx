@@ -59,19 +59,10 @@ const tabConfig = {
     colorLight: 'hsl(280, 70%, 95%)',
     shape: 'rounded-square',
   },
-  writing: {
-    id: 'writing',
-    label: 'Viết',
-    icon: PenTool,
-    href: '/writing',
-    color: 'hsl(35, 90%, 55%)',
-    colorLight: 'hsl(35, 90%, 95%)',
-    shape: 'rounded-square',
-  },
 };
 
 // Thứ tự tabs
-const tabOrder = ['listening', 'speaking', 'home', 'reading', 'writing'] as const;
+const tabOrder = ['listening', 'speaking', 'home', 'reading'] as const;
 
 // Component cho mỗi tab
 function NavTab({ 
@@ -169,7 +160,6 @@ export function MobileNavBar() {
     if (pathname.startsWith('/listening')) return 'listening';
     if (pathname.startsWith('/speaking')) return 'speaking';
     if (pathname.startsWith('/reading')) return 'reading';
-    if (pathname.startsWith('/writing')) return 'writing';
     return 'home';
   }, [pathname]);
 

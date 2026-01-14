@@ -10,7 +10,7 @@ import { showError, showSuccess } from '@/lib/toast';
  */
 export interface HistoryEntry {
   id: string;
-  type: 'listening' | 'speaking' | 'reading' | 'writing';
+  type: 'listening' | 'speaking' | 'reading';
   topic: string;
   content: any;
   durationMinutes?: number;
@@ -28,7 +28,7 @@ export interface HistoryEntry {
  * Interface cho filters
  */
 export interface HistoryFilters {
-  type?: 'listening' | 'speaking' | 'reading' | 'writing' | 'all';
+  type?: 'listening' | 'speaking' | 'reading' | 'all';
   status?: 'all' | 'pinned' | 'favorite' | 'deleted';
   search?: string;
 }
@@ -254,7 +254,6 @@ export function getTypeIcon(type: HistoryEntry['type']): string {
     listening: '🎧',
     speaking: '🎤',
     reading: '📖',
-    writing: '✍️',
   };
   return icons[type] || '📚';
 }
@@ -267,7 +266,6 @@ export function getTypeLabel(type: HistoryEntry['type']): string {
     listening: 'Nghe',
     speaking: 'Nói',
     reading: 'Đọc',
-    writing: 'Viết',
   };
   return labels[type] || type;
 }

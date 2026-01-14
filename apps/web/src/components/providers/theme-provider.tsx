@@ -178,7 +178,7 @@ export function useTheme(): ThemeContextType {
     return {
       theme: 'system',
       resolvedTheme: 'light',
-      accentColor: 'fresh-greens',
+      accentColor: 'ocean-scholar',
       setTheme: () => {},
       toggleTheme: () => {},
       setAccentColor: () => {},

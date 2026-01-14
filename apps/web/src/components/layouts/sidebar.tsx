@@ -44,14 +44,6 @@ export function Sidebar() {
       href: '/reading',
       iconBg: 'bg-purple-500',
     },
-    {
-      id: 'writing',
-      nameVi: 'Viết',
-      nameEn: 'Writing',
-      icon: PenTool,
-      href: '/writing',
-      iconBg: 'bg-orange-500',
-    },
   ];
 
   return (
