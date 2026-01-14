@@ -239,6 +239,31 @@ CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
   }
 
   /**
+   * Text-to-Speech trả về PCM format (raw audio)
+   * PCM 24kHz, 16-bit, signed, little-endian
+   * Dùng cho việc concat audio (PCM không có header nên concat đơn giản)
+   */
+  async textToSpeechPcm(
+    text: string,
+    voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' = 'nova',
+  ): Promise<Buffer> {
+    try {
+      const response = await this.openai.audio.speech.create({
+        model: 'tts-1',
+        voice: voice,
+        input: text,
+        response_format: 'pcm', // Raw PCM: 24kHz, 16-bit, signed, little-endian
+      });
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error) {
+      this.logger.error('Lỗi TTS PCM:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Đánh giá phát âm của user
    *
    * Mục đích: So sánh transcript của user với mẫu và đưa ra feedback
@@ -420,54 +445,49 @@ Chỉ trả về JSON.
   }
 
   /**
-   * Helper: Merge nhiều buffer MP3 thành 1 file MP3 hợp lệ bằng ffmpeg
-   * Sử dụng concat demuxer để nối các file MP3 đúng cách
+   * Helper: Merge nhiều buffer PCM thành 1 file MP3
+   * PCM là raw audio nên Buffer.concat hoạt động hoàn hảo
+   * Sau đó dùng ffmpeg encode sang MP3
    */
-  private async mergeAudios(buffers: Buffer[]): Promise<Buffer> {
-    if (buffers.length === 0) return Buffer.from([]);
-    if (buffers.length === 1) return buffers[0];
+  private async mergeAudiosFromPcm(pcmBuffers: Buffer[]): Promise<Buffer> {
+    if (pcmBuffers.length === 0) return Buffer.from([]);
+
+    // PCM là raw data, concat đơn giản
+    const combinedPcm = Buffer.concat(pcmBuffers);
+    this.logger.log(`Combined PCM size: ${combinedPcm.length} bytes`);
 
     const tempDir = os.tmpdir();
     const sessionId = randomUUID();
-    const inputFiles: string[] = [];
+    const inputPath = path.join(tempDir, `${sessionId}_input.pcm`);
+    const outputPath = path.join(tempDir, `${sessionId}_output.mp3`);
 
-    // Ghi buffers ra file tạm
-    for (let i = 0; i < buffers.length; i++) {
-      const filePath = path.join(tempDir, `${sessionId}_part_${i}.mp3`);
-      fs.writeFileSync(filePath, buffers[i]);
-      inputFiles.push(filePath);
-    }
-
-    // Tạo file list cho concat demuxer
-    const listFilePath = path.join(tempDir, `${sessionId}_filelist.txt`);
-    const listContent = inputFiles
-      .map((f) => `file '${f.replace(/\\/g, '/')}'`)
-      .join('\n');
-    fs.writeFileSync(listFilePath, listContent);
-
-    const outputPath = path.join(tempDir, `${sessionId}_merged.mp3`);
+    // Ghi PCM ra file
+    fs.writeFileSync(inputPath, combinedPcm);
 
     return new Promise((resolve, reject) => {
       ffmpeg()
-        .input(listFilePath)
-        .inputOptions(['-f', 'concat', '-safe', '0'])
-        .outputOptions(['-acodec', 'libmp3lame', '-ab', '128k', '-ar', '44100']) // Re-encode thành MP3 chuẩn
+        .input(inputPath)
+        .inputOptions([
+          '-f', 's16le',      // Format: signed 16-bit little-endian
+          '-ar', '24000',     // Sample rate: 24kHz (OpenAI TTS default)
+          '-ac', '1',         // Channels: mono
+        ])
+        .audioCodec('libmp3lame')
+        .audioBitrate('128k')
         .output(outputPath)
         .on('error', (err: Error) => {
-          this.logger.error('Lỗi khi merge audio:', err);
-          this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
+          this.logger.error('Lỗi khi encode PCM to MP3:', err);
+          this.cleanupTempFiles([inputPath, outputPath]);
           reject(err);
         })
         .on('end', () => {
           try {
-            const mergedBuffer = fs.readFileSync(outputPath);
-            this.logger.log(
-              `Merge audio thành công: ${mergedBuffer.length} bytes`,
-            );
-            this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
-            resolve(mergedBuffer);
+            const mp3Buffer = fs.readFileSync(outputPath);
+            this.logger.log(`Encode MP3 thành công: ${mp3Buffer.length} bytes`);
+            this.cleanupTempFiles([inputPath, outputPath]);
+            resolve(mp3Buffer);
           } catch (e) {
-            this.cleanupTempFiles([...inputFiles, listFilePath, outputPath]);
+            this.cleanupTempFiles([inputPath, outputPath]);
             reject(e);
           }
         })
@@ -519,8 +539,8 @@ Chỉ trả về JSON.
       const voice = speakerVoices[line.speaker];
 
       try {
-        // Sinh audio cho câu này
-        const audioBuffer = await this.textToSpeech(line.text, voice);
+        // Sinh audio cho câu này (PCM format)
+        const audioBuffer = await this.textToSpeechPcm(line.text, voice);
         audioBuffers.push(audioBuffer);
 
         // Ước tính duration: ~150 words/minute avg for TTS
@@ -547,8 +567,8 @@ Chỉ trả về JSON.
       }
     }
 
-    // Merge audio buffers using ffmpeg
-    const combinedBuffer = await this.mergeAudios(audioBuffers);
+    // Merge PCM buffers và encode sang MP3
+    const combinedBuffer = await this.mergeAudiosFromPcm(audioBuffers);
 
     this.logger.log(
       `Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`,
@@ -620,8 +640,8 @@ Chỉ trả về JSON.
           message: `Đang sinh audio câu ${i + 1}/${conversation.length}`,
         });
 
-        // Sinh audio cho câu này
-        const audioBuffer = await this.textToSpeech(line.text, voice);
+        // Sinh audio cho câu này (PCM format)
+        const audioBuffer = await this.textToSpeechPcm(line.text, voice);
         audioBuffers.push(audioBuffer);
 
         // Ước tính duration: ~150 words/minute avg for TTS
@@ -641,8 +661,8 @@ Chỉ trả về JSON.
         );
       }
 
-      // Merge audio buffers using ffmpeg
-      const combinedBuffer = await this.mergeAudios(audioBuffers);
+      // Merge PCM buffers và encode sang MP3
+      const combinedBuffer = await this.mergeAudiosFromPcm(audioBuffers);
 
       this.logger.log(
         `[SSE] Hoàn thành sinh audio: ${combinedBuffer.length} bytes`,

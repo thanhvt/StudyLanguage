@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Headphones, Mic, BookOpen, PenTool, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
-import { PageTransition, FadeIn, StaggerChildren, StaggerItem } from '@/components/animations';
+import { FadeIn, StaggerChildren, StaggerItem } from '@/components/animations';
 import { GradientText } from '@/components/ui/glass-card';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { Card } from '@/components/ui/card';
@@ -61,7 +61,7 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <PageTransition>
+      <>
         {/* Hero Section - Enhanced */}
         <FadeIn delay={0.1}>
           <div className="text-center mb-12">
@@ -147,7 +147,7 @@ export default function HomePage() {
             </p>
           </div>
         </FadeIn>
-      </PageTransition>
+      </>
     </AppLayout>
   );
 }

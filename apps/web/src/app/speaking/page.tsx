@@ -15,7 +15,7 @@ import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { useAudioRecorder } from '@/hooks/use-audio-recorder';
-import { PageTransition, FadeIn } from '@/components/animations';
+import { FadeIn } from '@/components/animations';
 import { api } from '@/lib/api';
 
 /**
@@ -345,7 +345,6 @@ export default function SpeakingPage() {
 
   return (
     <AppLayout>
-      <PageTransition>
         <HistoryDrawer
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
@@ -550,7 +549,6 @@ export default function SpeakingPage() {
             </div>
           )}
         </div>
-      </PageTransition>
     </AppLayout>
   );
 }

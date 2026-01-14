@@ -12,7 +12,7 @@ import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
-import { PageTransition, FadeIn } from '@/components/animations';
+import { FadeIn } from '@/components/animations';
 
 /**
  * Reading Page - Module Luyện Đọc (matching live reference)
@@ -150,7 +150,7 @@ Chỉ trả về JSON, không có text khác.`,
 
   return (
     <AppLayout>
-      <PageTransition>
+      <>
         {/* Header với History Button */}
         <FadeIn>
           <div className="flex items-center justify-between mb-6">
@@ -355,7 +355,7 @@ Chỉ trả về JSON, không có text khác.`,
             </div>
           </FadeIn>
         )}
-      </PageTransition>
+      </>
     </AppLayout>
   );
 }

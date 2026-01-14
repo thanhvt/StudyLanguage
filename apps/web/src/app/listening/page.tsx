@@ -13,7 +13,7 @@ import { AppLayout } from '@/components/layouts/app-layout';
 import { HistoryDrawer, HistoryButton } from '@/components/history';
 import { HistoryEntry } from '@/hooks/use-history';
 import { useSaveLesson } from '@/hooks/use-save-lesson';
-import { PageTransition, FadeIn } from '@/components/animations';
+import { FadeIn } from '@/components/animations';
 import { showError, showSuccess } from '@/lib/toast';
 
 // New Listening Components
@@ -187,7 +187,7 @@ export default function ListeningPage() {
 
   return (
     <AppLayout>
-      <PageTransition>
+      <>
         {/* Header với History Button và Listen Later Badge */}
         <FadeIn>
           <div className="flex items-center justify-between mb-6">
@@ -438,7 +438,7 @@ export default function ListeningPage() {
           playlist={activePlaylist}
           onClose={() => setActivePlaylist(null)}
         />
-      </PageTransition>
+      </>
     </AppLayout>
   );
 }
