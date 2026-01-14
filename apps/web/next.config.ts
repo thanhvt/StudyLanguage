@@ -35,8 +35,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "media-src 'self' https://cdn.pixabay.com", // Cho phép audio từ Pixabay cho nhạc nền
-              `connect-src ${connectSources}`,
+              "media-src 'self' blob: data: https://cdn.pixabay.com", // Cho phép audio từ Pixabay, blob URLs và data URLs
+              `connect-src ${connectSources} https://api.dictionaryapi.dev`, // Thêm Dictionary API
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
