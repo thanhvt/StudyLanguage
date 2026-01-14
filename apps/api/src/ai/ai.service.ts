@@ -471,4 +471,110 @@ Chỉ trả về JSON.
       timestamps,
     };
   }
+
+  /**
+   * Sinh audio cho hội thoại với progress callback (cho SSE)
+   *
+   * Mục đích: Tương tự generateConversationAudio nhưng emit progress events
+   * Tham số:
+   *   - conversation: Danh sách các câu với speaker
+   *   - onProgress: Callback được gọi sau mỗi câu hoàn thành
+   * Trả về: Audio buffer đã ghép + timestamps cho mỗi câu
+   */
+  async generateConversationAudioWithProgress(
+    conversation: { speaker: string; text: string }[],
+    onProgress: (event: {
+      type: 'progress' | 'complete' | 'error';
+      current?: number;
+      total?: number;
+      message?: string;
+      audio?: string;
+      timestamps?: { startTime: number; endTime: number }[];
+    }) => void,
+  ): Promise<void> {
+    this.logger.log(
+      `[SSE] Đang sinh audio cho ${conversation.length} câu hội thoại...`,
+    );
+
+    const audioBuffers: Buffer[] = [];
+    const timestamps: { startTime: number; endTime: number }[] = [];
+    let currentTime = 0;
+
+    // Map speakers to voices
+    const speakerVoices: Record<string, 'nova' | 'onyx' | 'alloy' | 'shimmer'> =
+      {};
+    const availableVoices: ('nova' | 'onyx' | 'alloy' | 'shimmer')[] = [
+      'nova',
+      'onyx',
+      'alloy',
+      'shimmer',
+    ];
+    let voiceIndex = 0;
+
+    try {
+      for (let i = 0; i < conversation.length; i++) {
+        const line = conversation[i];
+
+        // Gán giọng cho speaker nếu chưa có
+        if (!speakerVoices[line.speaker]) {
+          speakerVoices[line.speaker] =
+            availableVoices[voiceIndex % availableVoices.length];
+          voiceIndex++;
+        }
+
+        const voice = speakerVoices[line.speaker];
+
+        // Emit progress event trước khi xử lý
+        onProgress({
+          type: 'progress',
+          current: i + 1,
+          total: conversation.length,
+          message: `Đang sinh audio câu ${i + 1}/${conversation.length}`,
+        });
+
+        // Sinh audio cho câu này
+        const audioBuffer = await this.textToSpeech(line.text, voice);
+        audioBuffers.push(audioBuffer);
+
+        // Ước tính duration: ~150 words/minute avg for TTS
+        const wordCount = line.text.split(/\\s+/).length;
+        const estimatedDuration = (wordCount / 150) * 60; // seconds
+        const duration = Math.max(estimatedDuration, 1); // minimum 1 second
+
+        timestamps.push({
+          startTime: currentTime,
+          endTime: currentTime + duration,
+        });
+
+        currentTime += duration + 0.3; // 0.3s gap between lines
+
+        this.logger.log(
+          `[SSE] Sinh audio line ${i + 1}/${conversation.length} - voice: ${voice}`,
+        );
+      }
+
+      // Concatenate all audio buffers
+      const combinedBuffer = Buffer.concat(audioBuffers);
+
+      this.logger.log(
+        `[SSE] Hoàn thành sinh audio: ${combinedBuffer.length} bytes`,
+      );
+
+      // Emit complete event với audio data
+      onProgress({
+        type: 'complete',
+        current: conversation.length,
+        total: conversation.length,
+        message: 'Hoàn thành!',
+        audio: combinedBuffer.toString('base64'),
+        timestamps,
+      });
+    } catch (error) {
+      this.logger.error('[SSE] Lỗi sinh audio:', error);
+      onProgress({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Lỗi sinh audio',
+      });
+    }
+  }
 }

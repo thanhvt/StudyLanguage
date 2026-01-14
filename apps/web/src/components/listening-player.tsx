@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { AudioPlayer } from '@/components/audio-player';
+import { createClient } from '@/lib/supabase/client';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface ConversationLine {
   speaker: string;
@@ -100,6 +103,9 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(audioUrl || null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState<string>('');
+  const abortControllerRef = useRef<AbortController | null>(null);
   // Timestamps thật từ server (thay vì estimated)
   const [realTimestamps, setRealTimestamps] = useState<{ startTime: number; endTime: number }[] | null>(null);
 
@@ -121,37 +127,118 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
   });
 
   /**
-   * Gọi API để sinh audio từ conversation
-   * Sử dụng endpoint mới /api/ai/generate-conversation-audio
+   * Gọi API SSE để sinh audio từ conversation với real-time progress
+   * Sử dụng endpoint mới /api/ai/generate-conversation-audio-sse
    */
   const generateAudio = useCallback(async () => {
     setIsGeneratingAudio(true);
     setError(null);
+    setProgress(0);
+    setProgressMessage('Đang khởi tạo...');
+
+    // Tạo AbortController để có thể cancel request
+    abortControllerRef.current = new AbortController();
 
     try {
-      const response = await api('/ai/generate-conversation-audio', {
+      // Lấy token từ Supabase
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('Chưa đăng nhập');
+      }
+
+      // Gọi SSE endpoint
+      const response = await fetch(`${API_BASE_URL}/ai/generate-conversation-audio-sse`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ conversation }),
+        signal: abortControllerRef.current.signal,
       });
 
-      if (!response.ok) throw new Error('Lỗi sinh audio');
+      if (!response.ok) {
+        throw new Error(`Lỗi sinh audio: ${response.status}`);
+      }
 
-      const data = await response.json();
-      
-      // Tạo data URL từ base64
-      const audioDataUrl = `data:audio/mpeg;base64,${data.audio}`;
-      setGeneratedAudioUrl(audioDataUrl);
-      
-      // Cập nhật timestamps thật từ server (không dùng estimated nữa)
-      if (data.timestamps && data.timestamps.length > 0) {
-        setRealTimestamps(data.timestamps);
+      // Đọc SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Không thể đọc response stream');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events (format: "data: {...}\n\n")
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || ''; // Giữ lại phần chưa hoàn chỉnh
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const event = JSON.parse(line.slice(6));
+
+              if (event.type === 'progress') {
+                // Cập nhật progress thực từ server
+                const percent = Math.round((event.current / event.total) * 100);
+                setProgress(percent);
+                setProgressMessage(event.message || `Đang xử lý ${event.current}/${event.total}...`);
+              } else if (event.type === 'complete') {
+                // Hoàn thành!
+                setProgress(100);
+                setProgressMessage('Hoàn thành!');
+
+                // Tạo data URL từ base64
+                const audioDataUrl = `data:audio/mpeg;base64,${event.audio}`;
+
+                // Đợi xíu cho animation 100%
+                setTimeout(() => {
+                  setGeneratedAudioUrl(audioDataUrl);
+                  if (event.timestamps && event.timestamps.length > 0) {
+                    setRealTimestamps(event.timestamps);
+                  }
+                  setIsGeneratingAudio(false);
+                }, 300);
+                return; // Exit loop
+              } else if (event.type === 'error') {
+                throw new Error(event.message || 'Lỗi sinh audio');
+              }
+            } catch (parseError) {
+              console.warn('[SSE] Lỗi parse event:', parseError);
+            }
+          }
+        }
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('[SSE] Request đã bị hủy');
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Lỗi sinh audio');
+      setProgress(0);
+      setProgressMessage('');
     } finally {
       setIsGeneratingAudio(false);
+      abortControllerRef.current = null;
     }
   }, [conversation]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
@@ -167,95 +254,97 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
         />
       ) : (
         <div className="glass-card p-8 text-center space-y-4">
-          {/* Icon Header */}
-          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/5 flex items-center justify-center shadow-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-primary"
-            >
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-            </svg>
-          </div>
-
           {/* Title & Description */}
           <div className="space-y-2">
-            <h3 className="font-display font-semibold text-lg text-foreground">
-              Sinh Audio
-            </h3>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               Nhấn để AI chuyển đổi hội thoại thành audio với nhiều giọng nói khác nhau
             </p>
           </div>
 
-          {/* Generate Button */}
-          <button
-            onClick={generateAudio}
-            disabled={isGeneratingAudio}
-            className={`
-              inline-flex items-center justify-center gap-2 
-              px-8 py-3 rounded-xl font-medium text-white
-              bg-gradient-to-r from-primary to-primary/80
-              hover:from-primary/90 hover:to-primary/70
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-all duration-300 shadow-lg hover:shadow-xl
-              hover:scale-105 active:scale-100
-            `}
-          >
-            {isGeneratingAudio ? (
-              <>
-                <svg
-                  className="w-5 h-5 animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
+          {/* Generate Button hoặc Progress Display */}
+          {isGeneratingAudio ? (
+            /* Progress Card - Hiển thị khi đang xử lý */
+            <div className="w-full max-w-sm mx-auto space-y-4">
+              {/* Animated Icon với Pulse Effect */}
+              <div className="relative flex justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-primary/20 animate-ping" />
+                </div>
+                <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                  <svg
+                    className="w-8 h-8 text-primary-foreground animate-pulse"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
                     stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Đang sinh audio...
-              </>
-            ) : (
-              <>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                    strokeWidth="2"
+                  >
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Progress Text - Full Width, No Truncation */}
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {progressMessage || 'Đang khởi tạo...'}
+                </p>
+                <p className="text-3xl font-bold text-primary">
+                  {progress}%
+                </p>
+              </div>
+
+              {/* Progress Bar với Gradient và Animation */}
+              <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                {/* Actual Progress */}
+                <div 
+                  className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full transition-all duration-300 ease-out relative"
+                  style={{ width: `${progress}%` }}
                 >
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                </svg>
-                Sinh Audio
-              </>
-            )}
-          </button>
+                  {/* Glow Effect on Progress */}
+                  <div className="absolute right-0 top-0 bottom-0 w-4 bg-white/40 blur-sm rounded-full" />
+                </div>
+              </div>
+
+              {/* Step Counter */}
+              <p className="text-sm text-muted-foreground text-center">
+                Vui lòng đợi trong giây lát...
+              </p>
+            </div>
+          ) : (
+            /* Generate Button - Hiển thị khi chưa xử lý */
+            <button
+              onClick={generateAudio}
+              className={`
+                inline-flex items-center justify-center gap-2 
+                px-8 py-3 rounded-xl font-medium text-primary-foreground
+                bg-primary hover:bg-primary/90
+                transition-all duration-300 shadow-lg hover:shadow-xl
+                hover:scale-105 active:scale-100
+              `}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+              Sinh Audio
+            </button>
+          )}
 
           {/* Error Message */}
           {error && (

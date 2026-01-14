@@ -50,6 +50,7 @@ async function refreshAndGetToken(): Promise<string | null> {
  * Tham số đầu vào:
  *   - endpoint: Đường dẫn API (ví dụ: '/ai/generate-text')
  *   - options: Tùy chọn fetch (method, body, headers, ...)
+ *   - timeoutMs: Thời gian timeout (ms), mặc định 60s. Tăng lên cho các request sinh audio
  *   - _isRetry: Internal flag, không dùng trực tiếp
  * Tham số đầu ra: Promise<Response>
  * Khi nào sử dụng: Thay thế fetch thông thường khi gọi Backend API
@@ -57,6 +58,7 @@ async function refreshAndGetToken(): Promise<string | null> {
 export async function api(
   endpoint: string,
   options: RequestInit = {},
+  timeoutMs = 60000,
   _isRetry = false
 ): Promise<Response> {
   // Lấy token mới nhất
@@ -78,13 +80,13 @@ export async function api(
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`[API] Gọi ${options.method || 'GET'} ${url}`);
 
-  // Tạo AbortController với timeout dài (60s cho AI generation)
+  // Tạo AbortController với timeout tùy chỉnh
   // Mobile Safari có thể tự kill request sớm, nên xử lý timeout rõ ràng
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort();
-    console.warn('[API] Request timeout sau 60 giây');
-  }, 60000); // 60 giây timeout
+    console.warn(`[API] Request timeout sau ${timeoutMs / 1000} giây`);
+  }, timeoutMs);
 
   try {
     const response = await fetch(url, {
@@ -104,7 +106,7 @@ export async function api(
       
       if (newToken) {
         console.log('[API] Refresh thành công, đang retry request...');
-        return api(endpoint, options, true); // Retry với flag
+        return api(endpoint, options, timeoutMs, true); // Retry với flag và giữ timeout
       }
       
       console.error('[API] Refresh thất bại, user cần đăng nhập lại');

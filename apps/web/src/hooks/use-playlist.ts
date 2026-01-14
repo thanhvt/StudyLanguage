@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/components/providers/auth-provider';
 import {
   Playlist,
   PlaylistItem,
@@ -17,21 +18,41 @@ import {
  * Khi nào sử dụng: Trong các components liên quan đến Playlists
  */
 export function usePlaylist() {
+  const { user, loading: authLoading } = useAuth();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track đã fetch lần đầu chưa - tránh infinite loop
+  const hasFetchedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   /**
    * Lấy danh sách playlists từ API
    */
   const fetchPlaylists = useCallback(async () => {
+    // Không có user = chưa đăng nhập
+    if (!user) {
+      setPlaylists([]);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await api('/playlists');
+      
+      // Handle 401 specifically - token có thể đã hết hạn
+      if (response.status === 401) {
+        console.warn('[usePlaylist] Token hết hạn, cần đăng nhập lại');
+        setPlaylists([]);
+        setError(null); // Không hiển thị lỗi nếu do chưa đăng nhập
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Lỗi lấy danh sách playlists');
       }
@@ -44,7 +65,7 @@ export function usePlaylist() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   /**
    * Lấy chi tiết playlist kèm items
@@ -76,6 +97,11 @@ export function usePlaylist() {
    * @returns Playlist vừa tạo hoặc null nếu lỗi
    */
   const createPlaylist = useCallback(async (dto: CreatePlaylistDto) => {
+    if (!user) {
+      setError('Vui lòng đăng nhập để tạo playlist');
+      return null;
+    }
+
     setIsCreating(true);
     setError(null);
 
@@ -298,10 +324,29 @@ export function usePlaylist() {
     // TODO: Nếu cần persist order lên server, thêm API call ở đây
   }, []);
 
-  // Fetch lần đầu khi mount
+  // Fetch khi auth đã sẵn sàng và user thay đổi
   useEffect(() => {
-    fetchPlaylists();
-  }, [fetchPlaylists]);
+    // Đợi auth khởi tạo xong
+    if (authLoading) {
+      return;
+    }
+
+    // Nếu user thay đổi (login/logout), reset flag và fetch lại
+    const currentUserId = user?.id || null;
+    if (currentUserId !== lastUserIdRef.current) {
+      lastUserIdRef.current = currentUserId;
+      hasFetchedRef.current = false;
+    }
+
+    // Chỉ fetch 1 lần cho mỗi user
+    if (!hasFetchedRef.current && user) {
+      hasFetchedRef.current = true;
+      fetchPlaylists();
+    } else if (!user) {
+      // Clear playlists khi logout
+      setPlaylists([]);
+    }
+  }, [authLoading, user, fetchPlaylists]);
 
   return {
     playlists,

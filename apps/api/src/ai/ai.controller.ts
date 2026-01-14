@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   BadRequestException,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiService } from './ai.service';
@@ -292,5 +293,37 @@ export class AiController {
       dto.userInput,
       dto.topic,
     );
+  }
+
+  /**
+   * POST /api/ai/generate-conversation-audio-sse
+   *
+   * Mục đích: Sinh audio với SSE progress updates
+   * Body: { conversation: [{ speaker, text }] }
+   * Trả về: SSE stream với events: progress, complete, error
+   */
+  @Post('generate-conversation-audio-sse')
+  async generateConversationAudioSSE(
+    @Body() dto: GenerateConversationAudioDto,
+    @Res() res: import('express').Response,
+  ) {
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    res.flushHeaders();
+
+    // Gọi service với progress callback
+    await this.aiService.generateConversationAudioWithProgress(
+      dto.conversation,
+      (event) => {
+        // Gửi SSE event
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      },
+    );
+
+    // Kết thúc stream
+    res.end();
   }
 }

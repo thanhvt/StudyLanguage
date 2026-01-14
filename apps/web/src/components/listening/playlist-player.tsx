@@ -83,7 +83,7 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
       const response = await api('/ai/generate-conversation-audio', {
         method: 'POST',
         body: JSON.stringify({ conversation: item.conversation }),
-      });
+      }, 600000); // 10 phút timeout cho sinh audio hội thoại dài (lên tới 20 phút)
 
       if (!response.ok) throw new Error('Lỗi sinh audio');
 

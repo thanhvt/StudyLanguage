@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { api } from '@/lib/api';
 import { ListenLaterItem, AddListenLaterDto } from '@/types/listening-types';
+import { useAuth } from '@/components/providers/auth-provider';
 
 /**
  * ListenLaterContext - Context để share state Listen Later giữa các components
@@ -33,21 +34,43 @@ const ListenLaterContext = createContext<ListenLaterContextType | null>(null);
  * Khi nào sử dụng: Wrap ở listening page hoặc app layout
  */
 export function ListenLaterProvider({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<ListenLaterItem[]>([]);
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track đã fetch lần đầu chưa - tránh infinite loop
+  const hasFetchedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   /**
    * Lấy danh sách Listen Later từ API
    */
   const fetchListenLater = useCallback(async () => {
+    // Không có user = chưa đăng nhập
+    if (!user) {
+      setItems([]);
+      setCount(0);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await api('/listen-later');
+      
+      // Handle 401 specifically - token có thể đã hết hạn
+      if (response.status === 401) {
+        console.warn('[ListenLaterContext] Token hết hạn, cần đăng nhập lại');
+        setItems([]);
+        setCount(0);
+        setError(null); // Không hiển thị lỗi nếu do chưa đăng nhập
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Lỗi lấy danh sách Nghe Sau');
       }
@@ -61,12 +84,17 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   /**
    * Thêm item vào Listen Later
    */
   const addToListenLater = useCallback(async (dto: AddListenLaterDto) => {
+    if (!user) {
+      setError('Vui lòng đăng nhập để sử dụng tính năng này');
+      return null;
+    }
+
     setIsAdding(true);
     setError(null);
 
@@ -146,10 +174,30 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Fetch lần đầu khi mount
+  // Fetch khi auth đã sẵn sàng và user thay đổi
   useEffect(() => {
-    fetchListenLater();
-  }, [fetchListenLater]);
+    // Đợi auth khởi tạo xong
+    if (authLoading) {
+      return;
+    }
+
+    // Nếu user thay đổi (login/logout), reset flag và fetch lại
+    const currentUserId = user?.id || null;
+    if (currentUserId !== lastUserIdRef.current) {
+      lastUserIdRef.current = currentUserId;
+      hasFetchedRef.current = false;
+    }
+
+    // Chỉ fetch 1 lần cho mỗi user
+    if (!hasFetchedRef.current && user) {
+      hasFetchedRef.current = true;
+      fetchListenLater();
+    } else if (!user) {
+      // Clear items khi logout
+      setItems([]);
+      setCount(0);
+    }
+  }, [authLoading, user, fetchListenLater]);
 
   return (
     <ListenLaterContext.Provider 
