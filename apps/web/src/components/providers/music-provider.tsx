@@ -3,41 +3,60 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, ReactNode } from 'react';
 
 /**
- * Danh sách nhạc nền - Nhạc instrumental/ballad/country nhẹ nhàng
+ * Danh sách nhạc nền - Nhạc Lofi/Chill Coffee Shop
  * Nguồn: Pixabay - Free to use, no attribution required
  * 
  * Mục đích: Background music thư giãn khi học tiếng Anh
+ * Style: Lofi, chill, slow tempo - như đang ngồi ở quán café nhẹ nhàng
  */
 const RELAXING_TRACKS = [
   {
-    id: 'piano-1',
-    name: 'Peaceful Piano Dreams',
-    // Ambient piano - nhẹ nhàng, thư giãn
-    url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
+    id: 'good-night-lofi',
+    name: 'Good Night Lofi',
+    // Lofi cozy chill - nhẹ nhàng, êm ái, perfect cho buổi tối
+    url: 'https://cdn.pixabay.com/audio/2023/07/30/audio_e0908e8569.mp3',
   },
   {
-    id: 'acoustic-1',
-    name: 'Gentle Acoustic Morning',
-    // Acoustic guitar nhẹ nhàng
-    url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+    id: 'lofi-study-chill',
+    name: 'Lofi Study Chill',
+    // Lofi beats calm peaceful - dành cho học bài, tập trung
+    url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3',
   },
   {
-    id: 'ambient-1',
-    name: 'Calm Study Vibes',
-    // Ambient chill
-    url: 'https://cdn.pixabay.com/download/audio/2022/02/22/audio_d1718ab41b.mp3',
+    id: 'tactical-pause-lofi',
+    name: 'Tactical Pause Lofi',
+    // Lofi nhẹ nhàng, tiết tấu chậm rãi
+    url: 'https://cdn.pixabay.com/audio/2026/01/11/audio_c0a807a944.mp3',
   },
   {
-    id: 'piano-2',
-    name: 'Soft Piano Meditation',
-    // Piano meditation
-    url: 'https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02f9.mp3',
+    id: 'relax-lofi-beat',
+    name: 'Relax Lofi Beat',
+    // Lofi thư giãn, nhịp chậm, dễ chịu
+    url: 'https://cdn.pixabay.com/audio/2026/01/05/audio_900e402d72.mp3',
   },
   {
-    id: 'nature-1',
-    name: 'Forest Rain Ambience',
-    // Nature sounds với nhạc nhẹ
-    url: 'https://cdn.pixabay.com/download/audio/2022/03/24/audio_4a7c509a60.mp3',
+    id: 'lofi-girl-ambient',
+    name: 'Lofi Girl Ambient',
+    // Lofi girl chill beats - ambient nhẹ nhàng
+    url: 'https://cdn.pixabay.com/audio/2026/01/06/audio_2e752c8e21.mp3',
+  },
+  {
+    id: 'lofi-chill-bg',
+    name: 'Lofi Chill Background',
+    // Nhạc nền lofi nhẹ nhàng, không gây xao lãng
+    url: 'https://cdn.pixabay.com/audio/2026/01/05/audio_a31cc74f48.mp3',
+  },
+  {
+    id: 'lofi-instrumental',
+    name: 'Lofi Instrumental',
+    // Nhạc không lời, giai điệu êm dịu
+    url: 'https://cdn.pixabay.com/audio/2026/01/07/audio_7b34859a47.mp3',
+  },
+  {
+    id: 'lofi-girl-chill',
+    name: 'Lofi Girl Chill',
+    // Lofi girl - giai điệu thư thái, bình yên
+    url: 'https://cdn.pixabay.com/audio/2025/12/24/audio_f328b14e4b.mp3',
   },
 ];
 

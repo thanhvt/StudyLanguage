@@ -256,9 +256,9 @@ export function RightPanelContent() {
          </div>
       </div>
       )}
-      <div className="glow-divider my-1" />
+      <div className="glow-divider my-4" />
       {/* 4. Compact Footer (Settings) */}
-      <div className="mt-auto space-y-2">
+      <div className="mt-6 space-y-3">
          {/* Theme Toggle > Replaced with Enhanced Switcher */}
          <div className="mb-2">
             <ThemeSwitcher dropUp />

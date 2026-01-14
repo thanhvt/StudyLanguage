@@ -220,14 +220,16 @@ export function MobileNavBar() {
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <SheetContent side="right" className="p-0 border-l border-border/40 w-[320px] sm:w-[380px]">
            <SheetTitle className="sr-only">Menu</SheetTitle>
+           {/* Improved Close Button */}
            <button 
              onClick={() => setIsMenuOpen(false)}
-             className="absolute right-4 top-4 z-50 p-2 rounded-full bg-background/50 backdrop-blur-sm border border-border/50"
+             className="absolute right-4 top-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-muted/80 hover:bg-muted backdrop-blur-sm border border-border/50 transition-colors"
            >
               <span className="sr-only">Close</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
            </button>
-           <div className="h-full overflow-y-auto p-5 pb-20 pt-12">
+           {/* Content with better spacing */}
+           <div className="h-full overflow-y-auto px-5 pb-24 pt-14 space-y-5">
              <RightPanelContent />
            </div>
         </SheetContent>
