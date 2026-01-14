@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { MusicProvider } from "@/components/providers/music-provider";
-import { MusicControlBar } from "@/components/music-control-bar";
 import { LanguageProvider } from "@/components/providers/language-provider";
 import { UserActionLogger } from "@/components/providers/user-action-logger";
 import { ListenLaterProvider } from "@/components/providers/listen-later-provider";
@@ -40,7 +39,6 @@ export default function RootLayout({
                 <LanguageProvider>
                   <UserActionLogger />
                   {children}
-                  <MusicControlBar />
                 </LanguageProvider>
               </MusicProvider>
             </ListenLaterProvider>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { Headphones, Mic, BookOpen, PenTool, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Headphones, Mic, BookOpen, PenTool, GraduationCap, PanelLeftClose } from 'lucide-react';
 
 /**
  * Sidebar - Navigation menu component (Updated để match reference)
@@ -57,18 +57,40 @@ export function Sidebar() {
         )}
       >
         {/* Logo Section */}
-        <div className="p-4 border-b border-border">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md">
+        <div className={cn(
+          "flex items-center border-b border-border transition-all",
+          isCollapsed ? "flex-col justify-center gap-4 py-4" : "justify-between p-4"
+        )}>
+          {/* Logo - Click to expand when collapsed */}
+          <div 
+            onClick={() => isCollapsed && setIsCollapsed(false)}
+            className={cn(
+              "flex items-center gap-3 transition-opacity",
+              isCollapsed ? "cursor-pointer hover:opacity-80" : ""
+            )}
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md shrink-0">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             {!isCollapsed && (
-              <div>
-                <h1 className="text-lg font-bold text-foreground">StudyLanguage</h1>
-                <p className="text-xs text-muted-foreground">Study Smart</p>
-              </div>
+              <Link href="/">
+                <div>
+                  <h1 className="text-md font-bold text-foreground">Passive Learning</h1>
+                </div>
+              </Link>
             )}
-          </Link>
+          </div>
+
+          {/* Collapse Toggle Button - Only visible when expanded */}
+          {!isCollapsed && (
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 transition-all duration-200 group"
+              title="Thu gọn sidebar"
+            >
+              <PanelLeftClose className="w-5 h-5 transition-transform group-hover:scale-110" />
+            </button>
+          )}
         </div>
 
         {/* Navigation Menu */}
@@ -148,22 +170,6 @@ export function Sidebar() {
             </div>
           </div>
         )}
-
-        {/* Collapse Toggle Button */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center gap-2 p-3 m-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-xl transition-colors text-sm"
-          title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
-            <>
-              <ChevronLeft className="w-5 h-5" />
-              <span>Thu gọn</span>
-            </>
-          )}
-        </button>
       </aside>
 
       {/* Mobile: Không cần sidebar slide-in, đã có MobileNavBar ở bottom */}

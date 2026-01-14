@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Headphones, Mic, BookOpen, PenTool } from 'lucide-react';
-import { useMemo } from 'react';
+import { Home, Headphones, Mic, BookOpen, PenTool, Menu } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { RightPanelContent } from './right-panel';
 
 /**
  * MobileNavBar - Dribbble-Style Morphing Tab Bar
@@ -59,10 +61,19 @@ const tabConfig = {
     colorLight: 'hsl(280, 70%, 95%)',
     shape: 'rounded-square',
   },
+  menu: {
+    id: 'menu',
+    label: 'Menu',
+    icon: Menu,
+    href: '#', // Special case
+    color: 'hsl(30, 90%, 50%)',
+    colorLight: 'hsl(30, 90%, 95%)',
+    shape: 'circle',
+  },
 };
 
 // Thứ tự tabs
-const tabOrder = ['listening', 'speaking', 'home', 'reading'] as const;
+const tabOrder = ['listening', 'speaking', 'home', 'reading', 'menu'] as const;
 
 // Component cho mỗi tab
 function NavTab({ 
@@ -153,41 +164,74 @@ function NavTab({
 
 export function MobileNavBar() {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Xác định tab đang active
   const activeTab = useMemo(() => {
+    if (isMenuOpen) return 'menu'; // Force active if sheet is open
     if (pathname === '/') return 'home';
     if (pathname.startsWith('/listening')) return 'listening';
     if (pathname.startsWith('/speaking')) return 'speaking';
     if (pathname.startsWith('/reading')) return 'reading';
     return 'home';
-  }, [pathname]);
+  }, [pathname, isMenuOpen]);
 
   return (
-    <nav 
-      className={cn(
-        'lg:hidden fixed bottom-4 left-4 right-4 z-50',
-        // Pill-shaped container
-        'rounded-[15px]',
-        // Background với backdrop blur
-        'bg-card/95 dark:bg-card/90 backdrop-blur-xl',
-        // Shadow
-        'shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)]',
-        'dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]',
-        // Border subtle
-        'border border-border/50'
-      )}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-    >
-      <div className="flex items-center h-16 px-2">
-        {tabOrder.map((tabKey) => (
-          <NavTab
-            key={tabKey}
-            tabKey={tabKey}
-            isActive={activeTab === tabKey}
-          />
-        ))}
-      </div>
-    </nav>
+    <>
+      <nav 
+        className={cn(
+          'lg:hidden fixed bottom-4 left-4 right-4 z-50',
+          // Pill-shaped container
+          'rounded-[15px]',
+          // Background với backdrop blur
+          'bg-card/95 dark:bg-card/90 backdrop-blur-xl',
+          // Shadow
+          'shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)]',
+          'dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]',
+          // Border subtle
+          'border border-border/50'
+        )}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="flex items-center h-16 px-2">
+          {tabOrder.map((tabKey) => {
+            if (tabKey === 'menu') {
+              return (
+                <div key={tabKey} onClick={() => setIsMenuOpen(true)}>
+                  <NavTab
+                    tabKey={tabKey}
+                    isActive={activeTab === tabKey}
+                  />
+                </div>
+              );
+            }
+            return (
+              <NavTab
+                key={tabKey}
+                tabKey={tabKey}
+                isActive={activeTab === tabKey}
+              />
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Menu / Settings Sheet */}
+      <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <SheetContent side="right" className="p-0 border-l border-border/40 w-[320px] sm:w-[380px]">
+           <SheetTitle className="sr-only">Menu</SheetTitle>
+           <button 
+             onClick={() => setIsMenuOpen(false)}
+             className="absolute right-4 top-4 z-50 p-2 rounded-full bg-background/50 backdrop-blur-sm border border-border/50"
+           >
+              <span className="sr-only">Close</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+           </button>
+           <div className="h-full overflow-y-auto p-5 pb-20 pt-12">
+             <RightPanelContent />
+           </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

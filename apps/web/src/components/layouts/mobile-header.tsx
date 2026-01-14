@@ -32,7 +32,7 @@ export function MobileHeader() {
           >
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-foreground">StudyLanguage</span>
+          <span className="font-bold text-foreground">Passive Learning</span>
         </Link>
 
         {/* Settings Sheet */}
