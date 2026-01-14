@@ -10,87 +10,212 @@ import {
   AddPlaylistItemDto,
 } from '@/types/listening-types';
 
+// ============================================================================
+// MODULE-LEVEL CACHE - Persist across component remounts
+// ============================================================================
+
+interface PlaylistCache {
+  data: Playlist[];
+  userId: string | null;
+  timestamp: number;
+}
+
+// Cache toàn cục - không bị reset khi component remount
+let playlistCache: PlaylistCache | null = null;
+
+// Thời gian cache hợp lệ (5 phút)
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Track request đang chạy để tránh duplicate
+let pendingRequest: Promise<Playlist[]> | null = null;
+
+// Debounce timer
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * usePlaylist - Hook quản lý Playlists
+ * Kiểm tra cache còn hợp lệ không
+ * 
+ * @param userId - User ID hiện tại
+ * @returns true nếu cache valid cho user này và chưa hết hạn
+ */
+function isCacheValid(userId: string | null): boolean {
+  if (!playlistCache) return false;
+  if (playlistCache.userId !== userId) return false;
+  if (Date.now() - playlistCache.timestamp > CACHE_TTL_MS) return false;
+  return true;
+}
+
+/**
+ * Cập nhật cache
+ * 
+ * @param data - Dữ liệu playlists
+ * @param userId - User ID
+ */
+function updateCache(data: Playlist[], userId: string | null): void {
+  playlistCache = {
+    data,
+    userId,
+    timestamp: Date.now(),
+  };
+}
+
+/**
+ * Xóa cache (khi logout hoặc cần force refresh)
+ */
+function clearCache(): void {
+  playlistCache = null;
+  pendingRequest = null;
+}
+
+// ============================================================================
+// HOOK IMPLEMENTATION
+// ============================================================================
+
+/**
+ * usePlaylist - Hook quản lý Playlists với caching thông minh
  * 
  * Mục đích: CRUD operations cho Playlists với Supabase backend
  * Tham số đầu ra: playlists, loading states, và các methods
  * Khi nào sử dụng: Trong các components liên quan đến Playlists
+ * 
+ * Features:
+ * - Module-level cache (persist across remounts)
+ * - Debounce để tránh gọi API quá nhanh
+ * - Stale-while-revalidate pattern
+ * - Duplicate request prevention
  */
 export function usePlaylist() {
   const { user, loading: authLoading } = useAuth();
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    // Khởi tạo từ cache nếu có và hợp lệ
+    if (isCacheValid(user?.id || null)) {
+      return playlistCache!.data;
+    }
+    return [];
+  });
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Track đã fetch lần đầu chưa - tránh infinite loop
-  const hasFetchedRef = useRef(false);
-  const lastUserIdRef = useRef<string | null>(null);
+  // Track nếu component đã unmount
+  const isMountedRef = useRef(true);
 
   /**
-   * Lấy danh sách playlists từ API
+   * Core fetch function - gọi API và cập nhật cache
    */
+  const doFetch = useCallback(async (userId: string): Promise<Playlist[]> => {
+    const response = await api('/playlists');
+    
+    // Handle different status codes
+    if (response.status === 401) {
+      console.warn('[usePlaylist] Token hết hạn');
+      return [];
+    }
+    
+    if (response.status === 429) {
+      console.warn('[usePlaylist] Rate limited, sử dụng cache');
+      // Nếu có cache, trả về cache thay vì báo lỗi
+      if (playlistCache?.data) {
+        return playlistCache.data;
+      }
+      throw new Error('Quá nhiều request. Vui lòng đợi một chút.');
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[usePlaylist] Lỗi ${response.status}: ${errorText}`);
+      throw new Error(`Lỗi ${response.status}`);
+    }
+
+    const data = await response.json();
+    const playlists = data.playlists || [];
+    
+    // Cập nhật cache
+    updateCache(playlists, userId);
+    
+    return playlists;
+  }, []);
+
   /**
-   * Lấy danh sách playlists từ API
+   * Lấy danh sách playlists từ API với debounce và caching
+   * 
+   * @param forceRefresh - Bỏ qua cache và gọi API mới
    */
-  const fetchPlaylists = useCallback(async () => {
+  const fetchPlaylists = useCallback(async (forceRefresh = false) => {
     // Không có user = chưa đăng nhập
     if (!user) {
       setPlaylists([]);
+      clearCache();
+      return;
+    }
+
+    const userId = user.id;
+
+    // Kiểm tra cache (trừ khi force refresh)
+    if (!forceRefresh && isCacheValid(userId)) {
+      // Cache vẫn valid, dùng data từ cache
+      setPlaylists(playlistCache!.data);
+      return;
+    }
+
+    // Nếu đang có request pending, đợi kết quả thay vì gọi mới
+    if (pendingRequest) {
+      try {
+        const result = await pendingRequest;
+        if (isMountedRef.current) {
+          setPlaylists(result);
+        }
+      } catch {
+        // Ignore - sẽ được handle bởi request gốc
+      }
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    // Tạo promise và lưu vào pendingRequest
+    pendingRequest = doFetch(userId);
 
     try {
-      const response = await api('/playlists', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-
-      // Handle 401 specifically - token có thể đã hết hạn
-      if (response.status === 401) {
-        // console.warn('[usePlaylist] Token hết hạn, đang xử lý refresh...');
-        // Không xóa playlists ngay để tránh flash loading nếu refresh thành công sau đó
-        // setPlaylists([]); 
-        return;
+      const result = await pendingRequest;
+      if (isMountedRef.current) {
+        setPlaylists(result);
       }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        console.error(`[usePlaylist] Lỗi ${response.status}: ${errorText}`);
-        setError(`Lỗi ${response.status}: Không thể lấy danh sách playlists`);
-        return;
-      }
-
-      const data = await response.json();
-      setPlaylists(data.playlists || []);
     } catch (err) {
-      clearTimeout(timeoutId);
-      
-      // Ignore abort errors (component unmount or timeout)
-      if (err instanceof Error && err.name === 'AbortError') {
-        console.log('[usePlaylist] Fetch aborted');
-        return;
-      }
-      
-      console.error('[usePlaylist] Lỗi fetch:', err);
-      // Chỉ set error nếu không phải là lỗi network (để tránh báo lỗi khi offline tạm thời)
-      if (err instanceof Error && err.message !== 'Failed to fetch') {
-         setError(err.message);
+      if (isMountedRef.current) {
+        console.error('[usePlaylist] Lỗi fetch:', err);
+        // Nếu có cache cũ, vẫn dùng được
+        if (playlistCache?.data) {
+          setPlaylists(playlistCache.data);
+          setError('Không thể cập nhật. Đang hiển thị dữ liệu cũ.');
+        } else {
+          setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+        }
       }
     } finally {
-      setIsLoading(false);
+      pendingRequest = null;
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [user]);
+  }, [user, doFetch]);
+
+  /**
+   * Debounced fetch - chờ 300ms trước khi thực sự gọi API
+   * Tránh gọi API nhiều lần khi chuyển tab nhanh
+   */
+  const debouncedFetch = useCallback(() => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      fetchPlaylists();
+    }, 300);
+  }, [fetchPlaylists]);
 
   /**
    * Lấy chi tiết playlist kèm items
@@ -141,9 +266,14 @@ export function usePlaylist() {
       }
 
       const data = await response.json();
+      const newPlaylist = { ...data.playlist, itemCount: 0 };
       
-      // Cập nhật local state
-      setPlaylists(prev => [{ ...data.playlist, itemCount: 0 }, ...prev]);
+      // Cập nhật local state và cache
+      setPlaylists(prev => {
+        const updated = [newPlaylist, ...prev];
+        updateCache(updated, user.id);
+        return updated;
+      });
 
       return data.playlist as Playlist;
     } catch (err) {
@@ -153,7 +283,7 @@ export function usePlaylist() {
     } finally {
       setIsCreating(false);
     }
-  }, []);
+  }, [user]);
 
   /**
    * Cập nhật playlist
@@ -175,10 +305,12 @@ export function usePlaylist() {
 
       const data = await response.json();
       
-      // Cập nhật local state
-      setPlaylists(prev =>
-        prev.map(p => (p.id === playlistId ? { ...p, ...data.playlist } : p))
-      );
+      // Cập nhật local state và cache
+      setPlaylists(prev => {
+        const updated = prev.map(p => (p.id === playlistId ? { ...p, ...data.playlist } : p));
+        if (user) updateCache(updated, user.id);
+        return updated;
+      });
 
       return data.playlist as Playlist;
     } catch (err) {
@@ -186,7 +318,7 @@ export function usePlaylist() {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     }
-  }, []);
+  }, [user]);
 
   /**
    * Xóa playlist
@@ -204,8 +336,13 @@ export function usePlaylist() {
         throw new Error('Lỗi xóa playlist');
       }
 
-      // Cập nhật local state
-      setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      // Cập nhật local state và cache
+      setPlaylists(prev => {
+        const updated = prev.filter(p => p.id !== playlistId);
+        if (user) updateCache(updated, user.id);
+        return updated;
+      });
+      
       if (currentPlaylist?.id === playlistId) {
         setCurrentPlaylist(null);
       }
@@ -216,7 +353,7 @@ export function usePlaylist() {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
-  }, [currentPlaylist?.id]);
+  }, [currentPlaylist?.id, user]);
 
   /**
    * Thêm item vào playlist
@@ -238,14 +375,16 @@ export function usePlaylist() {
 
       const data = await response.json();
       
-      // Cập nhật item count trong local state
-      setPlaylists(prev =>
-        prev.map(p =>
+      // Cập nhật item count trong local state và cache
+      setPlaylists(prev => {
+        const updated = prev.map(p =>
           p.id === playlistId
             ? { ...p, itemCount: (p.itemCount || 0) + 1 }
             : p
-        )
-      );
+        );
+        if (user) updateCache(updated, user.id);
+        return updated;
+      });
 
       // Cập nhật current playlist nếu đang xem
       if (currentPlaylist?.id === playlistId) {
@@ -262,7 +401,7 @@ export function usePlaylist() {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     }
-  }, [currentPlaylist?.id]);
+  }, [currentPlaylist?.id, user]);
 
   /**
    * Xóa item khỏi playlist
@@ -281,14 +420,16 @@ export function usePlaylist() {
         throw new Error('Lỗi xóa khỏi playlist');
       }
 
-      // Cập nhật item count
-      setPlaylists(prev =>
-        prev.map(p =>
+      // Cập nhật item count và cache
+      setPlaylists(prev => {
+        const updated = prev.map(p =>
           p.id === playlistId
             ? { ...p, itemCount: Math.max(0, (p.itemCount || 0) - 1) }
             : p
-        )
-      );
+        );
+        if (user) updateCache(updated, user.id);
+        return updated;
+      });
 
       // Cập nhật current playlist nếu đang xem
       if (currentPlaylist?.id === playlistId) {
@@ -305,7 +446,7 @@ export function usePlaylist() {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
-  }, [currentPlaylist?.id]);
+  }, [currentPlaylist?.id, user]);
 
   /**
    * Sắp xếp lại items trong playlist
@@ -346,32 +487,41 @@ export function usePlaylist() {
    */
   const reorderPlaylists = useCallback((reorderedPlaylists: Playlist[]) => {
     setPlaylists(reorderedPlaylists);
-    // TODO: Nếu cần persist order lên server, thêm API call ở đây
-  }, []);
+    if (user) updateCache(reorderedPlaylists, user.id);
+  }, [user]);
 
-  // Fetch khi auth đã sẵn sàng và user thay đổi
+  // Effect: Fetch data khi auth sẵn sàng
   useEffect(() => {
+    isMountedRef.current = true;
+    
     // Đợi auth khởi tạo xong
     if (authLoading) {
       return;
     }
 
-    // Nếu user thay đổi (login/logout), reset flag và fetch lại
-    const currentUserId = user?.id || null;
-    if (currentUserId !== lastUserIdRef.current) {
-      lastUserIdRef.current = currentUserId;
-      hasFetchedRef.current = false;
+    // Logout: Clear cache và state
+    if (!user) {
+      setPlaylists([]);
+      clearCache();
+      return;
     }
 
-    // Chỉ fetch 1 lần cho mỗi user
-    if (!hasFetchedRef.current && user) {
-      hasFetchedRef.current = true;
-      fetchPlaylists();
-    } else if (!user) {
-      // Clear playlists khi logout
-      setPlaylists([]);
+    // User thay đổi: Clear cache cũ
+    if (playlistCache && playlistCache.userId !== user.id) {
+      clearCache();
     }
-  }, [authLoading, user, fetchPlaylists]);
+
+    // Sử dụng debounced fetch để tránh gọi quá nhanh khi chuyển tab
+    debouncedFetch();
+    
+    // Cleanup
+    return () => {
+      isMountedRef.current = false;
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [authLoading, user, debouncedFetch]);
 
   return {
     playlists,

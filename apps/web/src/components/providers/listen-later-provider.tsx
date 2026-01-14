@@ -5,12 +5,62 @@ import { api } from '@/lib/api';
 import { ListenLaterItem, AddListenLaterDto } from '@/types/listening-types';
 import { useAuth } from '@/components/providers/auth-provider';
 
+// ============================================================================
+// MODULE-LEVEL CACHE - Persist across component remounts
+// ============================================================================
+
+interface ListenLaterCache {
+  items: ListenLaterItem[];
+  count: number;
+  userId: string | null;
+  timestamp: number;
+}
+
+// Cache toàn cục - không bị reset khi component remount
+let listenLaterCache: ListenLaterCache | null = null;
+
+// Thời gian cache hợp lệ (5 phút)
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Track request đang chạy để tránh duplicate
+let pendingRequest: Promise<{ items: ListenLaterItem[]; count: number }> | null = null;
+
+// Debounce timer
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * ListenLaterContext - Context để share state Listen Later giữa các components
- * 
- * Mục đích: Giải quyết vấn đề badge count không sync khi xóa item
- * Khi nào sử dụng: Wrap trong AppLayout hoặc ListeningPage
+ * Kiểm tra cache còn hợp lệ không
  */
+function isCacheValid(userId: string | null): boolean {
+  if (!listenLaterCache) return false;
+  if (listenLaterCache.userId !== userId) return false;
+  if (Date.now() - listenLaterCache.timestamp > CACHE_TTL_MS) return false;
+  return true;
+}
+
+/**
+ * Cập nhật cache
+ */
+function updateCache(items: ListenLaterItem[], count: number, userId: string | null): void {
+  listenLaterCache = {
+    items,
+    count,
+    userId,
+    timestamp: Date.now(),
+  };
+}
+
+/**
+ * Xóa cache
+ */
+function clearCache(): void {
+  listenLaterCache = null;
+  pendingRequest = null;
+}
+
+// ============================================================================
+// CONTEXT & PROVIDER
+// ============================================================================
 
 interface ListenLaterContextType {
   items: ListenLaterItem[];
@@ -27,64 +77,138 @@ interface ListenLaterContextType {
 const ListenLaterContext = createContext<ListenLaterContextType | null>(null);
 
 /**
- * ListenLaterProvider Component
+ * ListenLaterProvider Component với caching thông minh
  * 
- * Mục đích: Cung cấp shared state cho Listen Later feature
- * Tham số đầu vào: children - React nodes
- * Khi nào sử dụng: Wrap ở listening page hoặc app layout
+ * Features:
+ * - Module-level cache (persist across remounts)
+ * - Debounce để tránh gọi API quá nhanh
+ * - Stale-while-revalidate pattern
+ * - Duplicate request prevention
  */
 export function ListenLaterProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const [items, setItems] = useState<ListenLaterItem[]>([]);
-  const [count, setCount] = useState(0);
+  const [items, setItems] = useState<ListenLaterItem[]>(() => {
+    if (isCacheValid(user?.id || null)) {
+      return listenLaterCache!.items;
+    }
+    return [];
+  });
+  const [count, setCount] = useState(() => {
+    if (isCacheValid(user?.id || null)) {
+      return listenLaterCache!.count;
+    }
+    return 0;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Track đã fetch lần đầu chưa - tránh infinite loop
-  const hasFetchedRef = useRef(false);
-  const lastUserIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
 
   /**
-   * Lấy danh sách Listen Later từ API
+   * Core fetch function
    */
-  const fetchListenLater = useCallback(async () => {
-    // Không có user = chưa đăng nhập
+  const doFetch = useCallback(async (userId: string): Promise<{ items: ListenLaterItem[]; count: number }> => {
+    const response = await api('/listen-later');
+    
+    if (response.status === 401) {
+      console.warn('[ListenLater] Token hết hạn');
+      return { items: [], count: 0 };
+    }
+    
+    if (response.status === 429) {
+      console.warn('[ListenLater] Rate limited, sử dụng cache');
+      if (listenLaterCache) {
+        return { items: listenLaterCache.items, count: listenLaterCache.count };
+      }
+      throw new Error('Quá nhiều request. Vui lòng đợi.');
+    }
+
+    if (!response.ok) {
+      throw new Error(`Lỗi ${response.status}`);
+    }
+
+    const data = await response.json();
+    const result = { items: data.items || [], count: data.count || 0 };
+    
+    updateCache(result.items, result.count, userId);
+    
+    return result;
+  }, []);
+
+  /**
+   * Lấy danh sách Listen Later với debounce và caching
+   */
+  const fetchListenLater = useCallback(async (forceRefresh = false) => {
     if (!user) {
       setItems([]);
       setCount(0);
+      clearCache();
+      return;
+    }
+
+    const userId = user.id;
+
+    if (!forceRefresh && isCacheValid(userId)) {
+      setItems(listenLaterCache!.items);
+      setCount(listenLaterCache!.count);
+      return;
+    }
+
+    if (pendingRequest) {
+      try {
+        const result = await pendingRequest;
+        if (isMountedRef.current) {
+          setItems(result.items);
+          setCount(result.count);
+        }
+      } catch {
+        // Ignore
+      }
       return;
     }
 
     setIsLoading(true);
     setError(null);
 
+    pendingRequest = doFetch(userId);
+
     try {
-      const response = await api('/listen-later');
-      
-      // Handle 401 specifically - token có thể đã hết hạn
-      if (response.status === 401) {
-        console.warn('[ListenLaterContext] Token hết hạn, cần đăng nhập lại');
-        setItems([]);
-        setCount(0);
-        setError(null); // Không hiển thị lỗi nếu do chưa đăng nhập
-        return;
+      const result = await pendingRequest;
+      if (isMountedRef.current) {
+        setItems(result.items);
+        setCount(result.count);
       }
-
-      if (!response.ok) {
-        throw new Error('Lỗi lấy danh sách Nghe Sau');
-      }
-
-      const data = await response.json();
-      setItems(data.items || []);
-      setCount(data.count || 0);
     } catch (err) {
-      console.error('[ListenLaterContext] Lỗi fetch:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      if (isMountedRef.current) {
+        console.error('[ListenLater] Lỗi fetch:', err);
+        if (listenLaterCache) {
+          setItems(listenLaterCache.items);
+          setCount(listenLaterCache.count);
+        }
+        setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      }
     } finally {
-      setIsLoading(false);
+      pendingRequest = null;
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [user]);
+  }, [user, doFetch]);
+
+  /**
+   * Debounced fetch
+   */
+  const debouncedFetch = useCallback(() => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      fetchListenLater();
+    }, 300);
+  }, [fetchListenLater]);
 
   /**
    * Thêm item vào Listen Later
@@ -109,20 +233,24 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+      const newItem = data.item as ListenLaterItem;
       
-      // Cập nhật local state
-      setItems(prev => [data.item, ...prev]);
+      setItems(prev => {
+        const updated = [newItem, ...prev];
+        updateCache(updated, updated.length, user.id);
+        return updated;
+      });
       setCount(prev => prev + 1);
 
-      return data.item as ListenLaterItem;
+      return newItem;
     } catch (err) {
-      console.error('[ListenLaterContext] Lỗi add:', err);
+      console.error('[ListenLater] Lỗi add:', err);
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return null;
     } finally {
       setIsAdding(false);
     }
-  }, []);
+  }, [user]);
 
   /**
    * Xóa item khỏi Listen Later
@@ -137,20 +265,23 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
         throw new Error('Lỗi xóa khỏi Nghe Sau');
       }
 
-      // Cập nhật local state - đây là nơi count được sync
-      setItems(prev => prev.filter(item => item.id !== itemId));
+      setItems(prev => {
+        const updated = prev.filter(item => item.id !== itemId);
+        if (user) updateCache(updated, updated.length, user.id);
+        return updated;
+      });
       setCount(prev => Math.max(0, prev - 1));
 
       return true;
     } catch (err) {
-      console.error('[ListenLaterContext] Lỗi remove:', err);
+      console.error('[ListenLater] Lỗi remove:', err);
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
-  }, []);
+  }, [user]);
 
   /**
-   * Xóa tất cả items trong Listen Later
+   * Xóa tất cả
    */
   const clearAll = useCallback(async () => {
     try {
@@ -159,45 +290,49 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error('Lỗi xóa tất cả Nghe Sau');
+        throw new Error('Lỗi xóa tất cả');
       }
 
-      // Cập nhật local state
       setItems([]);
       setCount(0);
+      if (user) updateCache([], 0, user.id);
 
       return true;
     } catch (err) {
-      console.error('[ListenLaterContext] Lỗi clearAll:', err);
+      console.error('[ListenLater] Lỗi clearAll:', err);
       setError(err instanceof Error ? err.message : 'Lỗi không xác định');
       return false;
     }
-  }, []);
+  }, [user]);
 
-  // Fetch khi auth đã sẵn sàng và user thay đổi
+  // Effect: Fetch data khi auth sẵn sàng
   useEffect(() => {
-    // Đợi auth khởi tạo xong
+    isMountedRef.current = true;
+    
     if (authLoading) {
       return;
     }
 
-    // Nếu user thay đổi (login/logout), reset flag và fetch lại
-    const currentUserId = user?.id || null;
-    if (currentUserId !== lastUserIdRef.current) {
-      lastUserIdRef.current = currentUserId;
-      hasFetchedRef.current = false;
-    }
-
-    // Chỉ fetch 1 lần cho mỗi user
-    if (!hasFetchedRef.current && user) {
-      hasFetchedRef.current = true;
-      fetchListenLater();
-    } else if (!user) {
-      // Clear items khi logout
+    if (!user) {
       setItems([]);
       setCount(0);
+      clearCache();
+      return;
     }
-  }, [authLoading, user, fetchListenLater]);
+
+    if (listenLaterCache && listenLaterCache.userId !== user.id) {
+      clearCache();
+    }
+
+    debouncedFetch();
+    
+    return () => {
+      isMountedRef.current = false;
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [authLoading, user, debouncedFetch]);
 
   return (
     <ListenLaterContext.Provider 
@@ -220,10 +355,6 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
 
 /**
  * Hook để sử dụng ListenLater context
- * 
- * Mục đích: Thay thế useListenLater() hook để share state
- * Tham số đầu ra: ListenLaterContextType
- * Khi nào sử dụng: Trong mọi component cần truy cập listen later state
  */
 export function useListenLaterContext() {
   const context = useContext(ListenLaterContext);
@@ -234,19 +365,16 @@ export function useListenLaterContext() {
 }
 
 /**
- * Hook fallback - để không break existing code
- * Sẽ cố dùng context, nếu không có sẽ fallback về standalone state
+ * Hook fallback
  */
 export function useListenLaterSafe() {
   const context = useContext(ListenLaterContext);
   
-  // Nếu có context, dùng context
   if (context) {
     return context;
   }
   
-  // Fallback - tạo standalone state (không recommended)
-  console.warn('[useListenLaterSafe] Không tìm thấy ListenLaterProvider, sử dụng standalone state');
+  console.warn('[useListenLaterSafe] Không tìm thấy ListenLaterProvider');
   return {
     items: [] as ListenLaterItem[],
     count: 0,
