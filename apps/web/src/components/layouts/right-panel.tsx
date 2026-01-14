@@ -70,56 +70,55 @@ export function RightPanelContent() {
 
   return (
     <>
-      {/* NEW: Music Player Section */}
-      {/* NEW: Music Player Section - Enhanced Design */}
+      {/* NEW: Music Player Section - Compact Design */}
       {currentTrack && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-900/40 via-purple-900/10 to-transparent border border-white/10 rounded-3xl p-4 shadow-xl backdrop-blur-md group">
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-900/40 via-purple-900/10 to-transparent border border-white/10 rounded-2xl p-3 shadow-xl backdrop-blur-md group">
           {/* Subtle animated background glow */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-24 h-24 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
           
           <div className="relative z-10">
             {/* Header / Track Info */}
-            <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-3 mb-3">
                <div className={cn(
-                 "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg border border-white/10 relative overflow-hidden", 
+                 "w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg border border-white/10 relative overflow-hidden", 
                  isPlaying ? "shadow-[0_0_15px_rgba(139,92,246,0.5)]" : "bg-white/5"
                )}>
                  <div className={cn("absolute inset-0 bg-gradient-to-br from-violet-600 to-indigo-600 opacity-80", !isPlaying && "opacity-0")} />
-                 <span className="relative z-10">{isPlaying ? '🎧' : '🎵'}</span>
+                 <span className="relative z-10 text-sm">{isPlaying ? '🎧' : '🎵'}</span>
                </div>
                
                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                 <p className="text-sm font-bold truncate text-white tracking-wide">{currentTrack.name}</p>
-                 <p className="text-[11px] text-white/50 font-medium uppercase tracking-wider">Background Music</p>
+                 <p className="text-xs font-bold truncate text-white tracking-wide">{currentTrack.name}</p>
+                 <p className="text-[10px] text-white/50 font-medium uppercase tracking-wider">Background Music</p>
                </div>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center justify-between px-2 mb-4">
+            <div className="flex items-center justify-between px-3 mb-3">
                {/* Prev Button */}
                <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={prevTrack}
-                  className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
                 >
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-back"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-back"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
                </Button>
                
-               {/* Play/Pause Button - Main Focus */}
+               {/* Play/Pause Button - Compact Focus */}
                <Button 
                   onClick={toggle} 
                   className={cn(
-                    "h-14 w-14 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all active:scale-95 flex items-center justify-center border border-white/20",
+                    "h-12 w-12 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.3)] transition-all active:scale-95 flex items-center justify-center border border-white/20",
                     isPlaying 
                       ? "bg-white text-indigo-900 hover:bg-white/90" 
                       : "bg-gradient-to-br from-violet-500 to-indigo-600 text-white hover:brightness-110"
                   )}
                >
                   {isPlaying ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-0.5"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-0.5"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   )}
                </Button>
 
@@ -128,24 +127,24 @@ export function RightPanelContent() {
                   variant="ghost" 
                   size="icon" 
                   onClick={nextTrack}
-                  className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
                >
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-forward"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-forward"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
                </Button>
             </div>
 
             {/* Volume */}
-            <div className="bg-black/20 rounded-xl p-2.5 flex items-center gap-3 backdrop-blur-sm border border-white/5 mx-1">
-               <div className="w-5 h-5 flex items-center justify-center">
+            <div className="bg-black/20 rounded-xl p-2 flex items-center gap-2 backdrop-blur-sm border border-white/5 mx-1">
+               <div className="w-4 h-4 flex items-center justify-center">
                  {volume === 0 ? (
-                    <span className="text-white/40 text-xs">🔇</span>
+                    <span className="text-white/40 text-[10px]">🔇</span>
                  ) : volume < 0.5 ? (
-                    <span className="text-white/60 text-xs">🔉</span> 
+                    <span className="text-white/60 text-[10px]">🔉</span> 
                  ) : (
-                    <span className="text-white/80 text-xs">🔊</span>
+                    <span className="text-white/80 text-[10px]">🔊</span>
                  )}
                </div>
-               <div className="relative flex-1 h-6 flex items-center">
+               <div className="relative flex-1 h-5 flex items-center">
                   <input
                     type="range"
                     min={0}
@@ -156,7 +155,7 @@ export function RightPanelContent() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   {/* Custom Track */}
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" 
                       style={{ width: `${volume * 100}%` }}
@@ -164,84 +163,33 @@ export function RightPanelContent() {
                   </div>
                   {/* Thumb Indicator (Visual only) */}
                   <div 
-                    className="absolute h-3 w-3 bg-white rounded-full shadow-md pointer-events-none transition-all duration-75"
-                    style={{ left: `calc(${volume * 100}% - 6px)` }}
+                    className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-md pointer-events-none transition-all duration-75"
+                    style={{ left: `calc(${volume * 100}% - 5px)` }}
                   />
                </div>
             </div>
 
             {isDucking && (
-              <p className="text-[10px] text-amber-300 text-center mt-2 animate-pulse font-medium tracking-wide">
-                 Voice Active - Ducking Music...
+              <p className="text-[9px] text-amber-300 text-center mt-1.5 animate-pulse font-medium tracking-wide">
+                 Voice Active...
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* 1. User Profile Enhanced */}
-      <div className={cn("flex flex-col items-center text-center space-y-3 pt-1", !user && "flex-1 justify-center")}>
-         {user ? (
-          <>
-            <div className="relative">
-              {/* Avatar Glow Ring */}
-              {/* <div className="w-20 h-20 rounded-full avatar-glow p-1 bg-background/50 backdrop-blur-md">
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden shadow-inner">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    user.email?.[0].toUpperCase() || 'U'
-                  )}
-                </div>
-              </div> */}
-              
-              {/* Level Badge */}
-              {/* <div className="absolute -bottom-2 md:left-1/2 md:-translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/20 whitespace-nowrap">
-                LV. {userLevel} Scholar
-              </div> */}
-            </div>
-
-            {/* <div className="space-y-1 w-full">
-              <h3 className="font-bold text-lg truncate px-2">
-                {user.displayName || user.email?.split('@')[0] || 'User'}
-              </h3>
-              
-              <div className="flex items-center gap-2 text-xs text-muted-foreground px-4">
-                <span>XP</span>
-                <div className="h-2 flex-1 bg-muted/50 rounded-full overflow-hidden border border-white/10">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-blue-500 rounded-full shadow-[0_0_10px_hsl(var(--primary))]" 
-                    style={{ width: `${userXP}%` }}
-                  />
-                </div>
-                <span>{userXP}%</span>
-              </div>
-            </div> */}
-          </>
-        ) : (
-          <div className="text-center space-y-4 w-full">
-             <div className="w-20 h-20 mx-auto rounded-full bg-muted/30 flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
-                <User className="w-8 h-8 text-muted-foreground" />
-             </div>
-             <div className="space-y-2">
-               <h3 className="font-semibold">Tham gia ngay!</h3>
-               <p className="text-xs text-muted-foreground px-2">Đăng nhập để lưu tiến độ và đua top.</p>
-             </div>
-             <Button onClick={signInWithGoogle} className="w-full rounded-xl shadow-lg shadow-primary/20">
-               <Sparkles className="w-4 h-4 mr-2" />
-               Đăng nhập với Google
-             </Button>
-          </div>
-        )}
-      </div>
+      {/* 1. User Profile Enhanced (Commented Out by User) - Hidden if empty to prevent spacing issues */}
+      {/* 
+        NOTE: The original code had an empty container here when user content was commented out. 
+        I'm hiding it to fix the double gap issue.
+      */}
+      {/* <div className={cn("hidden", "flex flex-col items-center ...")}> ... </div> */}
 
       {/* <div className="glow-divider my-1" /> */}
 
-
-
       {/* 2. Motivation Stats (Streak) */}
       {user && (
-        <div className="stat-card-neon rounded-2xl p-4 flex items-center justify-between mt-2">
+        <div className="stat-card-neon rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Chuỗi ngày</p>
             <div className="flex items-baseline gap-1">
