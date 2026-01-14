@@ -7,12 +7,12 @@
  */
 
 export type AccentColorId =
-  | 'fresh-greens'
-  | 'leafy-green-garden'
-  | 'cool-waters'
-  | 'bright-green'
-  | 'green-harmony'
-  | 'spring-green-harmony';
+  | 'ocean-scholar'
+  | 'sunset-focus'
+  | 'royal-purple'
+  | 'rose-focus'
+  | 'ocean-blue'
+  | 'emerald-study';
 
 export interface ThemeConfig {
   id: AccentColorId;
@@ -32,114 +32,114 @@ export interface ThemeConfig {
   };
 }
 
-// Danh sách 6 themes theo yêu cầu
+// 6 Vibrant Learning-Focused Themes
 export const THEME_CONFIGS: ThemeConfig[] = [
   {
-    id: 'fresh-greens',
-    name: 'Fresh Greens',
-    description: 'Xanh lá tươi mát, năng động',
+    id: 'ocean-scholar',
+    name: 'Ocean Scholar',
+    description: 'Teal học thuật, thanh lịch',
     colors: {
-      primary: '122 39% 49%',
+      primary: '166 84% 32%',
       primaryForeground: '0 0% 100%',
-      accent: '66 70% 54%',
+      accent: '168 78% 56%',
       accentForeground: '0 0% 10%',
-      ring: '122 39% 49%',
-      sidebarPrimary: '122 39% 49%',
+      ring: '166 84% 32%',
+      sidebarPrimary: '166 84% 32%',
     },
     preview: {
-      primary: '#4caf50',
-      accent: '#cddc39',
+      primary: '#0D9488',
+      accent: '#2DD4BF',
     },
   },
   {
-    id: 'leafy-green-garden',
-    name: 'Leafy Green Garden',
-    description: 'Vườn xanh thanh bình',
+    id: 'sunset-focus',
+    name: 'Sunset Focus',
+    description: 'Cam năng động, tập trung',
+    colors: {
+      primary: '21 90% 48%',
+      primaryForeground: '0 0% 100%',
+      accent: '38 92% 50%',
+      accentForeground: '0 0% 10%',
+      ring: '21 90% 48%',
+      sidebarPrimary: '21 90% 48%',
+    },
+    preview: {
+      primary: '#EA580C',
+      accent: '#F59E0B',
+    },
+  },
+  {
+    id: 'royal-purple',
+    name: 'Royal Purple',
+    description: 'Tím sang trọng, sáng tạo',
+    colors: {
+      primary: '263 70% 58%',
+      primaryForeground: '0 0% 100%',
+      accent: '271 91% 65%',
+      accentForeground: '0 0% 100%',
+      ring: '263 70% 58%',
+      sidebarPrimary: '263 70% 58%',
+    },
+    preview: {
+      primary: '#7C3AED',
+      accent: '#A855F7',
+    },
+  },
+  {
+    id: 'rose-focus',
+    name: 'Rose Focus',
+    description: 'Hồng thân thiện, ấm áp',
+    colors: {
+      primary: '330 81% 60%',
+      primaryForeground: '0 0% 100%',
+      accent: '330 86% 70%',
+      accentForeground: '0 0% 10%',
+      ring: '330 81% 60%',
+      sidebarPrimary: '330 81% 60%',
+    },
+    preview: {
+      primary: '#EC4899',
+      accent: '#F472B6',
+    },
+  },
+  {
+    id: 'ocean-blue',
+    name: 'Ocean Blue',
+    description: 'Xanh dương cổ điển',
+    colors: {
+      primary: '221 83% 53%',
+      primaryForeground: '0 0% 100%',
+      accent: '187 94% 43%',
+      accentForeground: '0 0% 10%',
+      ring: '221 83% 53%',
+      sidebarPrimary: '221 83% 53%',
+    },
+    preview: {
+      primary: '#2563EB',
+      accent: '#06B6D4',
+    },
+  },
+  {
+    id: 'emerald-study',
+    name: 'Emerald Study',
+    description: 'Xanh ngọc bích, phát triển',
     colors: {
       primary: '160 84% 39%',
       primaryForeground: '0 0% 100%',
-      accent: '174 72% 40%',
-      accentForeground: '0 0% 100%',
+      accent: '84 81% 44%',
+      accentForeground: '0 0% 10%',
       ring: '160 84% 39%',
       sidebarPrimary: '160 84% 39%',
     },
     preview: {
-      primary: '#10b981',
-      accent: '#14b8a6',
-    },
-  },
-  {
-    id: 'cool-waters',
-    name: 'Cool Waters',
-    description: 'Nước biển mát lạnh',
-    colors: {
-      primary: '207 90% 54%',
-      primaryForeground: '0 0% 100%',
-      accent: '187 100% 42%',
-      accentForeground: '0 0% 10%',
-      ring: '207 90% 54%',
-      sidebarPrimary: '207 90% 54%',
-    },
-    preview: {
-      primary: '#2196f3',
-      accent: '#00bcd4',
-    },
-  },
-  {
-    id: 'bright-green',
-    name: 'Bright Green',
-    description: 'Xanh sáng năng động',
-    colors: {
-      primary: '84 81% 44%',
-      primaryForeground: '0 0% 10%',
-      accent: '48 96% 53%',
-      accentForeground: '0 0% 10%',
-      ring: '84 81% 44%',
-      sidebarPrimary: '84 81% 44%',
-    },
-    preview: {
-      primary: '#84cc16',
-      accent: '#facc15',
-    },
-  },
-  {
-    id: 'green-harmony',
-    name: 'Green Harmony',
-    description: 'Hài hòa xanh lá',
-    colors: {
-      primary: '142 71% 45%',
-      primaryForeground: '0 0% 100%',
-      accent: '160 84% 39%',
-      accentForeground: '0 0% 100%',
-      ring: '142 71% 45%',
-      sidebarPrimary: '142 71% 45%',
-    },
-    preview: {
-      primary: '#22c55e',
-      accent: '#10b981',
-    },
-  },
-  {
-    id: 'spring-green-harmony',
-    name: 'Spring Green Harmony',
-    description: 'Mùa xuân tươi trẻ',
-    colors: {
-      primary: '158 64% 52%',
-      primaryForeground: '0 0% 10%',
-      accent: '156 72% 67%',
-      accentForeground: '0 0% 10%',
-      ring: '158 64% 52%',
-      sidebarPrimary: '158 64% 52%',
-    },
-    preview: {
-      primary: '#34d399',
-      accent: '#6ee7b7',
+      primary: '#10B981',
+      accent: '#84CC16',
     },
   },
 ];
 
 // Theme mặc định
-export const DEFAULT_THEME: AccentColorId = 'fresh-greens';
+export const DEFAULT_THEME: AccentColorId = 'ocean-scholar';
 
 /**
  * Lấy config của theme theo ID

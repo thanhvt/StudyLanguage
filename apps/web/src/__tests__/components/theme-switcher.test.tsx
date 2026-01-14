@@ -64,8 +64,8 @@ describe('ThemeSwitcher Component', () => {
     // Kiểm tra có label "Màu chủ đạo"
     expect(screen.getByText('Màu chủ đạo')).toBeInTheDocument();
     
-    // Kiểm tra render Fresh Greens (mặc định)
-    expect(screen.getByText('Fresh Greens')).toBeInTheDocument();
+    // Kiểm tra render Ocean Scholar (mặc định)
+    expect(screen.getByText('Ocean Scholar')).toBeInTheDocument();
   });
 
   /**
@@ -79,8 +79,8 @@ describe('ThemeSwitcher Component', () => {
     // Tìm và click vào một color option
     const colorButtons = screen.getAllByRole('button');
     const colorButton = colorButtons.find(btn => 
-      btn.textContent?.includes('Fresh Greens') || 
-      btn.textContent?.includes('Leafy')
+      btn.textContent?.includes('Ocean Scholar') || 
+      btn.textContent?.includes('Sunset')
     );
     
     if (colorButton) {
