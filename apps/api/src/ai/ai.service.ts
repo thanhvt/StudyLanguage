@@ -584,6 +584,7 @@ Chỉ trả về JSON.
   ): Promise<{
     audioBuffer: Buffer;
     timestamps: { startTime: number; endTime: number }[];
+    audioUrl?: string;
   }> {
     this.logger.log(
       `Đang sinh audio cho ${conversation.length} câu hội thoại...`,
