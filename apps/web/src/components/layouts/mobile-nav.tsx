@@ -104,7 +104,7 @@ function NavTab({
     <Link
       href={config.href}
       className={cn(
-        'relative flex flex-col items-center justify-center transition-all duration-300 ease-out',
+        'relative flex flex-col items-center justify-center transition-transform duration-300 ease-out',
         'flex-1 min-h-[64px]',
         // Khi active, cần thêm space cho phần nhô lên
         isActive ? 'z-10' : 'z-0'
@@ -113,14 +113,14 @@ function NavTab({
       {/* Container chính - nhô lên khi active */}
       <div
         className={cn(
-          'relative flex flex-col items-center justify-center transition-all duration-300 ease-out',
+          'relative flex flex-col items-center justify-center transition-transform duration-300 ease-out',
           isActive ? '-translate-y-4' : 'translate-y-0'
         )}
       >
         {/* Icon container với shape và border */}
         <div
           className={cn(
-            'relative flex items-center justify-center transition-all duration-300 ease-out',
+            'relative flex items-center justify-center transition-[width,height,box-shadow] duration-300 ease-out',
             getShapeClass(),
             isActive ? 'w-14 h-14' : 'w-10 h-10'
           )}
@@ -134,7 +134,7 @@ function NavTab({
         >
           <IconComponent 
             className={cn(
-              'transition-all duration-300 ease-out',
+              'transition-[width,height] duration-300 ease-out',
               isActive ? 'w-6 h-6' : 'w-5 h-5'
             )}
             style={{ 
@@ -148,7 +148,7 @@ function NavTab({
         {/* Label - chỉ hiển thị khi active */}
         <span 
           className={cn(
-            'text-[10px] font-semibold mt-1 transition-all duration-300 ease-out whitespace-nowrap',
+            'text-[10px] font-semibold mt-1 transition-[opacity,transform] duration-300 ease-out whitespace-nowrap',
             isActive 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 -translate-y-2 pointer-events-none absolute'

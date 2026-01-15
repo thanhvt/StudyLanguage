@@ -101,7 +101,7 @@ export function RightPanelContent() {
                   variant="ghost" 
                   size="icon" 
                   onClick={prevTrack}
-                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                 >
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-back"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
                </Button>
@@ -110,7 +110,7 @@ export function RightPanelContent() {
                <Button 
                   onClick={toggle} 
                   className={cn(
-                    "h-12 w-12 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.3)] transition-all active:scale-95 flex items-center justify-center border border-white/20",
+                    "h-12 w-12 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.3)] transition-[transform,colors,filter] active:scale-95 flex items-center justify-center border border-white/20",
                     isPlaying 
                       ? "bg-white text-indigo-900 hover:bg-white/90" 
                       : "bg-gradient-to-br from-violet-500 to-indigo-600 text-white hover:brightness-110"
@@ -128,7 +128,7 @@ export function RightPanelContent() {
                   variant="ghost" 
                   size="icon" 
                   onClick={nextTrack}
-                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                >
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-skip-forward"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
                </Button>
@@ -164,7 +164,7 @@ export function RightPanelContent() {
                   </div>
                   {/* Thumb Indicator (Visual only) */}
                   <div 
-                    className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-md pointer-events-none transition-all duration-75"
+                    className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-md pointer-events-none transition-[left] duration-75"
                     style={{ left: `calc(${volume * 100}% - 5px)` }}
                   />
                </div>
@@ -197,7 +197,7 @@ export function RightPanelContent() {
             
             <Button 
               onClick={signInWithGoogle} 
-              className="w-full bg-gradient-to-r from-primary to-accent hover:brightness-110 text-white font-semibold py-3 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-primary to-accent hover:brightness-110 text-white font-semibold py-3 rounded-xl shadow-lg transition-[transform,filter,box-shadow] duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -244,7 +244,7 @@ export function RightPanelContent() {
             <div 
               key={goal.id}
               className={cn(
-                "group flex items-center gap-3 p-3 rounded-xl border transition-all duration-300",
+                "group flex items-center gap-3 p-3 rounded-xl border transition-colors duration-300",
                 goal.completed 
                   ? "bg-primary/5 border-primary/20" 
                   : "bg-card/40 border-border/40 hover:bg-card/60"
@@ -292,13 +292,13 @@ export function RightPanelContent() {
            <div className="flex bg-muted/30 rounded-lg p-1">
               <button 
                  onClick={() => setLanguage('vi')}
-                 className={cn("flex-1 text-xs font-bold rounded-md transition-all", language === 'vi' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}
+                 className={cn("flex-1 text-xs font-bold rounded-md transition-colors", language === 'vi' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}
               >
                 VI
               </button>
               <button 
                  onClick={() => setLanguage('en')}
-                 className={cn("flex-1 text-xs font-bold rounded-md transition-all", language === 'en' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}
+                 className={cn("flex-1 text-xs font-bold rounded-md transition-colors", language === 'en' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}
               >
                 EN
               </button>

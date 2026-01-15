@@ -51,14 +51,14 @@ export function Sidebar() {
       {/* Desktop Sidebar - Enhanced với aurora gradient và glow effects */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col transition-all duration-300',
+          'hidden lg:flex flex-col transition-[width] duration-300',
           'sidebar-enhanced sidebar-glow-border',
           isCollapsed ? 'w-20' : 'w-64'
         )}
       >
         {/* Logo Section */}
         <div className={cn(
-          "flex items-center border-b border-border transition-all",
+          "flex items-center border-b border-border transition-[padding,gap]",
           isCollapsed ? "flex-col justify-center gap-4 py-4" : "justify-between p-4"
         )}>
           {/* Logo - Click to expand when collapsed */}
@@ -85,7 +85,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button
               onClick={() => setIsCollapsed(true)}
-              className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 transition-all duration-200 group"
+              className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 transition-colors duration-200 group"
               title="Thu gọn sidebar"
             >
               <PanelLeftClose className="w-5 h-5 transition-transform group-hover:scale-110" />
@@ -104,7 +104,7 @@ export function Sidebar() {
                 key={item.id}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200',
+                  'flex items-center gap-3 px-3 py-3 rounded-xl transition-[colors,transform,box-shadow] duration-200',
                   'menu-item-glow',
                   isActive
                     ? 'active-rainbow-glow text-white'

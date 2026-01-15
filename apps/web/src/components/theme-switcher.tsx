@@ -32,7 +32,7 @@ export function ThemeSwitcher({ dropUp = false }: ThemeSwitcherProps) {
           <button
             onClick={() => setTheme('light')}
             className={cn(
-              "px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+              "px-3 py-1.5 rounded-md transition-[colors,box-shadow] flex items-center gap-1.5",
               (theme === 'light' || theme === 'system')
                 ? "bg-background text-amber-500 shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -45,7 +45,7 @@ export function ThemeSwitcher({ dropUp = false }: ThemeSwitcherProps) {
           <button
             onClick={() => setTheme('dark')}
             className={cn(
-              "px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+              "px-3 py-1.5 rounded-md transition-[colors,box-shadow] flex items-center gap-1.5",
               theme === 'dark'
                 ? "bg-background text-indigo-400 shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
