@@ -252,11 +252,12 @@ export class AiController {
       dto.conversation,
     );
 
-    // Trả về base64 audio + timestamps
+    // Trả về base64 audio + timestamps + audioUrl
     return {
       audio: result.audioBuffer.toString('base64'),
       contentType: 'audio/mpeg',
       timestamps: result.timestamps,
+      audioUrl: result.audioUrl,
     };
   }
 

@@ -36,7 +36,7 @@ interface PlaylistPlayerProps {
 }
 
 export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
-  const { fetchPlaylistWithItems } = usePlaylist();
+  const { fetchPlaylistWithItems, updatePlaylistItemAudio } = usePlaylist();
   const { isPlaying: isMusicPlaying, play: playMusic, enableDucking, disableDucking } = useMusic();
 
   // State
@@ -79,17 +79,16 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
   const currentItem = items[currentIndex];
 
   /**
-   * Tính estimated timestamps cho transcript karaoke
-   * Ước lượng thời gian mỗi câu dựa trên số từ (~0.5s/word)
-   */
-  /**
    * Tính timestamps cho transcript karaoke
    * Ưu tiên dùng timestamps thật từ DB, nếu không thì ước lượng
    */
   const currentTimestamps = useMemo(() => {
     if (!currentItem?.conversation) return undefined;
     
-    // Nếu có timestamps thật thì dùng
+    // Nếu có timestamps realtime vừa sinh
+    if (audioTimestamps) return audioTimestamps;
+
+    // Nếu có timestamps thật từ DB
     if (currentItem.audio_timestamps && currentItem.audio_timestamps.length > 0) {
       return currentItem.audio_timestamps;
     }
@@ -109,7 +108,7 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
         endTime: startTime + lineDuration,
       };
     });
-  }, [currentItem?.conversation, currentItem?.audio_timestamps]);
+  }, [currentItem?.conversation, currentItem?.audio_timestamps, audioTimestamps]);
 
   /**
    * Sinh audio cho item hiện tại
@@ -131,7 +130,11 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
       if (!response.ok) throw new Error('Lỗi sinh audio');
 
       const data = await response.json();
-      return `data:audio/mpeg;base64,${data.audio}`;
+      return {
+        src: `data:audio/mpeg;base64,${data.audio}`,
+        persistentUrl: data.audioUrl,
+        timestamps: data.timestamps
+      };
     } catch (err) {
       console.error('[PlaylistPlayer] Lỗi sinh audio:', err);
       return null;
@@ -146,25 +149,68 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
   const playAudio = useCallback(async () => {
     if (!currentItem) return;
 
+    // Reset timestamps local
+    setAudioTimestamps(null);
+
     // Sinh audio nếu chưa có
-    let audioUrl = currentItem.audio_url;
+    let audioSrc = currentItem.audio_url;
     
-    if (!audioUrl) {
-      audioUrl = await generateAudioForItem(currentItem);
+    if (!audioSrc) {
+      const result = await generateAudioForItem(currentItem);
+      if (result) {
+        audioSrc = result.src;
+        
+        if (result.timestamps) {
+          setAudioTimestamps(result.timestamps);
+        }
+
+        // Lưu persistent URL nếu có
+        if (result.persistentUrl && playlist) {
+          // Fire and forget update
+          updatePlaylistItemAudio(
+            playlist.id, 
+            currentItem.id, 
+            result.persistentUrl, 
+            result.timestamps
+          ).then(success => {
+            if (success) {
+              // Cập nhật local items state để lần sau không sinh lại
+              setItems(prev => prev.map(i => 
+                i.id === currentItem.id 
+                  ? { ...i, audio_url: result.persistentUrl, audio_timestamps: result.timestamps }
+                  : i
+              ));
+            }
+          });
+        }
+      }
+    } else {
+      // Nếu có sẵn audio url thì dùng timestamps có sẵn (đã handle ở useMemo currentTimestamps)
     }
     
-    if (!audioUrl) return;
+    if (!audioSrc) return;
 
     if (audioRef.current) {
       // Enable ducking - giảm volume nhạc nền khi audio chính phát
       enableDucking();
       
-      audioRef.current.src = audioUrl;
+      // Nếu là base64 data uri hoặc url mới thì gán
+      if (audioRef.current.src !== audioSrc) {
+        audioRef.current.src = audioSrc;
+      }
+      
       audioRef.current.volume = volume;
-      audioRef.current.play();
-      setIsPlaying(true);
+      
+      // Chờ một chút để browser load source
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (e) {
+        console.error("Play error:", e);
+        // Retry logic or user interaction needed
+      }
     }
-  }, [currentItem, generateAudioForItem, volume, enableDucking]);
+  }, [currentItem, generateAudioForItem, volume, enableDucking, playlist, updatePlaylistItemAudio]);
 
   /**
    * Pause audio

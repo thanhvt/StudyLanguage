@@ -374,4 +374,60 @@ export class PlaylistsService {
       message: 'Đã sắp xếp lại playlist',
     };
   }
+
+  /**
+   * Cập nhật audio URL và timestamps cho playlist item
+   * 
+   * Mục đích: Lưu audio URL sau khi sinh xong để không cần sinh lại
+   * Tham số:
+   *   - userId: ID của user
+   *   - playlistId: ID của playlist
+   *   - itemId: ID của item
+   *   - audioUrl: URL audio
+   *   - audioTimestamps: Timestamps
+   */
+  async updateAudioData(
+    userId: string,
+    playlistId: string,
+    itemId: string,
+    audioUrl: string,
+    audioTimestamps?: object[],
+  ) {
+    // Kiểm tra playlist thuộc về user
+    const { data: playlist, error: checkError } = await this.supabase
+      .from('playlists')
+      .select('id')
+      .eq('id', playlistId)
+      .eq('user_id', userId)
+      .single();
+
+    if (checkError || !playlist) {
+      throw new Error('Playlist không tồn tại hoặc không thuộc về bạn');
+    }
+
+    const updateData: { audio_url: string; audio_timestamps?: object[] } = {
+      audio_url: audioUrl,
+    };
+    
+    if (audioTimestamps) {
+      updateData.audio_timestamps = audioTimestamps;
+    }
+
+    // Cập nhật item
+    const { error } = await this.supabase
+      .from('playlist_items')
+      .update(updateData)
+      .eq('id', itemId)
+      .eq('playlist_id', playlistId);
+
+    if (error) {
+      console.error('[PlaylistsService] Lỗi cập nhật audio item:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: 'Đã lưu audio URL',
+    };
+  }
 }

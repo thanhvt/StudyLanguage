@@ -16,7 +16,6 @@ export interface AddListenLaterDto {
   audioTimestamps?: { startTime: number; endTime: number }[]; // Timestamps cho từng câu
 }
 
-
 /**
  * ListenLaterService - Service xử lý CRUD cho Listen Later
  *
@@ -98,7 +97,7 @@ export class ListenLaterService {
 
   /**
    * Cập nhật audio URL và timestamps cho item Listen Later
-   * 
+   *
    * Mục đích: Lưu audio sau khi sinh để không cần sinh lại khi nghe lại
    * Tham số:
    *   - userId: ID của user hiện tại
@@ -116,7 +115,7 @@ export class ListenLaterService {
     const updateData: { audio_url: string; audio_timestamps?: object } = {
       audio_url: audioUrl,
     };
-    
+
     if (audioTimestamps) {
       updateData.audio_timestamps = audioTimestamps;
     }
@@ -137,7 +136,6 @@ export class ListenLaterService {
       message: 'Đã lưu audio URL',
     };
   }
-
 
   /**
    * Xóa item khỏi Listen Later

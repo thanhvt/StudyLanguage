@@ -82,8 +82,14 @@ export class ListenLaterController {
         numSpeakers: { type: 'number', example: 2 },
         category: { type: 'string', example: 'it' },
         subCategory: { type: 'string', example: 'Agile Ceremonies' },
-        audioUrl: { type: 'string', description: 'URL audio đã sinh (optional)' },
-        audioTimestamps: { type: 'array', description: 'Timestamps cho từng câu (optional)' },
+        audioUrl: {
+          type: 'string',
+          description: 'URL audio đã sinh (optional)',
+        },
+        audioTimestamps: {
+          type: 'array',
+          description: 'Timestamps cho từng câu (optional)',
+        },
       },
       required: ['topic', 'conversation', 'duration', 'numSpeakers'],
     },
@@ -117,8 +123,14 @@ export class ListenLaterController {
     schema: {
       type: 'object',
       properties: {
-        audioUrl: { type: 'string', description: 'URL audio trên Supabase Storage' },
-        audioTimestamps: { type: 'array', description: 'Timestamps cho từng câu' },
+        audioUrl: {
+          type: 'string',
+          description: 'URL audio trên Supabase Storage',
+        },
+        audioTimestamps: {
+          type: 'array',
+          description: 'Timestamps cho từng câu',
+        },
       },
       required: ['audioUrl'],
     },
@@ -126,7 +138,11 @@ export class ListenLaterController {
   async updateAudio(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() dto: { audioUrl: string; audioTimestamps?: { startTime: number; endTime: number }[] },
+    @Body()
+    dto: {
+      audioUrl: string;
+      audioTimestamps?: { startTime: number; endTime: number }[];
+    },
   ) {
     try {
       const userId = req.user?.id;
@@ -198,4 +214,3 @@ export class ListenLaterController {
     }
   }
 }
-

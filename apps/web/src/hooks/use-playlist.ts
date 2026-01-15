@@ -479,11 +479,57 @@ export function usePlaylist() {
 
       return true;
     } catch (err) {
-      console.error('[usePlaylist] Lỗi reorder:', err);
-      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
-      return false;
     }
   }, [fetchPlaylistWithItems]);
+
+  /**
+   * Cập nhật audio cho item trong playlist
+   */
+  const updatePlaylistItemAudio = useCallback(async (
+    playlistId: string,
+    itemId: string,
+    audioUrl: string,
+    audioTimestamps?: { startTime: number; endTime: number }[]
+  ) => {
+    try {
+      const response = await api(`/playlists/${playlistId}/items/${itemId}/audio`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          audioUrl,
+          audioTimestamps,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Lỗi cập nhật audio');
+      }
+
+      // Cập nhật cache nếu cần thiết
+      // Tuy nhiên, audioUrl thường chỉ quan trọng khi playback, 
+      // và playlist items sẽ được refetch chi tiết khi mở playlist.
+      // Nếu muốn perfect sync, ta có thể update local state:
+      if (currentPlaylist?.id === playlistId) {
+        setCurrentPlaylist(prev => {
+          if (!prev || !prev.items) return prev;
+          return {
+            ...prev,
+            items: prev.items.map(item => 
+              item.id === itemId 
+                ? { ...item, audio_url: audioUrl, audio_timestamps: audioTimestamps }
+                : item
+            )
+          };
+        });
+      }
+
+      return true;
+    } catch (err) {
+      console.error('[usePlaylist] Lỗi updateAudio:', err);
+      // Không show error toast để trành làm phiền user nếu chỉ là background update
+      return false;
+    }
+  }, [currentPlaylist?.id]);
+
 
   /**
    * Sắp xếp lại thứ tự playlists (client-side only)
@@ -543,5 +589,6 @@ export function usePlaylist() {
     reorderItems,
     reorderPlaylists,
     setCurrentPlaylist,
+    updatePlaylistItemAudio,
   };
 }

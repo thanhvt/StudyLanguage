@@ -650,9 +650,20 @@ Chỉ trả về JSON.
       `Hoàn thành sinh audio: ${combinedBuffer.length} bytes, ${timestamps.length} segments`,
     );
 
+    // Upload lên Supabase Storage
+    let audioUrl: string | undefined;
+    try {
+      audioUrl = await this.storageService.uploadAudio(combinedBuffer);
+      this.logger.log(`Đã upload audio: ${audioUrl}`);
+    } catch (error) {
+      this.logger.error('Lỗi upload audio:', error);
+      // Không throw error nếu upload fail, vẫn trả về base64
+    }
+
     return {
       audioBuffer: combinedBuffer,
       timestamps,
+      audioUrl,
     };
   }
 

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Post,
@@ -9,7 +11,12 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { LessonsService, CreateLessonDto } from './lessons.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import {
@@ -87,7 +94,7 @@ class UpdateAudioRequestDto {
 
 /**
  * LessonsController - API endpoints cho lessons
- * 
+ *
  * Mục đích: CRUD operations cho lessons
  * Base path: /api/lessons
  */
@@ -100,7 +107,7 @@ export class LessonsController {
 
   /**
    * POST /api/lessons
-   * 
+   *
    * Mục đích: Tạo lesson mới (lưu bài học vào database)
    * Body: { type, topic, content, durationMinutes?, numSpeakers?, keywords?, mode?, status? }
    * Trả về: { success: true, lesson: { id, type, topic, createdAt } }
@@ -116,7 +123,7 @@ export class LessonsController {
 
   /**
    * PATCH /api/lessons/:id/audio
-   * 
+   *
    * Mục đích: Cập nhật audio URL và timestamps cho lesson sau khi sinh audio
    * Params: id - Lesson ID
    * Body: { audioUrl, audioTimestamps? }

@@ -292,4 +292,61 @@ export class PlaylistsController {
       );
     }
   }
+
+  /**
+   * Cập nhật audio URL cho item trong playlist
+   *
+   * PUT /playlists/:id/items/:itemId/audio
+   */
+  @Put(':id/items/:itemId/audio')
+  @ApiOperation({ summary: 'Cập nhật audio URL cho item trong playlist' })
+  @ApiParam({ name: 'id', description: 'ID của playlist' })
+  @ApiParam({ name: 'itemId', description: 'ID của item' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        audioUrl: {
+          type: 'string',
+          description: 'URL audio trên Supabase Storage',
+        },
+        audioTimestamps: {
+          type: 'array',
+          description: 'Timestamps cho từng câu',
+        },
+      },
+      required: ['audioUrl'],
+    },
+  })
+  async updateAudio(
+    @Req() req: any,
+    @Param('id') playlistId: string,
+    @Param('itemId') itemId: string,
+    @Body()
+    dto: {
+      audioUrl: string;
+      audioTimestamps?: { startTime: number; endTime: number }[];
+    },
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
+      }
+
+      return await this.playlistsService.updateAudioData(
+        userId,
+        playlistId,
+        itemId,
+        dto.audioUrl,
+        dto.audioTimestamps,
+      );
+    } catch (error) {
+      console.error('[PlaylistsController] PUT update audio error:', error);
+      throw new HttpException(
+        error.message || 'Lỗi cập nhật audio cho playlist item',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

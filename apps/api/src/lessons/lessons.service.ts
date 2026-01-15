@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -15,9 +16,25 @@ export interface CreateLessonDto {
   status?: 'draft' | 'completed';
 }
 
+export interface LessonRow {
+  id: string;
+  user_id: string;
+  type: string;
+  topic: string;
+  content: any;
+  duration_minutes: number | null;
+  num_speakers: number | null;
+  keywords: string | null;
+  mode: string;
+  status: string;
+  created_at: string;
+  audio_url?: string | null;
+  audio_timestamps?: any;
+}
+
 /**
  * LessonsService - Service xử lý CRUD cho lessons
- * 
+ *
  * Mục đích: Tạo và quản lý các bài học trong database
  * Khi nào sử dụng: Được inject vào LessonsController
  */
@@ -34,7 +51,7 @@ export class LessonsService {
 
   /**
    * Tạo lesson mới
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param dto - Dữ liệu lesson cần tạo
    * @returns Lesson vừa tạo
@@ -61,20 +78,22 @@ export class LessonsService {
       throw error;
     }
 
+    const lessonData = data as LessonRow;
+
     return {
       success: true,
       lesson: {
-        id: data.id,
-        type: data.type,
-        topic: data.topic,
-        createdAt: data.created_at,
+        id: lessonData.id,
+        type: lessonData.type,
+        topic: lessonData.topic,
+        createdAt: lessonData.created_at,
       },
     };
   }
 
   /**
    * Cập nhật audio URL và timestamps cho lesson
-   * 
+   *
    * Mục đích: Lưu audio URL sau khi sinh xong để không cần sinh lại
    * Tham số:
    *   - lessonId: ID của lesson
@@ -83,14 +102,14 @@ export class LessonsService {
    * Khi nào sử dụng: Sau khi frontend sinh audio xong và nhận được URL từ backend
    */
   async updateAudioData(
-    lessonId: string, 
+    lessonId: string,
     audioUrl: string,
     audioTimestamps?: { startTime: number; endTime: number }[],
   ) {
     const updateData: { audio_url: string; audio_timestamps?: object } = {
       audio_url: audioUrl,
     };
-    
+
     if (audioTimestamps) {
       updateData.audio_timestamps = audioTimestamps;
     }
