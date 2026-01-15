@@ -137,26 +137,7 @@ Cung cấp cho người dùng một nơi tập trung để **xem lại toàn b�
 - 📚 **View Vocabulary:** Xem từ đã tra
 - 📝 **View My Answers:** Xem đáp án đã chọn
 
-#### D. Writing History (Lịch sử bài viết)
-
-**Lưu trữ:**
-| Dữ liệu | Mô tả |
-|---------|-------|
-| **Original Text** | Bài viết gốc của user |
-| **AI Corrections** | Bản đã sửa lỗi với highlight |
-| **Error List** | Danh sách lỗi: Loại lỗi + Giải thích + Cách sửa |
-| **Paraphrase Suggestions** | Các gợi ý viết lại hay hơn |
-| **Word Count** | Số từ |
-| **Writing Prompt** | Đề bài / Chủ đề |
-
-**Hành động:**
-- 📝 **View Original:** Xem bài gốc
-- ✅ **View Corrected:** Xem bản đã sửa
-- 🔍 **Review Errors:** Xem chi tiết từng lỗi
-- ✏️ **Edit & Resubmit:** Sửa và nộp lại
-- 📤 **Export:** Xuất file (PDF/Word)
-
-#### E. Vocabulary History (Lịch sử từ vựng)
+#### D. Vocabulary History (Lịch sử từ vựng)
 
 **Lưu trữ:**
 | Dữ liệu | Mô tả |

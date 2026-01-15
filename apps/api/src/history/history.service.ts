@@ -27,6 +27,7 @@ export interface HistoryEntry {
   status: string;
   isPinned: boolean;
   isFavorite: boolean;
+  userNotes?: string;
   createdAt: string;
   deletedAt?: string;
 }
@@ -278,8 +279,41 @@ export class HistoryService {
       status: row.status,
       isPinned: row.is_pinned || false,
       isFavorite: row.is_favorite || false,
+      userNotes: row.user_notes || null,
       createdAt: row.created_at,
       deletedAt: row.deleted_at,
+    };
+  }
+
+  /**
+   * Cập nhật ghi chú cho bản ghi
+   * 
+   * @param userId - ID của user hiện tại
+   * @param id - ID của bản ghi
+   * @param notes - Nội dung ghi chú
+   * @returns Kết quả và ghi chú đã lưu
+   */
+  async updateNotes(userId: string, id: string, notes: string) {
+    // Verify ownership
+    await this.getHistoryEntry(userId, id);
+
+    const { data, error } = await this.supabase
+      .from('lessons')
+      .update({ user_notes: notes })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[HistoryService] Lỗi cập nhật notes:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      userNotes: data.user_notes,
+      message: 'Đã lưu ghi chú',
     };
   }
 }

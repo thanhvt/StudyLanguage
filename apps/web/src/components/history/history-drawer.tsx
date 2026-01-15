@@ -1,10 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { HistoryPanel } from './history-panel';
-import { HistoryEntry, HistoryFilters } from '@/hooks/use-history';
+import { ListeningDetailView } from './listening-detail-view';
+import { HistoryEntry, HistoryFilters, useHistory } from '@/hooks/use-history';
 
 /**
  * Props cho HistoryDrawer
@@ -16,7 +18,7 @@ interface HistoryDrawerProps {
   onClose: () => void;
   /** Filter theo loại cố định */
   filterType?: HistoryFilters['type'];
-  /** Callback khi mở entry */
+  /** Callback khi mở entry (external handling) */
   onOpenEntry?: (entry: HistoryEntry) => void;
 }
 
@@ -28,8 +30,8 @@ interface HistoryDrawerProps {
  *   - isOpen: Trạng thái mở
  *   - onClose: Callback đóng
  *   - filterType: Filter cố định theo type
- *   - onOpenEntry: Callback khi chọn entry
- * Khi nào sử dụng: Trigger từ button trong các pages Listening/Speaking/Reading/Writing
+ *   - onOpenEntry: Callback khi chọn entry (nếu muốn xử lý bên ngoài)
+ * Khi nào sử dụng: Trigger từ button trong các pages hoặc từ Home
  */
 export function HistoryDrawer({
   isOpen,
@@ -37,17 +39,28 @@ export function HistoryDrawer({
   filterType,
   onOpenEntry,
 }: HistoryDrawerProps) {
+  // State quản lý entry đang xem chi tiết
+  const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
+  
+  // Hook để get actions cho detail view
+  const { togglePin, toggleFavorite, updateNotes } = useHistory();
+
   // Đóng drawer khi nhấn Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        if (selectedEntry) {
+          // Nếu đang xem detail, quay lại list
+          setSelectedEntry(null);
+        } else {
+          onClose();
+        }
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, selectedEntry]);
 
   // Chặn scroll body khi drawer mở
   useEffect(() => {
@@ -61,6 +74,39 @@ export function HistoryDrawer({
     };
   }, [isOpen]);
 
+  // Reset selected entry khi đóng drawer
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedEntry(null);
+    }
+  }, [isOpen]);
+
+  /**
+   * Xử lý khi chọn entry để xem chi tiết
+   */
+  const handleOpenEntry = useCallback((entry: HistoryEntry) => {
+    // Nếu có external handler, gọi nó
+    if (onOpenEntry) {
+      onOpenEntry(entry);
+      return;
+    }
+
+    // Nếu là listening, mở detail view trong drawer
+    if (entry.type === 'listening') {
+      setSelectedEntry(entry);
+    } else {
+      // Các loại khác có thể mở modal hoặc navigate
+      console.log('[HistoryDrawer] Mở entry loại:', entry.type, entry.id);
+    }
+  }, [onOpenEntry]);
+
+  /**
+   * Quay lại danh sách từ detail view
+   */
+  const handleBackToList = useCallback(() => {
+    setSelectedEntry(null);
+  }, []);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -72,7 +118,13 @@ export function HistoryDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={onClose}
+            onClick={() => {
+              if (selectedEntry) {
+                setSelectedEntry(null);
+              } else {
+                onClose();
+              }
+            }}
           />
 
           {/* Drawer */}
@@ -83,28 +135,59 @@ export function HistoryDrawer({
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-border shadow-2xl z-50 flex flex-col"
           >
-            {/* Header */}
+            {/* Header - Thay đổi title dựa trên state */}
             <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                📚 Lịch sử học tập
+                {selectedEntry ? (
+                  <>🎧 Chi tiết bài nghe</>
+                ) : (
+                  <>📚 Lịch sử học tập</>
+                )}
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={() => {
+                  if (selectedEntry) {
+                    setSelectedEntry(null);
+                  } else {
+                    onClose();
+                  }
+                }}
                 className="h-8 w-8 p-0"
               >
                 ✕
               </Button>
             </div>
 
-            {/* Content */}
+            {/* Content - Toggle giữa list và detail */}
             <div className="flex-1 p-4 overflow-hidden">
-              <HistoryPanel
-                filterType={filterType}
-                onOpenEntry={onOpenEntry}
-                height="100%"
-              />
+              <AnimatePresence mode="wait">
+                {selectedEntry ? (
+                  <ListeningDetailView
+                    key="detail"
+                    entry={selectedEntry}
+                    onBack={handleBackToList}
+                    onTogglePin={togglePin}
+                    onToggleFavorite={toggleFavorite}
+                    onUpdateNotes={updateNotes}
+                  />
+                ) : (
+                  <motion.div
+                    key="list"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="h-full"
+                  >
+                    <HistoryPanel
+                      filterType={filterType}
+                      onOpenEntry={handleOpenEntry}
+                      height="100%"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </>
@@ -143,3 +226,4 @@ export function HistoryButton({
     </Button>
   );
 }
+

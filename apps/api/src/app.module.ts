@@ -22,15 +22,16 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
       envFilePath: '.env',
     }),
     // [SECURITY - OWASP A04] Rate Limiting: Chống tấn công Brute Force, DOS
-    // Mặc định: 10 requests / 60 seconds (có thể tùy chỉnh theo API)
+    // Default: 100 requests / 60 seconds (tăng từ 10 để dev dễ hơn)
     ThrottlerModule.forRoot({
       throttlers: [
         {
           ttl: 60000, // 60 giây
-          limit: 10, // 10 requests mỗi 60 giây
+          limit: 100, // 100 requests mỗi 60 giây
         },
       ],
     }),
+
     AuthModule, // [FIX API-AUTH-01] Module xác thực Supabase
     LoggingModule,
     AiModule,

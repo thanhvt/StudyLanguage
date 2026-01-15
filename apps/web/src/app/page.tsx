@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Headphones, Mic, BookOpen, PenTool, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
+import { Headphones, Mic, BookOpen, PenTool, Sparkles, TrendingUp, ArrowRight, History } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { FadeIn, StaggerChildren, StaggerItem } from '@/components/animations';
 import { GradientText } from '@/components/ui/glass-card';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { Card } from '@/components/ui/card';
+import { ActivityTimeline, HistoryDrawer } from '@/components/history';
 
 /**
  * Home Page - Dashboard chính
@@ -18,6 +20,7 @@ import { Card } from '@/components/ui/card';
  */
 export default function HomePage() {
   const { t } = useLanguage();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Danh sách 3 kỹ năng chính với icons và gradients từ StudyMate Hub
   const skills = [
@@ -130,6 +133,39 @@ export default function HomePage() {
           })}
         </StaggerChildren>
 
+        {/* Activity Timeline Section */}
+        <FadeIn delay={0.6}>
+          <div className="mt-12">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <History className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-display text-xl font-bold">Hoạt động gần đây</h2>
+                  <p className="text-sm text-muted-foreground">Tiếp tục từ lần học trước</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsHistoryOpen(true)}
+                className="text-sm text-primary font-medium hover:underline flex items-center gap-1 group"
+              >
+                Xem tất cả
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+            
+            {/* Timeline */}
+            <Card className="p-6 border border-border/50">
+              <ActivityTimeline 
+                maxItems={5}
+                onViewAll={() => setIsHistoryOpen(true)}
+              />
+            </Card>
+          </div>
+        </FadeIn>
+
         {/* Bottom CTA / Tip */}
         <FadeIn delay={0.8}>
           <div className="mt-12 text-center">
@@ -138,6 +174,12 @@ export default function HomePage() {
             </p>
           </div>
         </FadeIn>
+
+        {/* History Drawer */}
+        <HistoryDrawer
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+        />
       </>
     </AppLayout>
   );

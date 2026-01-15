@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -6,16 +9,22 @@ import {
   Post,
   Param,
   Query,
+  Body,
   UseGuards,
   Req,
 } from '@nestjs/common';
 import { HistoryService } from './history.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 /**
  * HistoryController - Controller quản lý lịch sử học tập
- * 
+ *
  * Mục đích: Xử lý các request liên quan đến lịch sử bài học
  * Tham số đầu vào: Request từ client với JWT token
  * Tham số đầu ra: JSON response với dữ liệu lịch sử
@@ -30,7 +39,7 @@ export class HistoryController {
 
   /**
    * Lấy danh sách lịch sử học tập
-   * 
+   *
    * @param type - Loại bài học (listening, speaking, reading, writing)
    * @param status - Trạng thái filter (all, pinned, favorite, deleted)
    * @param search - Từ khóa tìm kiếm
@@ -39,8 +48,16 @@ export class HistoryController {
    */
   @Get()
   @ApiOperation({ summary: 'Lấy danh sách lịch sử học tập' })
-  @ApiQuery({ name: 'type', required: false, enum: ['listening', 'speaking', 'reading', 'writing'] })
-  @ApiQuery({ name: 'status', required: false, enum: ['all', 'pinned', 'favorite', 'deleted'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['listening', 'speaking', 'reading', 'writing'],
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['all', 'pinned', 'favorite', 'deleted'],
+  })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -93,8 +110,23 @@ export class HistoryController {
   }
 
   /**
+   * Cập nhật ghi chú cho bản ghi
+   */
+  @Patch(':id/notes')
+  @ApiOperation({ summary: 'Cập nhật ghi chú bản ghi' })
+  async updateNotes(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('notes') notes: string,
+  ) {
+    const userId = req.user.id;
+    return this.historyService.updateNotes(userId, id, notes || '');
+  }
+
+  /**
    * Soft delete một bản ghi
    */
+
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa mềm bản ghi' })
   async deleteEntry(@Req() req: any, @Param('id') id: string) {

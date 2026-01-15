@@ -20,6 +20,7 @@ export interface HistoryEntry {
   status: string;
   isPinned: boolean;
   isFavorite: boolean;
+  userNotes?: string;
   createdAt: string;
   deletedAt?: string;
 }
@@ -201,6 +202,36 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
   }, [fetchHistory, pagination.page]);
 
   /**
+   * Cập nhật ghi chú cho một entry
+   */
+  const updateNotes = useCallback(async (id: string, notes: string) => {
+    try {
+      const response = await apiJson<{ success: boolean; userNotes: string }>(
+        `/history/${id}/notes`,
+        { 
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes })
+        }
+      );
+
+      // Cập nhật local state
+      setHistory(prev =>
+        prev.map(entry =>
+          entry.id === id ? { ...entry, userNotes: response.userNotes } : entry
+        )
+      );
+
+      showSuccess('Đã lưu ghi chú');
+      return response;
+    } catch (err) {
+      console.error('[useHistory] Lỗi update notes:', err);
+      showError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      throw err;
+    }
+  }, []);
+
+  /**
    * Cập nhật filters
    */
   const updateFilters = useCallback((newFilters: Partial<HistoryFilters>) => {
@@ -241,10 +272,12 @@ export function useHistory(initialFilters?: Partial<HistoryFilters>) {
     toggleFavorite,
     deleteEntry,
     restoreEntry,
+    updateNotes,
     goToPage,
     refresh,
   };
 }
+
 
 /**
  * getTypeIcon - Lấy icon cho từng loại bài học
