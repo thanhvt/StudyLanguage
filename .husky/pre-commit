@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Kiểm tra pnpm-lock.yaml có đồng bộ với package.json không
+echo "🔍 Đang kiểm tra pnpm-lock.yaml..."
+
+# Chạy pnpm install với --frozen-lockfile để kiểm tra
+pnpm install --frozen-lockfile 2>/dev/null
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ LỖI: pnpm-lock.yaml không đồng bộ với package.json!"
+  echo ""
+  echo "📋 Hướng dẫn sửa lỗi:"
+  echo "   1. Chạy: pnpm install"
+  echo "   2. Thêm vào commit: git add pnpm-lock.yaml"
+  echo "   3. Commit lại"
+  echo ""
+  exit 1
+fi
+
+echo "✅ pnpm-lock.yaml đã đồng bộ!"
