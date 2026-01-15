@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { usePlaylist } from '@/hooks/use-playlist';
+import { useMusic } from '@/components/providers/music-provider';
 import { PlaylistItem, Playlist } from '@/types/listening-types';
 import { api } from '@/lib/api';
 
@@ -35,6 +36,7 @@ interface PlaylistPlayerProps {
 
 export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
   const { fetchPlaylistWithItems } = usePlaylist();
+  const { isPlaying: isMusicPlaying, play: playMusic, enableDucking, disableDucking } = useMusic();
 
   // State
   const [items, setItems] = useState<PlaylistItem[]>([]);
@@ -79,6 +81,11 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
   const generateAudioForItem = useCallback(async (item: PlaylistItem) => {
     setIsGeneratingAudio(true);
 
+    // Auto-play nhạc nền trong lúc chờ generate (nếu chưa phát)
+    if (!isMusicPlaying) {
+      playMusic();
+    }
+
     try {
       const response = await api('/ai/generate-conversation-audio', {
         method: 'POST',
@@ -95,7 +102,7 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, []);
+  }, [isMusicPlaying, playMusic]);
 
   /**
    * Phát audio
@@ -108,12 +115,15 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
     if (!audioUrl) return;
 
     if (audioRef.current) {
+      // Enable ducking - giảm volume nhạc nền khi audio chính phát
+      enableDucking();
+      
       audioRef.current.src = audioUrl;
       audioRef.current.volume = volume;
       audioRef.current.play();
       setIsPlaying(true);
     }
-  }, [currentItem, generateAudioForItem, volume]);
+  }, [currentItem, generateAudioForItem, volume, enableDucking]);
 
   /**
    * Pause audio
@@ -122,8 +132,10 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
+      // Disable ducking - nhạc nền trở lại volume bình thường
+      disableDucking();
     }
-  }, []);
+  }, [disableDucking]);
 
   /**
    * Toggle play/pause
@@ -164,6 +176,9 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
     if (!audio) return;
 
     const handleEnded = () => {
+      // Disable ducking khi audio kết thúc
+      disableDucking();
+      
       if (currentIndex < items.length - 1) {
         // Auto play next
         setCurrentIndex(prev => prev + 1);
@@ -190,7 +205,7 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [currentIndex, items.length]);
+  }, [currentIndex, items.length, disableDucking]);
 
   /**
    * Auto play khi chuyển track
@@ -271,6 +286,10 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
                 </p>
                 {isLoading ? (
                   <p className="text-sm text-muted-foreground">Đang tải...</p>
+                ) : isGeneratingAudio ? (
+                  <p className="text-sm text-primary animate-pulse flex items-center gap-1">
+                    🎧 Đang chuẩn bị bài {currentIndex + 1}...
+                  </p>
                 ) : currentItem ? (
                   <p className="font-medium text-sm truncate">{currentItem.topic}</p>
                 ) : (

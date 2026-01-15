@@ -458,7 +458,7 @@ Chỉ trả về JSON.
     // Tìm item cuối cùng đang viết dở và xóa nó
     const lastCompleteItemIndex = repaired.lastIndexOf('}');
     const lastOpeningBrace = repaired.lastIndexOf('{"');
-    
+
     if (lastOpeningBrace > lastCompleteItemIndex) {
       // Có item đang viết dở -> cắt bỏ
       repaired = repaired.substring(0, lastOpeningBrace);
