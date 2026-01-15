@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Patch,
+  Param,
   Body,
   HttpCode,
   HttpStatus,
@@ -16,7 +18,10 @@ import {
   IsNumber,
   IsEnum,
   IsNotEmpty,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 /**
  * DTO với validation cho request tạo lesson
@@ -55,6 +60,32 @@ class CreateLessonRequestDto implements CreateLessonDto {
 }
 
 /**
+ * DTO cho timestamp
+ */
+class TimestampDto {
+  @IsNumber()
+  startTime: number;
+
+  @IsNumber()
+  endTime: number;
+}
+
+/**
+ * DTO cho request cập nhật audio
+ */
+class UpdateAudioRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  audioUrl: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TimestampDto)
+  @IsOptional()
+  audioTimestamps?: TimestampDto[];
+}
+
+/**
  * LessonsController - API endpoints cho lessons
  * 
  * Mục đích: CRUD operations cho lessons
@@ -81,5 +112,28 @@ export class LessonsController {
   async createLesson(@Req() req: any, @Body() dto: CreateLessonRequestDto) {
     const userId = req.user.id;
     return this.lessonsService.createLesson(userId, dto);
+  }
+
+  /**
+   * PATCH /api/lessons/:id/audio
+   * 
+   * Mục đích: Cập nhật audio URL và timestamps cho lesson sau khi sinh audio
+   * Params: id - Lesson ID
+   * Body: { audioUrl, audioTimestamps? }
+   * Trả về: { success: true, message: 'Đã lưu audio URL' }
+   */
+  @Patch(':id/audio')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cập nhật audio cho bài học' })
+  @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
+  async updateAudio(
+    @Param('id') lessonId: string,
+    @Body() dto: UpdateAudioRequestDto,
+  ) {
+    return this.lessonsService.updateAudioData(
+      lessonId,
+      dto.audioUrl,
+      dto.audioTimestamps,
+    );
   }
 }

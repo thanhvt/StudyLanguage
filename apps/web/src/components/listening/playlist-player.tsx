@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -19,6 +19,7 @@ import { usePlaylist } from '@/hooks/use-playlist';
 import { useMusic } from '@/components/providers/music-provider';
 import { PlaylistItem, Playlist } from '@/types/listening-types';
 import { api } from '@/lib/api';
+import { TranscriptViewer } from '@/components/listening-player';
 
 /**
  * PlaylistPlayer - Mini player bar cho phát liên tục playlist
@@ -48,6 +49,8 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
+  // State cho timestamps để sync karaoke
+  const [audioTimestamps, setAudioTimestamps] = useState<{ startTime: number; endTime: number }[] | null>(null);
 
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -74,6 +77,39 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
 
   // Current item
   const currentItem = items[currentIndex];
+
+  /**
+   * Tính estimated timestamps cho transcript karaoke
+   * Ước lượng thời gian mỗi câu dựa trên số từ (~0.5s/word)
+   */
+  /**
+   * Tính timestamps cho transcript karaoke
+   * Ưu tiên dùng timestamps thật từ DB, nếu không thì ước lượng
+   */
+  const currentTimestamps = useMemo(() => {
+    if (!currentItem?.conversation) return undefined;
+    
+    // Nếu có timestamps thật thì dùng
+    if (currentItem.audio_timestamps && currentItem.audio_timestamps.length > 0) {
+      return currentItem.audio_timestamps;
+    }
+
+    // Fallback: Ước lượng dựa trên số từ (~0.5s/word)
+    const avgSecondsPerWord = 0.5;
+    return currentItem.conversation.map((line, index) => {
+      const words = line.text.split(' ').length;
+      const lineDuration = words * avgSecondsPerWord;
+      
+      const startTime = currentItem.conversation
+        .slice(0, index)
+        .reduce((acc, l) => acc + l.text.split(' ').length * avgSecondsPerWord, 0);
+      
+      return {
+        startTime,
+        endTime: startTime + lineDuration,
+      };
+    });
+  }, [currentItem?.conversation, currentItem?.audio_timestamps]);
 
   /**
    * Sinh audio cho item hiện tại
@@ -111,7 +147,12 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
     if (!currentItem) return;
 
     // Sinh audio nếu chưa có
-    const audioUrl = await generateAudioForItem(currentItem);
+    let audioUrl = currentItem.audio_url;
+    
+    if (!audioUrl) {
+      audioUrl = await generateAudioForItem(currentItem);
+    }
+    
     if (!audioUrl) return;
 
     if (audioRef.current) {
@@ -380,39 +421,53 @@ export function PlaylistPlayer({ playlist, onClose }: PlaylistPlayerProps) {
             </Button>
           </div>
 
-          {/* Expanded view - track list */}
+          {/* Expanded view - transcript + track list */}
           {isExpanded && items.length > 0 && (
-            <div className="mt-4 max-h-60 overflow-y-auto space-y-2 border-t border-border pt-4">
-              {items.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentIndex(index);
-                    setIsPlaying(true);
-                  }}
-                  className={`
-                    w-full flex items-center gap-3 p-2 rounded-lg transition-all text-left
-                    ${index === currentIndex
-                      ? 'bg-primary/10 ring-1 ring-primary/30'
-                      : 'hover:bg-muted'
-                    }
-                  `}
-                >
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                    {index === currentIndex && isPlaying ? (
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.topic}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.duration} phút • {item.num_speakers} người
-                    </p>
-                  </div>
-                </button>
-              ))}
+            <div className="mt-4 space-y-4 border-t border-border pt-4">
+              {/* Transcript với karaoke effect */}
+              {currentItem?.conversation && isPlaying && (
+                <div className="max-h-48 overflow-y-auto">
+                  <TranscriptViewer
+                    conversation={currentItem.conversation}
+                    currentTime={currentTime}
+                    audioTimestamps={audioTimestamps || currentTimestamps}
+                  />
+                </div>
+              )}
+              
+              {/* Track list */}
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {items.map((item, index) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentIndex(index);
+                      setIsPlaying(true);
+                    }}
+                    className={`
+                      w-full flex items-center gap-3 p-2 rounded-lg transition-all text-left
+                      ${index === currentIndex
+                        ? 'bg-primary/10 ring-1 ring-primary/30'
+                        : 'hover:bg-muted'
+                      }
+                    `}
+                  >
+                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                      {index === currentIndex && isPlaying ? (
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.topic}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.duration} phút • {item.num_speakers} người
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

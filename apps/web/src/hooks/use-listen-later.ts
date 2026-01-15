@@ -135,6 +135,44 @@ export function useListenLater() {
     }
   }, []);
 
+  /**
+   * Cập nhật audio cho item Listen Later
+   * 
+   * @param itemId - ID của item cần cập nhật
+   * @param audioUrl - URL audio trên Supabase Storage
+   * @param audioTimestamps - Timestamps cho từng câu
+   */
+  const updateAudio = useCallback(async (
+    itemId: string, 
+    audioUrl: string,
+    audioTimestamps?: { startTime: number; endTime: number }[]
+  ) => {
+    try {
+      const response = await api(`/listen-later/${itemId}/audio`, {
+        method: 'PATCH',
+        body: JSON.stringify({ audioUrl, audioTimestamps }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Lỗi cập nhật audio');
+      }
+
+      // Cập nhật local state
+      setItems(prev => prev.map(item => {
+        if (item.id === itemId) {
+          return { ...item, audio_url: audioUrl, audio_timestamps: audioTimestamps };
+        }
+        return item;
+      }));
+
+      return true;
+    } catch (err) {
+      console.error('[useListenLater] Lỗi updateAudio:', err);
+      // Không cần show error toast vì đây là background update
+      return false;
+    }
+  }, []);
+
   // Fetch lần đầu khi mount
   useEffect(() => {
     fetchListenLater();
@@ -149,5 +187,7 @@ export function useListenLater() {
     addToListenLater,
     removeFromListenLater,
     clearAll,
+    updateAudio,
   };
 }
+

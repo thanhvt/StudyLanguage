@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import { StorageService } from '../storage/storage.service';
 import ffmpeg from 'fluent-ffmpeg';
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import * as ffprobeInstaller from '@ffprobe-installer/ffprobe';
@@ -29,7 +30,7 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly openai: OpenAI;
 
-  constructor() {
+  constructor(private readonly storageService: StorageService) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -664,6 +665,17 @@ Chỉ trả về JSON.
    *   - onProgress: Callback được gọi sau mỗi câu hoàn thành
    * Trả về: Audio buffer đã ghép + timestamps cho mỗi câu
    */
+  /**
+   * Sinh audio cho hội thoại với progress callback (cho SSE)
+   * Và upload lên Supabase Storage để lưu trữ vĩnh viễn
+   *
+   * Mục đích: Tương tự generateConversationAudio nhưng emit progress events
+   * Tham số:
+   *   - conversation: Danh sách các câu với speaker
+   *   - onProgress: Callback được gọi sau mỗi câu hoàn thành
+   *   - shouldUpload: Có upload lên Storage không (default: true)
+   * Trả về: Audio buffer đã ghép + timestamps + audioUrl (nếu upload)
+   */
   async generateConversationAudioWithProgress(
     conversation: { speaker: string; text: string }[],
     onProgress: (event: {
@@ -672,8 +684,10 @@ Chỉ trả về JSON.
       total?: number;
       message?: string;
       audio?: string;
+      audioUrl?: string; // URL audio đã upload lên Storage
       timestamps?: { startTime: number; endTime: number }[];
     }) => void,
+    shouldUpload: boolean = true,
   ): Promise<void> {
     this.logger.log(
       `[SSE] Đang sinh audio cho ${conversation.length} câu hội thoại...`,
@@ -743,13 +757,33 @@ Chỉ trả về JSON.
         `[SSE] Hoàn thành sinh audio: ${combinedBuffer.length} bytes`,
       );
 
-      // Emit complete event với audio data
+      // Upload audio lên Supabase Storage nếu cần
+      let audioUrl: string | undefined;
+      if (shouldUpload) {
+        try {
+          onProgress({
+            type: 'progress',
+            current: conversation.length,
+            total: conversation.length,
+            message: 'Đang upload audio lên cloud...',
+          });
+
+          audioUrl = await this.storageService.uploadAudio(combinedBuffer);
+          this.logger.log(`[SSE] Đã upload audio: ${audioUrl}`);
+        } catch (uploadError) {
+          this.logger.error('[SSE] Lỗi upload audio:', uploadError);
+          // Không throw error - vẫn trả về audio base64, chỉ không có URL persistent
+        }
+      }
+
+      // Emit complete event với audio data và URL
       onProgress({
         type: 'complete',
         current: conversation.length,
         total: conversation.length,
         message: 'Hoàn thành!',
         audio: combinedBuffer.toString('base64'),
+        audioUrl,
         timestamps,
       });
     } catch (error) {

@@ -73,6 +73,7 @@ interface ListenLaterContextType {
   addToListenLater: (dto: AddListenLaterDto) => Promise<ListenLaterItem | null>;
   removeFromListenLater: (itemId: string) => Promise<boolean>;
   clearAll: () => Promise<boolean>;
+  updateAudio: (itemId: string, audioUrl: string, audioTimestamps?: { startTime: number; endTime: number }[]) => Promise<boolean>;
 }
 
 const ListenLaterContext = createContext<ListenLaterContextType | null>(null);
@@ -308,6 +309,42 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  /**
+   * Cập nhật audio cho item
+   */
+  const updateAudio = useCallback(async (
+    itemId: string, 
+    audioUrl: string,
+    audioTimestamps?: { startTime: number; endTime: number }[]
+  ) => {
+    try {
+      const response = await api(`/listen-later/${itemId}/audio`, {
+        method: 'PATCH',
+        body: JSON.stringify({ audioUrl, audioTimestamps }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Lỗi cập nhật audio');
+      }
+
+      setItems(prev => {
+        const updated = prev.map(item => {
+          if (item.id === itemId) {
+            return { ...item, audio_url: audioUrl, audio_timestamps: audioTimestamps };
+          }
+          return item;
+        });
+        if (user) updateCache(updated, updated.length, user.id);
+        return updated;
+      });
+
+      return true;
+    } catch (err) {
+      console.error('[ListenLater] Lỗi updateAudio:', err);
+      return false;
+    }
+  }, [user]);
+
   // Effect: Fetch data khi auth sẵn sàng
   useEffect(() => {
     isMountedRef.current = true;
@@ -348,6 +385,7 @@ export function ListenLaterProvider({ children }: { children: ReactNode }) {
         addToListenLater,
         removeFromListenLater,
         clearAll,
+        updateAudio,
       }}
     >
       {children}
@@ -386,5 +424,6 @@ export function useListenLaterSafe() {
     addToListenLater: async () => null,
     removeFromListenLater: async () => false,
     clearAll: async () => false,
+    updateAudio: async () => false,
   };
 }

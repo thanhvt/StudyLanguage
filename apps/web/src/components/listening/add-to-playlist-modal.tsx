@@ -31,6 +31,8 @@ interface AddToPlaylistModalProps {
   numSpeakers: number;
   category?: string;
   subCategory?: string;
+  audioUrl?: string; // Audio URL nếu đã có
+  audioTimestamps?: { startTime: number; endTime: number }[]; // Timestamps nếu đã có
   onSuccess?: (playlist: Playlist) => void;
 }
 
@@ -44,6 +46,7 @@ export function AddToPlaylistModal({
   category,
   subCategory,
   onSuccess,
+  ...props
 }: AddToPlaylistModalProps) {
   const {
     playlists,
@@ -71,6 +74,8 @@ export function AddToPlaylistModal({
       numSpeakers,
       category,
       subCategory,
+      audioUrl: props.audioUrl,
+      audioTimestamps: props.audioTimestamps,
     });
 
     setAddingToId(null);

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -27,6 +30,8 @@ export interface AddPlaylistItemDto {
   numSpeakers: number;
   category?: string;
   subCategory?: string;
+  audioUrl?: string; // URL audio đã sinh (nếu có)
+  audioTimestamps?: object[]; // Timestamps (nếu có)
 }
 
 /**
@@ -38,7 +43,7 @@ export interface ReorderItemsDto {
 
 /**
  * PlaylistsService - Service xử lý CRUD cho Playlists
- * 
+ *
  * Mục đích: Quản lý playlists và playlist items của user trong Supabase
  * Tham số đầu vào: userId và các DTOs
  * Tham số đầu ra: Dữ liệu từ Supabase
@@ -57,7 +62,7 @@ export class PlaylistsService {
 
   /**
    * Lấy danh sách playlists của user
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @returns Danh sách playlists kèm số lượng items
    */
@@ -97,7 +102,7 @@ export class PlaylistsService {
 
   /**
    * Tạo playlist mới
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param dto - Dữ liệu playlist cần tạo
    * @returns Playlist vừa tạo
@@ -126,13 +131,17 @@ export class PlaylistsService {
 
   /**
    * Cập nhật playlist
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist cần cập nhật
    * @param dto - Dữ liệu cập nhật
    * @returns Playlist đã cập nhật
    */
-  async updatePlaylist(userId: string, playlistId: string, dto: UpdatePlaylistDto) {
+  async updatePlaylist(
+    userId: string,
+    playlistId: string,
+    dto: UpdatePlaylistDto,
+  ) {
     const { data, error } = await this.supabase
       .from('playlists')
       .update({
@@ -158,7 +167,7 @@ export class PlaylistsService {
 
   /**
    * Xóa playlist
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist cần xóa
    * @returns Kết quả xóa
@@ -183,7 +192,7 @@ export class PlaylistsService {
 
   /**
    * Lấy chi tiết playlist kèm items
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist
    * @returns Playlist kèm danh sách items
@@ -225,13 +234,17 @@ export class PlaylistsService {
 
   /**
    * Thêm item vào playlist
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist
    * @param dto - Dữ liệu item cần thêm
    * @returns Item vừa thêm
    */
-  async addItemToPlaylist(userId: string, playlistId: string, dto: AddPlaylistItemDto) {
+  async addItemToPlaylist(
+    userId: string,
+    playlistId: string,
+    dto: AddPlaylistItemDto,
+  ) {
     // Kiểm tra playlist thuộc về user
     const { data: playlist, error: checkError } = await this.supabase
       .from('playlists')
@@ -265,6 +278,8 @@ export class PlaylistsService {
         num_speakers: dto.numSpeakers,
         category: dto.category,
         sub_category: dto.subCategory,
+        audio_url: dto.audioUrl,
+        audio_timestamps: dto.audioTimestamps,
         position: nextPosition,
       })
       .select()
@@ -283,13 +298,17 @@ export class PlaylistsService {
 
   /**
    * Xóa item khỏi playlist
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist
    * @param itemId - ID của item cần xóa
    * @returns Kết quả xóa
    */
-  async removeItemFromPlaylist(userId: string, playlistId: string, itemId: string) {
+  async removeItemFromPlaylist(
+    userId: string,
+    playlistId: string,
+    itemId: string,
+  ) {
     // Kiểm tra playlist thuộc về user
     const { data: playlist, error: checkError } = await this.supabase
       .from('playlists')
@@ -322,7 +341,7 @@ export class PlaylistsService {
 
   /**
    * Sắp xếp lại items trong playlist
-   * 
+   *
    * @param userId - ID của user hiện tại
    * @param playlistId - ID của playlist
    * @param dto - Dữ liệu sắp xếp mới

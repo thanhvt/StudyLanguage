@@ -30,6 +30,8 @@ interface ListenLaterButtonProps {
   subCategory?: string;
   onSuccess?: () => void;
   variant?: 'default' | 'icon';
+  audioUrl?: string; // Audio URL nếu đã có
+  audioTimestamps?: { startTime: number; endTime: number }[]; // Timestamps nếu đã có
 }
 
 export function ListenLaterButton({
@@ -41,6 +43,7 @@ export function ListenLaterButton({
   subCategory,
   onSuccess,
   variant = 'default',
+  ...props
 }: ListenLaterButtonProps) {
   // Dùng context để share state
   const { addToListenLater, isAdding } = useListenLaterContext();
@@ -59,6 +62,8 @@ export function ListenLaterButton({
       numSpeakers,
       category,
       subCategory,
+      audioUrl: props.audioUrl,
+      audioTimestamps: props.audioTimestamps,
     });
 
     if (result) {

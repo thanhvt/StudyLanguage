@@ -92,6 +92,7 @@ export function TranscriptViewer({
 interface ListeningPlayerProps {
   conversation: ConversationLine[];
   audioUrl?: string;
+  onAudioGenerated?: (url: string, timestamps?: { startTime: number; endTime: number }[]) => void;
 }
 
 /**
@@ -99,7 +100,7 @@ interface ListeningPlayerProps {
  *
  * Mục đích: Kết hợp Audio Player + Transcript cho module Listening
  */
-export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps) {
+export function ListeningPlayer({ conversation, audioUrl, onAudioGenerated }: ListeningPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(audioUrl || null);
@@ -212,6 +213,13 @@ export function ListeningPlayer({ conversation, audioUrl }: ListeningPlayerProps
                   if (event.timestamps && event.timestamps.length > 0) {
                     setRealTimestamps(event.timestamps);
                   }
+                  
+                  // Gọi callback để parent lưu audio URL
+                  if (event.audioUrl && onAudioGenerated) {
+                    console.log('Audio generated and saved at:', event.audioUrl);
+                    onAudioGenerated(event.audioUrl, event.timestamps);
+                  }
+                  
                   setIsGeneratingAudio(false);
                 }, 300);
                 return; // Exit loop

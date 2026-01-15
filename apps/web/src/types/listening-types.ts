@@ -68,6 +68,8 @@ export interface ListenLaterItem {
   category?: string;
   sub_category?: string;
   created_at: string;
+  audio_url?: string; // URL audio đã lưu
+  audio_timestamps?: { startTime: number; endTime: number }[]; // Timestamps đã lưu
 }
 
 /**
@@ -80,6 +82,8 @@ export interface AddListenLaterDto {
   numSpeakers: number;
   category?: string;
   subCategory?: string;
+  audioUrl?: string;
+  audioTimestamps?: { startTime: number; endTime: number }[];
 }
 
 // ============================================
@@ -114,6 +118,8 @@ export interface PlaylistItem {
   sub_category?: string;
   position: number;
   created_at: string;
+  audio_url?: string;
+  audio_timestamps?: { startTime: number; endTime: number }[];
 }
 
 /**
@@ -134,6 +140,8 @@ export interface AddPlaylistItemDto {
   numSpeakers: number;
   category?: string;
   subCategory?: string;
+  audioUrl?: string;
+  audioTimestamps?: { startTime: number; endTime: number }[];
 }
 
 // ============================================

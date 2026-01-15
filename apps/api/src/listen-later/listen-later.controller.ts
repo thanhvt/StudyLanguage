@@ -5,6 +5,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -81,6 +82,8 @@ export class ListenLaterController {
         numSpeakers: { type: 'number', example: 2 },
         category: { type: 'string', example: 'it' },
         subCategory: { type: 'string', example: 'Agile Ceremonies' },
+        audioUrl: { type: 'string', description: 'URL audio đã sinh (optional)' },
+        audioTimestamps: { type: 'array', description: 'Timestamps cho từng câu (optional)' },
       },
       required: ['topic', 'conversation', 'duration', 'numSpeakers'],
     },
@@ -97,6 +100,50 @@ export class ListenLaterController {
       console.error('[ListenLaterController] POST error:', error);
       throw new HttpException(
         error.message || 'Lỗi thêm vào Nghe Sau',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Cập nhật audio URL cho item Nghe Sau
+   *
+   * PATCH /listen-later/:id/audio
+   */
+  @Patch(':id/audio')
+  @ApiOperation({ summary: 'Cập nhật audio cho item Nghe Sau' })
+  @ApiParam({ name: 'id', description: 'ID của item cần cập nhật' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        audioUrl: { type: 'string', description: 'URL audio trên Supabase Storage' },
+        audioTimestamps: { type: 'array', description: 'Timestamps cho từng câu' },
+      },
+      required: ['audioUrl'],
+    },
+  })
+  async updateAudio(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: { audioUrl: string; audioTimestamps?: { startTime: number; endTime: number }[] },
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
+      }
+
+      return await this.listenLaterService.updateAudioData(
+        userId,
+        id,
+        dto.audioUrl,
+        dto.audioTimestamps,
+      );
+    } catch (error) {
+      console.error('[ListenLaterController] PATCH audio error:', error);
+      throw new HttpException(
+        error.message || 'Lỗi cập nhật audio',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -151,3 +198,4 @@ export class ListenLaterController {
     }
   }
 }
+

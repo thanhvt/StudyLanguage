@@ -12,7 +12,10 @@ export interface AddListenLaterDto {
   numSpeakers: number;
   category?: string;
   subCategory?: string;
+  audioUrl?: string; // URL audio đã sinh
+  audioTimestamps?: { startTime: number; endTime: number }[]; // Timestamps cho từng câu
 }
+
 
 /**
  * ListenLaterService - Service xử lý CRUD cho Listen Later
@@ -76,6 +79,8 @@ export class ListenLaterService {
         num_speakers: dto.numSpeakers,
         category: dto.category,
         sub_category: dto.subCategory,
+        audio_url: dto.audioUrl,
+        audio_timestamps: dto.audioTimestamps,
       })
       .select()
       .single();
@@ -90,6 +95,49 @@ export class ListenLaterService {
       item: data,
     };
   }
+
+  /**
+   * Cập nhật audio URL và timestamps cho item Listen Later
+   * 
+   * Mục đích: Lưu audio sau khi sinh để không cần sinh lại khi nghe lại
+   * Tham số:
+   *   - userId: ID của user hiện tại
+   *   - itemId: ID của item trong Listen Later
+   *   - audioUrl: URL audio trên Supabase Storage
+   *   - audioTimestamps: Timestamps của từng câu
+   * Khi nào sử dụng: Sau khi sinh audio từ Listen Later drawer
+   */
+  async updateAudioData(
+    userId: string,
+    itemId: string,
+    audioUrl: string,
+    audioTimestamps?: { startTime: number; endTime: number }[],
+  ) {
+    const updateData: { audio_url: string; audio_timestamps?: object } = {
+      audio_url: audioUrl,
+    };
+    
+    if (audioTimestamps) {
+      updateData.audio_timestamps = audioTimestamps;
+    }
+
+    const { error } = await this.supabase
+      .from('listen_later')
+      .update(updateData)
+      .eq('id', itemId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[ListenLaterService] Lỗi cập nhật audio:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: 'Đã lưu audio URL',
+    };
+  }
+
 
   /**
    * Xóa item khỏi Listen Later

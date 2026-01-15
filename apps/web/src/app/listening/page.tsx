@@ -29,6 +29,7 @@ import {
   RadioModeButton,
 } from '@/components/listening';
 import { usePlaylist } from '@/hooks/use-playlist';
+import { useListenLaterSafe } from '@/components/providers/listen-later-provider';
 import { Playlist, ListenLaterItem, ConversationLine } from '@/types/listening-types';
 
 /**
@@ -73,9 +74,43 @@ export default function ListeningPage() {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
+  // Audio persistence state
+  const [audioUrl, setAudioUrl] = useState<string | undefined>();
+  const [audioTimestamps, setAudioTimestamps] = useState<{ startTime: number; endTime: number }[] | undefined>();
+  const [currentSource, setCurrentSource] = useState<'new' | 'history' | 'listenLater'>('new');
+  const [currentId, setCurrentId] = useState<string | undefined>();
+
   // Hooks
   const { saveLesson } = useSaveLesson();
   const { playlists } = usePlaylist();
+  const { updateAudio: updateListenLaterAudio } = useListenLaterSafe();
+
+  /**
+   * Xử lý khi audio sinh xong
+   */
+  const handleAudioGenerated = async (url: string, timestamps?: { startTime: number; endTime: number }[]) => {
+    setAudioUrl(url); // Update local state
+    setAudioTimestamps(timestamps);
+    
+    // Nếu chưa có source ID thì không lưu được vào đâu cụ thể (nhưng thường handleGenerate đã set currentId)
+    if (!currentId) return;
+
+    try {
+      if (currentSource === 'listenLater') {
+        // Update Listen Later item
+        await updateListenLaterAudio(currentId, url, timestamps);
+      } else {
+        // Update Lesson (cho cả 'new' và 'history')
+        // Lưu ý: với 'history', currentId là lessonId
+        await api(`/lessons/${currentId}/audio`, {
+          method: 'PATCH',
+          body: JSON.stringify({ audioUrl: url, audioTimestamps: timestamps }),
+        });
+      }
+    } catch (error) {
+      console.error('Lỗi lưu audio url:', error);
+    }
+  };
 
   /**
    * Xử lý khi chọn topic từ Topic Picker
@@ -121,9 +156,12 @@ export default function ListeningPage() {
 
       const data = await response.json();
       setConversation(data.script);
+      setAudioUrl(undefined); // Reset audio url cho bài mới
+      setAudioTimestamps(undefined);
+      setCurrentSource('new');
 
       // Lưu vào database để hiển thị trong History
-      await saveLesson({
+      const saveResult = await saveLesson({
         type: 'listening',
         topic,
         content: { script: data.script },
@@ -133,6 +171,10 @@ export default function ListeningPage() {
         mode: mode,
         status: 'completed',
       });
+
+      if (saveResult && saveResult.lesson && saveResult.lesson.id) {
+        setCurrentId(saveResult.lesson.id);
+      }
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
     } finally {
@@ -145,6 +187,9 @@ export default function ListeningPage() {
    */
   const handleReset = () => {
     setConversation(null);
+    setAudioUrl(undefined);
+    setAudioTimestamps(undefined);
+    setCurrentId(undefined);
     setTopic('');
     setKeywords('');
     setSelectedCategory(undefined);
@@ -160,6 +205,18 @@ export default function ListeningPage() {
     if (entry.content?.script) {
       setConversation(entry.content.script);
     }
+    // Lấy audio url từ entry (đã lưu trong content hoặc lessons table)
+    // Cần check kỹ cấu trúc entry trả về từ history service
+    // Ở đây giả định audioUrl có thể nằm trong content hoặc root
+    const entryAudioUrl = (entry as any).audio_url || entry.content?.audioUrl;
+    const entryAudioTimestamps = (entry as any).audio_timestamps || entry.content?.audioTimestamps;
+    
+    setAudioUrl(entryAudioUrl);
+    setAudioTimestamps(entryAudioTimestamps);
+    
+    setCurrentSource('history');
+    setCurrentId(entry.id);
+
     if (entry.durationMinutes) setDuration(entry.durationMinutes);
     if (entry.numSpeakers) setNumSpeakers(entry.numSpeakers);
     if (entry.keywords) setKeywords(entry.keywords);
@@ -171,6 +228,11 @@ export default function ListeningPage() {
   const handlePlayFromListenLater = (item: ListenLaterItem) => {
     setTopic(item.topic);
     setConversation(item.conversation);
+    setAudioUrl(item.audio_url);
+    setAudioTimestamps(item.audio_timestamps);
+    setCurrentSource('listenLater');
+    setCurrentId(item.id);
+    
     setDuration(item.duration);
     setNumSpeakers(item.num_speakers);
     setSelectedCategory(item.category);
@@ -415,6 +477,8 @@ export default function ListeningPage() {
                     category={selectedCategory}
                     subCategory={selectedSubCategory}
                     variant="default"
+                    audioUrl={audioUrl}
+                    audioTimestamps={audioTimestamps}
                   />
                   
                   {/* Add to Playlist Button - có text */}
@@ -436,7 +500,11 @@ export default function ListeningPage() {
                 </div>
               </div>
               
-              <ListeningPlayer conversation={conversation} />
+              <ListeningPlayer 
+                conversation={conversation} 
+                audioUrl={audioUrl}
+                onAudioGenerated={handleAudioGenerated}
+              />
             </div>
           </FadeIn>
         )}
@@ -451,6 +519,8 @@ export default function ListeningPage() {
           numSpeakers={numSpeakers}
           category={selectedCategory}
           subCategory={selectedSubCategory}
+          audioUrl={audioUrl}
+          audioTimestamps={audioTimestamps}
           onSuccess={() => {
             // Toast notification đã có trong modal
           }}

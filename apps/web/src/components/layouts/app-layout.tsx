@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { Sidebar } from './sidebar';
 import { RightPanel } from './right-panel';
 import { MobileHeader } from './mobile-header';
-import { MobileNavBar } from './mobile-nav';
+import { MobileFAB } from './mobile-fab';
 import { PageTransition } from './page-transition';
 
 /**
@@ -31,7 +31,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <Sidebar />
 
       {/* Main content area - flex grow với responsive padding */}
-      <main className="flex-1 overflow-y-auto pt-14 pb-24 lg:pt-0 lg:pb-0">
+      <main className="flex-1 overflow-y-auto pt-14 pb-8 lg:pt-0 lg:pb-0">
         <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
           {/* Page transition wrapper */}
           <PageTransition>
@@ -43,8 +43,8 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Right panel - 320px cố định trên xl, ẩn trên nhỏ hơn */}
       <RightPanel />
 
-      {/* Mobile Bottom Nav - chỉ hiện trên mobile */}
-      <MobileNavBar />
+      {/* Mobile FAB - chỉ hiện trên mobile, có thể kéo thả */}
+      <MobileFAB />
     </div>
   );
 }
