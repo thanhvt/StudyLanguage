@@ -4,6 +4,7 @@ import { AiController } from './ai.controller';
 
 @Module({
   providers: [AiService],
-  controllers: [AiController]
+  controllers: [AiController],
+  exports: [AiService], // Export để các module khác có thể inject AiService
 })
 export class AiModule {}

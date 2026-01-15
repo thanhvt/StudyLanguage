@@ -16,7 +16,6 @@ import { useSaveLesson } from '@/hooks/use-save-lesson';
 import { FadeIn } from '@/components/animations';
 import { showError, showSuccess } from '@/lib/toast';
 
-// New Listening Components
 import {
   DurationSelector,
   SpeakersSelector,
@@ -27,6 +26,7 @@ import {
   PlaylistManager,
   AddToPlaylistModal,
   PlaylistPlayer,
+  RadioModeButton,
 } from '@/components/listening';
 import { usePlaylist } from '@/hooks/use-playlist';
 import { Playlist, ListenLaterItem, ConversationLine } from '@/types/listening-types';
@@ -313,6 +313,10 @@ export default function ListeningPage() {
                       </>
                     )}
                   </Button>
+                </div>
+                {/* Radio Mode - Tính năng mới */}
+                <div className="mt-6">
+                  <RadioModeButton onPlaylistGenerated={handlePlayPlaylist} />
                 </div>
 
                 {/* Playlist Manager */}

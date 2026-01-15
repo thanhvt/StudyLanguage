@@ -33,7 +33,11 @@ async function bootstrap() {
   // Đọc từ biến môi trường CORS_ORIGINS, fallback về localhost cho development
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-    : ['http://localhost:3000', 'http://localhost:8081'];
+    : [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:8081',
+      ];
 
   app.enableCors({
     origin: corsOrigins, // Web & Mobile

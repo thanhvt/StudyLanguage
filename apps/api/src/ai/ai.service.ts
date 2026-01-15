@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -59,7 +60,7 @@ export class AiService {
           { role: 'user', content: prompt },
         ],
         temperature: 0.9,
-        max_tokens: 2000,
+        max_tokens: 4000, // Tăng lên để hội thoại dài không bị cắt giữa chừng
       });
 
       const result = response.choices[0]?.message?.content || '';
@@ -153,7 +154,15 @@ CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
         throw new Error('Không tìm thấy JSON trong response');
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        // Thử repair JSON bị truncated
+        this.logger.warn('JSON bị lỗi, đang thử repair...');
+        const repaired = this.repairTruncatedJson(jsonMatch[0]);
+        parsed = JSON.parse(repaired);
+      }
 
       // Log số từ thực tế để debug
       const actualWordCount = parsed.script.reduce(
@@ -431,6 +440,65 @@ Chỉ trả về JSON.
       // Fallback nếu không parse được
       return { response: result.trim(), shouldEnd: false };
     }
+  }
+
+  /**
+   * Helper: Repair JSON bị truncated (bị cắt giữa chừng)
+   *
+   * Mục đích: Khi OpenAI response bị cắt, JSON không đóng đúng
+   * Tham số: json - JSON string bị lỗi
+   * Trả về: JSON string đã được repair
+   * Khi nào sử dụng: Khi JSON.parse() thất bại
+   */
+  private repairTruncatedJson(json: string): string {
+    let repaired = json.trim();
+
+    // Loại bỏ item cuối nếu đang viết dở (không có closing brace)
+    // Ví dụ: ...}, {"speaker": "Person A", "text": "Hello...
+    // Tìm item cuối cùng đang viết dở và xóa nó
+    const lastCompleteItemIndex = repaired.lastIndexOf('}');
+    const lastOpeningBrace = repaired.lastIndexOf('{"');
+    
+    if (lastOpeningBrace > lastCompleteItemIndex) {
+      // Có item đang viết dở -> cắt bỏ
+      repaired = repaired.substring(0, lastOpeningBrace);
+      // Xóa dấu phẩy thừa nếu có
+      repaired = repaired.replace(/,\s*$/, '');
+    }
+
+    // Đếm số brackets chưa đóng
+    let openBraces = 0;
+    let openBrackets = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    for (const char of repaired) {
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char === '{') openBraces++;
+        if (char === '}') openBraces--;
+        if (char === '[') openBrackets++;
+        if (char === ']') openBrackets--;
+      }
+    }
+
+    // Thêm closing brackets còn thiếu
+    repaired += ']'.repeat(Math.max(0, openBrackets));
+    repaired += '}'.repeat(Math.max(0, openBraces));
+
+    this.logger.log(`Đã repair JSON: thêm ${openBrackets}] và ${openBraces}}`);
+    return repaired;
   }
 
   /**
