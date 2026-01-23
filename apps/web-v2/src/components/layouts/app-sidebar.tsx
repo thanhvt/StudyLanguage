@@ -164,14 +164,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </div>
       
-      <SidebarContent>
+      <SidebarContent className="px-2">
         {/* Learning Section - Card Style Nav */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2 group-data-[collapsible=icon]:hidden">
             Learn
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu className="space-y-1">
+          <SidebarGroupContent className="px-1">
+            <SidebarMenu className="space-y-2">
               {mainNav.map((item) => {
                 const isActive = pathname === item.url || (item.url !== "/" && pathname?.startsWith(item.url))
                 return (
@@ -181,25 +181,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       isActive={isActive} 
                       tooltip={item.title}
                       className={cn(
-                        "h-12 rounded-xl transition-all duration-200",
-                        isActive && `${item.bgClass} shadow-lg ${item.glowClass}`,
+                        "h-12 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center",
+                        isActive && `${item.bgClass} shadow-lg ${item.glowClass} ring-1 ring-inset`,
+                        isActive && item.colorClass.replace("text-", "ring-") + "/30",
                         "hover:scale-[1.02] active:scale-[0.98]"
                       )}
                     >
-                      <Link href={item.url} className="flex items-center gap-3">
+                      <Link href={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0">
                         <div className={cn(
-                          "flex items-center justify-center size-8 rounded-lg transition-all",
-                          isActive ? `${item.bgClass} ${item.colorClass}` : "bg-muted/50"
+                          "flex items-center justify-center size-9 rounded-lg transition-all group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:bg-transparent",
+                          isActive ? `${item.bgClass}` : "bg-muted/30"
                         )}>
-                          <item.icon className={cn("size-5", isActive ? item.colorClass : "text-muted-foreground")} />
+                          <item.icon className={cn(
+                            "size-5 group-data-[collapsible=icon]:size-6", 
+                            item.colorClass,
+                            !isActive && "opacity-70 group-data-[collapsible=icon]:opacity-100"
+                          )} />
                         </div>
                         <span className={cn(
-                          "font-medium",
+                          "font-medium group-data-[collapsible=icon]:hidden",
                           isActive && "font-semibold"
                         )}>{item.title}</span>
                         {/* Active indicator dot */}
                         {isActive && (
-                          <div className={cn("ml-auto size-2 rounded-full", item.colorClass.replace("text-", "bg-"))} />
+                          <div className={cn("ml-auto size-2 rounded-full group-data-[collapsible=icon]:hidden", item.colorClass.replace("text-", "bg-"))} />
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -209,14 +214,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* Separator */}
+        <div className="mx-4 my-2 h-px bg-border/50 group-data-[collapsible=icon]:mx-2" />
 
         {/* Personal Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2 group-data-[collapsible=icon]:hidden">
             Personal
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu className="space-y-1">
+          <SidebarGroupContent className="px-1">
+            <SidebarMenu className="space-y-2">
               {secondaryNav.map((item) => {
                 const isActive = pathname === item.url
                 return (
@@ -225,14 +232,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       asChild 
                       tooltip={item.title}
                       className={cn(
-                        "h-10 rounded-xl transition-all duration-200",
-                        isActive && "bg-muted",
+                        "h-10 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center",
+                        isActive && "bg-muted shadow-sm",
                         "hover:scale-[1.02] active:scale-[0.98]"
                       )}
                     >
-                      <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon className="size-4 text-muted-foreground" />
-                        <span>{item.title}</span>
+                      <Link href={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0">
+                        <item.icon className="size-5 text-muted-foreground group-data-[collapsible=icon]:size-5" />
+                        <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
