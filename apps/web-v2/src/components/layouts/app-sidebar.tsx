@@ -126,10 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95 shadow-xl border-r-0"
     >
       {/* Premium Header with Gradient Logo */}
-      <SidebarHeader className="border-b border-border/30 pb-4">
+      <SidebarHeader className="border-b border-border/30 pb-4 group-data-[collapsible=icon]:pb-2 group-data-[collapsible=icon]:px-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-3 px-2 py-3 group">
+            <div className="flex items-center gap-3 px-2 py-3 group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1">
               {/* Gradient Animated Logo */}
               <div className="relative flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-violet-600 text-white shadow-lg shadow-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/40">
                 <Sparkles className="size-5 transition-transform group-hover:rotate-12" />
@@ -267,9 +267,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className="h-14 rounded-xl data-[state=open]:bg-accent/50 hover:bg-accent/30 transition-all"
+                    className="h-14 rounded-xl data-[state=open]:bg-accent/50 hover:bg-accent/30 transition-all group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
                   >
-                    <Avatar className="h-10 w-10 rounded-xl ring-2 ring-border/50">
+                    <Avatar className="h-10 w-10 rounded-xl ring-2 ring-border/50 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9">
                       <AvatarImage src={avatarUrl} alt={displayName} />
                       <AvatarFallback className="rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white font-semibold">
                         {initials}

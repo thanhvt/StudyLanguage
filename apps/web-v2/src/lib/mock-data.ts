@@ -64,60 +64,65 @@ export const mockWeeklyActivity: WeeklyActivity[] = [
 
 // ============================================
 // Mock Calendar Data (7 weeks = 49 days)
+// Static data to prevent hydration mismatch
 // ============================================
 
-function generateCalendarData(): CalendarDay[] {
-  const days: CalendarDay[] = []
-  const today = new Date()
-  
-  // Generate 49 days (7 weeks) going back from today
-  for (let i = 48; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    
-    // Random minutes with some pattern (weekends more, early week less)
-    const dayOfWeek = date.getDay()
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-    const baseMinutes = isWeekend ? 45 : 25
-    const variance = Math.floor(Math.random() * 40) - 10
-    const minutes = Math.max(0, baseMinutes + variance)
-    
-    // Calculate intensity (0-4) based on minutes
-    let intensity: 0 | 1 | 2 | 3 | 4 = 0
-    if (minutes > 0 && minutes < 15) intensity = 1
-    else if (minutes >= 15 && minutes < 30) intensity = 2
-    else if (minutes >= 30 && minutes < 60) intensity = 3
-    else if (minutes >= 60) intensity = 4
-    
-    // Add some "streak break" days for realism
-    if (Math.random() < 0.15 && i > 7) {
-      days.push({
-        date: date.toISOString().split('T')[0],
-        minutes: 0,
-        intensity: 0,
-      })
-    } else {
-      days.push({
-        date: date.toISOString().split('T')[0],
-        minutes,
-        intensity,
-      })
-    }
-  }
-  
-  // Ensure last 12 days have activity (current streak)
-  for (let i = days.length - 12; i < days.length; i++) {
-    if (days[i].minutes === 0) {
-      const mins = 15 + Math.floor(Math.random() * 45)
-      days[i].minutes = mins
-      days[i].intensity = mins >= 60 ? 4 : mins >= 30 ? 3 : 2
-    }
-  }
-  
-  return days
-}
-
-export const mockCalendarData = generateCalendarData()
+// Pre-generated static calendar data (7 weeks)
+export const mockCalendarData: CalendarDay[] = [
+  // Week 1 (oldest)
+  { date: "2026-01-10", minutes: 0, intensity: 0 },
+  { date: "2026-01-11", minutes: 35, intensity: 3 },
+  { date: "2026-01-12", minutes: 20, intensity: 2 },
+  { date: "2026-01-13", minutes: 45, intensity: 3 },
+  { date: "2026-01-14", minutes: 0, intensity: 0 },
+  { date: "2026-01-15", minutes: 25, intensity: 2 },
+  { date: "2026-01-16", minutes: 60, intensity: 4 },
+  // Week 2
+  { date: "2026-01-17", minutes: 15, intensity: 2 },
+  { date: "2026-01-18", minutes: 40, intensity: 3 },
+  { date: "2026-01-19", minutes: 0, intensity: 0 },
+  { date: "2026-01-20", minutes: 30, intensity: 3 },
+  { date: "2026-01-21", minutes: 55, intensity: 3 },
+  { date: "2026-01-22", minutes: 25, intensity: 2 },
+  { date: "2026-01-23", minutes: 70, intensity: 4 },
+  // Week 3
+  { date: "2026-01-24", minutes: 20, intensity: 2 },
+  { date: "2026-01-25", minutes: 0, intensity: 0 },
+  { date: "2026-01-26", minutes: 45, intensity: 3 },
+  { date: "2026-01-27", minutes: 35, intensity: 3 },
+  { date: "2026-01-28", minutes: 10, intensity: 1 },
+  { date: "2026-01-29", minutes: 50, intensity: 3 },
+  { date: "2026-01-30", minutes: 80, intensity: 4 },
+  // Week 4
+  { date: "2026-01-31", minutes: 25, intensity: 2 },
+  { date: "2026-02-01", minutes: 40, intensity: 3 },
+  { date: "2026-02-02", minutes: 30, intensity: 3 },
+  { date: "2026-02-03", minutes: 0, intensity: 0 },
+  { date: "2026-02-04", minutes: 55, intensity: 3 },
+  { date: "2026-02-05", minutes: 20, intensity: 2 },
+  { date: "2026-02-06", minutes: 65, intensity: 4 },
+  // Week 5
+  { date: "2026-02-07", minutes: 15, intensity: 2 },
+  { date: "2026-02-08", minutes: 45, intensity: 3 },
+  { date: "2026-02-09", minutes: 35, intensity: 3 },
+  { date: "2026-02-10", minutes: 25, intensity: 2 },
+  { date: "2026-02-11", minutes: 50, intensity: 3 },
+  { date: "2026-02-12", minutes: 30, intensity: 3 },
+  { date: "2026-02-13", minutes: 75, intensity: 4 },
+  // Week 6 (streak starts - last 12 days) 
+  { date: "2026-02-14", minutes: 20, intensity: 2 },
+  { date: "2026-02-15", minutes: 40, intensity: 3 },
+  { date: "2026-02-16", minutes: 35, intensity: 3 },
+  { date: "2026-02-17", minutes: 45, intensity: 3 },
+  { date: "2026-02-18", minutes: 25, intensity: 2 },
+  { date: "2026-02-19", minutes: 55, intensity: 3 },
+  { date: "2026-02-20", minutes: 60, intensity: 4 },
+  // Week 7 (current - streak continues)
+  { date: "2026-02-21", minutes: 30, intensity: 3 },
+  { date: "2026-02-22", minutes: 45, intensity: 3 },
+  { date: "2026-02-23", minutes: 50, intensity: 3 },
+  { date: "2026-02-24", minutes: 15, intensity: 2 },
+]
 
 // ============================================
 // Mock Skill Data

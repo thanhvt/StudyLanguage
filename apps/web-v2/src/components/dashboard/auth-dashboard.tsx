@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { NextLessonCard } from "./next-lesson-card"
 import { WeeklyActivityChart } from "./weekly-activity-chart"
 import { SkillRadarChart } from "./skill-radar-chart"
@@ -14,7 +15,13 @@ interface AuthDashboardProps {
 }
 
 export function AuthDashboard({ userName = mockUserStats.name }: AuthDashboardProps) {
-  const greeting = getTimeGreetingVi()
+  // Use state to prevent hydration mismatch for time-based greeting
+  const [greeting, setGreeting] = useState("Xin chào")
+  
+  useEffect(() => {
+    setGreeting(getTimeGreetingVi())
+  }, [])
+  
   const { totalMinutesToday, dailyGoalMinutes, streak } = mockUserStats
 
   return (
