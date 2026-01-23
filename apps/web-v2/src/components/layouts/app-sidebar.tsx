@@ -126,13 +126,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95 shadow-xl border-r-0"
     >
       {/* Premium Header with Gradient Logo */}
-      <SidebarHeader className="border-b border-border/30 pb-4 group-data-[collapsible=icon]:pb-2">
+      <SidebarHeader className="border-b border-border/30 pb-4 group-data-[collapsible=icon]:pb-2 group-data-[collapsible=icon]:border-b-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-3 px-2 py-3 group group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <div className="flex items-center gap-3 px-2 py-3 group group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
               {/* Gradient Animated Logo */}
-              <div className="relative flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-violet-600 text-white shadow-lg shadow-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/40">
-                <Sparkles className="size-5 transition-transform group-hover:rotate-12" />
+              <div className="relative flex aspect-square size-10 group-data-[collapsible=icon]:size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-violet-600 text-white shadow-lg shadow-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/40">
+                <Sparkles className="size-5 group-data-[collapsible=icon]:size-4 transition-transform group-hover:rotate-12" />
                 {/* Shimmer overlay */}
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-pulse transition-opacity" />
               </div>
@@ -267,7 +267,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className="h-14 rounded-xl data-[state=open]:bg-accent/50 hover:bg-accent/30 transition-all group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+                    className="h-14 rounded-xl data-[state=open]:bg-accent/50 hover:bg-accent/30 transition-all group-data-[collapsible=icon]:h-auto group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-2"
                   >
                     <Avatar className="h-10 w-10 rounded-xl ring-2 ring-border/50 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9">
                       <AvatarImage src={avatarUrl} alt={displayName} />
