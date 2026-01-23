@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layouts/app-sidebar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,21 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-             {/* Header with trigger if needed, or floating trigger */}
-             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                <SidebarTrigger className="-ml-1" />
-                <div className="h-4 w-px bg-border mx-2" />
-                {/* Breadcrumb could go here */}
-                <h1 className="font-display font-medium">StudyLanguage</h1>
-              </header>
-              <main className="flex-1 p-6 overflow-auto">
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>
