@@ -15,7 +15,7 @@ export function StreakCard() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-1">
-          <span className="text-4xl font-bold font-display text-foreground">12</span>
+          <span className="text-4xl font-bold font-display text-foreground tabular-nums">12</span>
           <span className="text-sm text-muted-foreground">You're on fire! 🔥</span>
         </div>
       </CardContent>

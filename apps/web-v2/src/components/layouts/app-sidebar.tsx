@@ -40,27 +40,31 @@ import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Skeleton } from "@/components/ui/skeleton"
 
-// Menu items.
+// Menu items with skill colors
 const mainNav = [
   {
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+    colorClass: "text-primary",
   },
   {
     title: "Listening",
     url: "/listening",
     icon: Headphones,
+    colorClass: "text-skill-listening",
   },
   {
     title: "Speaking",
     url: "/speaking",
     icon: Mic,
+    colorClass: "text-skill-speaking",
   },
   {
     title: "Reading",
     url: "/reading",
     icon: BookOpen,
+    colorClass: "text-skill-reading",
   },
 ]
 
@@ -94,12 +98,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
-    <Sidebar collapsible="icon" {...props} className="border-r border-border bg-sidebar">
+    <Sidebar collapsible="icon" {...props} className="shadow-sm bg-sidebar">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex items-center gap-2 px-2 py-2 group">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
                 <span className="text-lg font-bold">S</span>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
@@ -122,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
                       <Link href={item.url}>
-                        <item.icon />
+                        <item.icon className={item.colorClass} />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>

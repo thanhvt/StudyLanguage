@@ -6,7 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -41,6 +42,11 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
+  /* Skill Colors */
+  --color-skill-listening: var(--skill-listening);
+  --color-skill-speaking: var(--skill-speaking);
+  --color-skill-reading: var(--skill-reading);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -51,13 +57,13 @@
 }
 
 :root {
-  --radius: 0.75rem; /* Larger radius for Bento Zen */
+  --radius: 0.75rem;
 
-  /* Slate-50 / Slate-900 Canvas */
-  --background: oklch(0.982 0.003 247.858); /* Slate-50 */
+  /* Canvas */
+  --background: oklch(0.982 0.003 247.858);
   --foreground: oklch(0.145 0 0);
 
-  /* White Card */
+  /* Cards */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
 
@@ -68,29 +74,33 @@
   --primary: oklch(0.511 0.262 276.966);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Neural Purple Secondary (Violet-500) */
-  --secondary: oklch(0.627 0.265 303.9); 
+  /* Violet-500 Secondary */
+  --secondary: oklch(0.627 0.265 303.9);
   --secondary-foreground: oklch(0.985 0 0);
 
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
 
-  /* Accent for hovers - Slate-100 */
   --accent: oklch(0.962 0.006 247.896);
   --accent-foreground: oklch(0.205 0 0);
 
-  --destructive: oklch(0.577 0.245 27.325); /* Rose-600 logic */
+  --destructive: oklch(0.577 0.245 27.325);
 
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.511 0.262 276.966); /* Matches Primary */
+  --ring: oklch(0.511 0.262 276.966);
+
+  /* Skill Colors - Semantic */
+  --skill-listening: oklch(0.65 0.20 240);  /* Blue */
+  --skill-speaking: oklch(0.65 0.18 150);   /* Green */
+  --skill-reading: oklch(0.62 0.22 280);    /* Purple */
 
   /* Chart Colors */
-  --chart-1: oklch(0.511 0.262 276.966); /* Indigo */
-  --chart-2: oklch(0.627 0.265 303.9); /* Violet */
-  --chart-3: oklch(0.646 0.222 41.116); /* Orange/Red */
-  --chart-4: oklch(0.723 0.219 149.579); /* Green */
-  --chart-5: oklch(0.769 0.188 70.08); /* Yellow */
+  --chart-1: oklch(0.511 0.262 276.966);
+  --chart-2: oklch(0.627 0.265 303.9);
+  --chart-3: oklch(0.646 0.222 41.116);
+  --chart-4: oklch(0.723 0.219 149.579);
+  --chart-5: oklch(0.769 0.188 70.08);
 
   --sidebar: oklch(0.982 0.003 247.858);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -103,22 +113,18 @@
 }
 
 .dark {
-  /* Slate-950 Canvas */
-  --background: oklch(0.09 0.035 250); /* #0F172A approximate */
+  --background: oklch(0.09 0.035 250);
   --foreground: oklch(0.985 0 0);
 
-  /* Slate-900 Card */
-  --card: oklch(0.13 0.028 261.692); /* Slate-900 */
+  --card: oklch(0.13 0.028 261.692);
   --card-foreground: oklch(0.985 0 0);
 
   --popover: oklch(0.13 0.028 261.692);
   --popover-foreground: oklch(0.985 0 0);
 
-  /* Indigo-500 Primary */
   --primary: oklch(0.59 0.246 273.7);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Violet-400 Secondary */
   --secondary: oklch(0.714 0.203 305.504);
   --secondary-foreground: oklch(0.985 0 0);
 
@@ -133,6 +139,11 @@
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.59 0.246 273.7);
+
+  /* Skill Colors - Dark Mode (slightly brighter) */
+  --skill-listening: oklch(0.70 0.18 240);
+  --skill-speaking: oklch(0.70 0.16 150);
+  --skill-reading: oklch(0.68 0.20 280);
 
   --sidebar: oklch(0.09 0.035 250);
   --sidebar-foreground: oklch(0.985 0 0);
@@ -150,5 +161,37 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  /* Typography: text-wrap balance for headings */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    font-family: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
   }
 }
+
+/* Utility: Tabular numbers for data */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skill color utilities */
+.text-skill-listening { color: var(--skill-listening); }
+.text-skill-speaking { color: var(--skill-speaking); }
+.text-skill-reading { color: var(--skill-reading); }
+.bg-skill-listening { background-color: var(--skill-listening); }
+.bg-skill-speaking { background-color: var(--skill-speaking); }
+.bg-skill-reading { background-color: var(--skill-reading); }
+

@@ -47,7 +47,7 @@ export function WeeklyActivityChart() {
                           <span className="text-[0.70rem] uppercase text-muted-foreground">
                             Minutes
                           </span>
-                          <span className="font-bold text-muted-foreground">
+                          <span className="font-bold text-foreground tabular-nums">
                             {payload[0].value}
                           </span>
                         </div>

@@ -1,6 +1,7 @@
 import { AuthProvider } from "@/components/providers/auth-provider"
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layouts/app-sidebar"
+import { AppHeader } from "@/components/layouts/app-header"
 
 export default function MainLayout({
   children,
@@ -12,12 +13,8 @@ export default function MainLayout({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="h-4 w-px bg-border mx-2" />
-            <h1 className="font-display font-medium">StudyLanguage</h1>
-          </header>
-          <main className="flex-1 p-6 overflow-auto">
+          <AppHeader />
+          <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}
           </main>
         </SidebarInset>
