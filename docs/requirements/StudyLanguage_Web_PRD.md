@@ -39,9 +39,9 @@ StudyLanguage là ứng dụng web học tiếng Anh thông minh, sử dụng c�
 #### 2.1.1. Xác thực người dùng (Authentication)
 | Tính năng | Mô tả | Trạng thái |
 |:----------|:------|:-----------|
-| Google OAuth Login | Đăng nhập bằng tài khoản Google (Supabase Auth) | ✅ Hoàn thành |
-| Protected Routes | Bảo vệ các trang yêu cầu đăng nhập | ✅ Hoàn thành |
-| Session Management | Quản lý phiên đăng nhập tự động | ✅ Hoàn thành |
+| Google OAuth Login | Đăng nhập bằng tài khoản Google (Supabase Auth) |  |
+| Protected Routes | Bảo vệ các trang yêu cầu đăng nhập |  |
+| Session Management | Quản lý phiên đăng nhập tự động |  |
 
 #### 2.1.2. Giao diện & Chủ đề (UI & Themes)
 
@@ -49,7 +49,6 @@ StudyLanguage là ứng dụng web học tiếng Anh thông minh, sử dụng c�
 | Tính năng | Mô tả |
 |:----------|:------|
 | Theme Toggle | Chuyển đổi giữa Light/Dark/System mode |
-| System Detection | Tự động theo chế độ của hệ điều hành |
 | Persistence | Lưu preference vào localStorage |
 
 **Accent Color System (6 themes):**
@@ -174,7 +173,7 @@ Category (3 main categories)
 | Tính năng | Mô tả |
 |:----------|:------|
 | Add to Queue | Lưu conversation để nghe sau |
-| Queue Drawer | Slide-out panel hiển thị danh sách |
+| Queue List | Hiển thị danh sách |
 | Play from Queue | Phát trực tiếp từ queue |
 | Remove Item | Xóa item khỏi queue |
 | Clear All | Xóa toàn bộ queue (có confirm) |
@@ -280,6 +279,8 @@ Category (3 main categories)
 | Click-to-Lookup | Click vào từ để tra nghĩa |
 | TTS Read Aloud | Nút phát audio đọc bài (OpenAI TTS) |
 | Highlight Words | Highlight từ khi hover |
+| User đọc bài đọc | User đọc bài đọc |
+| AI review | AI đánh giá bài đọc |
 
 #### 2.4.4. Dictionary Popup
 
@@ -348,13 +349,12 @@ interface HistoryEntry {
 | Recent Activities | Hiển thị 5 hoạt động gần nhất trên Home |
 | Date Grouping | Nhóm theo ngày (Hôm nay, Hôm qua, Tuần trước...) |
 | Quick Resume | Click để mở lại bài học |
-| View All Link | Link đến History Drawer đầy đủ |
+| View All Link | Link đến History đầy đủ |
 
-#### 2.5.4. History Drawer
+#### 2.5.4. History List
 
 | Tính năng | Mô tả |
 |:----------|:------|
-| Slide-out Panel | Panel từ bên phải (Sheet component) |
 | Tabs | Tabs cho từng loại bài học |
 | Pagination | Phân trang cho danh sách dài |
 | Detail View | Xem chi tiết entry đã chọn |
@@ -393,9 +393,6 @@ interface HistoryEntry {
 | Section | Mô tả |
 |:--------|:------|
 | User Profile | Avatar, name, email |
-| Learning Streak | Số ngày học liên tục |
-| Daily Goals | Mục tiêu hàng ngày với progress |
-| XP/Level | Điểm kinh nghiệm và level |
 | Quick Settings | Theme toggle, Language switcher |
 | Music Controls | Play/Pause, Volume, Track info |
 | Logout Button | Nút đăng xuất |
@@ -531,14 +528,6 @@ interface HistoryEntry {
 
 ### 4.1. Tính năng theo Module
 
-| Module | Số tính năng chính | Trạng thái |
-|:-------|:-------------------|:-----------|
-| **Core System** | 8 | ✅ Hoàn thành |
-| **Listening** | 12 | ✅ Hoàn thành |
-| **Speaking** | 8 | ✅ Hoàn thành |
-| **Reading** | 6 | ✅ Hoàn thành |
-| **History** | 6 | ✅ Hoàn thành |
-| **UI/UX** | 10 | ✅ Hoàn thành |
 
 ### 4.2. Điểm nổi bật
 
