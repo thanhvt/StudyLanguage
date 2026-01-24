@@ -1,51 +1,189 @@
 "use client"
 
+import * as React from "react"
+import { useRef, useEffect, useMemo } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import type { ConversationLine, ConversationTimestamp } from "@/types/listening-types"
 
-const MOCK_TRANSCRIPT = [
-  { id: 1, speaker: "Barista", text: "Hi there! Welcome to The Daily Grind. What can I get started for you today?", timestamp: "0:00" },
-  { id: 2, speaker: "You", text: "Hi! I'd like a medium latte, please.", timestamp: "0:05" },
-  { id: 3, speaker: "Barista", text: "Sure thing. Would you like that hot or iced?", timestamp: "0:08" },
-  { id: 4, speaker: "You", text: "Iced, please. And could I swap the milk for oat milk?", timestamp: "0:12" },
-  { id: 5, speaker: "Barista", text: "Absolutely. An iced oat milk latte. Anything else to eat with that? We have fresh croissants.", timestamp: "0:16" },
-  { id: 6, speaker: "You", text: "No thanks, just the coffee is fine.", timestamp: "0:22" },
-  { id: 7, speaker: "Barista", text: "No problem. That'll be $5.50. You can tap your card right here.", timestamp: "0:25" },
+interface TranscriptViewerProps {
+  conversation: ConversationLine[]
+  currentTime: number
+  timestamps?: ConversationTimestamp[]
+  onSeek?: (time: number) => void
+  className?: string
+}
+
+// Speaker colors for visual distinction
+const SPEAKER_COLORS = [
+  { bg: "bg-blue-500/15", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/30" },
+  { bg: "bg-emerald-500/15", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/30" },
+  { bg: "bg-violet-500/15", text: "text-violet-600 dark:text-violet-400", border: "border-violet-500/30" },
+  { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30" },
 ]
 
-export function TranscriptViewer() {
-  const activeId = 3 // Mock active line for demo
+function getSpeakerColor(speakerIndex: number) {
+  return SPEAKER_COLORS[speakerIndex % SPEAKER_COLORS.length]
+}
+
+function formatTimestamp(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+export function TranscriptViewer({
+  conversation,
+  currentTime,
+  timestamps,
+  onSeek,
+  className,
+}: TranscriptViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const activeLineRef = useRef<HTMLDivElement>(null)
+
+  // Build speaker map for consistent coloring
+  const speakerMap = useMemo(() => {
+    const map = new Map<string, number>()
+    let index = 0
+    conversation.forEach(line => {
+      if (!map.has(line.speaker)) {
+        map.set(line.speaker, index++)
+      }
+    })
+    return map
+  }, [conversation])
+
+  // Find active line index based on current time
+  const activeLineIndex = useMemo(() => {
+    if (!timestamps || timestamps.length === 0) return -1
+    
+    for (let i = timestamps.length - 1; i >= 0; i--) {
+      if (currentTime >= timestamps[i].startTime) {
+        return i
+      }
+    }
+    return -1
+  }, [currentTime, timestamps])
+
+  // Auto-scroll to active line
+  useEffect(() => {
+    if (activeLineRef.current) {
+      activeLineRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, [activeLineIndex])
+
+  // Handle line click for seeking
+  const handleLineClick = (index: number) => {
+    if (timestamps && timestamps[index] && onSeek) {
+      onSeek(timestamps[index].startTime)
+    }
+  }
+
+  // Format speaker label
+  const getSpeakerLabel = (speaker: string) => {
+    // Convert "Person A" to "Speaker A" or keep as is
+    if (speaker.toLowerCase().startsWith('person')) {
+      return speaker.replace(/person/i, 'Speaker')
+    }
+    return speaker
+  }
+
+  // Determine if speaker should be on left or right (for chat-bubble layout)
+  const isLeftSpeaker = (speaker: string) => {
+    const index = speakerMap.get(speaker) ?? 0
+    return index % 2 === 0
+  }
+
+  if (conversation.length === 0) {
+    return (
+      <div className={cn("flex items-center justify-center h-64 text-muted-foreground", className)}>
+        No conversation to display
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col h-full max-h-[500px] w-full max-w-2xl mx-auto">
-      <h3 className="text-lg font-semibold mb-4 px-4">Transcript</h3>
-      <ScrollArea className="h-full w-full rounded-2xl border bg-card/50 p-4 shadow-inner">
-        <div className="space-y-6">
-          {MOCK_TRANSCRIPT.map((line) => (
-            <div 
-              key={line.id} 
-              className={cn(
-                "transition-all duration-300 ease-in-out px-4 py-2 rounded-lg cursor-pointer hover:bg-muted/50",
-                activeId === line.id ? "scale-105 bg-primary/10 border-l-4 border-primary shadow-sm" : "opacity-70 grayscale"
-              )}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className={cn(
-                  "text-xs font-bold uppercase tracking-wider",
-                  activeId === line.id ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {line.speaker}
-                </span>
-                <span className="text-[10px] text-muted-foreground font-mono">{line.timestamp}</span>
+    <div className={cn("w-full", className)}>
+      <h3 className="text-lg font-semibold mb-4 px-2">Transcript</h3>
+      
+      <ScrollArea className="h-[400px] rounded-2xl border bg-card/30 p-4 shadow-inner">
+        <div ref={containerRef} className="space-y-4">
+          {conversation.map((line, index) => {
+            const isActive = index === activeLineIndex
+            const isPlayed = activeLineIndex >= 0 && index < activeLineIndex
+            const speakerIndex = speakerMap.get(line.speaker) ?? 0
+            const colors = getSpeakerColor(speakerIndex)
+            const isLeft = isLeftSpeaker(line.speaker)
+            const timestamp = timestamps?.[index]
+            
+            return (
+              <div
+                key={line.id || index}
+                ref={isActive ? activeLineRef : null}
+                className={cn(
+                  "flex",
+                  isLeft ? "justify-start" : "justify-end"
+                )}
+              >
+                <div
+                  onClick={() => handleLineClick(index)}
+                  className={cn(
+                    "max-w-[85%] p-4 rounded-2xl transition-all duration-300 cursor-pointer",
+                    "border",
+                    isLeft ? "rounded-tl-sm" : "rounded-tr-sm",
+                    // Active state - highlighted
+                    isActive && [
+                      "scale-[1.02] shadow-lg",
+                      colors.bg,
+                      colors.border,
+                      "ring-2 ring-primary/30"
+                    ],
+                    // Played state - normal
+                    isPlayed && !isActive && [
+                      "bg-muted/30 border-border/30",
+                      "opacity-70"
+                    ],
+                    // Future state - dimmed
+                    !isActive && !isPlayed && [
+                      "bg-muted/20 border-border/20",
+                      "opacity-50 grayscale-[30%]"
+                    ],
+                    // Hover effect
+                    "hover:opacity-100 hover:grayscale-0"
+                  )}
+                >
+                  {/* Speaker Label & Timestamp */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={cn(
+                      "text-xs font-bold uppercase tracking-wider",
+                      isActive ? colors.text : "text-muted-foreground"
+                    )}>
+                      {getSpeakerLabel(line.speaker)}
+                    </span>
+                    {timestamp && (
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {formatTimestamp(timestamp.startTime)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Message Text */}
+                  <p className={cn(
+                    "text-base leading-relaxed",
+                    isActive 
+                      ? "text-foreground font-medium" 
+                      : "text-muted-foreground"
+                  )}>
+                    {line.text}
+                  </p>
+                </div>
               </div>
-              <p className={cn(
-                "text-lg leading-relaxed font-medium",
-                activeId === line.id ? "text-foreground" : "text-muted-foreground"
-              )}>
-                {line.text}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </ScrollArea>
     </div>
