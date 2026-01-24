@@ -280,10 +280,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-lg"
+                  className="w-[calc(var(--radix-dropdown-menu-trigger-width)_-_2px)] min-w-56 rounded-xl shadow-lg"
                   side="top"
                   align="start"
-                  sideOffset={8}
+                  sideOffset={16}
                 >
                   <DropdownMenuLabel className="p-0 font-normal">
                     <div className="flex items-center gap-3 px-3 py-2.5 text-left text-sm">

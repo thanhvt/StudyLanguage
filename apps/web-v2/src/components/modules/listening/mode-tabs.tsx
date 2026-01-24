@@ -9,25 +9,55 @@ type ListeningMode = 'passive' | 'interactive'
 interface ModeTabsProps {
   value: ListeningMode
   onChange: (mode: ListeningMode) => void
+  variant?: 'cards' | 'compact'
   className?: string
 }
 
 const MODES = [
   {
     value: 'passive' as const,
-    label: 'Passive Mode',
+    label: 'Passive', // Shortened label for compact
+    fullLabel: 'Passive Mode',
     description: 'Listen to AI conversations',
     icon: Headphones,
   },
   {
     value: 'interactive' as const,
-    label: 'Interactive Mode',
+    label: 'Interactive', // Shortened label for compact
+    fullLabel: 'Interactive Mode',
     description: 'Join and respond to the conversation',
     icon: Mic,
   },
 ]
 
-export function ModeTabs({ value, onChange, className }: ModeTabsProps) {
+export function ModeTabs({ value, onChange, variant = 'cards', className }: ModeTabsProps) {
+  if (variant === 'compact') {
+    return (
+      <div className={cn("bg-secondary/30 p-1 rounded-xl flex items-center", className)}>
+        {MODES.map((mode) => {
+          const isActive = value === mode.value
+          const Icon = mode.icon
+          
+          return (
+            <button
+              key={mode.value}
+              onClick={() => onChange(mode.value)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
+                isActive 
+                  ? "bg-background shadow-sm text-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              )}
+            >
+              <Icon className="size-4" />
+              {mode.label}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div className={cn("flex gap-3", className)}>
       {MODES.map((mode) => {
@@ -62,7 +92,7 @@ export function ModeTabs({ value, onChange, className }: ModeTabsProps) {
                 "font-semibold transition-colors",
                 isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
               )}>
-                {mode.label}
+                {mode.fullLabel}
               </p>
               <p className="text-xs text-muted-foreground">
                 {mode.description}

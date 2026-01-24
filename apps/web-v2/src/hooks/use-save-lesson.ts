@@ -32,7 +32,7 @@ export function useSaveLesson(): UseSaveLessonReturn {
     try {
       console.log('[useSaveLesson] Đang lưu bài học...', data.type, data.topic);
       
-      const response = await api('/history', {
+      const response = await api('/lessons', {
         method: 'POST',
         body: JSON.stringify({
           type: data.type,

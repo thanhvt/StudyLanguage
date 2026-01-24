@@ -18,10 +18,11 @@ interface ConfigPanelProps {
   onGenerate: () => void
   isGenerating?: boolean
   disabled?: boolean
+  className?: string
 }
 
 const DURATION_OPTIONS = [
-  { value: 5, label: "5 min", description: "Quick practice" },
+  { value: 5, label: "5 min", description: "Quick" },
   { value: 10, label: "10 min", description: "Standard" },
   { value: 15, label: "15 min", description: "Extended" },
 ]
@@ -42,6 +43,7 @@ export function ConfigPanel({
   onGenerate,
   isGenerating = false,
   disabled = false,
+  className
 }: ConfigPanelProps) {
   const [showCustomDuration, setShowCustomDuration] = useState(false)
   const [customDuration, setCustomDuration] = useState(duration.toString())
@@ -65,103 +67,97 @@ export function ConfigPanel({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-4", className)}>
       {/* Duration Selector */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <Clock className="size-4 text-muted-foreground" />
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+          <Clock className="size-3.5" />
           Duration
         </Label>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {DURATION_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => handleDurationSelect(option.value)}
               className={cn(
-                "flex flex-col items-center px-4 py-2.5 rounded-xl border transition-all duration-200",
+                "flex flex-col items-center justify-center py-2 rounded-lg border transition-all duration-200",
                 "hover:border-primary/50 hover:bg-primary/5",
                 duration === option.value && !showCustomDuration
-                  ? "border-primary bg-primary/10 text-primary shadow-sm shadow-primary/20"
+                  ? "border-primary bg-primary/10 text-primary shadow-sm"
                   : "border-border/50 bg-secondary/20"
               )}
             >
               <span className="font-semibold text-sm">{option.label}</span>
-              <span className="text-[10px] text-muted-foreground">{option.description}</span>
             </button>
           ))}
           
           {/* Custom Duration */}
-          {showCustomDuration ? (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-primary bg-primary/10">
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={customDuration}
-                onChange={handleCustomDurationChange}
-                className="w-12 text-center bg-transparent border-none outline-none font-semibold text-sm"
-                autoFocus
-              />
-              <span className="text-xs text-muted-foreground">min</span>
-            </div>
-          ) : (
-            <button
-              onClick={handleCustomDuration}
-              className={cn(
-                "flex flex-col items-center px-4 py-2.5 rounded-xl border transition-all duration-200",
-                "border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5",
-                "text-muted-foreground hover:text-foreground"
-              )}
-            >
+          <button
+            onClick={handleCustomDuration}
+            className={cn(
+              "flex flex-col items-center justify-center py-2 rounded-lg border transition-all duration-200",
+              "border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5",
+              showCustomDuration 
+                ? "border-primary bg-primary/10 text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {showCustomDuration ? (
+               <input
+               type="number"
+               min={1}
+               max={20}
+               value={customDuration}
+               onClick={(e) => e.stopPropagation()}
+               onChange={handleCustomDurationChange}
+               className="w-full text-center bg-transparent border-none outline-none font-semibold text-sm"
+               autoFocus
+             />
+            ) : (
               <span className="font-semibold text-sm">Custom</span>
-              <span className="text-[10px]">1-20 min</span>
-            </button>
-          )}
+            )}
+          </button>
         </div>
       </div>
 
       {/* Speakers Selector */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <Users className="size-4 text-muted-foreground" />
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+          <Users className="size-3.5" />
           Speakers
         </Label>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {SPEAKER_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => setSpeakers(option.value)}
               className={cn(
-                "flex flex-col items-center px-5 py-2.5 rounded-xl border transition-all duration-200",
+                "flex items-center justify-center gap-2 py-2 rounded-lg border transition-all duration-200",
                 "hover:border-primary/50 hover:bg-primary/5",
                 speakers === option.value
-                  ? "border-primary bg-primary/10 text-primary shadow-sm shadow-primary/20"
+                  ? "border-primary bg-primary/10 text-primary shadow-sm"
                   : "border-border/50 bg-secondary/20"
               )}
             >
-              <span className="font-semibold text-lg">{option.label}</span>
-              <span className="text-[10px] text-muted-foreground">{option.description}</span>
+              <span className="font-semibold">{option.label}</span>
+              <span className="text-xs opacity-70">{option.description}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Keywords Input */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <Tag className="size-4 text-muted-foreground" />
-          Keywords
-          <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+          <Tag className="size-3.5" />
+          Keywords <span className="normal-case opacity-50 font-normal">(opt)</span>
         </Label>
         <Textarea
-          placeholder="E.g., reservation, room service, check-out, discount..."
+          placeholder="E.g., reservation, room service..."
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          className="resize-none h-20 bg-secondary/20 border-border/50 focus:border-primary/50"
+          className="resize-none h-16 min-h-[64px] bg-secondary/20 border-border/50 focus:border-primary/50 text-sm"
         />
-        <p className="text-xs text-muted-foreground">
-          Add specific vocabulary or phrases you want to practice
-        </p>
       </div>
 
       {/* Generate Button */}
@@ -169,22 +165,21 @@ export function ConfigPanel({
         onClick={onGenerate}
         disabled={disabled || isGenerating}
         className={cn(
-          "w-full h-12 text-base font-semibold",
+          "w-full h-11 text-base font-semibold mt-2",
           "bg-gradient-to-r from-skill-listening to-primary",
           "hover:shadow-lg hover:shadow-primary/25 transition-all duration-300",
           "disabled:opacity-50 disabled:cursor-not-allowed"
         )}
-        size="lg"
       >
         {isGenerating ? (
           <>
-            <div className="size-5 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Generating Conversation...
+            <div className="size-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Generating...
           </>
         ) : (
           <>
-            <Sparkles className="size-5 mr-2" />
-            Generate Conversation
+            <Sparkles className="size-4 mr-2" />
+            Generate
           </>
         )}
       </Button>

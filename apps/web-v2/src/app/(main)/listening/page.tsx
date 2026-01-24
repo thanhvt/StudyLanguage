@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { Headphones, Sparkles, History, ListMusic } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useCallback, useEffect } from "react"
+import { Headphones, History, ListMusic } from "lucide-react"
 import { FeatureHeader } from "@/components/shared"
 import { 
   TopicPicker, 
@@ -10,36 +9,42 @@ import {
   ModeTabs,
   SessionPlayer,
   InteractiveMode,
-  RadioMode
+  RadioMode,
+  PlaylistPanel,
+  HistoryPanel
 } from "@/components/modules/listening"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { generateConversation, generateConversationAudio } from "@/lib/api"
+import { useListeningHistory } from "@/hooks/use-listening-history"
+import { useListeningPlaylist } from "@/hooks/use-listening-playlist"
 import type { 
   TopicScenario, 
   ConversationLine, 
   ConversationTimestamp,
-  ListeningSession 
+  HistoryEntry,
+  Playlist
 } from "@/types/listening-types"
 
 type ListeningMode = 'passive' | 'interactive'
 type ViewState = 'config' | 'playing' | 'interactive'
 
-// Mock conversation for development (remove when API is integrated)
+// Mock conversation for development
 const MOCK_CONVERSATION: ConversationLine[] = [
   { id: '1', speaker: 'Person A', text: "Good morning! I'd like to check in, please.", timestamp: '0:00' },
   { id: '2', speaker: 'Person B', text: "Good morning, sir! Do you have a reservation with us?", timestamp: '0:03' },
-  { id: '3', speaker: 'Person A', text: "Yes, I booked a room online. The name is John Smith.", timestamp: '0:07' },
-  { id: '4', speaker: 'Person B', text: "Let me check... Yes, I found it. You have a deluxe room for three nights, is that correct?", timestamp: '0:12' },
-  { id: '5', speaker: 'Person A', text: "That's right. Is breakfast included?", timestamp: '0:18' },
-  { id: '6', speaker: 'Person B', text: "Yes, breakfast is included. It's served from 7 AM to 10 AM in our restaurant on the second floor.", timestamp: '0:22' },
-  { id: '7', speaker: 'Person A', text: "Perfect. And what time is check-out?", timestamp: '0:28' },
-  { id: '8', speaker: 'Person B', text: "Check-out is at 11 AM. Would you like a wake-up call?", timestamp: '0:32' },
 ]
 
 export default function ListeningPage() {
   // Mode & View state
   const [mode, setMode] = useState<ListeningMode>('passive')
   const [viewState, setViewState] = useState<ViewState>('config')
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState(false)
+
+  // Hooks
+  const history = useListeningHistory()
+  const playlists = useListeningPlaylist()
 
   // Config state
   const [selectedTopic, setSelectedTopic] = useState<TopicScenario | null>(null)
@@ -80,6 +85,11 @@ export default function ListeningPage() {
   const handleGenerate = useCallback(async () => {
     if (!selectedTopic) return
 
+    if (mode === 'interactive') {
+      setViewState('interactive')
+      return
+    }
+
     setIsGenerating(true)
     setError(null)
 
@@ -102,36 +112,41 @@ export default function ListeningPage() {
       setConversation(conversationWithIds)
       setViewState('playing')
 
+      // Save to history
+      history.addEntry({
+        type: 'listening',
+        topic: selectedTopic.name,
+        content: { script: conversationWithIds },
+        durationMinutes: duration,
+        numSpeakers: speakers,
+        keywords: keywords,
+        mode: 'passive',
+        userNotes: `Generated conversation about ${selectedTopic.name}`,
+      })
+
       // Generate audio in background
       setIsGeneratingAudio(true)
       try {
         const audioResponse = await generateConversationAudio(conversationWithIds)
         setAudioUrl(audioResponse.audioUrl)
         setTimestamps(audioResponse.timestamps)
+        
+        // Update history with audio? (Hook doesn't support update yet, but simple add is fine for now)
       } catch (audioError) {
         console.error('Audio generation failed:', audioError)
-        // Continue without audio - user can still read transcript
       } finally {
         setIsGeneratingAudio(false)
       }
 
     } catch (err) {
       console.error('Generation failed:', err)
-      
-      // Fallback to mock data for development
-      console.log('Using mock data for development')
+      // Fallback
       setConversation(MOCK_CONVERSATION)
       setViewState('playing')
-      
-      // Mock timestamps
-      setTimestamps(MOCK_CONVERSATION.map((_, i) => ({
-        startTime: i * 4,
-        endTime: (i + 1) * 4,
-      })))
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedTopic, duration, speakers, keywords])
+  }, [selectedTopic, duration, speakers, keywords, mode, history])
 
   // Reset to config view
   const handleReset = useCallback(() => {
@@ -139,59 +154,60 @@ export default function ListeningPage() {
     setConversation([])
     setAudioUrl(undefined)
     setTimestamps(undefined)
-    setSelectedTopic(null)
-    setSelectedCategory('')
-    setSelectedSubCategory('')
-    setKeywords('')
   }, [])
 
-  // Handle mode change
-  const handleModeChange = useCallback((newMode: ListeningMode) => {
-    setMode(newMode)
-    // Reset state when changing modes
-    if (viewState === 'playing') {
-      handleReset()
-    }
-  }, [viewState, handleReset])
+  // Play from History/Playlist
+  const handlePlaySession = (conversation: ConversationLine[], topicName: string) => {
+    // In a real app we'd load the full topic object, for now we mock it or assume simple display
+    setSelectedTopic({ id: 'history', name: topicName, description: 'From History' })
+    setConversation(conversation)
+    setViewState('playing')
+    setIsHistoryOpen(false)
+    setIsPlaylistOpen(false)
+  }
 
   return (
-    <div className="flex flex-col gap-8 pb-24 max-w-5xl mx-auto">
+    <div className="flex flex-col lg:h-[calc(100vh-6rem)] h-auto gap-4 pb-4 px-4 lg:px-0">
       {/* Header */}
-      <FeatureHeader
-        icon={Headphones}
-        colorScheme="listening"
-        title="Listening Practice"
-        subtitle="140+ scenarios • AI-powered conversations"
-        actions={[
-          { icon: History, label: "History", onClick: () => {} },
-          { icon: ListMusic, label: "Playlists", onClick: () => {} },
-        ]}
-      />
+      <div className="flex-none">
+        <FeatureHeader
+          icon={Headphones}
+          colorScheme="listening"
+          title="Listening Practice"
+          subtitle="140+ scenarios • AI-powered"
+          actions={[
+            { icon: History, label: "History", onClick: () => setIsHistoryOpen(true) },
+            { icon: ListMusic, label: "Playlists", onClick: () => setIsPlaylistOpen(true) },
+          ]}
+        />
+      </div>
 
-      {/* Mode Tabs - Only show in config view */}
-      {viewState === 'config' && (
-        <ModeTabs value={mode} onChange={handleModeChange} />
-      )}
+      {/* Main Content Area - Flexible height on desktop, Auto on mobile */}
+      <div className="flex-1 lg:min-h-0 relative">
+        {/* View: Config */}
+        {viewState === 'config' && (
+          <div className="lg:h-full grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20 lg:pb-0">
+            {/* Left Column: Topic Picker */}
+            <div className="lg:col-span-8 lg:h-full flex flex-col min-h-0 order-2 lg:order-1">
+              <TopicPicker 
+                onSelect={handleTopicSelect}
+                selectedTopic={selectedTopic}
+                className="lg:h-full h-[500px]" 
+              />
+            </div>
 
-      {/* Config View */}
-      {viewState === 'config' && mode === 'passive' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Topic Picker - Main Column */}
-          <div className="lg:col-span-7">
-            <TopicPicker 
-              onSelect={handleTopicSelect}
-              selectedTopic={selectedTopic}
-            />
-          </div>
+            {/* Right Column: Config */}
+            <div className="lg:col-span-4 flex flex-col gap-4 lg:overflow-y-auto pr-1 order-1 lg:order-2">
+              {/* Mode Switcher */}
+              <ModeTabs 
+                value={mode} 
+                onChange={setMode} 
+                variant="compact"
+                className="flex-none"
+              />
 
-          {/* Config Panel - Sidebar */}
-          <div className="lg:col-span-5">
-            <div className="sticky top-4 space-y-6">
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Sparkles className="size-5 text-primary" />
-                  Configuration
-                </h3>
+              {/* Config Panel */}
+              <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm flex-none">
                 <ConfigPanel
                   duration={duration}
                   setDuration={setDuration}
@@ -205,95 +221,86 @@ export default function ListeningPage() {
                 />
               </div>
 
-              {/* Quick Tips */}
-              <div className="p-4 rounded-xl bg-secondary/30 border border-border/50">
-                <h4 className="font-medium text-sm mb-2">💡 Quick Tips</h4>
-                <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li>• Choose a topic that interests you</li>
-                  <li>• Start with 5-minute conversations</li>
-                  <li>• Add keywords for specific vocabulary</li>
-                  <li>• Use favorites ⭐ to save topics</li>
-                </ul>
+              {/* Radio Mode & Tips */}
+              <div className="flex-none space-y-3">
+                <RadioMode 
+                  onPlaylistGenerated={(duration, count) => {
+                    console.log(`Generated: ${count} tracks`)
+                  }}
+                />
               </div>
-
-              {/* Radio Mode Button */}
-              <RadioMode 
-                onPlaylistGenerated={(duration, count) => {
-                  console.log(`Generated playlist: ${count} tracks, ${duration} min`)
-                  // TODO: Implement playlist playback
-                }}
-              />
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Interactive Mode Config */}
-      {viewState === 'config' && mode === 'interactive' && (
-        <div className="max-w-2xl mx-auto w-full">
-          <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-sm space-y-6">
-            <div className="text-center space-y-2">
-              <div className="size-16 rounded-full bg-gradient-to-br from-skill-listening to-primary mx-auto flex items-center justify-center">
-                <Headphones className="size-8 text-white" />
-              </div>
-              <h2 className="text-xl font-bold">Interactive Listening</h2>
-              <p className="text-muted-foreground text-sm">
-                Join the conversation! AI will pause for you to respond.
-              </p>
-            </div>
-
-            <TopicPicker 
-              onSelect={handleTopicSelect}
-              selectedTopic={selectedTopic}
-            />
-
-            <ConfigPanel
+        {/* View: Interactive Mode */}
+        {viewState === 'interactive' && selectedTopic && (
+          <div className="h-full flex flex-col">
+            <InteractiveMode
+              topic={selectedTopic}
               duration={duration}
-              setDuration={setDuration}
-              speakers={speakers}
-              setSpeakers={setSpeakers}
-              keywords={keywords}
-              setKeywords={setKeywords}
-              onGenerate={() => {
-                if (selectedTopic) {
-                  setViewState('interactive')
-                }
-              }}
-              isGenerating={false}
-              disabled={!selectedTopic}
+              onBack={handleReset}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Interactive Mode View */}
-      {viewState === 'interactive' && selectedTopic && (
-        <InteractiveMode
-          topic={selectedTopic}
-          duration={duration}
-          onBack={handleReset}
-        />
-      )}
+        {/* View: Playing */}
+        {viewState === 'playing' && selectedTopic && (
+          <div className="lg:h-full h-[80vh] overflow-y-auto">
+            <SessionPlayer
+              topic={selectedTopic}
+              category={selectedCategory}
+              subCategory={selectedSubCategory}
+              conversation={conversation}
+              duration={duration}
+              speakers={speakers}
+              audioUrl={audioUrl}
+              timestamps={timestamps}
+              isGeneratingAudio={isGeneratingAudio}
+              onReset={handleReset}
+            />
+          </div>
+        )}
+      </div>
 
-      {/* Playing View */}
-      {viewState === 'playing' && selectedTopic && (
-        <SessionPlayer
-          topic={selectedTopic}
-          category={selectedCategory}
-          subCategory={selectedSubCategory}
-          conversation={conversation}
-          duration={duration}
-          speakers={speakers}
-          audioUrl={audioUrl}
-          timestamps={timestamps}
-          isGeneratingAudio={isGeneratingAudio}
-          onReset={handleReset}
-        />
-      )}
+      {/* History Dialog */}
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle className="sr-only">Listening History</DialogTitle>
+          <HistoryPanel 
+            history={history.history}
+            onPlaySession={(entry) => {
+              if (entry.content.script) {
+                handlePlaySession(entry.content.script, entry.topic)
+              }
+            }}
+            onToggleFavorite={history.toggleFavorite}
+            onClearHistory={history.clearHistory}
+          />
+        </DialogContent>
+      </Dialog>
 
-      {/* Error Display */}
+      {/* Playlist Dialog */}
+      <Dialog open={isPlaylistOpen} onOpenChange={setIsPlaylistOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle className="sr-only">Your Playlists</DialogTitle>
+          <PlaylistPanel
+            playlists={playlists.playlists}
+            onCreatePlaylist={playlists.createPlaylist}
+            onDeletePlaylist={playlists.deletePlaylist}
+            onRenamePlaylist={playlists.updatePlaylistName}
+            onPlayPlaylist={(playlist) => {
+              // Create a combined conversation from all items? Or just play first?
+              // For now, playing logic is complex for multi-item. We'll just confirm play
+              console.log('Play playlist', playlist)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Toast/Overlay */}
       {error && (
-        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm backdrop-blur-md shadow-lg z-50 w-[90%] lg:w-auto text-center">
           {error}
         </div>
       )}

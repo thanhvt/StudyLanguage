@@ -13,6 +13,7 @@ import { ReadingConfigForm } from "@/components/modules/reading/reading-config-f
 import { ArticleViewer } from "@/components/modules/reading/article-viewer"
 import { ReadingQuiz } from "@/components/modules/reading/reading-quiz"
 import { AIThinkingIndicator } from "@/components/modules/reading/reading-skeleton"
+import { ReadingPracticeModal } from "@/components/modules/reading/reading-practice-modal"
 import { HistoryDrawer } from "@/components/history"
 import { useReading, ReadingArticle } from "@/hooks/use-reading"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
@@ -112,31 +113,39 @@ export default function ReadingPage() {
         onOpenEntry={handleOpenHistoryEntry}
       />
 
+      {/* Header Section */}
       {focusMode ? (
-        /* Focus Mode: Minimal sticky header */
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md -mx-4 md:-mx-6 px-4 md:px-6 py-4 mb-6 border-b border-transparent">
-          <div className="flex items-center justify-between max-w-3xl mx-auto">
-            <Button variant="ghost" size="sm" onClick={() => setFocusMode(false)} className="gap-2">
+        /* Focus Mode Header */
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/40 mb-8 transition-all">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={() => setFocusMode(false)} className="gap-2 text-muted-foreground hover:text-foreground">
               <Minimize2 className="size-4" />
-              Exit Focus Mode
+              Thoát Focus Mode
             </Button>
-            <div className="flex items-center gap-2 bg-secondary/50 rounded-full px-4 py-1.5 border border-border/50">
-              <Switch 
-                id="focus-mode" 
-                checked={focusMode} 
-                onCheckedChange={setFocusMode} 
-              />
-              <Label htmlFor="focus-mode" className="text-sm font-medium cursor-pointer">
-                Focus Mode
-              </Label>
+            
+            <div className="flex items-center gap-3">
+               {article && (
+                 <span className="text-sm font-medium hidden sm:inline-block">
+                   {article.title}
+                 </span>
+               )}
+               <div className="flex items-center gap-2 bg-secondary/50 rounded-full px-4 py-1.5 border border-border/50">
+                <Switch 
+                  id="focus-mode-active" 
+                  checked={focusMode} 
+                  onCheckedChange={setFocusMode} 
+                />
+                <Label htmlFor="focus-mode-active" className="text-sm font-medium cursor-pointer">
+                  Focus Mode
+                </Label>
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        /* Normal Mode: Wrapped in max-w-5xl for consistent layout */
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+        /* Normal Header */
+        <div className="max-w-5xl mx-auto mb-8 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className={cn(
                 "size-12 rounded-xl flex items-center justify-center",
@@ -151,8 +160,7 @@ export default function ReadingPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Focus Mode Toggle */}
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
               {article && (
                 <div className="flex items-center gap-2 bg-secondary/50 rounded-full px-4 py-1.5 border border-border/50">
                   <Switch 
@@ -166,99 +174,121 @@ export default function ReadingPage() {
                 </div>
               )}
 
-              {/* History Button */}
               <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} className="gap-2">
                 <History className="size-4" />
-                <span className="hidden sm:inline">History</span>
+                <span className="hidden sm:inline">Lịch sử</span>
               </Button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Content */}
-          <div className={cn(
-            "max-w-3xl mx-auto transition-all duration-700",
-            focusMode ? "py-4" : ""
-          )}>
-        {/* Step 1: Config Form (Show when no article) */}
+      {/* Main Content Area */}
+      <div className={cn(
+        "mx-auto transition-all duration-500 px-4 sm:px-6",
+        focusMode ? "max-w-7xl" : "max-w-5xl"
+      )}>
+        {/* Step 1: Config Form */}
         {!article && !isGenerating && (
-          <ReadingConfigForm 
-            onGenerate={handleGenerate} 
-            isGenerating={isGenerating}
-          />
+          <div className="max-w-2xl mx-auto py-8">
+            <ReadingConfigForm 
+              onGenerate={handleGenerate} 
+              isGenerating={isGenerating}
+            />
+          </div>
         )}
 
         {/* Loading State */}
         {isGenerating && (
-          <AIThinkingIndicator message="AI đang tạo bài đọc..." />
+          <div className="max-w-2xl mx-auto py-12">
+            <AIThinkingIndicator message="AI đang tạo bài đọc..." />
+          </div>
         )}
 
-        {/* Step 2: Article + Quiz (Show when article exists) */}
+        {/* Step 2: Article + Quiz (2-Column Layout) */}
         {article && !isGenerating && (
-          <div className="space-y-8">
-            {/* Article Header */}
-            <div className="text-center space-y-4">
-              {article.title && (
-                <>
-                  <span className="text-xs font-bold tracking-widest uppercase text-primary">
-                    {currentDifficulty === 'basic' ? 'Level A1-A2' : 'Level B1-B2'}
-                  </span>
-                  <h2 className="text-3xl md:text-4xl font-display font-bold leading-tight">
-                    {article.title}
-                  </h2>
-                </>
-              )}
+          <div className="relative">
+            {/* Toolbar / Metadata Bar */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl">
+              <div className="flex items-center gap-4">
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase",
+                  currentDifficulty === 'basic' 
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                )}>
+                  {currentDifficulty === 'basic' ? 'Level A1-A2' : 'Level B1-B2'}
+                </span>
+                <h2 className="text-lg font-bold truncate max-w-[200px] sm:max-w-md">
+                  {article.title}
+                </h2>
+              </div>
               
-              {/* Reset Button */}
-              <div className="flex items-center justify-center">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleReset}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="size-4 mr-2" />
-                  Làm bài mới
-                </Button>
+              <div className="flex items-center gap-2">
+                 <ReadingPracticeModal 
+                    articleContent={article.article}
+                    onSave={() => {
+                       // Optional: Save to history specific for speaking
+                    }} 
+                 />
+                 <Button 
+                   variant="ghost" 
+                   size="sm" 
+                   onClick={handleReset}
+                   className="text-muted-foreground hover:text-foreground h-8"
+                 >
+                   <RotateCcw className="size-3.5 mr-2" />
+                   Làm bài mới
+                 </Button>
               </div>
             </div>
 
-            {/* Article Content */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6 md:p-8">
-                <p className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
-                  💡 <span>Click vào từ để tra từ điển</span>
-                </p>
-                <ArticleViewer 
-                  content={article.article} 
-                />
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+              {/* Left Column: Article (7 cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-sm">
+                  <CardContent className="p-6 md:p-8">
+                    <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground bg-primary/5 p-2 rounded-lg w-fit">
+                      <span className="text-lg">💡</span> 
+                      <span>Click vào từ bất kỳ để tra nghĩa</span>
+                    </div>
+                    <ArticleViewer 
+                      content={article.article}
+                      className={cn(
+                        "font-serif text-lg leading-loose",
+                        focusMode && "text-xl leading-loose"
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
 
-            {/* Quiz */}
-            {article.questions && article.questions.length > 0 && (
-              <ReadingQuiz 
-                questions={article.questions}
-                onComplete={handleQuizComplete}
-                onReset={handleReset}
-              />
-            )}
+              {/* Right Column: Quiz (5 cols) */}
+              <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                <ReadingQuiz 
+                  questions={article.questions}
+                  onComplete={handleQuizComplete}
+                  onReset={handleReset}
+                />
+              </div>
+            </div>
           </div>
         )}
 
         {/* Error State */}
         {error && !isGenerating && (
-          <Card className="border-destructive/50 bg-destructive/5">
-            <CardContent className="p-6 text-center">
-              <p className="text-destructive font-medium mb-4">{error}</p>
-              <Button variant="outline" onClick={handleReset}>
-                Thử lại
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          <div className="max-w-md mx-auto py-12">
+            <Card className="border-destructive/50 bg-destructive/5">
+              <CardContent className="p-6 text-center">
+                <p className="text-destructive font-medium mb-4">{error}</p>
+                <Button variant="outline" onClick={handleReset}>
+                  Thử lại
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
