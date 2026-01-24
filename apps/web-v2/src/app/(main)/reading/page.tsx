@@ -5,6 +5,7 @@ import { BookOpen, Minimize2, RotateCcw, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { FeatureHeader } from "@/components/shared"
 import { cn } from "@/lib/utils"
@@ -227,8 +228,18 @@ export default function ReadingPage() {
               <div className="flex items-center gap-2">
                  <ReadingPracticeModal 
                     articleContent={article.article}
-                    onSave={() => {
-                       // Optional: Save to history specific for speaking
+                    onSave={async (result) => {
+                       await saveLesson({
+                         type: 'speaking', // Saving as speaking practice
+                         topic: `Practice: ${article.title}`,
+                         content: {
+                           articleTitle: article.title,
+                           feedback: result,
+                         },
+                         mode: 'interactive',
+                         status: 'completed'
+                       })
+                       toast.success('Đã lưu kết quả luyện đọc')
                     }} 
                  />
                  <Button 

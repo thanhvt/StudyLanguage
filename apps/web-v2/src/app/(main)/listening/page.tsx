@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { generateConversation, generateConversationAudio } from "@/lib/api"
 import { useListeningHistory } from "@/hooks/use-listening-history"
 import { useListeningPlaylist } from "@/hooks/use-listening-playlist"
+import { useSaveLesson } from "@/hooks/use-save-lesson"
 import type { 
   TopicScenario, 
   ConversationLine, 
@@ -45,6 +46,7 @@ export default function ListeningPage() {
   // Hooks
   const history = useListeningHistory()
   const playlists = useListeningPlaylist()
+  const { saveLesson } = useSaveLesson()
 
   // Config state
   const [selectedTopic, setSelectedTopic] = useState<TopicScenario | null>(null)
@@ -112,8 +114,8 @@ export default function ListeningPage() {
       setConversation(conversationWithIds)
       setViewState('playing')
 
-      // Save to history
-      history.addEntry({
+      // Save to history (Database)
+      await saveLesson({
         type: 'listening',
         topic: selectedTopic.name,
         content: { script: conversationWithIds },
@@ -121,8 +123,11 @@ export default function ListeningPage() {
         numSpeakers: speakers,
         keywords: keywords,
         mode: 'passive',
-        userNotes: `Generated conversation about ${selectedTopic.name}`,
+        status: 'completed'
       })
+      
+      // Refresh history list
+      history.refreshHistory()
 
       // Generate audio in background
       setIsGeneratingAudio(true)
@@ -131,7 +136,9 @@ export default function ListeningPage() {
         setAudioUrl(audioResponse.audioUrl)
         setTimestamps(audioResponse.timestamps)
         
-        // Update history with audio? (Hook doesn't support update yet, but simple add is fine for now)
+        // Update history with audio? (The audio URL is saved, but we might need to update the lesson record text time)
+        // For now, saveLesson created the record. We might need a way to update it.
+        // But let's keep it simple as per plan.
       } catch (audioError) {
         console.error('Audio generation failed:', audioError)
       } finally {
@@ -146,7 +153,7 @@ export default function ListeningPage() {
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedTopic, duration, speakers, keywords, mode, history])
+  }, [selectedTopic, duration, speakers, keywords, mode, history, saveLesson])
 
   // Reset to config view
   const handleReset = useCallback(() => {
