@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { Headphones, Sparkles, History, ListMusic } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { FeatureHeader } from "@/components/shared"
 import { 
   TopicPicker, 
   ConfigPanel, 
@@ -157,37 +157,16 @@ export default function ListeningPage() {
   return (
     <div className="flex flex-col gap-8 pb-24 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "size-14 rounded-2xl flex items-center justify-center",
-            "bg-gradient-to-br from-skill-listening to-primary",
-            "shadow-lg shadow-skill-listening/30"
-          )}>
-            <Headphones className="size-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-display font-bold">Listening Practice</h1>
-            <p className="text-muted-foreground">
-              140+ scenarios • AI-powered conversations
-            </p>
-          </div>
-        </div>
-
-        {/* Header Actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <History className="size-4" />
-            <span className="hidden sm:inline">History</span>
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <ListMusic className="size-4" />
-            <span className="hidden sm:inline">Playlists</span>
-          </Button>
-        </div>
-      </div>
-
-      <Separator />
+      <FeatureHeader
+        icon={Headphones}
+        colorScheme="listening"
+        title="Listening Practice"
+        subtitle="140+ scenarios • AI-powered conversations"
+        actions={[
+          { icon: History, label: "History", onClick: () => {} },
+          { icon: ListMusic, label: "Playlists", onClick: () => {} },
+        ]}
+      />
 
       {/* Mode Tabs - Only show in config view */}
       {viewState === 'config' && (

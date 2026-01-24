@@ -327,15 +327,21 @@ export default function SpeakingPage() {
   // SETUP MODE
   if (viewMode === "setup") {
     return (
-      <SetupScreen
-        topic={topic}
-        onTopicChange={setTopic}
-        duration={duration}
-        onDurationChange={setDuration}
-        feedbackMode={feedbackMode}
-        onFeedbackModeChange={setFeedbackMode}
-        onStart={startSession}
-      />
+      <div className="max-w-5xl mx-auto">
+        <SetupScreen
+          topic={topic}
+          onTopicChange={setTopic}
+          duration={duration}
+          onDurationChange={setDuration}
+          feedbackMode={feedbackMode}
+          onFeedbackModeChange={setFeedbackMode}
+          onStart={startSession}
+          onHistoryClick={() => {
+            // TODO: Implement history drawer for speaking
+            console.log("Open speaking history")
+          }}
+        />
+      </div>
     )
   }
 

@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { FeatureHeader } from "@/components/shared"
 import { TopicPicker } from "./topic-picker"
 import { Mic, Phone, Clock, Sparkles, Search, History, Settings2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -53,27 +54,18 @@ export function SetupScreen({
   const [isTopicPickerOpen, setIsTopicPickerOpen] = useState(false)
 
   return (
-    <div className="flex flex-col h-full p-4 lg:p-6">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Mic className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">
-              Speaking Practice
-            </h1>
-            <p className="text-sm text-muted-foreground">AI Conversation Coach</p>
-          </div>
-        </div>
-        {onHistoryClick && (
-          <Button variant="outline" size="sm" onClick={onHistoryClick} className="gap-2">
-            <History className="w-4 h-4" />
-            History
-          </Button>
-        )}
-      </div>
+      <FeatureHeader
+        icon={Mic}
+        colorScheme="speaking"
+        title="Speaking Practice"
+        subtitle="AI Conversation Coach"
+        actions={onHistoryClick ? [
+          { icon: History, label: "History", onClick: onHistoryClick },
+        ] : []}
+        className="mb-6"
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center">
