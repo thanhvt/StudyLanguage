@@ -60,25 +60,19 @@ function LoadingOverlay({ isRedirecting }: { isRedirecting: boolean }) {
   )
 }
 
-// Feature pill component with stagger animation
+// Feature pill component - FIXED: removed opacity-0 animation that causes blank screen
 function FeaturePill({ 
   icon: Icon, 
   label, 
   color, 
-  delay 
 }: { 
   icon: typeof Headphones
   label: string
   color: string
-  delay: number 
 }) {
   return (
     <div 
-      className={cn(
-        "flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border/50 rounded-full px-4 py-2 shadow-sm",
-        "opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
-      )}
-      style={{ animationDelay: `${delay}ms` }}
+      className="flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border/50 rounded-full px-4 py-2 shadow-sm transition-transform hover:scale-105"
     >
       <Icon className={cn("size-4", color)} />
       <span className="text-sm font-medium">{label}</span>
@@ -91,9 +85,15 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   // Get redirect URL from query params
   const redirectTo = searchParams.get("redirectTo") || "/"
+
+  // Track when component is mounted for animations
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (user && !loading) {
@@ -115,7 +115,7 @@ function LoginContent() {
     }
   }
 
-  // Initial loading state
+  // Initial loading state - show centered spinner
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -130,7 +130,7 @@ function LoginContent() {
     )
   }
 
-  // Success state - user is logged in
+  // Success state - user is logged in, redirecting
   if (user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -145,6 +145,7 @@ function LoginContent() {
     )
   }
 
+  // Main login UI - FIXED: no opacity-0 for initial render
   return (
     <>
       <LoadingOverlay isRedirecting={isRedirecting} />
@@ -162,50 +163,40 @@ function LoginContent() {
           <div className="absolute bottom-20 right-20 size-40 rounded-full bg-secondary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
 
           <div className="max-w-md text-center z-10 space-y-8">
-            {/* Logo with entrance animation */}
-            <div 
-              className="flex justify-center mb-6 opacity-0 animate-in fade-in zoom-in duration-500 fill-mode-forwards"
-            >
-              <div className="size-20 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/30 relative group">
+            {/* Logo - always visible, no opacity animation */}
+            <div className="flex justify-center mb-6">
+              <div className={cn(
+                "size-20 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/30 relative group",
+                "transition-transform duration-500",
+                mounted && "scale-100"
+              )}>
                 <div className="absolute inset-0 rounded-2xl bg-primary/50 blur-xl group-hover:blur-2xl transition-all opacity-50" />
                 <Sparkles className="size-10 text-primary-foreground relative" />
               </div>
             </div>
             
-            {/* Title with entrance animation */}
-            <h1 
-              className="text-4xl font-display font-bold leading-tight opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
-              style={{ animationDelay: '100ms' }}
-            >
+            {/* Title - always visible */}
+            <h1 className="text-4xl font-display font-bold leading-tight">
               Learn English with <span className="text-primary">AI-Powered</span> Conversations
             </h1>
             
-            {/* Subtitle */}
-            <p 
-              className="text-lg text-muted-foreground opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
-              style={{ animationDelay: '200ms' }}
-            >
+            {/* Subtitle - always visible */}
+            <p className="text-lg text-muted-foreground">
               Practice Listening, Speaking, and Reading with personalized content generated just for you.
             </p>
 
-            {/* Feature Pills with stagger animation */}
+            {/* Feature Pills - always visible */}
             <div className="flex flex-wrap justify-center gap-3 pt-4">
-              <FeaturePill icon={Headphones} label="Listening" color="text-blue-500" delay={300} />
-              <FeaturePill icon={Mic} label="Speaking" color="text-green-500" delay={400} />
-              <FeaturePill icon={BookOpen} label="Reading" color="text-purple-500" delay={500} />
+              <FeaturePill icon={Headphones} label="Listening" color="text-blue-500" />
+              <FeaturePill icon={Mic} label="Speaking" color="text-green-500" />
+              <FeaturePill icon={BookOpen} label="Reading" color="text-purple-500" />
             </div>
           </div>
         </div>
 
-        {/* Right: Login Form Section */}
+        {/* Right: Login Form Section - always visible */}
         <div className="flex flex-col justify-center items-center p-8 bg-background">
-          <Card 
-            className={cn(
-              "w-full max-w-md shadow-2xl border-border/50",
-              "opacity-0 animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-forwards lg:slide-in-from-bottom-4"
-            )}
-            style={{ animationDelay: '200ms' }}
-          >
+          <Card className="w-full max-w-md shadow-2xl border-border/50">
             <CardHeader className="text-center space-y-2">
               {/* Mobile Logo */}
               <div className="flex justify-center lg:hidden mb-4">
@@ -224,7 +215,7 @@ function LoginContent() {
                 size="lg"
                 className={cn(
                   "w-full h-12 text-base font-medium gap-3",
-                  "hover:bg-muted/50 hover:border-primary/50 transition-all duration-200",
+                  "hover:bg-muted/50 hover:border-primary/50 transition-colors duration-200",
                   "focus-visible:ring-primary/50"
                 )}
               >
@@ -247,11 +238,18 @@ function LoginContent() {
   )
 }
 
+// Main component with proper Suspense boundary
 export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="text-center space-y-4">
+          <div className="relative mx-auto w-fit">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+            <Loader2 className="size-12 text-primary animate-spin relative" />
+          </div>
+          <p className="text-muted-foreground animate-pulse">Loading...</p>
+        </div>
       </div>
     }>
       <LoginContent />
