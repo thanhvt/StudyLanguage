@@ -66,4 +66,4 @@ apps/*/pnpm-lock.yaml
 apps/*/package-lock.json
 apps/*/yarn.lock
 packages/*/pnpm-lock.yaml
-.agent
+
