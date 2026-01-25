@@ -15,6 +15,17 @@ export interface HistoryFilters {
 /**
  * Interface định nghĩa một entry trong lịch sử
  */
+/**
+ * Interface định nghĩa thống kê lịch sử học tập
+ */
+export interface HistoryStats {
+  todayCount: number;
+  weekCount: number;
+  streak: number;
+  heatmapData: { date: string; count: number }[];
+  weeklyData: { date: string; count: number; byType: { listening: number; speaking: number; reading: number } }[];
+}
+
 export interface HistoryEntry {
   id: string;
   type: 'listening' | 'speaking' | 'reading' | 'writing';
@@ -316,4 +327,121 @@ export class HistoryService {
       message: 'Đã lưu ghi chú',
     };
   }
+
+  /**
+   * Lấy thống kê lịch sử học tập
+   * 
+   * @param userId - ID của user hiện tại
+   * @returns HistoryStats với todayCount, weekCount, streak, heatmapData, weeklyData
+   */
+  async getStats(userId: string): Promise<HistoryStats> {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 6); // 7 days including today
+    const ninetyDaysAgo = new Date(todayStart);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89);
+
+    // Lấy tất cả lessons trong 90 ngày
+    const { data: lessonsData, error } = await this.supabase
+      .from('lessons')
+      .select('created_at, type')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .gte('created_at', ninetyDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[HistoryService] Lỗi lấy stats:', error);
+      throw error;
+    }
+
+    const lessons = lessonsData || [];
+
+    // Count today
+    const todayCount = lessons.filter(l => 
+      new Date(l.created_at) >= todayStart
+    ).length;
+
+    // Count this week
+    const weekCount = lessons.filter(l => 
+      new Date(l.created_at) >= weekStart
+    ).length;
+
+    // Build date map for heatmap and streak calculation
+    const dateMap: Map<string, { count: number; byType: { listening: number; speaking: number; reading: number } }> = new Map();
+    
+    lessons.forEach(l => {
+      const date = new Date(l.created_at);
+      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, { count: 0, byType: { listening: 0, speaking: 0, reading: 0 } });
+      }
+      
+      const entry = dateMap.get(dateKey)!;
+      entry.count++;
+      
+      if (l.type === 'listening' || l.type === 'speaking' || l.type === 'reading') {
+        const lessonType = l.type as 'listening' | 'speaking' | 'reading';
+        entry.byType[lessonType]++;
+      }
+    });
+
+    // Calculate streak
+    let streak = 0;
+    const checkDate = new Date(todayStart);
+    
+    // Check if today has lessons, if not start from yesterday
+    const todayKey = checkDate.toISOString().split('T')[0];
+    if (!dateMap.has(todayKey)) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    
+    // Count consecutive days
+    while (true) {
+      const dateKey = checkDate.toISOString().split('T')[0];
+      if (dateMap.has(dateKey) && dateMap.get(dateKey)!.count > 0) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    // Build heatmap data (90 days)
+    const heatmapData: { date: string; count: number }[] = [];
+    for (let i = 89; i >= 0; i--) {
+      const date = new Date(todayStart);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      heatmapData.push({
+        date: dateKey,
+        count: dateMap.get(dateKey)?.count || 0,
+      });
+    }
+
+    // Build weekly data (7 days)
+    const weeklyData: { date: string; count: number; byType: { listening: number; speaking: number; reading: number } }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(todayStart);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayData = dateMap.get(dateKey);
+      weeklyData.push({
+        date: dateKey,
+        count: dayData?.count || 0,
+        byType: dayData?.byType || { listening: 0, speaking: 0, reading: 0 },
+      });
+    }
+
+    return {
+      todayCount,
+      weekCount,
+      streak,
+      heatmapData,
+      weeklyData,
+    };
+  }
 }
+

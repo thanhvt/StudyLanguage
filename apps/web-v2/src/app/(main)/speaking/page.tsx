@@ -152,8 +152,9 @@ export default function SpeakingPage() {
     async (userText: string) => {
       if (!userText.trim()) return
 
+      const userMsgId = Date.now().toString()
       const userMsg: ConversationMessage = {
-        id: Date.now().toString(),
+        id: userMsgId,
         role: "user",
         text: userText,
         timestamp: Date.now(),
@@ -195,8 +196,18 @@ export default function SpeakingPage() {
         }
         setMessages((prev) => [...prev, aiMsg])
 
-        // Check for corrections and show alert
+        // Attach corrections to user message for Corrections Tab
         if (data.corrections && data.corrections.length > 0) {
+          // Update user message with corrections
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === userMsgId
+                ? { ...msg, corrections: data.corrections }
+                : msg
+            )
+          )
+
+          // Also show popup for immediate feedback
           const firstCorrection = data.corrections[0]
           setCurrentMistake({
             userSaid: firstCorrection.original,

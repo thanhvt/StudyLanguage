@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Keyboard, Mic, Settings2 } from "lucide-react"
+import { Keyboard, Mic } from "lucide-react"
 
 interface SpeakingControlsProps {
   mode: "voice" | "text"
@@ -10,11 +10,7 @@ interface SpeakingControlsProps {
 
 export function SpeakingControls({ mode, onModeToggle }: SpeakingControlsProps) {
   return (
-    <div className="flex items-center justify-center gap-4 mt-8 pb-8">
-      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-        <Settings2 className="size-5" />
-      </Button>
-
+    <div className="flex items-center justify-center gap-4">
       <div className="bg-secondary/50 p-1 rounded-full flex items-center border border-border/50">
         <Button 
           variant={mode === "voice" ? "secondary" : "ghost"} 

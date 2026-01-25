@@ -454,7 +454,7 @@ Chỉ trả về JSON.
     conversationHistory: { speaker: string; text: string }[],
     userInput: string,
     topic: string,
-  ): Promise<{ response: string; shouldEnd: boolean }> {
+  ): Promise<{ response: string; shouldEnd: boolean; corrections?: { original: string; correction: string; explanation: string }[] }> {
     this.logger.log('Đang tiếp tục hội thoại...');
 
     const historyText = conversationHistory
@@ -469,12 +469,38 @@ ${historyText}
 
 User vừa nói: "${userInput}"
 
-Hãy phản hồi tự nhiên với 1-2 câu. Nếu hội thoại đã đến hồi kết tự nhiên, set shouldEnd = true.
+=== NHIỆM VỤ CỦA BẠN ===
+1. Phản hồi tự nhiên với 1-2 câu để tiếp tục hội thoại
+2. PHÂN TÍCH câu của user để tìm lỗi ngữ pháp, từ vựng, hoặc cách diễn đạt
+3. Nếu có lỗi, liệt kê trong mảng "corrections"
 
-Trả về JSON:
-{ "response": "Câu phản hồi của bạn", "shouldEnd": false }
+=== TIÊU CHÍ PHÁT HIỆN LỖI ===
+- Lỗi thì (verb tense): "I go yesterday" → "I went yesterday"
+- Lỗi chủ ngữ/động từ: "She don't" → "She doesn't"
+- Lỗi từ vựng: Dùng sai từ cho ngữ cảnh
+- Lỗi cấu trúc câu: Thiếu article, preposition, etc.
 
-Chỉ trả về JSON.
+Trả về JSON theo format CHÍNH XÁC:
+{
+  "response": "Câu phản hồi tự nhiên của bạn để tiếp tục hội thoại",
+  "shouldEnd": false,
+  "corrections": [
+    {
+      "original": "I go to school yesterday",
+      "correction": "I went to school yesterday", 
+      "explanation": "Use past tense 'went' for actions that happened in the past"
+    }
+  ]
+}
+
+Nếu câu của user KHÔNG CÓ LỖI, trả về:
+{
+  "response": "Câu phản hồi",
+  "shouldEnd": false,
+  "corrections": []
+}
+
+CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
 `;
 
     const result = await this.generateText(prompt);
@@ -482,10 +508,16 @@ Chỉ trả về JSON.
     try {
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('Không tìm thấy JSON');
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      return {
+        response: parsed.response || result.trim(),
+        shouldEnd: parsed.shouldEnd ?? false,
+        corrections: parsed.corrections ?? [],
+      };
     } catch {
       // Fallback nếu không parse được
-      return { response: result.trim(), shouldEnd: false };
+      return { response: result.trim(), shouldEnd: false, corrections: [] };
     }
   }
 

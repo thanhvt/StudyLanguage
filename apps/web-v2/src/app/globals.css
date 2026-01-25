@@ -455,6 +455,14 @@
   transform: translateY(-3px);
 }
 
-.quick-action-btn:active {
-  transform: translateY(-1px);
+
+/* Music Waveform Animation */
+@keyframes music-wave {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
 }
+
+.animate-music-wave-1 { animation: music-wave 1s ease-in-out infinite; animation-delay: 0.0s; }
+.animate-music-wave-2 { animation: music-wave 1.2s ease-in-out infinite; animation-delay: 0.1s; }
+.animate-music-wave-3 { animation: music-wave 0.8s ease-in-out infinite; animation-delay: 0.2s; }
+.animate-music-wave-4 { animation: music-wave 1.1s ease-in-out infinite; animation-delay: 0.3s; }

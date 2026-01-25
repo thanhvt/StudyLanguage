@@ -40,14 +40,6 @@ export default function SettingsPage() {
   const avatarUrl = user?.user_metadata?.avatar_url || ""
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
 
-  const handleClearCache = () => {
-    if (confirm(t("settings.clearCacheDesc") + "?")) {
-      // Clear any cached audio data
-      localStorage.removeItem("cached-audio")
-      alert("Cache cleared!")
-    }
-  }
-
   if (!mounted) {
     return (
       <div className="flex-1 p-6">
@@ -281,17 +273,6 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground">{displayEmail}</p>
                 <p className="text-xs text-muted-foreground mt-1">Logged in with Google</p>
               </div>
-            </div>
-
-            {/* Clear Cache */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">{t("settings.clearCache")}</Label>
-                <p className="text-xs text-muted-foreground">{t("settings.clearCacheDesc")}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleClearCache}>
-                {t("settings.clearCache")}
-              </Button>
             </div>
           </CardContent>
         </Card>

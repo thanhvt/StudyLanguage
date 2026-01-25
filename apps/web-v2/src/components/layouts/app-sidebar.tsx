@@ -12,6 +12,13 @@ import {
   User,
   Sparkles,
   ChevronUp,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Shuffle,
+  Volume2,
+  Music,
 } from "lucide-react"
 
 import {
@@ -40,7 +47,9 @@ import {
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/components/providers/auth-provider"
+import { useMusic } from "@/components/providers/music-provider"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 
 // Menu items - clean design with subtle colors
@@ -86,6 +95,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading, signOut } = useAuth()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+  const { 
+    isPlaying, 
+    volume, 
+    currentTrack, 
+    toggle, 
+    setVolume, 
+    nextTrack, 
+    prevTrack,
+    shuffleTrack 
+  } = useMusic()
 
   const handleLogout = async () => {
     await signOut()
@@ -225,11 +244,114 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       
-      {/* Footer - User Profile */}
+      {/* Footer - Music Controls + User Profile */}
       <SidebarFooter className={cn(
-        "p-3 border-t border-sidebar-border",
-        isCollapsed && "px-1"
+        "border-t border-sidebar-border",
+        isCollapsed ? "px-1 py-2" : "p-3"
       )}>
+        {/* Music Controls */}
+        {!isCollapsed && currentTrack && (
+          <div className="mb-3 p-2 rounded-lg bg-sidebar-accent/30">
+            {/* Track Info */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="size-8 rounded-md bg-primary/20 flex items-center justify-center overflow-hidden">
+                {isPlaying ? (
+                  <div className="flex items-end gap-[2px] h-4 pb-1">
+                    <div className="w-0.5 bg-primary animate-music-wave-1 rounded-full" />
+                    <div className="w-0.5 bg-primary animate-music-wave-2 rounded-full" />
+                    <div className="w-0.5 bg-primary animate-music-wave-3 rounded-full" />
+                    <div className="w-0.5 bg-primary animate-music-wave-4 rounded-full" />
+                  </div>
+                ) : (
+                  <Music className="size-4 text-primary" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate text-sidebar-foreground">
+                  {currentTrack.name}
+                </p>
+                <p className="text-[10px] text-sidebar-muted">Nhạc nền</p>
+              </div>
+            </div>
+            
+            {/* Playback Controls */}
+            <div className="flex items-center justify-center gap-1 mb-2">
+              <button
+                onClick={shuffleTrack}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent transition-colors text-sidebar-muted hover:text-sidebar-foreground"
+                title="Shuffle"
+              >
+                <Shuffle className="size-3.5" />
+              </button>
+              <button
+                onClick={prevTrack}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent transition-colors text-sidebar-foreground"
+                title="Previous"
+              >
+                <SkipBack className="size-4" />
+              </button>
+              <button
+                onClick={toggle}
+                className={cn(
+                  "p-2 rounded-full transition-colors",
+                  isPlaying 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-sidebar-accent text-sidebar-foreground hover:bg-primary hover:text-primary-foreground"
+                )}
+                title={isPlaying ? "Pause" : "Play"}
+              >
+                {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
+              </button>
+              <button
+                onClick={nextTrack}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent transition-colors text-sidebar-foreground"
+                title="Next"
+              >
+                <SkipForward className="size-4" />
+              </button>
+              <button
+                onClick={shuffleTrack}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent transition-colors text-sidebar-muted hover:text-sidebar-foreground opacity-0 pointer-events-none"
+              >
+                <Shuffle className="size-3.5" />
+              </button>
+            </div>
+            
+            {/* Volume Slider */}
+            <div className="flex items-center gap-2">
+              <Volume2 className="size-3.5 text-sidebar-muted shrink-0" />
+              <Slider
+                value={[volume]}
+                onValueChange={([v]) => setVolume(v)}
+                min={0}
+                max={1}
+                step={0.05}
+                className="flex-1"
+              />
+              <span className="text-[10px] text-sidebar-muted w-7 text-right">
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          </div>
+        )}
+        
+        {/* Collapsed: Music Toggle Button */}
+        {isCollapsed && currentTrack && (
+          <div className="flex justify-center mb-2">
+            <button
+              onClick={toggle}
+              className={cn(
+                "p-2 rounded-lg transition-colors",
+                isPlaying 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-sidebar-accent text-sidebar-foreground hover:bg-primary hover:text-primary-foreground"
+              )}
+              title={isPlaying ? "Pause music" : "Play music"}
+            >
+              {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+            </button>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem className={cn(isCollapsed && "flex justify-center")}>
             {loading ? (

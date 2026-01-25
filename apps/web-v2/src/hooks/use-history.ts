@@ -338,3 +338,56 @@ export function formatDateGroup(dateString: string): string {
   
   return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
 }
+
+/**
+ * Interface cho thống kê lịch sử
+ */
+export interface HistoryStats {
+  todayCount: number;
+  weekCount: number;
+  streak: number;
+  heatmapData: { date: string; count: number }[];
+  weeklyData: { 
+    date: string; 
+    count: number; 
+    byType: { listening: number; speaking: number; reading: number } 
+  }[];
+}
+
+/**
+ * useHistoryStats - Hook lấy thống kê lịch sử học tập
+ * 
+ * Mục đích: Fetch data cho stats cards, heatmap, weekly chart
+ * Tham số đầu ra: Object chứa stats data và loading state
+ */
+export function useHistoryStats() {
+  const [stats, setStats] = useState<HistoryStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await apiJson<HistoryStats>('/history/stats');
+      setStats(data);
+    } catch (err) {
+      console.error('[useHistoryStats] Lỗi fetch stats:', err);
+      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return {
+    stats,
+    loading,
+    error,
+    refetch: fetchStats,
+  };
+}

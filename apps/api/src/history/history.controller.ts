@@ -80,6 +80,17 @@ export class HistoryController {
   }
 
   /**
+   * Lấy thống kê lịch sử học tập
+   * Returns: todayCount, weekCount, streak, heatmapData (90 days), weeklyData (7 days)
+   */
+  @Get('stats')
+  @ApiOperation({ summary: 'Lấy thống kê lịch sử học tập' })
+  async getStats(@Req() req: any) {
+    const userId = req.user.id;
+    return this.historyService.getStats(userId);
+  }
+
+  /**
    * Lấy chi tiết một bản ghi lịch sử
    */
   @Get(':id')

@@ -33,7 +33,7 @@ const MODES = [
 export function ModeTabs({ value, onChange, variant = 'cards', className }: ModeTabsProps) {
   if (variant === 'compact') {
     return (
-      <div className={cn("bg-secondary/30 p-1 rounded-xl flex items-center", className)}>
+      <div className={cn("bg-secondary/30 p-1 rounded-xl flex items-center gap-[3px]", className)}>
         {MODES.map((mode) => {
           const isActive = value === mode.value
           const Icon = mode.icon
