@@ -4,31 +4,70 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { ReadingFeedbackResult } from "@/hooks/use-reading-feedback"
-import { CheckCircle, AlertCircle, Mic, Activity, Clock } from "lucide-react"
+import { Mic, Activity, Clock } from "lucide-react"
 
 interface FeedbackProps {
   result: ReadingFeedbackResult
+  compact?: boolean
 }
 
-function ScoreRing({ score, label, icon: Icon, colorClass }: { score: number, label: string, icon: any, colorClass: string }) {
+function ScoreRing({ score, label, icon: Icon, colorClass, compact }: { score: number, label: string, icon: React.ElementType, colorClass: string, compact?: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1">
       <div className={cn(
-        "relative size-20 rounded-full flex items-center justify-center border-4 bg-card shadow-sm",
+        "relative rounded-full flex items-center justify-center border-3 bg-card shadow-sm",
+        compact ? "size-12" : "size-20 border-4",
         colorClass
       )}>
-        <Icon className={cn("size-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full opacity-20", colorClass.replace('border-', 'text-'))} />
-        <span className="text-2xl font-bold">{score}</span>
+        <span className={cn("font-bold", compact ? "text-sm" : "text-2xl")}>{score}</span>
       </div>
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
+      <span className={cn("font-medium text-muted-foreground uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>{label}</span>
     </div>
   )
 }
 
 /**
  * ReadingFeedback - Hiển thị kết quả đánh giá đọc
+ * @param compact - Chế độ thu gọn cho inline display
  */
-export function ReadingFeedback({ result }: FeedbackProps) {
+export function ReadingFeedback({ result, compact = false }: FeedbackProps) {
+  if (compact) {
+    return (
+      <div className="space-y-3 animate-in fade-in duration-300">
+        {/* Compact Score Row */}
+        <div className="flex items-center gap-4">
+          {/* Overall Score */}
+          <div className={cn(
+            "shrink-0 size-16 rounded-xl flex flex-col items-center justify-center",
+            result.overallScore >= 80 ? "bg-green-500/10 text-green-600 dark:text-green-400" :
+            result.overallScore >= 60 ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" :
+            "bg-red-500/10 text-red-600 dark:text-red-400"
+          )}>
+            <span className="text-2xl font-bold">{result.overallScore}</span>
+            <span className="text-[10px] uppercase font-medium opacity-70">Điểm</span>
+          </div>
+          
+          {/* Mini Metrics */}
+          <div className="flex gap-3 flex-1 justify-center">
+            <ScoreRing score={result.fluency} label="Lưu loát" icon={Activity} colorClass="border-blue-500" compact />
+            <ScoreRing score={result.pronunciation} label="Phát âm" icon={Mic} colorClass="border-purple-500" compact />
+            <ScoreRing score={result.pace} label="Tốc độ" icon={Clock} colorClass="border-orange-500" compact />
+          </div>
+        </div>
+
+        {/* Feedback Text */}
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {result.feedback || (
+            result.overallScore >= 80 ? "🎉 Tuyệt vời! Bạn đọc rất trôi chảy." : 
+            result.overallScore >= 60 ? "👍 Khá tốt. Tiếp tục luyện tập nhé!" : 
+            "💪 Cố gắng lên. Hãy thử lại nhé."
+          )}
+        </p>
+      </div>
+    )
+  }
+
+  // Full display mode
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Overall Score Banner */}
@@ -51,24 +90,9 @@ export function ReadingFeedback({ result }: FeedbackProps) {
 
       {/* Detailed Metrics */}
       <div className="grid grid-cols-3 gap-4">
-        <ScoreRing 
-          score={result.fluency} 
-          label="Lưu loát" 
-          icon={Activity}
-          colorClass="border-blue-500 text-blue-500" 
-        />
-        <ScoreRing 
-          score={result.pronunciation} 
-          label="Phát âm" 
-          icon={Mic}
-          colorClass="border-purple-500 text-purple-500" 
-        />
-        <ScoreRing 
-          score={result.pace} 
-          label="Tốc độ" 
-          icon={Clock}
-          colorClass="border-orange-500 text-orange-500" 
-        />
+        <ScoreRing score={result.fluency} label="Lưu loát" icon={Activity} colorClass="border-blue-500 text-blue-500" />
+        <ScoreRing score={result.pronunciation} label="Phát âm" icon={Mic} colorClass="border-purple-500 text-purple-500" />
+        <ScoreRing score={result.pace} label="Tốc độ" icon={Clock} colorClass="border-orange-500 text-orange-500" />
       </div>
 
       {/* AI Comments */}
@@ -98,7 +122,7 @@ export function ReadingFeedback({ result }: FeedbackProps) {
                       </div>
                       {word.suggestion && (
                         <p className="text-xs text-muted-foreground mt-1 italic">
-                          " {word.suggestion} "
+                          &quot; {word.suggestion} &quot;
                         </p>
                       )}
                     </div>

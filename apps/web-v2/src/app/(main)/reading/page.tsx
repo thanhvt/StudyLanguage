@@ -12,9 +12,8 @@ import { cn } from "@/lib/utils"
 
 import { ReadingConfigForm } from "@/components/modules/reading/reading-config-form"
 import { ArticleViewer } from "@/components/modules/reading/article-viewer"
-import { ReadingQuiz } from "@/components/modules/reading/reading-quiz"
 import { AIThinkingIndicator } from "@/components/modules/reading/reading-skeleton"
-import { ReadingPracticeModal } from "@/components/modules/reading/reading-practice-modal"
+import { ReadingPracticeSection } from "@/components/modules/reading/reading-practice-section"
 import { HistoryDrawer } from "@/components/history"
 import { useReading, ReadingArticle } from "@/hooks/use-reading"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
@@ -25,12 +24,11 @@ import { HistoryEntry } from "@/hooks/use-history"
  * 
  * Features:
  * - Form cấu hình bài đọc (chủ đề, độ khó)
- * - AI sinh nội dung + câu hỏi
+ * - AI sinh nội dung bài đọc
  * - Click-to-lookup tra từ điển
- * - Quiz đọc hiểu với instant feedback
+ * - Luyện phát âm với AI feedback (Sheet panel)
  * - Focus Mode để đọc tập trung
  * - Lưu history khi hoàn thành
- * - History drawer để xem lại bài cũ
  */
 export default function ReadingPage() {
   // State
@@ -55,23 +53,7 @@ export default function ReadingPage() {
     generateArticle({ topic, difficulty })
   }, [generateArticle])
 
-  const handleQuizComplete = useCallback(async (score: number, total: number) => {
-    if (article) {
-      await saveLesson({
-        type: 'reading',
-        topic: currentTopic,
-        content: {
-          title: article.title,
-          article: article.article,
-          questions: article.questions,
-          score,
-          total,
-          difficulty: currentDifficulty,
-        },
-        status: 'completed',
-      })
-    }
-  }, [article, currentTopic, currentDifficulty, saveLesson])
+
 
   const handleReset = useCallback(() => {
     resetReading()
@@ -226,22 +208,6 @@ export default function ReadingPage() {
               </div>
               
               <div className="flex items-center gap-2">
-                 <ReadingPracticeModal 
-                    articleContent={article.article}
-                    onSave={async (result) => {
-                       await saveLesson({
-                         type: 'speaking', // Saving as speaking practice
-                         topic: `Practice: ${article.title}`,
-                         content: {
-                           articleTitle: article.title,
-                           feedback: result,
-                         },
-                         mode: 'interactive',
-                         status: 'completed'
-                       })
-                       toast.success('Đã lưu kết quả luyện đọc')
-                    }} 
-                 />
                  <Button 
                    variant="ghost" 
                    size="sm" 
@@ -254,11 +220,12 @@ export default function ReadingPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* 2-Column Layout: Article Left, Practice Right */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Article (7 cols) */}
-              <div className="lg:col-span-7 space-y-6">
+              <div className="lg:col-span-7">
                 <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-sm">
-                  <CardContent className="p-6 md:p-8">
+                  <CardContent className="p-6 max-h-[60vh] overflow-y-auto">
                     <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground bg-primary/5 p-2 rounded-lg w-fit">
                       <span className="text-lg">💡</span> 
                       <span>Click vào từ bất kỳ để tra nghĩa</span>
@@ -274,12 +241,23 @@ export default function ReadingPage() {
                 </Card>
               </div>
 
-              {/* Right Column: Quiz (5 cols) */}
-              <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-                <ReadingQuiz 
-                  questions={article.questions}
-                  onComplete={handleQuizComplete}
-                  onReset={handleReset}
+              {/* Right Column: Practice Section (5 cols) */}
+              <div className="lg:col-span-5 lg:sticky lg:top-20">
+                <ReadingPracticeSection
+                  articleContent={article.article}
+                  onSave={async (result: unknown) => {
+                    await saveLesson({
+                      type: 'speaking',
+                      topic: `Practice: ${article.title}`,
+                      content: {
+                        articleTitle: article.title,
+                        feedback: result,
+                      },
+                      mode: 'interactive',
+                      status: 'completed'
+                    })
+                    toast.success('Đã lưu kết quả luyện đọc')
+                  }}
                 />
               </div>
             </div>
