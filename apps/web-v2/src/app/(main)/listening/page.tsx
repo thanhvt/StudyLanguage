@@ -193,18 +193,18 @@ export default function ListeningPage() {
       <div className="flex-1 lg:min-h-0 relative">
         {/* View: Config */}
         {viewState === 'config' && (
-          <div className="lg:h-full grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20 lg:pb-0">
-            {/* Left Column: Topic Picker */}
-            <div className="lg:col-span-8 lg:h-full flex flex-col min-h-0 order-2 lg:order-1">
+          <div className="lg:h-full grid grid-cols-1 lg:grid-cols-12 gap-6 pb-24 lg:pb-0">
+            {/* Left Column: Topic Picker - Visible on all screens */}
+            <div className="lg:col-span-8 lg:h-full flex flex-col min-h-0">
               <TopicPicker 
                 onSelect={handleTopicSelect}
                 selectedTopic={selectedTopic}
-                className="lg:h-full h-[500px]" 
+                className="lg:h-full min-h-[400px] h-auto lg:min-h-0" 
               />
             </div>
 
-            {/* Right Column: Config */}
-            <div className="lg:col-span-4 flex flex-col gap-4 lg:overflow-y-auto pr-1 order-1 lg:order-2">
+            {/* Right Column: Config - Shows first on mobile for quick access */}
+            <div className="lg:col-span-4 flex flex-col gap-4 lg:overflow-y-auto pr-1 -order-1 lg:order-none">
               {/* Mode Switcher */}
               <ModeTabs 
                 value={mode} 
@@ -307,7 +307,11 @@ export default function ListeningPage() {
 
       {/* Error Toast/Overlay */}
       {error && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm backdrop-blur-md shadow-lg z-50 w-[90%] lg:w-auto text-center">
+        <div 
+          role="alert"
+          aria-live="assertive"
+          className="fixed bottom-28 left-1/2 -translate-x-1/2 p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm backdrop-blur-md shadow-lg z-50 w-[90%] max-w-md text-center"
+        >
           {error}
         </div>
       )}

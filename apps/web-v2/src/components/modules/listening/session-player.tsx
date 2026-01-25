@@ -129,10 +129,10 @@ export function SessionPlayer({
 
         {/* Audio Generation Status */}
         {isGeneratingAudio && (
-          <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
-            <Loader2 className="size-4 text-primary animate-spin" />
+          <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3" role="status" aria-live="polite">
+            <Loader2 className="size-4 text-primary animate-spin" aria-hidden="true" />
             <div>
-              <p className="text-sm font-medium">Generating audio...</p>
+              <p className="text-sm font-medium">Generating audio…</p>
               <p className="text-xs text-muted-foreground">
                 This may take a moment for longer conversations
               </p>

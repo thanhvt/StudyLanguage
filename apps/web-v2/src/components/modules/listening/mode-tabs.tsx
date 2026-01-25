@@ -101,7 +101,7 @@ export function ModeTabs({ value, onChange, variant = 'cards', className }: Mode
 
             {/* Active Indicator */}
             {isActive && (
-              <div className="ml-auto size-3 rounded-full bg-primary animate-pulse" />
+              <div className="ml-auto size-3 rounded-full bg-primary animate-pulse [animation-iteration-count:3]" aria-hidden="true" />
             )}
           </button>
         )

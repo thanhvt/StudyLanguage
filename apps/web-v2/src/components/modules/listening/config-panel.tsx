@@ -6,6 +6,12 @@ import { Clock, Users, Tag, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 interface ConfigPanelProps {
@@ -149,40 +155,60 @@ export function ConfigPanel({
       {/* Keywords Input */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-          <Tag className="size-3.5" />
-          Keywords <span className="normal-case opacity-50 font-normal">(opt)</span>
+          <Tag className="size-3.5" aria-hidden="true" />
+          Keywords <span className="normal-case opacity-50 font-normal">(optional)</span>
         </Label>
-        <Textarea
-          placeholder="E.g., reservation, room service..."
-          value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
-          className="resize-none h-16 min-h-[64px] bg-secondary/20 border-border/50 focus:border-primary/50 text-sm"
-        />
+        <div className="relative">
+          <Textarea
+            placeholder="e.g. reservation, breakfast, check-in…"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            maxLength={200}
+            className="resize-none h-16 min-h-[64px] bg-secondary/20 border-border/50 focus:border-primary/50 text-sm"
+            aria-label="Keywords for conversation topic"
+          />
+          <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground/50">
+            {keywords.length}/200
+          </span>
+        </div>
       </div>
 
       {/* Generate Button */}
-      <Button
-        onClick={onGenerate}
-        disabled={disabled || isGenerating}
-        className={cn(
-          "w-full h-11 text-base font-semibold mt-2",
-          "bg-gradient-to-r from-skill-listening to-primary",
-          "hover:shadow-lg hover:shadow-primary/25 transition-all duration-300",
-          "disabled:opacity-50 disabled:cursor-not-allowed"
-        )}
-      >
-        {isGenerating ? (
-          <>
-            <div className="size-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Sparkles className="size-4 mr-2" />
-            Generate
-          </>
-        )}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full mt-2">
+              <Button
+                onClick={onGenerate}
+                disabled={disabled || isGenerating}
+                className={cn(
+                  "w-full h-11 text-base font-semibold",
+                  "bg-gradient-to-r from-skill-listening to-primary",
+                  "hover:shadow-lg hover:shadow-primary/25 transition-all duration-200",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="size-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4 mr-2" aria-hidden="true" />
+                    Generate Conversation
+                  </>
+                )}
+              </Button>
+            </div>
+          </TooltipTrigger>
+          {disabled && (
+            <TooltipContent>
+              <p>Select a topic first</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }

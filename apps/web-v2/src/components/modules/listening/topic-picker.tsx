@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useMemo } from "react"
-import { Search, ChevronDown, ChevronRight, Star, Sparkles, Play } from "lucide-react"
+import { Search, ChevronDown, ChevronRight, Star, Sparkles, Play, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -82,14 +82,24 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
       <div className="flex-none space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden="true" />
           <Input
             type="text"
-            placeholder="Search scenarios..."
+            placeholder="Search scenarios…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 bg-secondary/30 border-border/50 focus:border-primary/50"
+            className="pl-10 pr-10 h-10 bg-secondary/30 border-border/50 focus:border-primary/50"
+            aria-label="Search scenarios"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="size-3 text-muted-foreground" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         {/* Category Tabs */}
@@ -122,7 +132,7 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
           {searchResults && searchResults.length > 0 && (
             <div className="space-y-2 pb-4">
               <p className="text-xs text-muted-foreground px-1">
-                Found {searchResults.length} results
+                Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
               </p>
               {searchResults.map(({ category, subCategory, scenario }) => (
                 <button
@@ -199,12 +209,13 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
                             >
                               <button
                                 onClick={(e) => toggleFavorite(scenario.id, e)}
+                                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 className={cn(
                                   "shrink-0 p-1 rounded-full hover:bg-background/80 transition-colors",
                                   isFavorite ? "text-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
                                 )}
                               >
-                                <Star className={cn("size-3.5", isFavorite && "fill-current")} />
+                                <Star className={cn("size-3.5", isFavorite && "fill-current")} aria-hidden="true" />
                               </button>
 
                               <div className="flex-1 min-w-0">
@@ -222,9 +233,10 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="size-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                aria-label={`Play ${scenario.name}`}
+                                className="size-6 opacity-50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
                               >
-                                <Play className="size-3 fill-primary text-primary" />
+                                <Play className="size-3 fill-primary text-primary" aria-hidden="true" />
                               </Button>
                             </div>
                           )

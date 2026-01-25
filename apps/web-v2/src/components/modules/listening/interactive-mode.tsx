@@ -428,7 +428,11 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
 
       {/* Error Display */}
       {error && (
-        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm text-center">
+        <div 
+          role="alert"
+          aria-live="assertive"
+          className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm text-center"
+        >
           {error}
         </div>
       )}

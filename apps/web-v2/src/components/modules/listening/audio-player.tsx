@@ -169,15 +169,57 @@ export function AudioPlayer({
   // Calculate progress percentage
   const progress = duration ? (currentTime / duration) * 100 : 0
 
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const audio = audioRef.current
+    if (!audio || !audioSrc) return
+
+    switch (e.key) {
+      case ' ':
+      case 'k':
+        e.preventDefault()
+        togglePlay()
+        break
+      case 'ArrowLeft':
+      case 'j':
+        e.preventDefault()
+        skipBackward()
+        break
+      case 'ArrowRight':
+      case 'l':
+        e.preventDefault()
+        skipForward()
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        handleVolumeChange([Math.min(1, volume + 0.1)])
+        break
+      case 'ArrowDown':
+        e.preventDefault()
+        handleVolumeChange([Math.max(0, volume - 0.1)])
+        break
+      case 'm':
+        e.preventDefault()
+        toggleMute()
+        break
+    }
+  }, [audioSrc, volume])
+
   return (
-    <div className={cn(
-      "fixed bottom-6 left-1/2 -translate-x-1/2 z-50",
-      "w-[95%] max-w-2xl",
-      "bg-background/90 backdrop-blur-xl",
-      "border border-border/50 shadow-2xl shadow-black/20",
-      "rounded-2xl p-4",
-      "dark:bg-background/80 dark:border-border/30"
-    )}>
+    <div 
+      className={cn(
+        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50",
+        "w-[95%] max-w-2xl",
+        "bg-background/90 backdrop-blur-xl",
+        "border border-border/50 shadow-2xl shadow-black/20",
+        "rounded-2xl p-4",
+        "dark:bg-background/80 dark:border-border/30"
+      )}
+      role="region"
+      aria-label="Audio player"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       {/* Hidden Audio Element */}
       <audio
         ref={audioRef}
@@ -203,14 +245,16 @@ export function AudioPlayer({
             <Button 
               variant="ghost" 
               size="icon" 
+              aria-label="Skip backward 10 seconds"
               className="size-9 text-muted-foreground hover:text-foreground"
               onClick={onSkipPrev || skipBackward}
             >
-              <SkipBack className="size-4" />
+              <SkipBack className="size-4" aria-hidden="true" />
             </Button>
             
             <Button 
               size="icon" 
+              aria-label={isLoading ? "Loading audio" : isPlaying ? "Pause" : "Play"}
               className={cn(
                 "size-12 rounded-full",
                 "bg-gradient-to-br from-skill-listening to-primary",
@@ -222,21 +266,22 @@ export function AudioPlayer({
               disabled={!audioSrc || isLoading}
             >
               {isLoading ? (
-                <Loader2 className="size-5 animate-spin" />
+                <Loader2 className="size-5 animate-spin" aria-hidden="true" />
               ) : isPlaying ? (
-                <Pause className="size-5 fill-current" />
+                <Pause className="size-5 fill-current" aria-hidden="true" />
               ) : (
-                <Play className="size-5 fill-current ml-0.5" />
+                <Play className="size-5 fill-current ml-0.5" aria-hidden="true" />
               )}
             </Button>
             
             <Button 
               variant="ghost" 
               size="icon" 
+              aria-label="Skip forward 10 seconds"
               className="size-9 text-muted-foreground hover:text-foreground"
               onClick={onSkipNext || skipForward}
             >
-              <SkipForward className="size-4" />
+              <SkipForward className="size-4" aria-hidden="true" />
             </Button>
           </div>
 
@@ -280,13 +325,14 @@ export function AudioPlayer({
               <Button 
                 variant="ghost" 
                 size="icon" 
+                aria-label={isMuted || volume === 0 ? "Unmute" : "Mute"}
                 className="size-8 text-muted-foreground hover:text-foreground"
                 onClick={toggleMute}
               >
                 {isMuted || volume === 0 ? (
-                  <VolumeX className="size-4" />
+                  <VolumeX className="size-4" aria-hidden="true" />
                 ) : (
-                  <Volume2 className="size-4" />
+                  <Volume2 className="size-4" aria-hidden="true" />
                 )}
               </Button>
               

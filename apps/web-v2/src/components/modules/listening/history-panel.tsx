@@ -82,22 +82,24 @@ export function HistoryPanel({
                      <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={entry.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                       className={cn(
                         "size-8 hover:text-yellow-500",
                         entry.isFavorite ? "text-yellow-500" : "text-muted-foreground opacity-0 group-hover:opacity-100"
                       )}
                       onClick={() => onToggleFavorite(entry.id)}
                     >
-                      <Star className={cn("size-4", entry.isFavorite && "fill-current")} />
+                      <Star className={cn("size-4", entry.isFavorite && "fill-current")} aria-hidden="true" />
                     </Button>
                     
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label={`Play ${entry.topic}`}
+                      className="size-8 opacity-50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       onClick={() => onPlaySession(entry)}
                     >
-                      <Play className="size-4 fill-primary text-primary" />
+                      <Play className="size-4 fill-primary text-primary" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

@@ -108,9 +108,20 @@ export function TranscriptViewer({
 
   return (
     <div className={cn("w-full", className)}>
-      <h3 className="text-lg font-semibold mb-4 px-2">Transcript</h3>
+      <div className="flex items-center justify-between mb-4 px-2">
+        <h3 className="text-lg font-semibold">Transcript</h3>
+        {timestamps && timestamps.length > 0 && (
+          <span className="text-xs text-muted-foreground font-mono">
+            {activeLineIndex >= 0 ? activeLineIndex + 1 : 0}/{conversation.length} lines
+          </span>
+        )}
+      </div>
       
-      <ScrollArea className="h-[400px] rounded-2xl border bg-card/30 p-4 shadow-inner">
+      <ScrollArea 
+        className="h-[400px] rounded-2xl border bg-card/30 p-4 shadow-inner"
+        role="region"
+        aria-label="Conversation transcript"
+      >
         <div ref={containerRef} className="space-y-4">
           {conversation.map((line, index) => {
             const isActive = index === activeLineIndex
