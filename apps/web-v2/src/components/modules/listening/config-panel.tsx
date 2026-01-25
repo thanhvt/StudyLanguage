@@ -116,7 +116,7 @@ export function ConfigPanel({
                value={customDuration}
                onClick={(e) => e.stopPropagation()}
                onChange={handleCustomDurationChange}
-               className="w-full text-center bg-transparent border-none outline-none font-semibold text-sm"
+               className="w-full text-center bg-transparent border-none outline-none font-semibold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                autoFocus
              />
             ) : (
