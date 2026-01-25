@@ -174,12 +174,14 @@ export default function SpeakingPage() {
             conversationHistory,
             userInput: userText,
             topic,
-            feedbackMode,
+            // Note: feedbackMode is handled client-side, not in backend DTO
           }),
         })
 
         if (!response.ok) {
-          throw new Error("Could not connect to AI")
+          const errorData = await response.json().catch(() => ({}))
+          console.error("[SpeakingPage] API Error:", response.status, errorData)
+          throw new Error(errorData.message || `API Error: ${response.status}`)
         }
 
         const data = await response.json()

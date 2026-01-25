@@ -4,6 +4,13 @@ import { useState } from "react"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 
+export interface WordScore {
+  word: string
+  correct: boolean
+  score: number
+  issue?: string
+}
+
 export interface WordAnalysis {
   word: string
   score: number
@@ -17,6 +24,8 @@ export interface ReadingFeedbackResult {
   pace: number
   feedback: string
   wordAnalysis: WordAnalysis[]
+  wordByWord: WordScore[]
+  patterns: string[]
   userTranscript?: string
 }
 
@@ -29,12 +38,12 @@ interface UseReadingFeedbackReturn {
 }
 
 /**
- * useReadingFeedback - Hook for AI reading analysis
+ * useReadingFeedback - Hook for AI reading analysis (Enhanced)
  * 
  * Flow:
  * 1. Transcribe audio → get user's spoken text
- * 2. Evaluate pronunciation → compare with original text
- * 3. Return structured feedback
+ * 2. Evaluate pronunciation → compare with original text (word-by-word)
+ * 3. Return detailed feedback with scores for each word
  */
 export function useReadingFeedback(): UseReadingFeedbackReturn {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -71,7 +80,7 @@ export function useReadingFeedback(): UseReadingFeedbackReturn {
         throw new Error("Không nghe được giọng nói. Vui lòng thử lại.")
       }
 
-      // Step 2: Evaluate pronunciation
+      // Step 2: Evaluate pronunciation (enhanced with word-by-word)
       console.log("[useReadingFeedback] Step 2: Evaluating pronunciation...")
       const evaluateResponse = await api("/ai/evaluate-pronunciation", {
         method: "POST",
@@ -87,17 +96,12 @@ export function useReadingFeedback(): UseReadingFeedbackReturn {
         throw new Error(errorData.message || "Không thể đánh giá phát âm")
       }
 
-      const evaluateData = await evaluateResponse.json()
+      const data = await evaluateResponse.json()
       
-      // Transform backend response to UI format
-      // Backend returns: { overallScore: 0-10, feedback: { wrongWords, tips, encouragement } }
-      // UI expects: { overallScore: 0-100, fluency, pronunciation, pace, feedback: string, wordAnalysis }
+      // Backend now returns enhanced format directly (0-100 scores)
+      // { overallScore, fluency, pronunciation, pace, wordByWord, patterns, feedback }
       
-      const backendScore = evaluateData.overallScore || 0
-      const score100 = Math.round(backendScore * 10) // Convert 0-10 to 0-100
-      
-      // Extract feedback parts
-      const feedbackObj = evaluateData.feedback || {}
+      const feedbackObj = data.feedback || {}
       const wrongWords = feedbackObj.wrongWords || []
       const tips = feedbackObj.tips || []
       const encouragement = feedbackObj.encouragement || ""
@@ -105,23 +109,25 @@ export function useReadingFeedback(): UseReadingFeedbackReturn {
       // Build feedback text
       let feedbackText = encouragement
       if (tips.length > 0) {
-        feedbackText += " " + tips.join(" ")
+        feedbackText += "\n\n📝 Mẹo cải thiện:\n• " + tips.join("\n• ")
       }
       
-      // Transform wrongWords to wordAnalysis format
-      const wordAnalysis = wrongWords.map((w: { word: string; userSaid: string; suggestion: string }) => ({
+      // Transform wrongWords to wordAnalysis format for backward compat
+      const wordAnalysis: WordAnalysis[] = wrongWords.map((w: { word: string; userSaid: string; suggestion: string }) => ({
         word: w.word,
-        score: 40, // Words that are wrong get low score
+        score: 40,
         suggestion: `Bạn đọc "${w.userSaid}". ${w.suggestion}`
       }))
       
       const parsedResult: ReadingFeedbackResult = {
-        overallScore: score100,
-        fluency: score100,
-        pronunciation: score100,
-        pace: score100,
-        feedback: feedbackText || `Điểm: ${backendScore}/10. Tiếp tục luyện tập nhé!`,
+        overallScore: data.overallScore || 70,
+        fluency: data.fluency || data.overallScore || 70,
+        pronunciation: data.pronunciation || data.overallScore || 70,
+        pace: data.pace || data.overallScore || 70,
+        feedback: feedbackText || "Tiếp tục luyện tập nhé!",
         wordAnalysis,
+        wordByWord: data.wordByWord || [],
+        patterns: data.patterns || [],
         userTranscript,
       }
 

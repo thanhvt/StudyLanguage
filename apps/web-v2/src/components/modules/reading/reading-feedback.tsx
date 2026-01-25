@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { ReadingFeedbackResult } from "@/hooks/use-reading-feedback"
-import { Mic, Activity, Clock } from "lucide-react"
+import { Mic, Activity, Clock, Lightbulb } from "lucide-react"
+import { WordHighlighter } from "./word-highlighter"
 
 interface FeedbackProps {
   result: ReadingFeedbackResult
@@ -27,7 +28,7 @@ function ScoreRing({ score, label, icon: Icon, colorClass, compact }: { score: n
 }
 
 /**
- * ReadingFeedback - Hiển thị kết quả đánh giá đọc
+ * ReadingFeedback - Hiển thị kết quả đánh giá đọc với word-by-word highlighting
  * @param compact - Chế độ thu gọn cho inline display
  */
 export function ReadingFeedback({ result, compact = false }: FeedbackProps) {
@@ -55,8 +56,28 @@ export function ReadingFeedback({ result, compact = false }: FeedbackProps) {
           </div>
         </div>
 
+        {/* Word-by-Word Scores (compact) */}
+        {result.wordByWord && result.wordByWord.length > 0 && (
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <h4 className="text-xs font-medium text-muted-foreground mb-2">📝 Chi tiết từng từ:</h4>
+            <WordHighlighter wordScores={result.wordByWord} className="text-xs" />
+          </div>
+        )}
+
+        {/* Patterns (compact) */}
+        {result.patterns && result.patterns.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {result.patterns.slice(0, 2).map((pattern, idx) => (
+              <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                <Lightbulb className="size-3" />
+                {pattern.length > 40 ? pattern.substring(0, 40) + "..." : pattern}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Feedback Text */}
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
           {result.feedback || (
             result.overallScore >= 80 ? "🎉 Tuyệt vời! Bạn đọc rất trôi chảy." : 
             result.overallScore >= 60 ? "👍 Khá tốt. Tiếp tục luyện tập nhé!" : 
@@ -95,19 +116,53 @@ export function ReadingFeedback({ result, compact = false }: FeedbackProps) {
         <ScoreRing score={result.pace} label="Tốc độ" icon={Clock} colorClass="border-orange-500 text-orange-500" />
       </div>
 
+      {/* Word-by-Word Results */}
+      {result.wordByWord && result.wordByWord.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h4 className="flex items-center gap-2 font-semibold mb-3">
+              <span className="text-lg">📝</span> Chi tiết từng từ
+            </h4>
+            <WordHighlighter wordScores={result.wordByWord} />
+            <p className="text-xs text-muted-foreground mt-3">
+              💡 Hover vào từ để xem chi tiết • Xanh: Tốt • Vàng: Cần cải thiện • Đỏ: Cần luyện tập
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Patterns */}
+      {result.patterns && result.patterns.length > 0 && (
+        <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/10">
+          <CardContent className="p-4">
+            <h4 className="flex items-center gap-2 font-semibold mb-3 text-amber-700 dark:text-amber-400">
+              <Lightbulb className="size-4" /> Patterns cần lưu ý
+            </h4>
+            <ul className="space-y-2">
+              {result.patterns.map((pattern, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-sm">
+                  <span className="text-amber-500">•</span>
+                  <span className="text-muted-foreground">{pattern}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       {/* AI Comments */}
       <Card>
         <CardContent className="p-4 space-y-4">
           <div>
             <h4 className="flex items-center gap-2 font-semibold mb-2">
-              <span className="text-xl">🤖</span> Nhận xét chi tiết
+              <span className="text-xl">🤖</span> Nhận xét từ AI
             </h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
               {result.feedback}
             </p>
           </div>
 
-          {/* Word Analysis */}
+          {/* Legacy Word Analysis (from wrongWords) */}
           {result.wordAnalysis && result.wordAnalysis.length > 0 && (
             <div className="border-t pt-4 mt-4">
               <h4 className="font-semibold mb-3 text-sm">Từ cần lưu ý:</h4>

@@ -159,6 +159,94 @@
   --sidebar-muted: oklch(0.58 0 0);  /* Muted text sáng hơn chút */
 }
 
+/* ============================================
+   ACCENT COLOR THEMES (6 themes from PRD)
+   ============================================ */
+
+/* Ocean Scholar (Default - Teal) */
+[data-accent="ocean-scholar"] {
+  --primary: oklch(0.60 0.15 195);
+  --ring: oklch(0.60 0.15 195);
+  --sidebar-primary: oklch(0.60 0.15 195);
+  --sidebar-ring: oklch(0.60 0.15 195);
+}
+[data-accent="ocean-scholar"].dark {
+  --primary: oklch(0.65 0.14 195);
+  --ring: oklch(0.65 0.14 195);
+  --sidebar-primary: oklch(0.65 0.14 195);
+  --sidebar-ring: oklch(0.65 0.14 195);
+}
+
+/* Sunset Focus (Orange) */
+[data-accent="sunset-focus"] {
+  --primary: oklch(0.65 0.20 50);
+  --ring: oklch(0.65 0.20 50);
+  --sidebar-primary: oklch(0.65 0.20 50);
+  --sidebar-ring: oklch(0.65 0.20 50);
+}
+[data-accent="sunset-focus"].dark {
+  --primary: oklch(0.70 0.18 50);
+  --ring: oklch(0.70 0.18 50);
+  --sidebar-primary: oklch(0.70 0.18 50);
+  --sidebar-ring: oklch(0.70 0.18 50);
+}
+
+/* Royal Purple */
+[data-accent="royal-purple"] {
+  --primary: oklch(0.55 0.25 290);
+  --ring: oklch(0.55 0.25 290);
+  --sidebar-primary: oklch(0.55 0.25 290);
+  --sidebar-ring: oklch(0.55 0.25 290);
+}
+[data-accent="royal-purple"].dark {
+  --primary: oklch(0.65 0.22 290);
+  --ring: oklch(0.65 0.22 290);
+  --sidebar-primary: oklch(0.65 0.22 290);
+  --sidebar-ring: oklch(0.65 0.22 290);
+}
+
+/* Rose Focus (Pink) */
+[data-accent="rose-focus"] {
+  --primary: oklch(0.60 0.20 350);
+  --ring: oklch(0.60 0.20 350);
+  --sidebar-primary: oklch(0.60 0.20 350);
+  --sidebar-ring: oklch(0.60 0.20 350);
+}
+[data-accent="rose-focus"].dark {
+  --primary: oklch(0.68 0.18 350);
+  --ring: oklch(0.68 0.18 350);
+  --sidebar-primary: oklch(0.68 0.18 350);
+  --sidebar-ring: oklch(0.68 0.18 350);
+}
+
+/* Ocean Blue (Classic Blue) */
+[data-accent="ocean-blue"] {
+  --primary: oklch(0.55 0.22 240);
+  --ring: oklch(0.55 0.22 240);
+  --sidebar-primary: oklch(0.55 0.22 240);
+  --sidebar-ring: oklch(0.55 0.22 240);
+}
+[data-accent="ocean-blue"].dark {
+  --primary: oklch(0.62 0.20 240);
+  --ring: oklch(0.62 0.20 240);
+  --sidebar-primary: oklch(0.62 0.20 240);
+  --sidebar-ring: oklch(0.62 0.20 240);
+}
+
+/* Emerald Study (Green) */
+[data-accent="emerald-study"] {
+  --primary: oklch(0.60 0.18 155);
+  --ring: oklch(0.60 0.18 155);
+  --sidebar-primary: oklch(0.60 0.18 155);
+  --sidebar-ring: oklch(0.60 0.18 155);
+}
+[data-accent="emerald-study"].dark {
+  --primary: oklch(0.68 0.16 155);
+  --ring: oklch(0.68 0.16 155);
+  --sidebar-primary: oklch(0.68 0.16 155);
+  --sidebar-ring: oklch(0.68 0.16 155);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

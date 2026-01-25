@@ -278,49 +278,80 @@ CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
   }
 
   /**
-   * Đánh giá phát âm của user
+   * Đánh giá phát âm của user - Enhanced với word-by-word scoring
    *
-   * Mục đích: So sánh transcript của user với mẫu và đưa ra feedback
+   * Mục đích: So sánh transcript của user với mẫu và đưa ra feedback chi tiết
    * Tham số:
    *   - originalText: Văn bản gốc (mẫu)
    *   - userTranscript: Văn bản user đọc (từ Whisper)
-   * Trả về: Đánh giá chi tiết
+   * Trả về: Đánh giá chi tiết với word-by-word scores
    */
   async evaluatePronunciation(
     originalText: string,
     userTranscript: string,
   ): Promise<{
     overallScore: number;
+    fluency: number;
+    pronunciation: number;
+    pace: number;
+    wordByWord: { word: string; correct: boolean; score: number; issue?: string }[];
+    patterns: string[];
     feedback: {
       wrongWords: { word: string; userSaid: string; suggestion: string }[];
       tips: string[];
       encouragement: string;
     };
   }> {
-    this.logger.log('Đang đánh giá phát âm...');
+    this.logger.log('Đang đánh giá phát âm (enhanced)...');
 
     const prompt = `
-So sánh văn bản gốc và văn bản user đọc, đánh giá phát âm:
+Bạn là chuyên gia đánh giá phát âm tiếng Anh. Hãy phân tích CHI TIẾT việc đọc của user.
 
-VĂN BẢN GỐC:
+VĂN BẢN GỐC (reference):
 "${originalText}"
 
-USER ĐỌC:
+USER ĐỌC (transcript từ Whisper):
 "${userTranscript}"
 
-Trả về JSON theo format:
+=== YÊU CẦU PHÂN TÍCH CHI TIẾT ===
+
+1. **So sánh từng từ**: Đánh giá TỪNG TỪ trong văn bản gốc
+2. **Phát hiện patterns**: Nhận diện các lỗi phát âm phổ biến (VD: /th/, /r/, /l/, âm cuối...)
+3. **Đánh giá đa chiều**: Fluency (trôi chảy), Pronunciation (phát âm), Pace (tốc độ)
+4. **Gợi ý cải thiện**: Tips cụ thể và actionable
+
+Trả về JSON theo format CHÍNH XÁC sau:
 {
-  "overallScore": <điểm từ 0-10>,
+  "overallScore": <điểm tổng 0-100>,
+  "fluency": <điểm trôi chảy 0-100>,
+  "pronunciation": <điểm phát âm 0-100>,
+  "pace": <điểm tốc độ 0-100>,
+  "wordByWord": [
+    { "word": "hello", "correct": true, "score": 95 },
+    { "word": "world", "correct": false, "score": 40, "issue": "phát âm thành 'word'" }
+  ],
+  "patterns": [
+    "Cần luyện âm /th/ - đang phát âm thành /t/ hoặc /d/",
+    "Chú ý âm cuối các từ có đuôi -ed"
+  ],
   "feedback": {
     "wrongWords": [
-      { "word": "<từ sai>", "userSaid": "<user nói>", "suggestion": "<gợi ý phát âm>" }
+      { "word": "world", "userSaid": "word", "suggestion": "Lưỡi cong lên khi phát âm /r/" }
     ],
-    "tips": ["<mẹo cải thiện 1>", "<mẹo 2>"],
-    "encouragement": "<lời động viên>"
+    "tips": [
+      "Đọc chậm hơn để rõ ràng từng từ",
+      "Thực hành âm /θ/ bằng cách đặt lưỡi giữa hai hàm răng"
+    ],
+    "encouragement": "Tốt lắm! Bạn đã hoàn thành bài đọc. Tiếp tục luyện tập nhé!"
   }
 }
 
-Chỉ trả về JSON.
+LƯU Ý QUAN TRỌNG:
+- wordByWord PHẢI chứa TẤT CẢ các từ trong văn bản gốc (không bỏ sót)
+- Nếu Whisper transcribe sai hoàn toàn, vẫn phải list từng từ và đánh giá
+- Score 0-100: 90+ = Excellent, 70-89 = Good, 50-69 = Fair, <50 = Needs Work
+
+CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
 `;
 
     const result = await this.generateText(prompt);
@@ -330,7 +361,22 @@ Chỉ trả về JSON.
       if (!jsonMatch) {
         throw new Error('Không tìm thấy JSON');
       }
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Ensure all required fields exist with defaults
+      return {
+        overallScore: parsed.overallScore ?? 70,
+        fluency: parsed.fluency ?? parsed.overallScore ?? 70,
+        pronunciation: parsed.pronunciation ?? parsed.overallScore ?? 70,
+        pace: parsed.pace ?? parsed.overallScore ?? 70,
+        wordByWord: parsed.wordByWord ?? [],
+        patterns: parsed.patterns ?? [],
+        feedback: {
+          wrongWords: parsed.feedback?.wrongWords ?? [],
+          tips: parsed.feedback?.tips ?? [],
+          encouragement: parsed.feedback?.encouragement ?? 'Tiếp tục luyện tập nhé!',
+        },
+      };
     } catch (error) {
       this.logger.error('Lỗi parse evaluation:', error);
       throw new Error('Không thể parse kết quả đánh giá');
