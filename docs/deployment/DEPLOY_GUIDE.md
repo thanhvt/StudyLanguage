@@ -10,7 +10,9 @@
 
 ---
 
-## 🚀 Step 1: Deploy Web to Vercel
+---
+
+## 🚀 Step 1: Deploy Web (Legacy v1) to Vercel
 
 ### 1.1 Connect Repository
 1. Go to [Vercel Dashboard](https://vercel.com/new)
@@ -28,6 +30,32 @@ Add these in Vercel dashboard → Settings → Environment Variables:
 | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` |
 
 ### 1.3 Deploy
+```bash
+# Vercel will auto-deploy on push to main
+git push origin main
+```
+
+---
+
+## 🚀 Step 1b: Deploy Web V2 (New Version) to Vercel
+
+### 1b.1 Connect Repository
+1. Go to [Vercel Dashboard](https://vercel.com/new)
+2. Import GitHub repository: `thanhvt/StudyLanguage`
+3. **IMPORTANT**: Select `apps/web-v2` as the **Root Directory**.
+4. Framework Preset: `Next.js` (should be auto-detected).
+
+### 1b.2 Configure Environment Variables
+These are the same as v1, but must be set for the new project:
+
+| Variable | Example Value |
+|----------|---------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGci...` |
+| `NEXT_PUBLIC_API_URL` | `https://your-api.railway.app/api` |
+| `NEXT_PUBLIC_APP_URL` | `https://your-web-v2-app.vercel.app` |
+
+### 1b.3 Deploy
 ```bash
 # Vercel will auto-deploy on push to main
 git push origin main

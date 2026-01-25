@@ -32,7 +32,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type FilterType = HistoryFilters['type'] | 'favorite'
+type FilterType = NonNullable<HistoryFilters['type']> | 'favorite'
 
 /**
  * FilterTabs - Enhanced filter với Favorites tab

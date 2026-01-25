@@ -1,10 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { motion } from "framer-motion"
+import { useMemo } from "react"
+import { ResponsiveTimeRange } from "@nivo/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
 
 interface HeatmapData {
   date: string
@@ -18,78 +18,37 @@ interface LearningHeatmapProps {
 }
 
 /**
- * LearningHeatmap - Calendar heatmap kiểu GitHub
+ * LearningHeatmap - Calendar heatmap sử dụng @nivo/calendar
  * 
  * Features:
- * - 90 days history
- * - Color scale based on activity
- * - Tooltips on hover
- * - Click to filter by date
+ * - Powered by Nivo Charts (D3-based)
+ * - 90 days history view (TimeRange)
+ * - Responsive & Interactive
+ * - Custom dark/light theme support
  */
 export function LearningHeatmap({ data, loading, onDateClick }: LearningHeatmapProps) {
-  const [hoveredDate, setHoveredDate] = useState<{ date: string; count: number; x: number; y: number } | null>(null)
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
 
-  // Group data by weeks
-  const weeks = useMemo(() => {
-    if (!data.length) return []
-
-    const weeksArr: HeatmapData[][] = []
-    let currentWeek: HeatmapData[] = []
-
-    // Find the day of week for first date (0 = Sunday)
-    const firstDate = new Date(data[0].date)
-    const startPadding = firstDate.getDay()
-
-    // Add empty padding for start
-    for (let i = 0; i < startPadding; i++) {
-      currentWeek.push({ date: '', count: -1 }) // -1 = empty
-    }
-
-    data.forEach((d) => {
-      currentWeek.push(d)
-      if (currentWeek.length === 7) {
-        weeksArr.push(currentWeek)
-        currentWeek = []
-      }
-    })
-
-    // Push remaining
-    if (currentWeek.length > 0) {
-      weeksArr.push(currentWeek)
-    }
-
-    return weeksArr
+  // Transform data cho Nivo: { day, value }
+  const calendarData = useMemo(() => {
+    return data.map(d => ({
+      day: d.date,
+      value: d.count
+    }))
   }, [data])
 
-  // Get color based on count
-  const getColor = (count: number) => {
-    if (count < 0) return 'bg-transparent'
-    if (count === 0) return 'bg-muted/50'
-    if (count <= 2) return 'bg-emerald-200 dark:bg-emerald-900/50'
-    if (count <= 4) return 'bg-emerald-400 dark:bg-emerald-700'
-    return 'bg-emerald-600 dark:bg-emerald-500'
-  }
-
-  // Get month labels
-  const monthLabels = useMemo(() => {
-    const labels: { label: string; index: number }[] = []
-    let lastMonth = -1
-
-    data.forEach((d, i) => {
-      if (!d.date) return
-      const date = new Date(d.date)
-      const month = date.getMonth()
-      if (month !== lastMonth) {
-        labels.push({
-          label: date.toLocaleDateString('vi-VN', { month: 'short' }),
-          index: Math.floor(i / 7),
-        })
-        lastMonth = month
-      }
-    })
-
-    return labels
-  }, [data])
+  // Calculate range (90 days ago -> today)
+  const dateRange = useMemo(() => {
+    const today = new Date()
+    const from = new Date(today)
+    from.setDate(from.getDate() - 90)
+    
+    return {
+      from: from.toISOString().split('T')[0],
+      to: today.toISOString().split('T')[0]
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -98,14 +57,8 @@ export function LearningHeatmap({ data, loading, onDateClick }: LearningHeatmapP
           <Skeleton className="h-5 w-32" />
         </CardHeader>
         <CardContent>
-          <div className="flex gap-1">
-            {[...Array(13)].map((_, i) => (
-              <div key={i} className="flex flex-col gap-1">
-                {[...Array(7)].map((_, j) => (
-                  <Skeleton key={j} className="size-3 rounded-sm" />
-                ))}
-              </div>
-            ))}
+          <div className="h-[160px] w-full flex items-center justify-center">
+             <Skeleton className="h-[120px] w-full rounded-md" />
           </div>
         </CardContent>
       </Card>
@@ -114,103 +67,109 @@ export function LearningHeatmap({ data, loading, onDateClick }: LearningHeatmapP
 
   return (
     <Card className="border-border/50 overflow-hidden">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-0">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           📅 Hoạt động học tập
         </CardTitle>
       </CardHeader>
-      <CardContent className="relative">
-        {/* Month Labels */}
-        <div className="flex gap-1 mb-1 text-[10px] text-muted-foreground pl-5">
-          {monthLabels.map((m, i) => (
-            <span
-              key={i}
-              className="absolute"
-              style={{ left: `${20 + m.index * 14}px` }}
+      <CardContent className="h-[200px] w-full relative">
+        <ResponsiveTimeRange
+          data={calendarData}
+          from={dateRange.from}
+          to={dateRange.to}
+          emptyColor={isDark ? "#1e293b" : "#f1f5f9"} // slate-800 : slate-100
+          colors={
+             isDark 
+              ? ['#312e81', '#4338ca', '#6366f1', '#818cf8'] // Indigo dark mode (deep to light)
+              : ['#c7d2fe', '#818cf8', '#6366f1', '#4f46e5'] // Indigo light mode
+          }
+          margin={{ top: 20, right: 20, bottom: 0, left: 30 }}
+          dayBorderWidth={2}
+          dayBorderColor={isDark ? "#020817" : "#ffffff"} // background color match
+          dayRadius={4}
+          align="top"
+          onClick={(data) => onDateClick?.(data.day)}
+          
+          // Custom Tooltip
+          tooltip={({ day, value, color }) => (
+            <div
+              style={{
+                backgroundColor: isDark ? "#1e293b" : "#ffffff",
+                color: isDark ? "#f8fafc" : "#0f172a",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                border: isDark ? "1px solid #334155" : "1px solid #e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
             >
-              {m.label}
-            </span>
-          ))}
-        </div>
-
-        {/* Grid */}
-        <div className="flex gap-1 mt-4">
-          {/* Day Labels */}
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground pr-1">
-            <span className="h-3">CN</span>
-            <span className="h-3">T2</span>
-            <span className="h-3">T3</span>
-            <span className="h-3">T4</span>
-            <span className="h-3">T5</span>
-            <span className="h-3">T6</span>
-            <span className="h-3">T7</span>
-          </div>
-
-          {/* Weeks */}
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-1">
-              {week.map((day, dayIndex) => (
-                <motion.div
-                  key={dayIndex}
-                  className={cn(
-                    "size-3 rounded-sm cursor-pointer transition-transform",
-                    getColor(day.count),
-                    day.count >= 0 && "hover:scale-125 hover:ring-2 hover:ring-primary/50"
-                  )}
-                  onClick={() => day.count >= 0 && onDateClick?.(day.date)}
-                  onMouseEnter={(e) => {
-                    if (day.count >= 0) {
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      setHoveredDate({
-                        date: day.date,
-                        count: day.count,
-                        x: rect.left,
-                        y: rect.top,
-                      })
-                    }
-                  }}
-                  onMouseLeave={() => setHoveredDate(null)}
-                  whileHover={{ scale: day.count >= 0 ? 1.2 : 1 }}
-                />
-              ))}
+              <div
+                style={{
+                  width: "12px",
+                  height: "12px",
+                  backgroundColor: color,
+                  borderRadius: "2px",
+                }}
+              />
+              <div>
+                <div className="text-xs font-semibold">
+                  {new Date(day).toLocaleDateString('vi-VN', { 
+                    weekday: 'long', 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                  })}
+                </div>
+                <div className="text-xs opacity-90">
+                  {value === undefined ? 'Chưa học' : `${value} bài học`}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+          
+          // Theme config
+          theme={{
+            text: {
+              fill: isDark ? "#94a3b8" : "#64748b",
+              fontSize: 12,
+              fontFamily: "var(--font-sans)",
+            },
+            tooltip: {
+              container: {
+                background: isDark ? "#1e293b" : "#ffffff",
+                color: isDark ? "#f8fafc" : "#0f172a",
+                border: isDark ? "1px solid #334155" : "1px solid #e2e8f0",
+                fontSize: 12,
+                borderRadius: 8,
+                padding: "8px 12px",
+              },
+            },
+          }}
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 mt-4 text-[10px] text-muted-foreground">
+          // Localization & Formatting
+          monthLegend={(_year, _month, date) => {
+             return date.toLocaleDateString('vi-VN', { month: 'long' })
+          }}
+          
+          weekdayLegendOffset={0} // Hide huge weekday labels if prefer
+        />
+        
+        {/* Legend Custom */}
+        <div className="absolute bottom-2 right-4 flex items-center gap-2 text-[10px] text-muted-foreground pointer-events-none">
           <span>Ít</span>
-          <div className="flex gap-0.5">
-            <div className="size-3 rounded-sm bg-muted/50" />
-            <div className="size-3 rounded-sm bg-emerald-200 dark:bg-emerald-900/50" />
-            <div className="size-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-            <div className="size-3 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+          <div className="flex gap-1">
+             <div className={`size-3 rounded-sm ${isDark ? 'bg-[#1e293b]' : 'bg-slate-100'}`} />
+             <div className={`size-3 rounded-sm ${isDark ? 'bg-[#312e81]' : 'bg-indigo-200'}`} />
+             <div className={`size-3 rounded-sm ${isDark ? 'bg-[#4338ca]' : 'bg-indigo-400'}`} />
+             <div className={`size-3 rounded-sm ${isDark ? 'bg-[#6366f1]' : 'bg-indigo-500'}`} />
+             <div className={`size-3 rounded-sm ${isDark ? 'bg-[#818cf8]' : 'bg-indigo-600'}`} />
           </div>
           <span>Nhiều</span>
         </div>
-
-        {/* Tooltip */}
-        {hoveredDate && (
-          <div
-            className="fixed z-50 bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-lg border"
-            style={{
-              left: hoveredDate.x - 40,
-              top: hoveredDate.y - 35,
-            }}
-          >
-            <div className="font-medium">
-              {new Date(hoveredDate.date).toLocaleDateString('vi-VN', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}
-            </div>
-            <div className="text-muted-foreground">
-              {hoveredDate.count} bài học
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
 }
+
