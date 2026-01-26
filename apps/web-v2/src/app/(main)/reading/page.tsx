@@ -85,6 +85,7 @@ export default function ReadingPage() {
       focusMode && "fixed inset-0 z-50 bg-background overflow-y-auto p-4 md:p-6"
     )}>
       {/* Focus Mode Header */}
+      {focusMode ? (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/40 mb-8 transition-all">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => setFocusMode(false)} className="gap-2 text-muted-foreground hover:text-foreground">
