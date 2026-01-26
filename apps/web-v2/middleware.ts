@@ -17,7 +17,9 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 
 // Routes that require authentication
-const PROTECTED_ROUTES = ['/', '/listening', '/speaking', '/reading', '/history', '/settings'];
+// CHANGED: Allow guest browsing - protection moved to action level (AuthActionGuard)
+// const PROTECTED_ROUTES = ['/', '/listening', '/speaking', '/reading', '/history', '/settings'];
+const PROTECTED_ROUTES: string[] = []; // Guest có thể xem tất cả các trang
 
 // Routes that should redirect to home if already authenticated
 const AUTH_ROUTES = ['/login'];

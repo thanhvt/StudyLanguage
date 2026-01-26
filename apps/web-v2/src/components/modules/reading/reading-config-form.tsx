@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, Sparkles, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AuthActionGuard } from "@/components/auth"
 
 interface ReadingConfigFormProps {
   onGenerate: (topic: string, difficulty: 'basic' | 'advanced') => void
@@ -123,25 +124,27 @@ export function ReadingConfigForm({ onGenerate, isGenerating }: ReadingConfigFor
             </div>
           </div>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25"
-            disabled={!topic.trim() || isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="size-5 mr-2 animate-spin" />
-                Đang tạo bài đọc...
-              </>
-            ) : (
-              <>
-                <Sparkles className="size-5 mr-2" />
-                Tạo bài đọc
-              </>
-            )}
-          </Button>
+          {/* Submit Button - Protected by AuthActionGuard */}
+          <AuthActionGuard message="Đăng nhập để tạo bài đọc">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25"
+              disabled={!topic.trim() || isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="size-5 mr-2 animate-spin" />
+                  Đang tạo bài đọc...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-5 mr-2" />
+                  Tạo bài đọc
+                </>
+              )}
+            </Button>
+          </AuthActionGuard>
         </form>
       </CardContent>
     </Card>

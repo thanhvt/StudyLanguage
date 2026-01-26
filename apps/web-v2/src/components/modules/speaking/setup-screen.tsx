@@ -9,6 +9,7 @@ import { FeatureHeader } from "@/components/shared"
 import { TopicCombobox } from "./topic-combobox"
 import { Mic, Phone, Clock, Sparkles, History } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AuthActionGuard } from "@/components/auth"
 
 interface SetupScreenProps {
   topic: string
@@ -133,16 +134,18 @@ export function SetupScreen({
 
         <Separator className="my-4" />
 
-        {/* Start Button */}
-        <Button
-          className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 gap-2"
-          size="lg"
-          onClick={onStart}
-          disabled={!topic.trim()}
-        >
-          <Phone className="size-5" />
-          Start Conversation
-        </Button>
+        {/* Start Button - Protected by AuthActionGuard */}
+        <AuthActionGuard message="Đăng nhập để bắt đầu luyện nói">
+          <Button
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 gap-2"
+            size="lg"
+            onClick={onStart}
+            disabled={!topic.trim()}
+          >
+            <Phone className="size-5" />
+            Start Conversation
+          </Button>
+        </AuthActionGuard>
 
         {/* Tip - Compact */}
         <p className="text-center text-xs text-muted-foreground mt-3">

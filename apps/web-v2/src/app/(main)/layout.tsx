@@ -1,9 +1,14 @@
 import { AuthProvider } from "@/components/providers/auth-provider"
-import { ProtectedRoute } from "@/components/protected-route"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layouts/app-sidebar"
 import { AppHeader } from "@/components/layouts/app-header"
 
+/**
+ * MainLayout - Layout chính cho các trang app
+ * 
+ * CHANGED: Bỏ ProtectedRoute wrapper để cho phép Guest xem tất cả pages
+ * Protection được chuyển sang action-level qua AuthActionGuard component
+ */
 export default function MainLayout({
   children,
 }: {
@@ -11,17 +16,17 @@ export default function MainLayout({
 }) {
   return (
     <AuthProvider>
-      <ProtectedRoute fallbackUrl="/login">
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <AppHeader />
-            <main className="flex-1 p-4 md:p-6 overflow-auto">
-              {children}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </ProtectedRoute>
+      {/* Guest Mode: Không redirect, cho phép xem nội dung */}
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <AppHeader />
+          <main className="flex-1 p-4 md:p-6 overflow-auto">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
     </AuthProvider>
   )
 }
+

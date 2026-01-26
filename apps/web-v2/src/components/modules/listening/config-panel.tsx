@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { AuthActionGuard } from "@/components/auth"
 
 interface ConfigPanelProps {
   duration: number
@@ -173,42 +174,44 @@ export function ConfigPanel({
         </div>
       </div>
 
-      {/* Generate Button */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="w-full mt-2">
-              <Button
-                onClick={onGenerate}
-                disabled={disabled || isGenerating}
-                className={cn(
-                  "w-full h-11 text-base font-semibold",
-                  "bg-gradient-to-r from-skill-listening to-primary",
-                  "hover:shadow-lg hover:shadow-primary/25 transition-all duration-200",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="size-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="size-4 mr-2" aria-hidden="true" />
-                    Generate Conversation
-                  </>
-                )}
-              </Button>
-            </div>
-          </TooltipTrigger>
-          {disabled && (
-            <TooltipContent>
-              <p>Select a topic first</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
+      {/* Generate Button - Protected by AuthActionGuard */}
+      <AuthActionGuard message="Đăng nhập để tạo hội thoại luyện nghe">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full mt-2">
+                <Button
+                  onClick={onGenerate}
+                  disabled={disabled || isGenerating}
+                  className={cn(
+                    "w-full h-11 text-base font-semibold",
+                    "bg-gradient-to-r from-skill-listening to-primary",
+                    "hover:shadow-lg hover:shadow-primary/25 transition-all duration-200",
+                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                  )}
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="size-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4 mr-2" aria-hidden="true" />
+                      Generate Conversation
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {disabled && (
+              <TooltipContent>
+                <p>Select a topic first</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      </AuthActionGuard>
     </div>
   )
 }
