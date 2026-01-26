@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { Headphones, History, ListMusic } from "lucide-react"
-import { FeatureHeader } from "@/components/shared"
+import { useState, useCallback } from "react"
+import { Headphones, ListMusic } from "lucide-react"
+import { FeatureHeader, RecentLessonsDropdown } from "@/components/shared"
 import { 
   TopicPicker, 
   ConfigPanel, 
@@ -10,13 +10,11 @@ import {
   SessionPlayer,
   InteractiveMode,
   RadioMode,
-  PlaylistPanel,
-  HistoryPanel
+  PlaylistPanel
 } from "@/components/modules/listening"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { generateConversation, generateConversationAudio } from "@/lib/api"
-import { useListeningHistory } from "@/hooks/use-listening-history"
 import { useListeningPlaylist } from "@/hooks/use-listening-playlist"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
 import type { 
@@ -40,11 +38,9 @@ export default function ListeningPage() {
   // Mode & View state
   const [mode, setMode] = useState<ListeningMode>('passive')
   const [viewState, setViewState] = useState<ViewState>('config')
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false)
 
   // Hooks
-  const history = useListeningHistory()
   const playlists = useListeningPlaylist()
   const { saveLesson } = useSaveLesson()
 
@@ -125,9 +121,6 @@ export default function ListeningPage() {
         mode: 'passive',
         status: 'completed'
       })
-      
-      // Refresh history list
-      history.refreshHistory()
 
       // Generate audio in background
       setIsGeneratingAudio(true)
@@ -153,7 +146,7 @@ export default function ListeningPage() {
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedTopic, duration, speakers, keywords, mode, history, saveLesson])
+  }, [selectedTopic, duration, speakers, keywords, mode, saveLesson])
 
   // Reset to config view
   const handleReset = useCallback(() => {
@@ -169,8 +162,15 @@ export default function ListeningPage() {
     setSelectedTopic({ id: 'history', name: topicName, description: 'From History' })
     setConversation(conversation)
     setViewState('playing')
-    setIsHistoryOpen(false)
     setIsPlaylistOpen(false)
+  }
+
+  // Xử lý khi chọn entry từ RecentLessonsDropdown
+  const handleRecentLessonPlay = (entry: { topic: string; content: Record<string, unknown> }) => {
+    const script = entry.content?.script as ConversationLine[] | undefined
+    if (script) {
+      handlePlaySession(script, entry.topic)
+    }
   }
 
   return (
@@ -183,9 +183,13 @@ export default function ListeningPage() {
           title="Listening Practice"
           subtitle="140+ scenarios • AI-powered"
           actions={[
-            { icon: History, label: "History", onClick: () => setIsHistoryOpen(true) },
             { icon: ListMusic, label: "Playlists", onClick: () => setIsPlaylistOpen(true) },
           ]}
+        />
+        {/* Recent Lessons Dropdown */}
+        <RecentLessonsDropdown 
+          type="listening" 
+          onPlayEntry={handleRecentLessonPlay}
         />
       </div>
 
@@ -270,22 +274,7 @@ export default function ListeningPage() {
         )}
       </div>
 
-      {/* History Dialog */}
-      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="max-w-md">
-          <DialogTitle className="sr-only">Listening History</DialogTitle>
-          <HistoryPanel 
-            history={history.history}
-            onPlaySession={(entry) => {
-              if (entry.content.script) {
-                handlePlaySession(entry.content.script, entry.topic)
-              }
-            }}
-            onToggleFavorite={history.toggleFavorite}
-            onClearHistory={history.clearHistory}
-          />
-        </DialogContent>
-      </Dialog>
+
 
       {/* Playlist Dialog */}
       <Dialog open={isPlaylistOpen} onOpenChange={setIsPlaylistOpen}>

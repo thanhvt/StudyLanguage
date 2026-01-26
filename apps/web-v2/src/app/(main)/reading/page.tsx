@@ -14,10 +14,9 @@ import { ReadingConfigForm } from "@/components/modules/reading/reading-config-f
 import { ArticleViewer } from "@/components/modules/reading/article-viewer"
 import { AIThinkingIndicator } from "@/components/modules/reading/reading-skeleton"
 import { ReadingPracticeSection } from "@/components/modules/reading/reading-practice-section"
-import { HistoryDrawer } from "@/components/history"
+import { RecentLessonsDropdown } from "@/components/shared"
 import { useReading, ReadingArticle } from "@/hooks/use-reading"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
-import { HistoryEntry } from "@/hooks/use-history"
 
 /**
  * Reading Page - Module Luyện Đọc
@@ -35,7 +34,6 @@ export default function ReadingPage() {
   const [focusMode, setFocusMode] = useState(false)
   const [currentTopic, setCurrentTopic] = useState("")
   const [currentDifficulty, setCurrentDifficulty] = useState<'basic' | 'advanced'>('basic')
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [loadedArticle, setLoadedArticle] = useState<ReadingArticle | null>(null)
   
   // Hooks
@@ -61,26 +59,24 @@ export default function ReadingPage() {
     setCurrentTopic("")
   }, [resetReading])
 
-  const handleOpenHistoryEntry = useCallback((entry: HistoryEntry) => {
-    if (entry.content) {
-      setCurrentTopic(entry.topic)
-      const content = entry.content as { 
-        title?: string
-        article?: string 
-        questions?: { question: string; options: string[]; answer: number }[]
-        difficulty?: 'basic' | 'advanced'
-      }
-      
-      if (content.article && content.questions) {
-        setLoadedArticle({
-          title: content.title,
-          article: content.article,
-          questions: content.questions,
-        })
-        setCurrentDifficulty(content.difficulty || 'basic')
-      }
+  // Xử lý khi chọn entry từ RecentLessonsDropdown
+  const handleRecentLessonPlay = useCallback((entry: { topic: string; content: Record<string, unknown> }) => {
+    setCurrentTopic(entry.topic)
+    const content = entry.content as { 
+      title?: string
+      article?: string 
+      questions?: { question: string; options: string[]; answer: number }[]
+      difficulty?: 'basic' | 'advanced'
     }
-    setHistoryOpen(false)
+    
+    if (content.article && content.questions) {
+      setLoadedArticle({
+        title: content.title,
+        article: content.article,
+        questions: content.questions,
+      })
+      setCurrentDifficulty(content.difficulty || 'basic')
+    }
   }, [])
 
   return (
@@ -88,17 +84,7 @@ export default function ReadingPage() {
       "transition-all duration-500 ease-in-out",
       focusMode && "fixed inset-0 z-50 bg-background overflow-y-auto p-4 md:p-6"
     )}>
-      {/* History Drawer */}
-      <HistoryDrawer
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        filterType="reading"
-        onOpenEntry={handleOpenHistoryEntry}
-      />
-
-      {/* Header Section */}
-      {focusMode ? (
-        /* Focus Mode Header */
+      {/* Focus Mode Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/40 mb-8 transition-all">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => setFocusMode(false)} className="gap-2 text-muted-foreground hover:text-foreground">
@@ -157,10 +143,10 @@ export default function ReadingPage() {
                 </div>
               )}
 
-              <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} className="gap-2">
-                <History className="size-4" />
-                <span className="hidden sm:inline">Lịch sử</span>
-              </Button>
+              <RecentLessonsDropdown 
+                type="reading" 
+                onPlayEntry={handleRecentLessonPlay}
+              />
             </div>
           </div>
         </div>

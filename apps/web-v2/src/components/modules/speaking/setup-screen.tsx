@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { FeatureHeader } from "@/components/shared"
+import { FeatureHeader, RecentLessonsDropdown } from "@/components/shared"
 import { TopicCombobox } from "./topic-combobox"
-import { Mic, Phone, Clock, Sparkles, History } from "lucide-react"
+import { Mic, Phone, Clock, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AuthActionGuard } from "@/components/auth"
 
@@ -19,7 +19,7 @@ interface SetupScreenProps {
   feedbackMode: "strict" | "gentle"
   onFeedbackModeChange: (mode: "strict" | "gentle") => void
   onStart: () => void
-  onHistoryClick?: () => void
+  onPlayRecentLesson?: (entry: { topic: string; content: Record<string, unknown> }) => void
 }
 
 const DURATION_OPTIONS = [
@@ -37,7 +37,7 @@ export function SetupScreen({
   feedbackMode,
   onFeedbackModeChange,
   onStart,
-  onHistoryClick,
+  onPlayRecentLesson,
 }: SetupScreenProps) {
   return (
     <div className="flex flex-col h-full">
@@ -47,11 +47,15 @@ export function SetupScreen({
         colorScheme="speaking"
         title="Speaking Practice"
         subtitle="AI Conversation Coach"
-        actions={onHistoryClick ? [
-          { icon: History, label: "History", onClick: onHistoryClick },
-        ] : []}
         className="mb-4"
       />
+      {/* Recent Lessons Dropdown */}
+      <div className="flex justify-end mb-4 -mt-2">
+        <RecentLessonsDropdown 
+          type="speaking" 
+          onPlayEntry={onPlayRecentLesson}
+        />
+      </div>
 
       {/* Main Content - Single Column Compact */}
       <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">

@@ -349,9 +349,25 @@ export default function SpeakingPage() {
           feedbackMode={feedbackMode}
           onFeedbackModeChange={setFeedbackMode}
           onStart={startSession}
-          onHistoryClick={() => {
-            // TODO: Implement history drawer for speaking
-            console.log("Open speaking history")
+          onPlayRecentLesson={(entry) => {
+            if (entry.content) {
+              const content = entry.content as { 
+                messages?: ConversationMessage[]
+                feedbackMode?: "strict" | "gentle" 
+              }
+              
+              if (content.messages && content.messages.length > 0) {
+                setTopic(entry.topic)
+                setMessages(content.messages)
+                setFeedbackMode(content.feedbackMode || "gentle")
+                setViewMode("session")
+                // Reset other states
+                setInputMode("voice")
+                setTextInput("")
+                setSessionStartTime(Date.now()) // Start new session timer or keep old duration? Let's start new for practice.
+                setSessionDuration(0)
+              }
+            }
           }}
         />
       </div>

@@ -1,6 +1,6 @@
 export { HistoryCard } from './history-card'
 export { HistoryPanel } from './history-panel'
-export { HistoryDrawer, HistoryButton } from './history-drawer'
+
 export { StatsCards } from './stats-cards'
 export { LearningHeatmap } from './learning-heatmap'
 export { PinnedSection } from './pinned-section'
