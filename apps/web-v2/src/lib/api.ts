@@ -12,6 +12,16 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 /**
+ * Redirect to login page (client-side only)
+ */
+function redirectToLogin() {
+  if (typeof window !== 'undefined') {
+    console.warn('[API] Redirecting to login...')
+    window.location.href = '/login'
+  }
+}
+
+/**
  * Refresh session and get new token
  */
 async function refreshAndGetToken(): Promise<string | null> {
@@ -27,6 +37,12 @@ async function refreshAndGetToken(): Promise<string | null> {
   
   if (error) {
     console.warn('[API] Session refresh failed:', error.message)
+    // Check for refresh token errors - redirect to login
+    if (error.message?.toLowerCase().includes('refresh token') || 
+        error.message?.toLowerCase().includes('invalid') ||
+        error.code === 'refresh_token_not_found') {
+      redirectToLogin()
+    }
     return null
   }
   
@@ -88,7 +104,8 @@ export async function api(
         return api(endpoint, options, timeoutMs, true)
       }
       
-      console.error('[API] Refresh failed, user needs to login again')
+      console.error('[API] Refresh failed, redirecting to login...')
+      redirectToLogin()
     }
 
     return response

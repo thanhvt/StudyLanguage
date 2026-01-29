@@ -11,6 +11,7 @@
     "prepare": "husky",
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=web",
+    "dev:web-v2": "turbo run dev --filter=web-v2",
     "dev:mobile": "turbo run dev --filter=mobile",
     "dev:api": "turbo run dev --filter=api",
     "build": "turbo run build",
