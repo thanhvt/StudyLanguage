@@ -20,6 +20,7 @@ import {
   Shuffle,
   Volume2,
   Music,
+  MessageSquarePlus,
 } from "lucide-react"
 
 import {
@@ -52,6 +53,7 @@ import { useMusic } from "@/components/providers/music-provider"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
+import { FeedbackDialog } from "@/components/modules/feedback/feedback-dialog"
 
 // Menu items - clean design with subtle colors
 const mainNav = [
@@ -90,6 +92,15 @@ const secondaryNav = [
   },
 ]
 
+// Action-based menu items (opens dialog instead of navigating)
+const actionNav = [
+  {
+    title: "Góp ý",
+    action: "feedback",
+    icon: MessageSquarePlus,
+  },
+]
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
@@ -107,6 +118,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     shuffleTrack 
   } = useMusic()
 
+  // Feedback dialog state
+  const [feedbackOpen, setFeedbackOpen] = React.useState(false)
+
   const handleLogout = async () => {
     await signOut()
     router.push("/login")
@@ -119,6 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
+    <>
     <Sidebar 
       collapsible="icon" 
       {...props} 
@@ -240,6 +255,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuItem>
                 )
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Action Navigation (Góp ý) */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {actionNav.map((item) => (
+                <SidebarMenuItem key={item.title} className={cn(isCollapsed && "flex justify-center")}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    onClick={() => {
+                      if (item.action === "feedback") {
+                        setFeedbackOpen(true)
+                      }
+                    }}
+                    className={cn(
+                      "h-10 rounded-lg transition-colors cursor-pointer",
+                      isCollapsed && "w-10 justify-center px-0 mx-auto",
+                      "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex items-center gap-3",
+                      isCollapsed && "justify-center w-full"
+                    )}>
+                      <item.icon className="size-5 shrink-0 transition-colors" />
+                      {!isCollapsed && (
+                        <span>{item.title}</span>
+                      )}
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -484,5 +534,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+
+    {/* Feedback Dialog */}
+    <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+    </>
   )
 }
