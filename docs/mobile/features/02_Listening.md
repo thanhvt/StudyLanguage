@@ -18,6 +18,33 @@ Module nghe hiểu với AI-generated conversations, tối ưu cho học trên d
 | **Interactive Mode** | AI pause, user respond | Focused learning |
 | **Radio Mode** | Continuous playlists | Background learning |
 
+### 1.2 Custom Scenarios (NEW ✨)
+
+Cho phép user tạo và quản lý scenario riêng để luyện nghe theo chủ đề cá nhân.
+
+| Feature | Description |
+|---------|-------------|
+| **Create** | Tạo scenario với tên + mô tả chi tiết |
+| **Quick Use** | Dùng ngay không lưu vào database |
+| **Save** | Lưu vào database để dùng lại |
+| **Favorite** | Đánh dấu yêu thích |
+| **Delete** | Xóa scenario đã lưu |
+
+### 1.3 Global Audio Player (NEW ✨)
+
+Audio player persistent, hoạt động xuyên suốt các trang.
+
+| Mode | Description | Context |
+|------|-------------|---------|
+| **Full** | Full controls, transcript | Listening page |
+| **Compact** | Mini player với progress | Other pages |
+| **Minimized** | Floating pill | Tối thiểu hóa |
+
+**Features:**
+- Persist playback across page navigation
+- Confirmation dialog khi đổi audio đang phát
+- Lưu user preferences (volume, speed, mute)
+
 ---
 
 ## 2. User Flows
@@ -260,6 +287,90 @@ Module nghe hiểu với AI-generated conversations, tối ưu cho học trên d
 └─────────────────────────────────┘
 ```
 
+### 3.9 Custom Scenarios Panel (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ✨ Chủ đề của bạn          ⊕  │
+├─────────────────────────────────┤
+│                                 │
+│  ➕ Tạo scenario mới            │
+│  ┌─────────────────────────┐   │
+│  │ Tên scenario            │   │
+│  │ [                       ]   │
+│  │                         │   │
+│  │ Mô tả chi tiết          │   │
+│  │ [                       ]   │
+│  │ [                       ]   │
+│  │                         │   │
+│  │ [⚡ Dùng ngay] [💾 Lưu]  │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  📋 Scenarios đã lưu            │
+│  ┌─────────────────────────┐   │
+│  │ ⭐ Phỏng vấn xin việc    │   │
+│  │ 📝 Interview preparation │   │
+│  │              [▶️] [🗑️]   │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ ☆ Du lịch Nhật Bản      │   │
+│  │ 📝 Travel conversation  │   │
+│  │              [▶️] [🗑️]   │   │
+│  └─────────────────────────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Quick Use: Dùng ngay không lưu (cho guest hoặc test)
+- Save: Lưu vào database (yêu cầu đăng nhập)
+- Favorite: Toggle star icon
+- Delete: Xác nhận trước khi xóa
+
+### 3.10 Global Audio Player - Compact Mode (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Home                     ⋮  │
+├─────────────────────────────────┤
+│                                 │
+│       [Home page content]       │
+│                                 │
+├─────────────────────────────────┤
+│ ┌─────────────────────────────┐│
+│ │🎧 Coffee Shop Talk   ▼ ─   ✕││
+│ │   Daily Conversation        ││
+│ │ ──────●─────────── 5:30     ││
+│ │   [⏪]   [⏸️]   [⏩]   1.0x  ││
+│ └─────────────────────────────┘│
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Fixed bottom position
+- Show title + subtitle + progress
+- Basic controls: prev, play/pause, next, speed
+- Minimize (▼) / Close (✕) buttons
+
+### 3.11 Global Audio Player - Minimized Mode (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│       [Any page content]        │
+│                                 │
+│                                 │
+│                ┌──────────────┐ │
+│                │ ⏸️ 5:30/15:00│ │
+│                └──────────────┘ │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Floating pill, draggable
+- Tap to expand to Compact mode
+- Minimal info: play/pause + time
+
 ---
 
 ## 4. Features Detail
@@ -375,6 +486,62 @@ interface ListeningState {
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 5.4 Custom Scenarios State (NEW ✨)
+
+```typescript
+interface CustomScenario {
+  id: string;
+  name: string;
+  description: string;
+  isFavorite: boolean;
+  createdAt: Date;
+}
+
+// Hook: useCustomScenarios
+interface CustomScenariosHook {
+  scenarios: CustomScenario[];
+  loading: boolean;
+  error: string | null;
+  
+  // Actions
+  createScenario: (name: string, description: string) => Promise<CustomScenario>;
+  deleteScenario: (id: string) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
+}
+```
+
+### 5.5 Global Audio Player State (NEW ✨)
+
+```typescript
+type PlayerMode = 'full' | 'compact' | 'minimized';
+
+interface AudioPlayerState {
+  // Audio data
+  audioUrl: string | null;
+  title: string;
+  subtitle: string;
+  timestamps: ConversationTimestamp[];
+  
+  // Playback state
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  speed: PlaybackSpeed; // 0.5 | 0.75 | 1 | 1.25 | 1.5 | 1.75 | 2
+  volume: number;
+  isMuted: boolean;
+  
+  // UI state
+  isVisible: boolean;
+  mode: PlayerMode;
+  showChangeConfirm: boolean;
+  pendingAudio: AudioData | null;
+}
+
+// Store: useAudioPlayerStore (Zustand with persist)
+// Persists: volume, speed, isMuted
+```
+
 ---
 
 ## 6. Gestures System
@@ -418,12 +585,17 @@ interface ListeningState {
 - [ ] Offline download
 - [ ] Background audio
 - [ ] Lock screen controls
+- [ ] **Custom Scenarios UI** (NEW ✨)
+- [ ] **Global Audio Player - Compact mode** (NEW ✨)
 
 ### Advanced Phase
 - [ ] Interactive mode with recording
 - [ ] Pocket mode with gestures
 - [ ] Voice commands
 - [ ] Radio mode (playlists)
+- [ ] **Custom Scenarios CRUD** (NEW ✨)
+- [ ] **Global Audio Player - Minimized mode** (NEW ✨)
+- [ ] **Audio change confirmation dialog** (NEW ✨)
 
 ---
 
