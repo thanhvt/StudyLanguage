@@ -74,7 +74,7 @@ export default function SpeakingPage() {
 
   // Session timer
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: ReturnType<typeof setInterval>
     if (viewMode === "session" && sessionStartTime) {
       interval = setInterval(() => {
         setSessionDuration(Math.floor((Date.now() - sessionStartTime) / 1000))

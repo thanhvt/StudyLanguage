@@ -32,7 +32,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /**
    * Bắt đầu ghi âm từ microphone

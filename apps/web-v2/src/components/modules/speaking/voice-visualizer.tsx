@@ -22,7 +22,7 @@ export function VoiceVisualizer({
   const [bars, setBars] = useState<number[]>(Array(40).fill(8))
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: ReturnType<typeof setInterval>
     if (isListening) {
       interval = setInterval(() => {
         setBars(prev => prev.map((_, i) => {

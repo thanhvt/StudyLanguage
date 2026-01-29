@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Plus, Star, Trash2, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Star, Trash2, Sparkles, Loader2, Play, Save } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -38,7 +38,7 @@ export function CustomScenarioInput({
   const [newDescription, setNewDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  // Handle create new scenario
+  // Handle create new scenario (save to DB)
   const handleCreate = async () => {
     if (!newName.trim()) return
 
@@ -53,6 +53,21 @@ export function CustomScenarioInput({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  // Handle quick use (use without saving) - for when user just wants to try
+  const handleQuickUse = () => {
+    if (!newName.trim()) return
+
+    const tempScenario: TopicScenario = {
+      id: `temp-${Date.now()}`,
+      name: newName.trim(),
+      description: newDescription.trim(),
+    }
+    onSelect(tempScenario, 'custom', 'Quick Scenario')
+    setNewName('')
+    setNewDescription('')
+    setIsCreating(false)
   }
 
   // Handle select scenario
@@ -85,20 +100,58 @@ export function CustomScenarioInput({
     }
   }
 
-  // Not logged in state
+  // Not logged in state - still allow quick use
   if (!user) {
     return (
-      <div className={cn("flex flex-col items-center justify-center py-12 px-4 text-center", className)}>
-        <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <Sparkles className="size-7 text-primary" />
+      <div className={cn("flex flex-col gap-4", className)}>
+        {/* Header for guest */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              Custom Scenarios
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Nhập scenario tùy ý để luyện tập
+            </p>
+          </div>
         </div>
-        <h3 className="font-semibold mb-2">Custom Scenarios</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Đăng nhập để tạo và lưu scenarios của riêng bạn
-        </p>
-        <AuthActionGuard message="Đăng nhập để tạo custom scenario">
-          <Button size="sm">Đăng nhập</Button>
-        </AuthActionGuard>
+
+        {/* Quick Input for Guest */}
+        <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border border-primary/20 space-y-3">
+          <Input
+            placeholder="Tên scenario (VD: Phỏng vấn xin việc)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="bg-background/80 backdrop-blur-sm"
+          />
+          <Textarea
+            placeholder="Mô tả chi tiết (optional)..."
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            className="bg-background/80 backdrop-blur-sm resize-none h-20"
+          />
+          
+          {/* Redesigned Button Group */}
+          <div className="flex gap-2 pt-1">
+            <Button 
+              onClick={handleQuickUse}
+              disabled={!newName.trim()}
+              className="flex-1 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
+            >
+              <Play className="size-4" />
+              Sử dụng ngay
+            </Button>
+          </div>
+
+          {/* Login hint */}
+          <p className="text-xs text-center text-muted-foreground pt-2 border-t border-border/30">
+            <AuthActionGuard message="Đăng nhập để lưu scenarios">
+              <button className="text-primary hover:underline">Đăng nhập</button>
+            </AuthActionGuard>
+            {" "}để lưu và quản lý scenarios
+          </p>
+        </div>
       </div>
     )
   }
@@ -113,7 +166,7 @@ export function CustomScenarioInput({
             Custom Scenarios
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {scenarios.length} scenarios đã tạo
+            {scenarios.length} scenarios đã lưu
           </p>
         </div>
         
@@ -129,51 +182,69 @@ export function CustomScenarioInput({
         )}
       </div>
 
-      {/* Create Form */}
+      {/* Create Form - Redesigned */}
       {isCreating && (
-        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
+        <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border border-primary/20 space-y-3">
           <Input
             placeholder="Tên scenario (VD: Phỏng vấn xin việc)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="bg-background"
+            className="bg-background/80 backdrop-blur-sm"
             autoFocus
           />
           <Textarea
             placeholder="Mô tả chi tiết (optional)..."
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
-            className="bg-background resize-none h-20"
+            className="bg-background/80 backdrop-blur-sm resize-none h-20"
           />
-          <div className="flex gap-2 justify-end">
+          
+          {/* Redesigned Button Group - 3 options */}
+          <div className="flex flex-col gap-2 pt-1">
+            {/* Primary action - Use immediately */}
             <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                setIsCreating(false)
-                setNewName('')
-                setNewDescription('')
-              }}
+              onClick={handleQuickUse}
+              disabled={!newName.trim()}
+              className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
             >
-              Hủy
+              <Play className="size-4" />
+              Sử dụng ngay
             </Button>
-            <Button 
-              size="sm" 
-              onClick={handleCreate}
-              disabled={!newName.trim() || isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 mr-1.5 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Plus className="size-4 mr-1.5" />
-                  Tạo
-                </>
-              )}
-            </Button>
+            
+            {/* Secondary actions - Save or Cancel */}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setIsCreating(false)
+                  setNewName('')
+                  setNewDescription('')
+                }}
+                className="flex-1 text-muted-foreground hover:text-foreground"
+              >
+                Hủy
+              </Button>
+              <Button 
+                variant="secondary"
+                size="sm" 
+                onClick={handleCreate}
+                disabled={!newName.trim() || isSaving}
+                className="flex-1 gap-1.5"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-3.5" />
+                    Lưu lại
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -204,11 +275,15 @@ export function CustomScenarioInput({
               const isSelected = selectedTopic?.id === scenario.id
 
               return (
-                <button
+                // FIX: Changed from button to div to avoid nested buttons
+                <div
                   key={scenario.id}
                   onClick={() => handleSelect(scenario)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSelect(scenario)}
                   className={cn(
-                    "w-full text-left p-3 rounded-xl transition-all duration-200 group",
+                    "w-full text-left p-3 rounded-xl transition-all duration-200 group cursor-pointer",
                     "border hover:border-primary/30 hover:bg-primary/5",
                     isSelected 
                       ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20"
@@ -256,7 +331,7 @@ export function CustomScenarioInput({
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>

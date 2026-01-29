@@ -48,7 +48,7 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
   const [recordingDuration, setRecordingDuration] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
