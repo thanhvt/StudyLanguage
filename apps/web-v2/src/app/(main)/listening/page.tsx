@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Headphones, ListMusic } from "lucide-react"
-import { FeatureHeader, RecentLessonsDropdown } from "@/components/shared"
+import { Headphones, ListMusic, History } from "lucide-react"
+import { FeatureHeader, RecentLessonsPanel } from "@/components/shared"
+import { useAuth } from "@/components/providers/auth-provider"
 import { 
   TopicPicker, 
   ConfigPanel, 
@@ -39,8 +40,10 @@ export default function ListeningPage() {
   const [mode, setMode] = useState<ListeningMode>('passive')
   const [viewState, setViewState] = useState<ViewState>('config')
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false)
+  const [isRecentOpen, setIsRecentOpen] = useState(false)
 
   // Hooks
+  const { user } = useAuth()
   const playlists = useListeningPlaylist()
   const { saveLesson } = useSaveLesson()
 
@@ -183,13 +186,9 @@ export default function ListeningPage() {
           title="Listening Practice"
           subtitle="140+ scenarios • AI-powered"
           actions={[
+            { icon: History, label: "Gần đây", onClick: () => setIsRecentOpen(true) },
             { icon: ListMusic, label: "Playlists", onClick: () => setIsPlaylistOpen(true) },
           ]}
-        />
-        {/* Recent Lessons Dropdown */}
-        <RecentLessonsDropdown 
-          type="listening" 
-          onPlayEntry={handleRecentLessonPlay}
         />
       </div>
 
@@ -276,18 +275,32 @@ export default function ListeningPage() {
 
 
 
+      {/* Recent Lessons Dialog */}
+      <Dialog open={isRecentOpen} onOpenChange={setIsRecentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle className="sr-only">Recent Lessons</DialogTitle>
+          <RecentLessonsPanel 
+            type="listening"
+            isAuthenticated={!!user}
+            onPlayEntry={(entry) => {
+              handleRecentLessonPlay(entry)
+              setIsRecentOpen(false)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Playlist Dialog */}
       <Dialog open={isPlaylistOpen} onOpenChange={setIsPlaylistOpen}>
         <DialogContent className="max-w-md">
           <DialogTitle className="sr-only">Your Playlists</DialogTitle>
           <PlaylistPanel
-            playlists={playlists.playlists}
+            playlists={user ? playlists.playlists : []}
+            isAuthenticated={!!user}
             onCreatePlaylist={playlists.createPlaylist}
             onDeletePlaylist={playlists.deletePlaylist}
             onRenamePlaylist={playlists.updatePlaylistName}
             onPlayPlaylist={(playlist) => {
-              // Create a combined conversation from all items? Or just play first?
-              // For now, playing logic is complex for multi-item. We'll just confirm play
               console.log('Play playlist', playlist)
             }}
           />

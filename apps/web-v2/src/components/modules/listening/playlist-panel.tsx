@@ -10,7 +10,8 @@ import {
   Trash2,
   Edit2,
   Clock,
-  GripVertical
+  GripVertical,
+  LogIn
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +36,7 @@ import type { Playlist } from "@/types/listening-types"
 
 interface PlaylistPanelProps {
   playlists: Playlist[]
+  isAuthenticated?: boolean
   onCreatePlaylist: (name: string) => void
   onDeletePlaylist: (id: string) => void
   onRenamePlaylist: (id: string, name: string) => void
@@ -44,6 +46,7 @@ interface PlaylistPanelProps {
 
 export function PlaylistPanel({ 
   playlists, 
+  isAuthenticated = true,
   onCreatePlaylist,
   onDeletePlaylist,
   onRenamePlaylist,
@@ -70,20 +73,35 @@ export function PlaylistPanel({
           <ListMusic className="size-5 text-primary" />
           Playlists
         </h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1"
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          New
-        </Button>
+        {isAuthenticated && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <Plus className="size-4" />
+            New
+          </Button>
+        )}
       </div>
 
       {/* Playlist List */}
-      <ScrollArea className="h-[400px]">
-        {playlists.length === 0 ? (
+      <ScrollArea className="h-[350px]">
+        {/* Not authenticated */}
+        {!isAuthenticated ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <LogIn className="size-7 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">
+              Đăng nhập để quản lý playlists
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              Lưu các bài học yêu thích để ôn tập
+            </p>
+          </div>
+        ) : playlists.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ListMusic className="size-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">No playlists yet</p>
