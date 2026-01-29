@@ -74,9 +74,9 @@
   --primary: oklch(0.511 0.262 276.966);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Violet-500 Secondary */
-  --secondary: oklch(0.627 0.265 303.9);
-  --secondary-foreground: oklch(0.985 0 0);
+  /* Warm Dark Secondary (subtle orange hint) */
+  --secondary: oklch(0.90 0.02 50);
+  --secondary-foreground: oklch(0.15 0 0);
 
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -127,8 +127,8 @@
   --primary: oklch(0.59 0.246 273.7);
   --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.714 0.203 305.504);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklab(56.8% -0.05741 -0.1381);
+  --secondary-foreground: oklch(0.90 0 0);
 
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);

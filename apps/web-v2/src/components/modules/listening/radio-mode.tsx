@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   Radio, 
   Shuffle, 
@@ -35,10 +35,16 @@ const DURATION_OPTIONS = [
 ]
 
 export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
+  const [mounted, setMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [selectedDuration, setSelectedDuration] = useState(60)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isShuffling, setIsShuffling] = useState(false)
+
+  // Prevent hydration mismatch from Radix UI's auto-generated IDs
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Shuffle animation
   const handleShuffle = () => {
@@ -70,6 +76,21 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
   }
 
   const currentOption = DURATION_OPTIONS.find(o => o.value === selectedDuration)
+
+  // Render static placeholder during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="outline" className="w-full h-14 gap-3 justify-start">
+        <div className="size-10 rounded-xl bg-gradient-to-br from-primary/90 to-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+          <Radio className="size-5" />
+        </div>
+        <div className="text-left">
+          <p className="font-semibold">Radio Mode</p>
+          <p className="text-xs text-muted-foreground">Auto-generate continuous playlist</p>
+        </div>
+      </Button>
+    )
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
