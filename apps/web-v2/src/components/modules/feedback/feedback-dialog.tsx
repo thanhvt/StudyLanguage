@@ -76,7 +76,6 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   const { user } = useAuth()
   const [type, setType] = useState<FeedbackType>("general")
   const [email, setEmail] = useState(user?.email || "")
-  const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -87,7 +86,6 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     if (open) {
       setType("general")
       setEmail(user?.email || "")
-      setTitle("")
       setDescription("")
       setIsSuccess(false)
       setError(null)
@@ -108,7 +106,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         body: JSON.stringify({
           email,
           type,
-          title,
+          title: description.slice(0, 50), // Auto-generate title from first 50 chars
           description,
           pageUrl: window.location.href,
         }),
@@ -238,41 +236,27 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               </div>
             )}
 
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium">
-                Tiêu đề <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="title"
-                placeholder="Mô tả ngắn gọn..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={100}
-                className="bg-muted/30 border-border/50 focus:border-primary"
-              />
-            </div>
-
-            {/* Description */}
+            {/* Description - enlarged */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm font-medium">
-                Chi tiết <span className="text-destructive">*</span>
+                Nội dung góp ý <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="description"
-                placeholder="Mô tả chi tiết vấn đề hoặc đề xuất của bạn..."
+                placeholder="Mô tả chi tiết vấn đề, đề xuất, hoặc góp ý của bạn..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                rows={4}
-                maxLength={1000}
+                rows={6}
+                maxLength={1500}
                 className="bg-muted/30 border-border/50 focus:border-primary resize-none"
               />
               <p className="text-xs text-muted-foreground text-right">
-                {description.length}/1000
+                {description.length}/1500
               </p>
             </div>
+
+
 
             {/* Error message */}
             {error && (
@@ -281,10 +265,9 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               </div>
             )}
 
-            {/* Submit button */}
             <Button
               type="submit"
-              disabled={isSubmitting || !email || !title || !description}
+              disabled={isSubmitting || !email || !description}
               className="w-full h-11 font-medium"
             >
               {isSubmitting ? (
