@@ -157,7 +157,7 @@ export function RecentLessonsPanel({
 
         {/* Authenticated - has data */}
         {!authLoading && isAuthenticated && !isLoading && lessons.length > 0 && (
-          <div className="divide-y divide-border/30">
+          <div className="divide-y divide-border/30 overflow-hidden">
             {lessons.map((lesson) => (
               <button
                 key={lesson.id}
@@ -165,7 +165,7 @@ export function RecentLessonsPanel({
                 className={cn(
                   "w-full px-4 py-3 flex items-center gap-3",
                   "hover:bg-muted/50 transition-colors cursor-pointer",
-                  "text-left group"
+                  "text-left group overflow-hidden"
                 )}
               >
                 <div className={cn(
@@ -177,7 +177,7 @@ export function RecentLessonsPanel({
                   <Play className="size-4" />
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="text-sm font-medium truncate">
                     {lesson.topic}
                   </p>
