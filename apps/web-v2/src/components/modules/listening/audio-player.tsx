@@ -257,7 +257,7 @@ export function AudioPlayer({
               aria-label={isLoading ? "Loading audio" : isPlaying ? "Pause" : "Play"}
               className={cn(
                 "size-12 rounded-full",
-                "bg-gradient-to-br from-skill-listening to-primary",
+                "bg-gradient-to-br from-primary/90 to-primary",
                 "shadow-lg shadow-primary/30",
                 "hover:shadow-xl hover:shadow-primary/40",
                 "transition-all duration-200"
@@ -367,7 +367,7 @@ export function AudioPlayer({
             />
             {/* Progress Glow Effect */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 left-0 h-1 rounded-full bg-gradient-to-r from-skill-listening to-primary opacity-50 blur-sm pointer-events-none"
+              className="absolute top-1/2 -translate-y-1/2 left-0 h-1 rounded-full bg-gradient-to-r from-primary/80 to-primary opacity-50 blur-sm pointer-events-none"
               style={{ width: `${progress}%` }}
             />
           </div>

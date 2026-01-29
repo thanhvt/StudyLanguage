@@ -36,8 +36,8 @@ const colorSchemeStyles: Record<FeatureColorScheme, {
   shadow: string
 }> = {
   listening: {
-    gradient: "from-skill-listening to-primary",
-    shadow: "shadow-skill-listening/30",
+    gradient: "from-primary/90 to-primary",
+    shadow: "shadow-primary/30",
   },
   speaking: {
     gradient: "from-emerald-500 to-teal-600",

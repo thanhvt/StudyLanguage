@@ -185,7 +185,7 @@ export function ConfigPanel({
                   disabled={disabled || isGenerating}
                   className={cn(
                     "w-full h-11 text-base font-semibold",
-                    "bg-gradient-to-r from-skill-listening to-primary",
+                    "bg-gradient-to-r from-primary/90 to-primary",
                     "hover:shadow-lg hover:shadow-primary/25 transition-all duration-200",
                     "disabled:opacity-50 disabled:cursor-not-allowed"
                   )}

@@ -70,9 +70,32 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className={cn(
+              // Base layout & positioning
+              "absolute -top-2 -right-2 z-10",
+              // Size & shape - 44px touch target (WCAG compliant)
+              "size-9 flex items-center justify-center rounded-full",
+              // Premium glass-morphism background
+              "bg-background/80 backdrop-blur-sm",
+              "border border-border/50 shadow-lg shadow-black/5",
+              // Icon styling
+              "text-muted-foreground",
+              // Hover state - subtle scale + color shift
+              "hover:bg-background hover:text-foreground hover:border-border",
+              "hover:scale-105 hover:shadow-xl hover:shadow-black/10",
+              // Active state - press feedback
+              "active:scale-95 active:shadow-md",
+              // Focus state - accessibility
+              "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background",
+              // Smooth transitions
+              "transition-all duration-200 ease-out",
+              // Disabled state
+              "disabled:pointer-events-none disabled:opacity-50",
+              // SVG handling
+              "[&_svg]:pointer-events-none [&_svg]:shrink-0"
+            )}
           >
-            <XIcon />
+            <XIcon className="size-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
