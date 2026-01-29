@@ -80,7 +80,7 @@ export function ModeTabs({ value, onChange, variant = 'cards', className }: Mode
             <div className={cn(
               "size-12 rounded-xl flex items-center justify-center transition-colors",
               isActive
-                ? "bg-gradient-to-br from-skill-listening to-primary text-white"
+                ? "bg-gradient-to-br from-primary/90 to-primary text-white"
                 : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
             )}>
               <Icon className="size-6" />

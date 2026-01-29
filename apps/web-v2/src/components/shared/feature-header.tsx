@@ -93,7 +93,7 @@ export function FeatureHeader({
                 variant={action.variant || "outline"}
                 size="sm"
                 onClick={action.onClick}
-                className="gap-2"
+                className="gap-2 hover:border-primary/50 hover:text-primary"
               >
                 <action.icon className="size-4" />
                 <span className="hidden sm:inline">{action.label}</span>

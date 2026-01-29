@@ -1,29 +1,69 @@
 "use client"
 
 import * as React from "react"
-import { useRef, useEffect, useMemo } from "react"
+import { useRef, useEffect, useMemo, useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { 
+  MessageSquare, 
+  Mic, 
+  Headphones, 
+  Radio, 
+  Music,
+  Minimize2,
+  Maximize2
+} from "lucide-react"
 import type { ConversationLine, ConversationTimestamp } from "@/types/listening-types"
 
 interface TranscriptViewerProps {
   conversation: ConversationLine[]
   currentTime: number
+  totalDuration?: number
   timestamps?: ConversationTimestamp[]
   onSeek?: (time: number) => void
   className?: string
 }
 
-// Speaker colors for visual distinction
-const SPEAKER_COLORS = [
-  { bg: "bg-blue-500/15", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/30" },
-  { bg: "bg-emerald-500/15", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/30" },
-  { bg: "bg-violet-500/15", text: "text-violet-600 dark:text-violet-400", border: "border-violet-500/30" },
-  { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30" },
+// Speaker config with icons and gradients
+const SPEAKER_CONFIG = [
+  { 
+    icon: Mic,
+    bg: "bg-blue-500/15", 
+    text: "text-blue-600 dark:text-blue-400", 
+    border: "border-blue-500/40",
+    gradient: "from-blue-500 to-cyan-500",
+    glow: "shadow-blue-500/20"
+  },
+  { 
+    icon: Headphones,
+    bg: "bg-emerald-500/15", 
+    text: "text-emerald-600 dark:text-emerald-400", 
+    border: "border-emerald-500/40",
+    gradient: "from-emerald-500 to-teal-500",
+    glow: "shadow-emerald-500/20"
+  },
+  { 
+    icon: Radio,
+    bg: "bg-violet-500/15", 
+    text: "text-violet-600 dark:text-violet-400", 
+    border: "border-violet-500/40",
+    gradient: "from-violet-500 to-purple-500",
+    glow: "shadow-violet-500/20"
+  },
+  { 
+    icon: Music,
+    bg: "bg-amber-500/15", 
+    text: "text-amber-600 dark:text-amber-400", 
+    border: "border-amber-500/40",
+    gradient: "from-amber-500 to-orange-500",
+    glow: "shadow-amber-500/20"
+  },
 ]
 
-function getSpeakerColor(speakerIndex: number) {
-  return SPEAKER_COLORS[speakerIndex % SPEAKER_COLORS.length]
+function getSpeakerConfig(speakerIndex: number) {
+  return SPEAKER_CONFIG[speakerIndex % SPEAKER_CONFIG.length]
 }
 
 function formatTimestamp(seconds: number): string {
@@ -35,12 +75,14 @@ function formatTimestamp(seconds: number): string {
 export function TranscriptViewer({
   conversation,
   currentTime,
+  totalDuration,
   timestamps,
   onSeek,
   className,
 }: TranscriptViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const activeLineRef = useRef<HTMLDivElement>(null)
+  const [isCompact, setIsCompact] = useState(false)
 
   // Build speaker map for consistent coloring
   const speakerMap = useMemo(() => {
@@ -66,6 +108,17 @@ export function TranscriptViewer({
     return -1
   }, [currentTime, timestamps])
 
+  // Calculate progress percentage
+  const progressPercent = useMemo(() => {
+    if (totalDuration && totalDuration > 0) {
+      return Math.min((currentTime / totalDuration) * 100, 100)
+    }
+    if (conversation.length > 0 && activeLineIndex >= 0) {
+      return ((activeLineIndex + 1) / conversation.length) * 100
+    }
+    return 0
+  }, [currentTime, totalDuration, activeLineIndex, conversation.length])
+
   // Auto-scroll to active line
   useEffect(() => {
     if (activeLineRef.current) {
@@ -85,14 +138,13 @@ export function TranscriptViewer({
 
   // Format speaker label
   const getSpeakerLabel = (speaker: string) => {
-    // Convert "Person A" to "Speaker A" or keep as is
     if (speaker.toLowerCase().startsWith('person')) {
       return speaker.replace(/person/i, 'Speaker')
     }
     return speaker
   }
 
-  // Determine if speaker should be on left or right (for chat-bubble layout)
+  // Determine if speaker should be on left or right
   const isLeftSpeaker = (speaker: string) => {
     const index = speakerMap.get(speaker) ?? 0
     return index % 2 === 0
@@ -100,83 +152,152 @@ export function TranscriptViewer({
 
   if (conversation.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center h-64 text-muted-foreground", className)}>
-        No conversation to display
+      <div className={cn("flex flex-col items-center justify-center h-64 text-muted-foreground gap-3", className)}>
+        <MessageSquare className="w-12 h-12 opacity-30" />
+        <p>No conversation to display</p>
       </div>
     )
   }
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex items-center justify-between mb-4 px-2">
-        <h3 className="text-lg font-semibold">Transcript</h3>
-        {timestamps && timestamps.length > 0 && (
-          <span className="text-xs text-muted-foreground font-mono">
-            {activeLineIndex >= 0 ? activeLineIndex + 1 : 0}/{conversation.length} lines
-          </span>
-        )}
+      {/* Enhanced Header */}
+      <div className="flex items-center justify-between mb-3 px-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-primary" />
+          </div>
+          <h3 className="text-lg font-semibold">Transcript</h3>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Time Display */}
+          {totalDuration && (
+            <span className="text-xs font-mono text-muted-foreground tabular-nums">
+              {formatTimestamp(currentTime)} / {formatTimestamp(totalDuration)}
+            </span>
+          )}
+          
+          {/* Line Counter Badge */}
+          <Badge variant="secondary" className="text-xs font-mono">
+            {activeLineIndex >= 0 ? activeLineIndex + 1 : 0}/{conversation.length}
+          </Badge>
+
+          {/* Compact Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7"
+            onClick={() => setIsCompact(!isCompact)}
+            title={isCompact ? "Expand view" : "Compact view"}
+          >
+            {isCompact ? (
+              <Maximize2 className="w-3.5 h-3.5" />
+            ) : (
+              <Minimize2 className="w-3.5 h-3.5" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden mb-3 mx-2">
+        <div 
+          className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-300 rounded-full"
+          style={{ width: `${progressPercent}%` }}
+        />
       </div>
       
+      {/* Transcript Content */}
       <ScrollArea 
-        className="h-[400px] rounded-2xl border bg-card/30 p-4 shadow-inner"
+        className={cn(
+          "rounded-2xl border bg-card/30 backdrop-blur-sm shadow-inner transition-all duration-300",
+          isCompact ? "h-[280px] p-3" : "h-[400px] p-4"
+        )}
         role="region"
         aria-label="Conversation transcript"
       >
-        <div ref={containerRef} className="space-y-4">
+        <div ref={containerRef} className={cn("space-y-3", isCompact && "space-y-2")}>
           {conversation.map((line, index) => {
             const isActive = index === activeLineIndex
             const isPlayed = activeLineIndex >= 0 && index < activeLineIndex
             const speakerIndex = speakerMap.get(line.speaker) ?? 0
-            const colors = getSpeakerColor(speakerIndex)
+            const config = getSpeakerConfig(speakerIndex)
             const isLeft = isLeftSpeaker(line.speaker)
             const timestamp = timestamps?.[index]
+            const SpeakerIcon = config.icon
             
             return (
               <div
                 key={line.id || index}
                 ref={isActive ? activeLineRef : null}
                 className={cn(
-                  "flex",
+                  "flex gap-2",
                   isLeft ? "justify-start" : "justify-end"
                 )}
               >
+                {/* Speaker Avatar - Left */}
+                {isLeft && (
+                  <div className={cn(
+                    "shrink-0 rounded-full flex items-center justify-center transition-all duration-300",
+                    isCompact ? "w-6 h-6" : "w-8 h-8",
+                    isActive 
+                      ? `bg-gradient-to-br ${config.gradient} shadow-lg ${config.glow}` 
+                      : "bg-muted/50"
+                  )}>
+                    <SpeakerIcon className={cn(
+                      "text-white",
+                      isCompact ? "w-3 h-3" : "w-4 h-4",
+                      !isActive && "opacity-50"
+                    )} />
+                  </div>
+                )}
+
+                {/* Message Bubble */}
                 <div
                   onClick={() => handleLineClick(index)}
                   className={cn(
-                    "max-w-[85%] p-4 rounded-2xl transition-all duration-300 cursor-pointer",
-                    "border",
+                    "max-w-[80%] rounded-2xl transition-all duration-300 cursor-pointer border",
+                    isCompact ? "p-2.5" : "p-4",
                     isLeft ? "rounded-tl-sm" : "rounded-tr-sm",
-                    // Active state - highlighted
+                    // Active state
                     isActive && [
-                      "scale-[1.02] shadow-lg",
-                      colors.bg,
-                      colors.border,
-                      "ring-2 ring-primary/30"
+                      config.bg,
+                      config.border,
+                      "ring-2 ring-offset-1 ring-offset-background",
+                      `ring-${config.gradient.split('-')[1]}-500/40`,
+                      `shadow-lg ${config.glow}`
                     ],
-                    // Played state - normal
+                    // Played state
                     isPlayed && !isActive && [
-                      "bg-muted/30 border-border/30",
-                      "opacity-70"
+                      "bg-muted/40 border-border/40"
                     ],
-                    // Future state - dimmed
+                    // Future state
                     !isActive && !isPlayed && [
                       "bg-muted/20 border-border/20",
-                      "opacity-50 grayscale-[30%]"
+                      "opacity-60"
                     ],
-                    // Hover effect
-                    "hover:opacity-100 hover:grayscale-0"
+                    // Hover
+                    "hover:opacity-100 hover:bg-muted/40 hover:border-border/50"
                   )}
                 >
                   {/* Speaker Label & Timestamp */}
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className={cn(
+                    "flex items-center gap-2",
+                    isCompact ? "mb-0.5" : "mb-1.5"
+                  )}>
                     <span className={cn(
-                      "text-xs font-bold uppercase tracking-wider",
-                      isActive ? colors.text : "text-muted-foreground"
+                      "font-semibold uppercase tracking-wide",
+                      isCompact ? "text-[10px]" : "text-xs",
+                      isActive ? config.text : "text-muted-foreground"
                     )}>
                       {getSpeakerLabel(line.speaker)}
                     </span>
                     {timestamp && (
-                      <span className="text-[10px] text-muted-foreground font-mono">
+                      <span className={cn(
+                        "text-muted-foreground/70 font-mono",
+                        isCompact ? "text-[9px]" : "text-[10px]"
+                      )}>
                         {formatTimestamp(timestamp.startTime)}
                       </span>
                     )}
@@ -184,7 +305,8 @@ export function TranscriptViewer({
 
                   {/* Message Text */}
                   <p className={cn(
-                    "text-base leading-relaxed",
+                    "leading-relaxed",
+                    isCompact ? "text-sm" : "text-base",
                     isActive 
                       ? "text-foreground font-medium" 
                       : "text-muted-foreground"
@@ -192,6 +314,23 @@ export function TranscriptViewer({
                     {line.text}
                   </p>
                 </div>
+
+                {/* Speaker Avatar - Right */}
+                {!isLeft && (
+                  <div className={cn(
+                    "shrink-0 rounded-full flex items-center justify-center transition-all duration-300",
+                    isCompact ? "w-6 h-6" : "w-8 h-8",
+                    isActive 
+                      ? `bg-gradient-to-br ${config.gradient} shadow-lg ${config.glow}` 
+                      : "bg-muted/50"
+                  )}>
+                    <SpeakerIcon className={cn(
+                      "text-white",
+                      isCompact ? "w-3 h-3" : "w-4 h-4",
+                      !isActive && "opacity-50"
+                    )} />
+                  </div>
+                )}
               </div>
             )
           })}

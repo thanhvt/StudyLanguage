@@ -1,3 +1,5 @@
 export * from "./feature-header"
 export * from "./recent-lessons-dropdown"
 export * from "./recent-lessons-panel"
+export * from "./global-audio-player"
+export * from "./audio-change-dialog"

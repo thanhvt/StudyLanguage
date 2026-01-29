@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { TranscriptViewer } from "./transcript-viewer"
@@ -12,14 +12,13 @@ import {
   RotateCcw, 
   BookmarkPlus,
   Loader2,
-  Sparkles
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import type { 
   ConversationLine, 
   ConversationTimestamp, 
   TopicScenario 
 } from "@/types/listening-types"
+import { useAudioPlayerStore } from "@/stores/audio-player-store"
 
 interface SessionPlayerProps {
   topic: TopicScenario
@@ -48,23 +47,42 @@ export function SessionPlayer({
   isGeneratingAudio = false,
   onReset,
   onSaveToPlaylist,
-  onAudioGenerated,
 }: SessionPlayerProps) {
-  const [currentTime, setCurrentTime] = useState(0)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  // Global audio store
+  const requestAudioChange = useAudioPlayerStore((s) => s.requestAudioChange)
+  const setIsLoading = useAudioPlayerStore((s) => s.setIsLoading)
+  const globalCurrentTime = useAudioPlayerStore((s) => s.currentTime)
+  const globalDuration = useAudioPlayerStore((s) => s.duration)
+  const seek = useAudioPlayerStore((s) => s.seek)
+  const setMode = useAudioPlayerStore((s) => s.setMode)
 
-  // Handle time update from audio player
-  const handleTimeUpdate = useCallback((time: number) => {
-    setCurrentTime(time)
-  }, [])
+  // Sync audio to global store when audioUrl changes
+  useEffect(() => {
+    if (audioUrl) {
+      requestAudioChange({
+        audioUrl,
+        title: topic.name,
+        subtitle: `${category || ''}${subCategory ? ` • ${subCategory}` : ''}`,
+        timestamps,
+        conversation,
+        topic,
+        category,
+        subCategory,
+      })
+      // Set to full mode on Listening page
+      setMode('full')
+    }
+  }, [audioUrl, topic, category, subCategory, timestamps, conversation, requestAudioChange, setMode])
+
+  // Sync loading state
+  useEffect(() => {
+    setIsLoading(isGeneratingAudio)
+  }, [isGeneratingAudio, setIsLoading])
 
   // Handle seek from transcript
   const handleSeek = useCallback((time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time
-      setCurrentTime(time)
-    }
-  }, [])
+    seek(time)
+  }, [seek])
 
   // Calculate total words
   const totalWords = conversation.reduce((acc, line) => 
@@ -141,21 +159,22 @@ export function SessionPlayer({
         )}
       </div>
 
-      {/* Transcript Area */}
+      {/* Transcript Area - synced with global audio time */}
       <TranscriptViewer
         conversation={conversation}
-        currentTime={currentTime}
+        currentTime={globalCurrentTime}
+        totalDuration={globalDuration}
         timestamps={timestamps}
         onSeek={handleSeek}
       />
 
-      {/* Audio Player (Fixed Bottom) */}
+      {/* Audio Player (Fixed Bottom) - Only show on Listening page */}
+      {/* This uses the local AudioPlayer for full mode controls */}
       <AudioPlayer
         audioSrc={audioUrl}
         title={topic.name}
         subtitle={`${category}${subCategory ? ` • ${subCategory}` : ''}`}
         timestamps={timestamps}
-        onTimeUpdate={handleTimeUpdate}
         isLoading={isGeneratingAudio}
       />
 
@@ -164,3 +183,4 @@ export function SessionPlayer({
     </div>
   )
 }
+

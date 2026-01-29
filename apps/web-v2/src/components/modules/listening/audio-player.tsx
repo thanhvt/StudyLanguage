@@ -1,7 +1,14 @@
 "use client"
 
+/**
+ * audio-player.tsx - Local audio player UI for Listening page (Full Mode)
+ * 
+ * This component syncs with the global audio store for playback controls
+ * but provides the full UI experience for the Listening page.
+ */
+
 import * as React from "react"
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useCallback, useState } from "react"
 import { 
   Play, 
   Pause, 
@@ -21,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { useAudioPlayerStore, selectProgress } from "@/stores/audio-player-store"
 import type { PlaybackSpeed, ConversationTimestamp } from "@/types/listening-types"
 
 interface AudioPlayerProps {
@@ -28,8 +36,6 @@ interface AudioPlayerProps {
   title: string
   subtitle?: string
   timestamps?: ConversationTimestamp[]
-  onTimeUpdate?: (time: number) => void
-  onEnded?: () => void
   onSkipPrev?: () => void
   onSkipNext?: () => void
   isLoading?: boolean
@@ -55,124 +61,60 @@ export function AudioPlayer({
   audioSrc,
   title,
   subtitle,
-  timestamps,
-  onTimeUpdate,
-  onEnded,
   onSkipPrev,
   onSkipNext,
-  isLoading = false,
+  isLoading: externalLoading = false,
 }: AudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [speed, setSpeed] = useState<PlaybackSpeed>(1)
-  const [volume, setVolume] = useState(1)
-  const [isMuted, setIsMuted] = useState(false)
   const [showVolume, setShowVolume] = useState(false)
+  
+  // Global store state
+  const isPlaying = useAudioPlayerStore((s) => s.isPlaying)
+  const currentTime = useAudioPlayerStore((s) => s.currentTime)
+  const duration = useAudioPlayerStore((s) => s.duration)
+  const speed = useAudioPlayerStore((s) => s.speed)
+  const volume = useAudioPlayerStore((s) => s.volume)
+  const isMuted = useAudioPlayerStore((s) => s.isMuted)
+  const isLoading = useAudioPlayerStore((s) => s.isLoading)
+  const progress = useAudioPlayerStore(selectProgress)
+  
+  // Global store actions
+  const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
+  const seek = useAudioPlayerStore((s) => s.seek)
+  const setVolume = useAudioPlayerStore((s) => s.setVolume)
+  const setSpeed = useAudioPlayerStore((s) => s.setSpeed)
+  const toggleMute = useAudioPlayerStore((s) => s.toggleMute)
 
-  // Handle audio time update
-  const handleTimeUpdate = useCallback(() => {
-    const audio = audioRef.current
-    if (audio) {
-      setCurrentTime(audio.currentTime)
-      onTimeUpdate?.(audio.currentTime)
-    }
-  }, [onTimeUpdate])
+  // Handle seek
+  const handleSeek = useCallback((value: number[]) => {
+    seek(value[0])
+  }, [seek])
 
-  // Handle audio loaded metadata
-  const handleLoadedMetadata = () => {
-    const audio = audioRef.current
-    if (audio) {
-      setDuration(audio.duration)
-    }
-  }
-
-  // Handle audio ended
-  const handleEnded = () => {
-    setIsPlaying(false)
-    onEnded?.()
-  }
-
-  // Toggle play/pause
-  const togglePlay = () => {
-    const audio = audioRef.current
-    if (!audio || !audioSrc) return
-
-    if (isPlaying) {
-      audio.pause()
-    } else {
-      audio.play()
-    }
-    setIsPlaying(!isPlaying)
-  }
-
-  // Seek to position
-  const handleSeek = (value: number[]) => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.currentTime = value[0]
-      setCurrentTime(value[0])
-    }
-  }
-
-  // Change speed
-  const handleSpeedChange = (newSpeed: PlaybackSpeed) => {
+  // Handle speed change
+  const handleSpeedChange = useCallback((newSpeed: PlaybackSpeed) => {
     setSpeed(newSpeed)
-    const audio = audioRef.current
-    if (audio) {
-      audio.playbackRate = newSpeed
-    }
-  }
+  }, [setSpeed])
 
-  // Change volume
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0]
-    setVolume(newVolume)
-    setIsMuted(newVolume === 0)
-    const audio = audioRef.current
-    if (audio) {
-      audio.volume = newVolume
-    }
-  }
-
-  // Toggle mute
-  const toggleMute = () => {
-    const audio = audioRef.current
-    if (audio) {
-      if (isMuted) {
-        audio.volume = volume || 1
-        setIsMuted(false)
-      } else {
-        audio.volume = 0
-        setIsMuted(true)
-      }
-    }
-  }
+  // Handle volume change
+  const handleVolumeChange = useCallback((value: number[]) => {
+    setVolume(value[0])
+  }, [setVolume])
 
   // Skip backward 10 seconds
-  const skipBackward = () => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.currentTime = Math.max(0, audio.currentTime - 10)
-    }
-  }
+  const skipBackward = useCallback(() => {
+    seek(Math.max(0, currentTime - 10))
+  }, [currentTime, seek])
 
   // Skip forward 10 seconds
-  const skipForward = () => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.currentTime = Math.min(duration, audio.currentTime + 10)
-    }
-  }
+  const skipForward = useCallback(() => {
+    seek(Math.min(duration, currentTime + 10))
+  }, [currentTime, duration, seek])
 
-  // Calculate progress percentage
-  const progress = duration ? (currentTime / duration) * 100 : 0
+  // Combined loading state
+  const showLoading = isLoading || externalLoading
 
   // Keyboard navigation handler
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    const audio = audioRef.current
-    if (!audio || !audioSrc) return
+    if (!audioSrc) return
 
     switch (e.key) {
       case ' ':
@@ -203,7 +145,7 @@ export function AudioPlayer({
         toggleMute()
         break
     }
-  }, [audioSrc, volume])
+  }, [audioSrc, volume, togglePlay, skipBackward, skipForward, handleVolumeChange, toggleMute])
 
   return (
     <div 
@@ -220,15 +162,6 @@ export function AudioPlayer({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      {/* Hidden Audio Element */}
-      <audio
-        ref={audioRef}
-        src={audioSrc}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-      />
-
       <div className="flex flex-col gap-3">
         {/* Top Row: Track Info + Controls */}
         <div className="flex items-center justify-between gap-4">
@@ -254,7 +187,7 @@ export function AudioPlayer({
             
             <Button 
               size="icon" 
-              aria-label={isLoading ? "Loading audio" : isPlaying ? "Pause" : "Play"}
+              aria-label={showLoading ? "Loading audio" : isPlaying ? "Pause" : "Play"}
               className={cn(
                 "size-12 rounded-full",
                 "bg-gradient-to-br from-primary/90 to-primary",
@@ -263,9 +196,9 @@ export function AudioPlayer({
                 "transition-all duration-200"
               )}
               onClick={togglePlay}
-              disabled={!audioSrc || isLoading}
+              disabled={!audioSrc || showLoading}
             >
-              {isLoading ? (
+              {showLoading ? (
                 <Loader2 className="size-5 animate-spin" aria-hidden="true" />
               ) : isPlaying ? (
                 <Pause className="size-5 fill-current" aria-hidden="true" />

@@ -75,7 +75,7 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full h-14 gap-3 justify-start">
-          <div className="size-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+          <div className="size-10 rounded-xl bg-gradient-to-br from-primary/90 to-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
             <Radio className="size-5" />
           </div>
           <div className="text-left">
@@ -88,7 +88,7 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Radio className="size-5 text-purple-500" />
+            <Radio className="size-5 text-primary" />
             Radio Mode
           </DialogTitle>
           <DialogDescription>
@@ -121,8 +121,8 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
                   className={cn(
                     "flex flex-col items-center p-3 rounded-xl border transition-all duration-200",
                     selectedDuration === option.value
-                      ? "border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-sm"
-                      : "border-border hover:border-purple-500/50 hover:bg-muted/50"
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
                   )}
                 >
                   <span className="font-bold text-lg">{option.label}</span>
@@ -133,10 +133,10 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
           </div>
 
           {/* Preview */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Music className="size-6 text-purple-500" />
+              <div className="size-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Music className="size-6 text-primary" />
               </div>
               <div>
                 <p className="font-medium">Random Topics Playlist</p>
@@ -164,7 +164,7 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
           <Button 
             onClick={handleGenerate} 
             disabled={isGenerating}
-            className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90"
+            className="gap-2 bg-gradient-to-r from-primary/90 to-primary text-white hover:opacity-90"
           >
             {isGenerating ? (
               <>

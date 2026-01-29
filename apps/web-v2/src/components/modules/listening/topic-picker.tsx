@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, ChevronDown, ChevronRight, Star, Sparkles, Play, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import {
   searchScenarios, 
   getTotalScenarios 
 } from "@/data/topic-data"
+import { CustomScenarioInput } from "./custom-scenario-input"
 import type { TopicCategory, TopicScenario } from "@/types/listening-types"
 
 interface TopicPickerProps {
@@ -25,13 +26,16 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
   const [activeCategory, setActiveCategory] = useState<string>('it')
   const [expandedSubCategories, setExpandedSubCategories] = useState<string[]>(['agile'])
   const [searchQuery, setSearchQuery] = useState('')
-  const [favorites, setFavorites] = useState<Set<string>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('favorite-scenarios')
-      return saved ? new Set(JSON.parse(saved)) : new Set()
+  // Initialize empty to avoid hydration mismatch, then hydrate from localStorage
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+
+  // Hydrate favorites from localStorage after mount (client-only)
+  useEffect(() => {
+    const saved = localStorage.getItem('favorite-scenarios')
+    if (saved) {
+      setFavorites(new Set(JSON.parse(saved)))
     }
-    return new Set()
-  })
+  }, [])
 
   // Filter scenarios by search
   const searchResults = useMemo(() => {
@@ -114,13 +118,27 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
                   "text-sm font-medium transition-all duration-200 whitespace-nowrap",
                   activeCategory === category.id
                     ? "bg-background shadow-md text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                    : "text-foreground/60 hover:text-foreground hover:bg-background/50"
                 )}
               >
                 <span className="text-lg">{category.icon}</span>
                 <span className="hidden sm:inline">{category.name}</span>
               </button>
             ))}
+            {/* Custom Tab */}
+            <button
+              onClick={() => setActiveCategory('custom')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg",
+                "text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                activeCategory === 'custom'
+                  ? "bg-gradient-to-r from-primary/20 to-primary/10 shadow-md text-primary border border-primary/30"
+                  : "text-foreground/60 hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              <Sparkles className="size-4" />
+              <span className="hidden sm:inline">Custom</span>
+            </button>
           </div>
         )}
       </div>
@@ -164,8 +182,17 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
             </div>
           )}
 
+          {/* Custom Scenarios Tab */}
+          {!searchQuery && activeCategory === 'custom' && (
+            <CustomScenarioInput
+              onSelect={onSelect}
+              selectedTopic={selectedTopic}
+              className="h-full"
+            />
+          )}
+
           {/* Categories List */}
-          {!searchQuery && currentCategory && (
+          {!searchQuery && activeCategory !== 'custom' && currentCategory && (
             <div className="space-y-2 pb-4">
               {currentCategory.subCategories.map((subCategory) => {
                 const isExpanded = expandedSubCategories.includes(subCategory.id)
@@ -181,7 +208,7 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
                     >
                       <span className="font-medium text-sm">{subCategory.name}</span>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                        <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-primary/15 text-primary border-0">
                           {subCategory.scenarios.length}
                         </Badge>
                         <ChevronDown className={cn(

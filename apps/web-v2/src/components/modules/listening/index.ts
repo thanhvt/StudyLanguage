@@ -7,4 +7,5 @@ export * from './session-player'
 export * from './interactive-mode'
 export * from './radio-mode'
 export * from './playlist-panel'
+export * from './custom-scenario-input'
 

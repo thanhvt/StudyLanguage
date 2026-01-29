@@ -11,6 +11,7 @@ import { LessonsModule } from './lessons/lessons.module';
 import { ListenLaterModule } from './listen-later/listen-later.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { RadioModule } from './radio/radio.module';
+import { CustomScenariosModule } from './custom-scenarios/custom-scenarios.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -41,6 +42,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     ListenLaterModule, // Module tính năng Nghe Sau
     PlaylistsModule, // Module tính năng Playlists
     RadioModule, // Module tính năng Radio Mode
+    CustomScenariosModule, // Module tính năng Custom Scenarios
   ],
   controllers: [AppController],
   providers: [
