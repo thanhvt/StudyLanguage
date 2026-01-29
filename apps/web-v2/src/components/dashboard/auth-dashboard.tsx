@@ -78,18 +78,6 @@ export function AuthDashboard({ userName = mockUserStats.name }: AuthDashboardPr
         <div className="md:col-span-1">
           <SkillRadarChart />
         </div>
-
-        {/* Row 4: Streak Calendar (full width on mobile, spans 3 on desktop) */}
-        <div className="md:col-span-3">
-          <StreakCalendar />
-        </div>
-        
-        {/* Optional: Additional widget space */}
-        <div className="md:col-span-1 hidden md:flex items-center justify-center rounded-xl border border-dashed border-border p-6">
-          <p className="text-sm text-muted-foreground text-center">
-            🚀 More widgets coming soon
-          </p>
-        </div>
       </div>
     </div>
   )

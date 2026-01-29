@@ -1,35 +1,34 @@
 "use client"
 
-import { useState } from "react"
 import { GuestDashboard } from "@/components/dashboard/guest-dashboard"
 import { AuthDashboard } from "@/components/dashboard/auth-dashboard"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { useAuth } from "@/components/providers/auth-provider"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Home() {
-  // Mock auth state for demo - In production, use actual auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
+  const { user, loading } = useAuth()
+  const isAuthenticated = !!user
 
-  return (
-    <>
-      {/* Demo Toggle - Remove in production */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 p-3 rounded-lg bg-card border shadow-lg">
-        <Label htmlFor="auth-toggle" className="text-xs text-muted-foreground">
-          Guest
-        </Label>
-        <Switch
-          id="auth-toggle"
-          checked={isAuthenticated}
-          onCheckedChange={setIsAuthenticated}
-        />
-        <Label htmlFor="auth-toggle" className="text-xs text-muted-foreground">
-          Auth
-        </Label>
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+          <Skeleton className="md:col-span-3 h-48 rounded-xl" />
+          <Skeleton className="md:col-span-1 h-48 rounded-xl" />
+          <Skeleton className="md:col-span-4 h-32 rounded-xl" />
+          <Skeleton className="md:col-span-2 h-64 rounded-xl" />
+          <Skeleton className="md:col-span-1 h-64 rounded-xl" />
+          <Skeleton className="md:col-span-1 h-64 rounded-xl" />
+        </div>
       </div>
+    )
+  }
 
-      {/* Dashboard Content */}
-      {isAuthenticated ? <AuthDashboard /> : <GuestDashboard />}
-    </>
-  )
+  // Dashboard Content - switches based on auth state
+  return isAuthenticated ? <AuthDashboard /> : <GuestDashboard />
 }

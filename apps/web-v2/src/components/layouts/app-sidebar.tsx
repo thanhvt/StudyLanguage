@@ -9,6 +9,7 @@ import {
   Settings,
   History,
   LogOut,
+  LogIn,
   User,
   Sparkles,
   ChevronUp,
@@ -367,7 +368,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : user ? (
+              // Authenticated User - Show dropdown menu
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
@@ -444,6 +446,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              // Guest User - Show login button
+              <SidebarMenuButton
+                asChild
+                size="lg"
+                className={cn(
+                  "h-auto rounded-lg hover:bg-sidebar-accent/50 transition-colors",
+                  isCollapsed ? "w-10 justify-center p-2 mx-auto" : "p-2"
+                )}
+                tooltip="Đăng nhập"
+              >
+                <Link href="/login" className={cn(
+                  "flex items-center",
+                  isCollapsed ? "justify-center" : "gap-3"
+                )}>
+                  <div className={cn(
+                    "flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-indigo-600 text-white shrink-0",
+                    isCollapsed ? "size-7" : "size-9"
+                  )}>
+                    <LogIn className={cn(isCollapsed ? "size-3.5" : "size-4")} />
+                  </div>
+                  {!isCollapsed && (
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium text-sidebar-foreground">
+                        Đăng nhập
+                      </span>
+                      <span className="truncate text-xs text-sidebar-muted">
+                        Để lưu tiến trình học
+                      </span>
+                    </div>
+                  )}
+                </Link>
+              </SidebarMenuButton>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
