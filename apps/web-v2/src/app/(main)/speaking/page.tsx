@@ -437,6 +437,12 @@ export default function SpeakingPage() {
                 duration={recordingDuration}
                 onClick={handleMicClick}
                 disabled={isThinking}
+                showKeyboardHint={true}
+                sessionStats={{
+                  duration: sessionDuration,
+                  messageCount: messages.length,
+                  correctionCount: messages.filter(m => m.corrections && m.corrections.length > 0).length
+                }}
               />
             </div>
           ) : (
@@ -455,7 +461,7 @@ export default function SpeakingPage() {
                 <Button
                   onClick={handleSendText}
                   disabled={!textInput.trim() || isSending || isThinking}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white gap-2"
+                  className="bg-gradient-to-r from-primary/90 to-primary hover:opacity-90 text-primary-foreground gap-2"
                 >
                   {isSending || isThinking ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -494,12 +500,6 @@ export default function SpeakingPage() {
         onIgnore={() => setAlertOpen(false)}
       />
 
-      {/* Keyboard Shortcut Hint */}
-      {inputMode === "voice" && !isRecording && !isThinking && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-muted/80 backdrop-blur-sm px-3 py-1.5 rounded-full border">
-          Press <kbd className="px-1.5 py-0.5 bg-background rounded text-[10px] font-mono mx-1">Space</kbd> to start recording
-        </div>
-      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 # 📱 StudyLanguage Mobile App - Tổng Quan
 
-> **Phiên bản:** 1.0  
-> **Ngày:** 26/01/2026  
+> **Phiên bản:** 1.1  
+> **Ngày:** 01/02/2026  
 > **Nền tảng:** React Native + Expo
 
 ---

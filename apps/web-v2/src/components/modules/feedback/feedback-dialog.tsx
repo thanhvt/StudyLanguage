@@ -25,6 +25,9 @@ import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/providers/auth-provider"
 import { cn } from "@/lib/utils"
 
+// API base URL fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 // Feedback types with icons and labels
 const feedbackTypes = [
   {
@@ -98,7 +101,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/feedback`, {
+      const response = await fetch(`${API_BASE_URL}/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

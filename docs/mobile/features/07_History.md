@@ -19,6 +19,8 @@ Module lịch sử học tập với timeline view, filter theo skill, và sync 
 | **Detail View** | Full session info |
 | **Quick Actions** | Replay, practice again |
 | **Recent Lessons Panel** | Quick access từ skill pages (NEW ✨) |
+| **Session Restoration** | Resume session từ audio player (NEW ✨) |
+| **Persist Audio Data** | Lưu audio URL để replay không cần regenerate (NEW ✨) |
 
 ### 1.2 Recent Lessons Panel (NEW ✨)
 
@@ -34,6 +36,17 @@ Quick access panel hiển thị các bài học gần đây, tích hợp trực 
 **Authentication Flow:**
 - **Guest**: Hiển thị CTA đăng nhập
 - **Logged in**: Hiển thị danh sách bài học gần đây
+
+### 1.3 Session Restoration (NEW ✨)
+
+Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
+
+| Feature | Description |
+|---------|-------------|
+| **Resume from Player** | Click topic name trên player → Mở detail với transcript |
+| **Persist Audio URL** | Lưu audio URL vào history để replay ngay |
+| **Restore Config** | Khôi phục cấu hình session (mode, speakers, duration) |
+| **Navigate to Page** | Tự động navigate về skill page tương ứng |
 
 ---
 
@@ -486,6 +499,9 @@ interface Session {
 - [ ] Quick actions (long press)
 - [ ] Infinite scroll pagination
 - [ ] Offline sync queue
+- [ ] **Session restoration from audio player** (NEW ✨)
+- [ ] **Persist audio URL in history** (NEW ✨)
+- [ ] **Navigate to skill page from player** (NEW ✨)
 
 ---
 

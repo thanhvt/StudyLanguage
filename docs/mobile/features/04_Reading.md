@@ -18,6 +18,19 @@ Module đọc hiểu với AI-generated articles, tối ưu cho màn hình nhỏ
 | **Listen Mode** | AI đọc bài cho user |
 | **Quiz** | Kiểm tra hiểu bài |
 | **Night Mode** | Tự động đổi màu khi tối |
+| **Direct Save** | Lưu bài đọc trực tiếp không cần quiz (NEW ✨) |
+| **Recording Shortcut** | Phím Space để bắt đầu/dừng ghi âm practice (NEW ✨) |
+
+### 1.2 Reading Practice Mode (NEW ✨)
+
+Chế độ luyện đọc với AI phản hồi:
+
+| Feature | Description |
+|---------|-------------|
+| **Record Reading** | Ghi âm giọng đọc của user |
+| **Space Shortcut** | Nhấn Space để toggle recording (giống Speaking) |
+| **AI Analysis** | AI phân tích phát âm và đánh giá |
+| **Direct Save** | Lưu bài practice trực tiếp vào History |
 
 ---
 
@@ -353,6 +366,7 @@ Module đọc hiểu với AI-generated articles, tối ưu cho màn hình nhỏ
 | Pinch | Pinch in/out | Zoom text |
 | Listen | Tap 🔊 | AI reads article |
 | Night mode | Tap 🌙 | Dark theme |
+| **Space key** | Press Space | Toggle recording (NEW ✨) |
 
 ### 4.2 Dictionary Lookup
 
@@ -462,6 +476,9 @@ function handleWordTap(event: TextTouchEvent) {
 - [ ] Night mode (auto-detect)
 - [ ] Save words to vocabulary
 - [ ] Highlight new vocabulary
+- [ ] **Direct save reading articles** (NEW ✨)
+- [ ] **Space shortcut for recording** (NEW ✨)
+- [ ] **Reading practice with AI analysis** (NEW ✨)
 
 ---
 

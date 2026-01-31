@@ -10,6 +10,12 @@ interface VoiceVisualizerProps {
   duration?: number
   onClick?: () => void
   disabled?: boolean
+  showKeyboardHint?: boolean
+  sessionStats?: {
+    duration: number
+    messageCount: number
+    correctionCount: number
+  }
 }
 
 export function VoiceVisualizer({ 
@@ -17,7 +23,9 @@ export function VoiceVisualizer({
   isProcessing,
   duration = 0,
   onClick,
-  disabled 
+  disabled,
+  showKeyboardHint = false,
+  sessionStats
 }: VoiceVisualizerProps) {
   const [bars, setBars] = useState<number[]>(Array(40).fill(8))
 
@@ -46,7 +54,8 @@ export function VoiceVisualizer({
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-6 relative">
+
       {/* Main Button */}
       <div 
         className={cn(
@@ -57,7 +66,7 @@ export function VoiceVisualizer({
             ? "w-28 h-28 bg-gradient-to-br from-amber-500 to-orange-600"
             : disabled
             ? "w-28 h-28 bg-muted cursor-not-allowed"
-            : "w-28 h-28 bg-gradient-to-br from-emerald-500 to-teal-600 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30"
+            : "w-28 h-28 bg-gradient-to-br from-primary/90 to-primary hover:scale-105 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
         )}
         onClick={disabled ? undefined : onClick}
       >
@@ -87,8 +96,11 @@ export function VoiceVisualizer({
           {bars.map((height, i) => (
             <div
               key={i}
-              className="w-[3px] rounded-full bg-gradient-to-t from-emerald-500 to-teal-300 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-75"
-              style={{ height: `${height}px` }}
+              className="w-[3px] rounded-full bg-gradient-to-t from-primary/70 to-primary transition-all duration-75"
+              style={{ 
+                height: `${height}px`,
+                boxShadow: '0 0 8px hsl(var(--primary) / 0.3)'
+              }}
             />
           ))}
         </div>
@@ -122,6 +134,13 @@ export function VoiceVisualizer({
           : "Tap to speak"
         }
       </p>
+
+      {/* Keyboard Hint */}
+      {showKeyboardHint && !isListening && !isProcessing && !disabled && (
+        <div className="text-xs text-muted-foreground bg-muted/80 px-3 py-1.5 rounded-full border border-border/50">
+          Press <kbd className="px-1.5 py-0.5 bg-background rounded text-[10px] font-mono mx-1">Space</kbd> to start recording
+        </div>
+      )}
     </div>
   )
 }

@@ -16,7 +16,7 @@ Module nghe hiểu với AI-generated conversations, tối ưu cho học trên d
 |------|-------------|----------|
 | **Podcast Mode** | Nghe thụ động, có transcript | Commute, Workout |
 | **Interactive Mode** | AI pause, user respond | Focused learning |
-| **Radio Mode** | Continuous playlists | Background learning |
+| **Radio Mode** | Continuous playlists với duration options | Background learning |
 
 ### 1.2 Custom Scenarios (NEW ✨)
 
@@ -44,6 +44,26 @@ Audio player persistent, hoạt động xuyên suốt các trang.
 - Persist playback across page navigation
 - Confirmation dialog khi đổi audio đang phát
 - Lưu user preferences (volume, speed, mute)
+- Session restoration: Resume từ player hoặc recent lessons (NEW ✨)
+
+### 1.4 Radio Mode Enhancements (NEW ✨)
+
+Cải tiến Radio Mode với nhiều tính năng mới:
+
+| Feature | Description |
+|---------|-------------|
+| **Duration Options** | 1, 5, 10, 15, 20, 30 phút (1 phút là tùy chọn mới) |
+| **Progress Tracking** | Hiển thị progress khi đang generate playlist |
+| **Toast Notifications** | Thông báo feedback khi generate hoàn tất |
+| **Immediate Playback** | Phát ngay sau khi generate hoặc chọn existing playlist |
+| **Real API Integration** | Sử dụng API thực với authentication và error handling |
+
+### 1.5 Topic Picker Improvements (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| **Highlight Subcategory** | Tự động highlight subcategory chứa topic đang chọn |
+| **Two-line Topic Display** | Recent lessons hiển thị topic trên 2 dòng cho dễ đọc |
 
 ---
 
@@ -587,6 +607,10 @@ interface AudioPlayerState {
 - [ ] Lock screen controls
 - [ ] **Custom Scenarios UI** (NEW ✨)
 - [ ] **Global Audio Player - Compact mode** (NEW ✨)
+- [ ] **Radio Mode: 1-min duration option** (NEW ✨)
+- [ ] **Radio Mode: Progress tracking UI** (NEW ✨)
+- [ ] **Session restoration from player** (NEW ✨)
+- [ ] **Topic picker subcategory highlight** (NEW ✨)
 
 ### Advanced Phase
 - [ ] Interactive mode with recording
