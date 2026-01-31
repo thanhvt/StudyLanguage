@@ -3,10 +3,15 @@
 /**
  * global-audio-player.tsx - Global audio player UI component
  * 
+ * LAYOUT FOOTER APPROACH:
+ * - Player nằm trong layout flow, không dùng fixed position
+ * - Content tự động shrink khi player hiển thị
+ * - Slide up/down animation khi show/hide
+ * 
  * 3 modes:
  * - Full: Full controls, shown on Listening page
  * - Compact: Mini player with progress, shown on other pages
- * - Minimized: Floating pill, shown when user minimizes
+ * - Minimized: Floating pill, shown when user minimizes (vẫn dùng fixed)
  */
 
 import * as React from "react"
@@ -52,6 +57,12 @@ const SPEED_OPTIONS: { value: PlaybackSpeed; label: string }[] = [
   { value: 2, label: "2x" },
 ]
 
+// Player heights for different modes
+const PLAYER_HEIGHT = {
+  compact: 80,  // ~80px for compact mode
+  full: 0,      // Full mode uses local player on Listening page
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
@@ -63,32 +74,11 @@ function formatTime(seconds: number): string {
 // ============================================
 
 export function GlobalAudioPlayer() {
-  const router = useRouter()
   const pathname = usePathname()
   
   // Store state
   const isActive = useAudioPlayerStore(selectIsActive)
-  const progress = useAudioPlayerStore(selectProgress)
-  const title = useAudioPlayerStore((s) => s.title)
-  const subtitle = useAudioPlayerStore((s) => s.subtitle)
-  const isPlaying = useAudioPlayerStore((s) => s.isPlaying)
-  const currentTime = useAudioPlayerStore((s) => s.currentTime)
-  const duration = useAudioPlayerStore((s) => s.duration)
-  const speed = useAudioPlayerStore((s) => s.speed)
-  const volume = useAudioPlayerStore((s) => s.volume)
-  const isMuted = useAudioPlayerStore((s) => s.isMuted)
-  const isLoading = useAudioPlayerStore((s) => s.isLoading)
   const mode = useAudioPlayerStore((s) => s.mode)
-  
-  // Store actions
-  const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
-  const seek = useAudioPlayerStore((s) => s.seek)
-  const setVolume = useAudioPlayerStore((s) => s.setVolume)
-  const setSpeed = useAudioPlayerStore((s) => s.setSpeed)
-  const toggleMute = useAudioPlayerStore((s) => s.toggleMute)
-  const close = useAudioPlayerStore((s) => s.close)
-  const minimize = useAudioPlayerStore((s) => s.minimize)
-  const expand = useAudioPlayerStore((s) => s.expand)
   const setMode = useAudioPlayerStore((s) => s.setMode)
   
   // Auto-switch mode based on page
@@ -100,53 +90,29 @@ export function GlobalAudioPlayer() {
     }
   }, [pathname, mode, setMode])
   
-  // Handle seek
-  const handleSeek = useCallback((value: number[]) => {
-    seek(value[0])
-  }, [seek])
-  
-  // Handle volume change
-  const handleVolumeChange = useCallback((value: number[]) => {
-    setVolume(value[0])
-  }, [setVolume])
-  
-  // Skip backward 10 seconds
-  const skipBackward = useCallback(() => {
-    seek(Math.max(0, currentTime - 10))
-  }, [currentTime, seek])
-  
-  // Skip forward 10 seconds
-  const skipForward = useCallback(() => {
-    seek(Math.min(duration, currentTime + 10))
-  }, [currentTime, duration, seek])
-  
-  // Navigate to listening page
-  const goToListening = useCallback(() => {
-    router.push('/listening')
-  }, [router])
-  
-  // Don't render if not active
-  if (!isActive) return null
-  
-  // Render based on mode
-  if (mode === 'minimized') {
+  // Minimized mode still uses fixed position (floating pill)
+  if (mode === 'minimized' && isActive) {
     return <MinimizedPlayer />
   }
   
-  if (mode === 'compact') {
-    return <CompactPlayer />
+  // Full mode - Listening page has its own player, don't render
+  if (mode === 'full') {
+    return null
   }
   
-  // Full mode - only shown on Listening page
-  // The Listening page has its own player, so we don't render here
-  return null
+  // Compact mode - Layout footer with slide animation
+  return <CompactPlayer isVisible={isActive} />
 }
 
 // ============================================
-// COMPACT PLAYER (Other Pages)
+// COMPACT PLAYER (Layout Footer)
 // ============================================
 
-function CompactPlayer() {
+interface CompactPlayerProps {
+  isVisible: boolean
+}
+
+function CompactPlayer({ isVisible }: CompactPlayerProps) {
   const router = useRouter()
   
   // Store state
@@ -199,15 +165,20 @@ function CompactPlayer() {
   return (
     <div 
       className={cn(
-        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50",
-        "w-[95%] max-w-2xl",
+        // Layout footer - không dùng fixed
+        "flex-shrink-0 w-full",
         "bg-background/95 backdrop-blur-xl",
-        "border border-border/50 shadow-2xl shadow-black/20",
-        "rounded-2xl overflow-hidden",
-        "dark:bg-background/90 dark:border-border/30"
+        "border-t border-border/50",
+        "dark:bg-background/90 dark:border-border/30",
+        // Slide up/down animation
+        "transition-all duration-300 ease-out",
+        "overflow-hidden",
+        // Hide when not visible
+        isVisible ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
       )}
       role="region"
       aria-label="Audio player"
+      aria-hidden={!isVisible}
     >
       {/* Progress bar at top */}
       <div className="h-1 bg-muted/30">
@@ -217,7 +188,7 @@ function CompactPlayer() {
         />
       </div>
       
-      <div className="p-3 flex items-center gap-3">
+      <div className="p-3 flex items-center gap-3 max-w-5xl mx-auto">
         {/* Track Info - Clickable to go to Listening */}
         <button 
           onClick={goToListening}
@@ -392,7 +363,7 @@ function CompactPlayer() {
 }
 
 // ============================================
-// MINIMIZED PLAYER (Floating Pill)
+// MINIMIZED PLAYER (Floating Pill - vẫn dùng fixed)
 // ============================================
 
 function MinimizedPlayer() {
@@ -407,12 +378,15 @@ function MinimizedPlayer() {
   return (
     <div 
       className={cn(
+        // Minimized mode vẫn dùng fixed (floating pill)
         "fixed bottom-6 right-6 z-50",
         "flex items-center gap-1",
         "bg-background/95 backdrop-blur-xl",
         "border border-border/50 shadow-2xl shadow-black/20",
         "rounded-full p-1.5",
-        "dark:bg-background/90 dark:border-border/30"
+        "dark:bg-background/90 dark:border-border/30",
+        // Entrance animation
+        "animate-in slide-in-from-bottom-4 fade-in duration-300"
       )}
       role="region"
       aria-label="Minimized audio player"

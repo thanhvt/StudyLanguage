@@ -160,7 +160,7 @@ export function TranscriptViewer({
   }
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full relative", className)}>
       {/* Enhanced Header */}
       <div className="flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-2">
@@ -182,21 +182,6 @@ export function TranscriptViewer({
           <Badge variant="secondary" className="text-xs font-mono">
             {activeLineIndex >= 0 ? activeLineIndex + 1 : 0}/{conversation.length}
           </Badge>
-
-          {/* Compact Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-7 h-7"
-            onClick={() => setIsCompact(!isCompact)}
-            title={isCompact ? "Expand view" : "Compact view"}
-          >
-            {isCompact ? (
-              <Maximize2 className="w-3.5 h-3.5" />
-            ) : (
-              <Minimize2 className="w-3.5 h-3.5" />
-            )}
-          </Button>
         </div>
       </div>
 
@@ -208,15 +193,31 @@ export function TranscriptViewer({
         />
       </div>
       
-      {/* Transcript Content */}
-      <ScrollArea 
-        className={cn(
-          "rounded-2xl border bg-card/30 backdrop-blur-sm shadow-inner transition-all duration-300 overflow-hidden",
-          isCompact ? "h-[280px] p-3" : "h-[400px] p-4"
-        )}
-        role="region"
-        aria-label="Conversation transcript"
-      >
+      {/* Transcript Content - 50% viewport height */}
+      <div className="relative">
+        {/* Floating Compact Toggle Button */}
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute right-3 top-3 z-10 w-8 h-8 rounded-full shadow-md bg-background/80 backdrop-blur-sm hover:bg-background border border-border/50"
+          onClick={() => setIsCompact(!isCompact)}
+          title={isCompact ? "Mở rộng" : "Thu gọn"}
+        >
+          {isCompact ? (
+            <Maximize2 className="w-4 h-4" />
+          ) : (
+            <Minimize2 className="w-4 h-4" />
+          )}
+        </Button>
+
+        <ScrollArea 
+          className={cn(
+            "rounded-2xl border bg-card/30 backdrop-blur-sm shadow-inner transition-all duration-300 overflow-hidden",
+            isCompact ? "h-[40vh] p-3" : "h-[50vh] p-4"
+          )}
+          role="region"
+          aria-label="Conversation transcript"
+        >
         <div ref={containerRef} className={cn("space-y-3 pt-2", isCompact && "space-y-2")}>
           {conversation.map((line, index) => {
             const isActive = index === activeLineIndex
@@ -335,7 +336,8 @@ export function TranscriptViewer({
             )
           })}
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
     </div>
   )
 }

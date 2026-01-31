@@ -8,10 +8,13 @@ import { GlobalAudioPlayer, AudioChangeDialog } from "@/components/shared"
 /**
  * MainLayout - Layout chính cho các trang app
  * 
- * CHANGED: Bỏ ProtectedRoute wrapper để cho phép Guest xem tất cả pages
- * Protection được chuyển sang action-level qua AuthActionGuard component
+ * STRUCTURE:
+ * - SidebarInset là flex container với flex-col
+ * - Main content có flex-1 overflow-auto → co lại khi player hiện
+ * - GlobalAudioPlayer ở cuối như footer → không che content
  * 
- * ADDED: GlobalAudioProvider và GlobalAudioPlayer để audio persist across pages
+ * Khi player active → content shrink, player slide up
+ * Khi player inactive → content expand, player slide down
  */
 export default function MainLayout({
   children,
@@ -24,19 +27,21 @@ export default function MainLayout({
         {/* Guest Mode: Không redirect, cho phép xem nội dung */}
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset>
+          <SidebarInset className="flex flex-col h-svh overflow-hidden">
             <AppHeader />
-            <main className="flex-1 p-4 md:p-6 overflow-auto">
+            {/* Main content - shrinks when player is visible */}
+            <main className="flex-1 p-4 md:p-6 overflow-auto min-h-0">
               {children}
             </main>
+            {/* Global Audio Player - Layout Footer, slides up/down */}
+            <GlobalAudioPlayer />
           </SidebarInset>
         </SidebarProvider>
         
-        {/* Global Audio Player - persists across pages */}
-        <GlobalAudioPlayer />
         <AudioChangeDialog />
       </GlobalAudioProvider>
     </AuthProvider>
   )
 }
+
 

@@ -177,9 +177,6 @@ export function SessionPlayer({
         timestamps={timestamps}
         isLoading={isGeneratingAudio}
       />
-
-      {/* Bottom Spacer for Fixed Player */}
-      <div className="h-24" />
     </div>
   )
 }
