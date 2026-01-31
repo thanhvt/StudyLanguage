@@ -13,7 +13,10 @@ import {
   Radio, 
   Music,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Clock,
+  Users,
+  Loader2
 } from "lucide-react"
 import type { ConversationLine, ConversationTimestamp } from "@/types/listening-types"
 
@@ -24,6 +27,12 @@ interface TranscriptViewerProps {
   timestamps?: ConversationTimestamp[]
   onSeek?: (time: number) => void
   className?: string
+  // Metadata props (merged from SessionPlayer)
+  title?: string
+  subtitle?: string
+  duration?: number
+  speakers?: number
+  isGeneratingAudio?: boolean
 }
 
 // Speaker config with icons and gradients
@@ -79,6 +88,12 @@ export function TranscriptViewer({
   timestamps,
   onSeek,
   className,
+  // Metadata props
+  title,
+  subtitle,
+  duration,
+  speakers,
+  isGeneratingAudio,
 }: TranscriptViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const activeLineRef = useRef<HTMLDivElement>(null)
@@ -159,18 +174,55 @@ export function TranscriptViewer({
     )
   }
 
+  // Tính tổng số từ trong conversation
+  const totalWords = conversation.reduce((acc, line) => 
+    acc + line.text.split(' ').length, 0
+  )
+
   return (
     <div className={cn("w-full relative", className)}>
-      {/* Enhanced Header */}
-      <div className="flex items-center justify-between mb-3 px-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-primary" />
+      {/* Merged Header - Title + Metadata + Controls */}
+      <div className="mb-3 px-2">
+        {/* Row 1: Title + Actions */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex-1 min-w-0">
+            {/* Title */}
+            {title && (
+              <h2 className="text-lg font-bold truncate">{title}</h2>
+            )}
+            {/* Subtitle / Category */}
+            {subtitle && (
+              <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+            )}
           </div>
-          <h3 className="text-lg font-semibold">Transcript</h3>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        {/* Row 2: Stats Badges + Time + Progress */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Duration Badge */}
+          {duration && (
+            <Badge variant="secondary" className="gap-1 text-xs py-0.5">
+              <Clock className="size-3" />
+              {duration}m
+            </Badge>
+          )}
+          {/* Speakers Badge */}
+          {speakers && (
+            <Badge variant="secondary" className="gap-1 text-xs py-0.5">
+              <Users className="size-3" />
+              {speakers}
+            </Badge>
+          )}
+          {/* Words Badge */}
+          {totalWords > 0 && (
+            <Badge variant="outline" className="text-xs py-0.5 font-mono">
+              {totalWords}w
+            </Badge>
+          )}
+          
+          {/* Spacer */}
+          <div className="flex-1" />
+          
           {/* Time Display */}
           {totalDuration && (
             <span className="text-xs font-mono text-muted-foreground tabular-nums">
@@ -178,15 +230,23 @@ export function TranscriptViewer({
             </span>
           )}
           
-          {/* Line Counter Badge */}
-          <Badge variant="secondary" className="text-xs font-mono">
+          {/* Line Counter */}
+          <Badge variant="secondary" className="text-xs font-mono py-0.5">
             {activeLineIndex >= 0 ? activeLineIndex + 1 : 0}/{conversation.length}
           </Badge>
         </div>
+
+        {/* Audio Generation Status - Inline */}
+        {isGeneratingAudio && (
+          <div className="mt-2 py-1.5 px-2 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2" role="status">
+            <Loader2 className="size-3 text-primary animate-spin" />
+            <span className="text-xs font-medium">Đang tạo audio...</span>
+          </div>
+        )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden mb-3 mx-2">
+      {/* Progress Bar - Slim */}
+      <div className="h-1 bg-muted/50 rounded-full overflow-hidden mb-2 mx-2">
         <div 
           className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-300 rounded-full"
           style={{ width: `${progressPercent}%` }}

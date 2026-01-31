@@ -18,7 +18,7 @@ import type { PlaybackSpeed, ConversationTimestamp, ConversationLine, TopicScena
 export type PlayerMode = 'full' | 'compact' | 'minimized'
 
 export interface AudioData {
-  audioUrl: string
+  audioUrl?: string // Optional - có thể không có audio (text-only mode)
   title: string
   subtitle?: string
   timestamps?: ConversationTimestamp[]
@@ -226,8 +226,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 // SELECTORS
 // ============================================
 
+// Player active khi visible VÀ có content (audio hoặc conversation)
 export const selectIsActive = (state: AudioPlayerState) => 
-  state.isVisible && state.audioUrl !== null
+  state.isVisible && (state.audioUrl !== null || state.conversation.length > 0)
 
 export const selectProgress = (state: AudioPlayerState) => 
   state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0

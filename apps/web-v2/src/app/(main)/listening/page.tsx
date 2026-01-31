@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Headphones, ListMusic, History } from "lucide-react"
+import { Headphones, ListMusic, History, RotateCcw } from "lucide-react"
 import { FeatureHeader, RecentLessonsPanel } from "@/components/shared"
 import { useAuth } from "@/components/providers/auth-provider"
 import { 
@@ -160,25 +160,43 @@ export default function ListeningPage() {
     setTimestamps(undefined)
   }, [])
 
-  // Play from History/Playlist
-  const handlePlaySession = (conversation: ConversationLine[], topicName: string) => {
-    // In a real app we'd load the full topic object, for now we mock it or assume simple display
+  // Play from History/Playlist - regenerate audio
+  const handlePlaySession = useCallback(async (conversationData: ConversationLine[], topicName: string) => {
+    // Set state first to show UI immediately
     setSelectedTopic({ id: 'history', name: topicName, description: 'From History' })
-    setConversation(conversation)
+    setConversation(conversationData)
+    setAudioUrl(undefined) // Reset audio first
+    setTimestamps(undefined)
     setViewState('playing')
     setIsPlaylistOpen(false)
-  }
+    setIsRecentOpen(false)
+    
+    // Generate audio in background
+    setIsGeneratingAudio(true)
+    try {
+      const audioResponse = await generateConversationAudio(conversationData)
+      setAudioUrl(audioResponse.audioUrl)
+      setTimestamps(audioResponse.timestamps)
+    } catch (audioError) {
+      console.error('Audio regeneration failed:', audioError)
+      toast.error('Không thể tạo audio', {
+        description: 'Vui lòng thử lại sau',
+      })
+    } finally {
+      setIsGeneratingAudio(false)
+    }
+  }, [])
 
   // Xử lý khi chọn entry từ RecentLessonsDropdown
-  const handleRecentLessonPlay = (entry: { topic: string; content: Record<string, unknown> }) => {
+  const handleRecentLessonPlay = useCallback((entry: { topic: string; content: Record<string, unknown> }) => {
     const script = entry.content?.script as ConversationLine[] | undefined
     if (script) {
       handlePlaySession(script, entry.topic)
     }
-  }
+  }, [handlePlaySession])
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-6rem)] h-auto gap-4 pb-4 px-4 lg:px-0">
+    <div className="flex flex-col lg:h-[calc(100vh-6rem)] h-auto gap-4 px-4 lg:px-0 overflow-hidden">
       {/* Header */}
       <div className="flex-none">
         <FeatureHeader
@@ -189,26 +207,28 @@ export default function ListeningPage() {
           actions={[
             { icon: History, label: "Gần đây", onClick: () => setIsRecentOpen(true) },
             { icon: ListMusic, label: "Playlists", onClick: () => setIsPlaylistOpen(true) },
+            // Hiển thị nút "Mới" chỉ khi đang ở trạng thái playing
+            ...(viewState === 'playing' ? [{ icon: RotateCcw, label: "Mới", onClick: handleReset }] : []),
           ]}
         />
       </div>
 
       {/* Main Content Area - Flexible height on desktop, Auto on mobile */}
-      <div className="flex-1 lg:min-h-0 relative">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {/* View: Config */}
         {viewState === 'config' && (
-          <div className="lg:h-full grid grid-cols-1 lg:grid-cols-12 gap-6 pb-24 lg:pb-0">
-            {/* Left Column: Topic Picker - Visible on all screens */}
-            <div className="lg:col-span-8 lg:h-full flex flex-col min-h-0">
+          <div className="h-full flex flex-col lg:flex-row gap-6">
+            {/* Left Column: Topic Picker - Chiều cao ngang với cột phải */}
+            <div className="flex-1 min-h-0 lg:order-none order-1">
               <TopicPicker 
                 onSelect={handleTopicSelect}
                 selectedTopic={selectedTopic}
-                className="lg:h-full min-h-[400px] h-auto lg:min-h-0" 
+                className="h-full" 
               />
             </div>
 
-            {/* Right Column: Config - Shows first on mobile for quick access */}
-            <div className="lg:col-span-4 flex flex-col gap-4 lg:overflow-y-auto pr-1 -order-1 lg:order-none">
+            {/* Right Column: Config - Width cố định, chiều cao tự động */}
+            <div className="lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4 lg:order-none order-first">
               {/* Mode Switcher */}
               <ModeTabs 
                 value={mode} 
@@ -321,7 +341,7 @@ export default function ListeningPage() {
 
         {/* View: Playing */}
         {viewState === 'playing' && selectedTopic && (
-          <div className="lg:h-full h-[80vh] overflow-y-auto">
+          <div className="lg:flex-1 lg:min-h-0 overflow-y-auto pb-1">
             <SessionPlayer
               topic={selectedTopic}
               category={selectedCategory}

@@ -3,16 +3,16 @@
 /**
  * global-audio-player.tsx - Global audio player orchestrator
  * 
- * Mục đích: Điều phối hiển thị audio player dựa trên mode và page
+ * Mục đích: Điều phối hiển thị audio player dựa trên mode
  * 
- * LAYOUT FOOTER APPROACH:
+ * UNIFIED PLAYER APPROACH:
+ * - Một player duy nhất cho TẤT CẢ pages (bao gồm Listening)
  * - Player nằm trong layout flow, không dùng fixed position
  * - Content tự động shrink khi player hiển thị
  * - Slide up/down animation khi show/hide
  * 
- * 3 modes:
- * - Full: Full controls, shown on Listening page (không render global player)
- * - Compact: Mini player with progress, shown on other pages
+ * 2 modes:
+ * - Compact: Default player với đầy đủ controls
  * - Minimized: Floating pill, shown when user minimizes
  * 
  * HYDRATION FIX:
@@ -21,13 +21,12 @@
  * 
  * Luồng sử dụng:
  * - Được import và render trong MainLayout
- * - Auto-switch mode dựa trên pathname
+ * - Hiển thị trên TẤT CẢ pages khi có audio active
  */
 
 import * as React from "react"
 import dynamic from "next/dynamic"
-import { usePathname } from "next/navigation"
-import { useAudioPlayerStore, selectIsActive, type PlayerMode } from "@/stores/audio-player-store"
+import { useAudioPlayerStore, selectIsActive } from "@/stores/audio-player-store"
 
 // ============================================
 // DYNAMIC IMPORTS (ssr: false để tránh hydration mismatch)
@@ -48,35 +47,27 @@ const MinimizedPlayer = dynamic(
 // MAIN COMPONENT
 // ============================================
 
+/**
+ * GlobalAudioPlayer - Unified Audio Player Component
+ * 
+ * Render duy nhất trong MainLayout, hiển thị trên tất cả pages
+ * - isActive: có audio đang được load không
+ * - mode: 'compact' (default) hoặc 'minimized' (user click minimize)
+ */
 export function GlobalAudioPlayer() {
-  const pathname = usePathname()
-  
   // Store state
   const isActive = useAudioPlayerStore(selectIsActive)
   const mode = useAudioPlayerStore((s) => s.mode)
-  const setMode = useAudioPlayerStore((s) => s.setMode)
   
-  // Auto-switch mode based on page
-  React.useEffect(() => {
-    if (pathname === '/listening') {
-      setMode('full')
-    } else if (mode === 'full') {
-      setMode('compact')
-    }
-  }, [pathname, mode, setMode])
-  
-  // Minimized mode still uses fixed position (floating pill)
+  // Minimized mode uses fixed position (floating pill)
   if (mode === 'minimized' && isActive) {
     return <MinimizedPlayer />
   }
   
-  // Full mode - Listening page has its own player, don't render
-  if (mode === 'full') {
-    return null
-  }
-  
-  // Compact mode - Layout footer with slide animation
+  // Compact mode (default) - Layout footer with slide animation
+  // Render on ALL pages including Listening page
   return <CompactPlayer isVisible={isActive} />
 }
 
 export default GlobalAudioPlayer
+
