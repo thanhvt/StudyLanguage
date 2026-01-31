@@ -255,16 +255,36 @@ export default function ListeningPage() {
    * Mục đích: Chuyển đổi dữ liệu từ history entry sang format cần thiết
    * Tham số: entry - Bản ghi từ API history
    * Khi nào sử dụng: Khi user click vào bài học trong Recent popup
+   * 
+   * Flow:
+   *   - Nếu mode='interactive' -> mở InteractiveMode để luyện lại
+   *   - Nếu mode='passive' -> phát lại audio với SessionPlayer
    */
   const handleRecentLessonPlay = useCallback((entry: { 
     topic: string; 
     content: Record<string, unknown>;
     audioUrl?: string;
     audioTimestamps?: ConversationTimestamp[];
+    mode?: string;
   }) => {
+    // Kiểm tra nếu là interactive mode -> mở lại để luyện tiếp
+    if (entry.mode === 'interactive') {
+      const scenario = entry.content?.scenario as string
+      setSelectedTopic({ 
+        id: `history-${Date.now()}`, 
+        name: entry.topic, 
+        description: scenario || entry.topic 
+      })
+      setMode('interactive')
+      setViewState('interactive')
+      setIsRecentOpen(false)
+      toast.info('🎤 Mở lại bài luyện Interactive Mode')
+      return
+    }
+    
+    // Passive mode -> phát audio như bình thường
     const script = entry.content?.script as ConversationLine[]
     if (script) {
-      // Truyền cả audioUrl và timestamps nếu có
       handlePlaySession(
         script, 
         entry.topic, 

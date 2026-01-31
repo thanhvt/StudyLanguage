@@ -149,6 +149,8 @@ export interface HistoryEntry {
   topic: string
   content: {
     script?: ConversationLine[]
+    scenario?: string  // Interactive mode scenario context
+    conversationHistory?: { speaker: string; text: string }[]  // Interactive mode history
     audioUrl?: string
     timestamps?: ConversationTimestamp[]
   }

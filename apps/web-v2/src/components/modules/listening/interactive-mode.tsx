@@ -6,10 +6,9 @@ import {
   ArrowLeft, 
   Volume2, 
   VolumeX,
-  Settings,
   Loader2,
-  Sparkles,
-  CheckCircle
+  CheckCircle,
+  RotateCcw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { VoiceVisualizer } from "@/components/modules/speaking/voice-visualizer"
 import { cn } from "@/lib/utils"
 import { api, textToSpeech, transcribeAudio } from "@/lib/api"
+import { useSaveLesson } from "@/hooks/use-save-lesson"
 import type { ConversationLine, TopicScenario } from "@/types/listening-types"
 
 interface InteractiveModeProps {
@@ -41,6 +41,15 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
   const [currentLineIndex, setCurrentLineIndex] = useState(0)
   const [isGenerating, setIsGenerating] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // NEW: Scenario context from API
+  const [scenario, setScenario] = useState<string | null>(null)
+  
+  // NEW: Completion tracking
+  const [isComplete, setIsComplete] = useState(false)
+  
+  // NEW: Hook để lưu lesson
+  const { saveLesson } = useSaveLesson()
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false)
@@ -86,6 +95,11 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
       }
 
       const data = await response.json()
+      
+      // NEW: Store scenario context
+      setScenario(data.scenario || null)
+      setIsComplete(false)
+      conversationHistoryRef.current = []
       
       // Parse script and identify user turns
       const scriptLines: ScriptLine[] = data.script.map((line: any, index: number) => ({
@@ -247,7 +261,7 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
     }
   }
 
-  // Process user's recording
+  // Process user's recording - Enhanced with continue-conversation API
   const processUserRecording = async (audioBlob: Blob) => {
     setIsProcessing(true)
 
@@ -268,9 +282,50 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
         status: i === currentLineIndex ? 'completed' : l.status,
       })))
 
-      // Continue to next line
-      if (autoPlay) {
-        playNextLine(script, currentLineIndex + 1)
+      // NEW: Gọi API continue-conversation để AI phản hồi tự nhiên
+      try {
+        const continueRes = await api('/ai/continue-conversation', {
+          method: 'POST',
+          body: JSON.stringify({
+            conversationHistory: conversationHistoryRef.current,
+            userInput: userText,
+            topic: topic.name,
+          }),
+        })
+
+        if (continueRes.ok) {
+          const { response: aiResponse, shouldEnd } = await continueRes.json()
+          
+          // Thêm phản hồi AI vào history
+          conversationHistoryRef.current.push({
+            speaker: 'AI Partner',
+            text: aiResponse,
+          })
+
+          // Đọc phản hồi AI bằng TTS
+          await speakAiResponse(aiResponse)
+
+          if (shouldEnd) {
+            setIsComplete(true)
+          } else if (autoPlay && currentLineIndex + 1 < script.length) {
+            playNextLine(script, currentLineIndex + 1)
+          }
+        } else {
+          // Fallback: tiếp tục theo script có sẵn
+          if (autoPlay && currentLineIndex + 1 < script.length) {
+            playNextLine(script, currentLineIndex + 1)
+          } else if (currentLineIndex + 1 >= script.length) {
+            setIsComplete(true)
+          }
+        }
+      } catch (continueError) {
+        console.error('Continue conversation failed:', continueError)
+        // Fallback: tiếp tục theo script
+        if (autoPlay && currentLineIndex + 1 < script.length) {
+          playNextLine(script, currentLineIndex + 1)
+        } else if (currentLineIndex + 1 >= script.length) {
+          setIsComplete(true)
+        }
       }
 
     } catch (err) {
@@ -280,6 +335,97 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
       setIsProcessing(false)
     }
   }
+
+  /**
+   * speakAiResponse - Đọc phản hồi AI bằng TTS
+   * 
+   * Mục đích: Phát audio cho câu phản hồi động của AI
+   * Tham số: text - nội dung cần đọc
+   * Khi nào sử dụng: Sau khi nhận phản hồi từ continue-conversation API
+   */
+  const speakAiResponse = async (text: string) => {
+    setIsPlaying(true)
+    try {
+      const { audioUrl } = await textToSpeech(text, 'nova')
+      
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl
+        await new Promise<void>((resolve) => {
+          audioRef.current!.onended = () => {
+            setIsPlaying(false)
+            resolve()
+          }
+          audioRef.current!.play()
+        })
+      }
+    } catch (err) {
+      console.error('TTS for AI response failed:', err)
+      setIsPlaying(false)
+    }
+  }
+
+  /**
+   * skipUserTurn - Bỏ qua lượt nói của user (Hands-only mode)
+   * 
+   * Mục đích: Tự động skip khi bật chế độ chỉ nghe
+   * Khi nào sử dụng: Khi handsOnlyMode = true và đến lượt user
+   */
+  const skipUserTurn = useCallback(() => {
+    if (!script || script.length === 0) return
+    
+    conversationHistoryRef.current.push({ 
+      speaker: 'You', 
+      text: '(Bỏ qua)' 
+    })
+    
+    setScript(prev => prev.map((l, i) => ({
+      ...l,
+      text: i === currentLineIndex ? '(Bỏ qua lượt nói)' : l.text,
+      status: i === currentLineIndex ? 'completed' : l.status,
+    })))
+    
+    if (currentLineIndex + 1 >= script.length) {
+      setIsComplete(true)
+    } else {
+      playNextLine(script, currentLineIndex + 1)
+    }
+  }, [script, currentLineIndex])
+
+  // Auto-skip user turn when hands-only mode is active
+  useEffect(() => {
+    const currentLine = script?.[currentLineIndex]
+    if (
+      handsOnlyMode &&
+      currentLine?.isUserTurn &&
+      currentLine?.status === 'waiting' &&
+      !isComplete &&
+      !isRecording &&
+      !isProcessing
+    ) {
+      const timer = setTimeout(() => {
+        skipUserTurn()
+      }, 1500) // 1.5s delay như user yêu cầu
+      return () => clearTimeout(timer)
+    }
+  }, [handsOnlyMode, script, currentLineIndex, isComplete, isRecording, isProcessing, skipUserTurn])
+
+  // Auto-save lesson on completion
+  useEffect(() => {
+    if (isComplete && script.length > 0) {
+      saveLesson({
+        type: 'listening',
+        topic: topic.name,
+        content: { 
+          scenario,
+          script, 
+          conversationHistory: conversationHistoryRef.current 
+        },
+        durationMinutes: duration,
+        mode: 'interactive',
+        status: 'completed',
+      })
+    }
+  }, [isComplete, script, topic, duration, scenario, saveLesson])
 
   // Handle mic button click
   const handleMicClick = () => {
@@ -342,8 +488,18 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
       )}
 
       {/* Main Content */}
-      {!isGenerating && (
+      {!isGenerating && !isComplete && (
         <>
+          {/* Scenario Card - Hiển thị ngữ cảnh tình huống */}
+          {scenario && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-l-4 border-primary mb-4 animate-in fade-in duration-500">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
+                📍 Tình huống
+              </p>
+              <p className="text-sm leading-relaxed">{scenario}</p>
+            </div>
+          )}
+
           {/* Transcript */}
           <ScrollArea className="flex-1 rounded-2xl border bg-card/30 p-4 mb-6">
             <div className="space-y-4">
@@ -372,11 +528,21 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
                     )}
                     {line.status === 'waiting' && (
                       <Badge variant="secondary" className="text-xs animate-pulse">
-                        Your turn!
+                        🎤 Đến lượt bạn!
                       </Badge>
                     )}
                   </div>
                   <p className="text-sm leading-relaxed">{line.text}</p>
+                  
+                  {/* Enhanced Your Turn Prompt */}
+                  {line.status === 'waiting' && line.isUserTurn && (
+                    <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 animate-pulse">
+                      <p className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                        <span className="size-2 rounded-full bg-amber-500 animate-ping" />
+                        Bấm mic để bắt đầu nói
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -395,11 +561,11 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
             ) : isPlaying ? (
               <div className="flex items-center gap-3 text-primary">
                 <div className="size-3 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm font-medium">AI is speaking...</span>
+                <span className="text-sm font-medium">AI đang nói...</span>
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">
-                Waiting...
+                Đang chờ...
               </div>
             )}
 
@@ -411,7 +577,7 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
                   onCheckedChange={setAutoPlay}
                   className="scale-75"
                 />
-                <span>Auto-play</span>
+                <span>Tự động phát</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch
@@ -419,11 +585,66 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
                   onCheckedChange={setHandsOnlyMode}
                   className="scale-75"
                 />
-                <span>Hands-free</span>
+                <span>Chỉ nghe</span>
               </label>
             </div>
           </div>
         </>
+      )}
+
+      {/* Completion Screen with Feedback Summary */}
+      {!isGenerating && isComplete && (
+        <div className="flex-1 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-500">
+          <div className="w-full max-w-lg space-y-6 p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20">
+            {/* Success Header */}
+            <div className="text-center">
+              <div className="size-16 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
+                <CheckCircle className="size-8 text-emerald-500" />
+              </div>
+              <h3 className="text-xl font-bold">🎉 Hoàn thành!</h3>
+              <p className="text-sm text-muted-foreground mt-1">{topic.name}</p>
+            </div>
+            
+            {/* Feedback Summary Stats */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 rounded-xl bg-background/50 border">
+                <p className="text-2xl font-bold text-primary">{script.length}</p>
+                <p className="text-xs text-muted-foreground">Lượt trao đổi</p>
+              </div>
+              <div className="p-3 rounded-xl bg-background/50 border">
+                <p className="text-2xl font-bold text-emerald-500">
+                  {script.filter(l => l.status === 'completed' && !l.isUserTurn).length}
+                </p>
+                <p className="text-xs text-muted-foreground">AI đã nói</p>
+              </div>
+              <div className="p-3 rounded-xl bg-background/50 border">
+                <p className="text-2xl font-bold text-amber-500">
+                  {script.filter(l => l.isUserTurn && l.status === 'completed').length}
+                </p>
+                <p className="text-xs text-muted-foreground">Lượt của bạn</p>
+              </div>
+            </div>
+            
+            {/* Scenario Recap */}
+            {scenario && (
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Tình huống đã luyện:</p>
+                <p>{scenario}</p>
+              </div>
+            )}
+            
+            {/* Actions */}
+            <div className="flex gap-3 justify-center pt-2">
+              <Button variant="outline" onClick={onBack}>
+                ← Quay lại
+              </Button>
+              <Button onClick={generateInteractiveScript} className="gap-2">
+                <RotateCcw className="size-4" />
+                Thử lại
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Error Display */}

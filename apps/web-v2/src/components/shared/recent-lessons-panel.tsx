@@ -20,6 +20,8 @@ interface RecentLesson {
   // Audio data - đã lưu để tái sử dụng, không cần sinh lại
   audioUrl?: string
   audioTimestamps?: { startTime: number; endTime: number }[]
+  // Mode - để phân biệt passive/interactive
+  mode?: 'passive' | 'interactive'
 }
 
 interface RecentLessonsPanelProps {
