@@ -15,6 +15,7 @@ import {
 } from "@/components/modules/listening"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { generateConversation, generateConversationAudio } from "@/lib/api"
 import { useListeningPlaylist } from "@/hooks/use-listening-playlist"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
@@ -236,13 +237,14 @@ export default function ListeningPage() {
                 <RadioMode 
                   onPlaylistGenerated={(result) => {
                     console.log('Radio playlist generated:', result)
-                    // TODO: Implement playing radio playlist
-                    // For now, alert user
-                    alert(`🎵 Playlist "${result.playlist.name}" đã được tạo với ${result.items.length} bài!`)
+                    toast.success(`🎵 Playlist "${result.playlist.name}" đã được tạo!`, {
+                      description: `${result.items.length} bài • ${result.playlist.duration} phút`,
+                      duration: 5000,
+                    })
+                    // TODO: Implement playing first track of radio playlist
                   }}
                   onRequireLogin={() => {
-                    // Optionally redirect to login or show modal
-                    console.log('User needs to login for Radio Mode')
+                    toast.error('Vui lòng đăng nhập để sử dụng Radio Mode')
                   }}
                 />
               </div>

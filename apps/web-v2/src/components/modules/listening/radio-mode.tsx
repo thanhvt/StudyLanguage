@@ -46,6 +46,7 @@ export function RadioMode({ onPlaylistGenerated, onRequireLogin }: RadioModeProp
   const [isGenerating, setIsGenerating] = useState(false)
   const [isShuffling, setIsShuffling] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progress, setProgress] = useState(0)
 
   // Prevent hydration mismatch from Radix UI's auto-generated IDs
   useEffect(() => {
@@ -67,7 +68,7 @@ export function RadioMode({ onPlaylistGenerated, onRequireLogin }: RadioModeProp
     }, 100)
   }
 
-  // Generate playlist - calls real API
+  // Generate playlist - calls real API with progress simulation
   const handleGenerate = async () => {
     // Check if user is logged in
     if (!user) {
@@ -78,12 +79,34 @@ export function RadioMode({ onPlaylistGenerated, onRequireLogin }: RadioModeProp
 
     setIsGenerating(true)
     setError(null)
+    setProgress(0)
+    
+    // Tính số tracks ước tính (avg 7 phút/track)
+    const estimatedTracks = Math.ceil(selectedDuration / 7)
+    
+    // Progress simulation - giả lập tiến độ vì API generate tuần tự
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) return prev
+        return prev + Math.random() * 10
+      })
+    }, 2000)
     
     try {
+      // Tính timeout dựa trên số tracks - mỗi track cần ~120s để generate AI
+      // Minimum 6 phút, maximum 30 phút
+      const estimatedTimeout = Math.min(Math.max(estimatedTracks * 120000, 360000), 1800000)
+      console.log(`[RadioMode] Timeout = ${estimatedTimeout / 1000}s cho ${estimatedTracks} tracks`)
+      
       const result = await generateRadioPlaylist(selectedDuration)
+      
+      clearInterval(progressInterval)
+      setProgress(100)
+      
       onPlaylistGenerated?.(result)
       setIsOpen(false)
     } catch (err) {
+      clearInterval(progressInterval)
       console.error('Radio playlist generation failed:', err)
       setError(err instanceof Error ? err.message : 'Không thể tạo playlist. Vui lòng thử lại.')
     } finally {
