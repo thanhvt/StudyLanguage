@@ -196,17 +196,32 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
             <div className="space-y-2 pb-4">
               {currentCategory.subCategories.map((subCategory) => {
                 const isExpanded = expandedSubCategories.includes(subCategory.id)
+                // Kiểm tra xem group này có chứa topic đang được chọn không
+                const hasSelectedTopic = selectedTopic && subCategory.scenarios.some(s => s.id === selectedTopic.id)
 
                 return (
                   <div 
                     key={subCategory.id} 
-                    className="border border-border/50 rounded-xl overflow-hidden bg-card/30"
+                    className={cn(
+                      "border rounded-xl overflow-hidden transition-all duration-200",
+                      hasSelectedTopic 
+                        ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" 
+                        : "border-border/50 bg-card/30"
+                    )}
                   >
                     <button
                       onClick={() => toggleSubCategory(subCategory.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                      className={cn(
+                        "w-full flex items-center justify-between p-3 transition-colors",
+                        hasSelectedTopic 
+                          ? "bg-primary/10 hover:bg-primary/15" 
+                          : "hover:bg-muted/50"
+                      )}
                     >
-                      <span className="font-medium text-sm">{subCategory.name}</span>
+                      <span className={cn(
+                        "font-medium text-sm transition-colors",
+                        hasSelectedTopic && "text-primary"
+                      )}>{subCategory.name}</span>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-primary/15 text-primary border-0">
                           {subCategory.scenarios.length}
@@ -277,24 +292,6 @@ export function TopicPicker({ onSelect, selectedTopic, className }: TopicPickerP
           )}
         </ScrollArea>
       </div>
-
-      {/* Selected Topic Footer (if needed) */}
-      {selectedTopic && (
-        <div className="flex-none flex items-center gap-3 p-3 bg-primary/10 rounded-xl border border-primary/20">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-0.5">Selected</p>
-            <p className="text-sm font-medium truncate">{selectedTopic.name}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onSelect({ id: '', name: '', description: '' }, '', '')}
-            className="shrink-0 h-7 text-xs hover:bg-primary/20"
-          >
-            Change
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
