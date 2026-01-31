@@ -41,6 +41,9 @@ export interface HistoryEntry {
   userNotes?: string;
   createdAt: string;
   deletedAt?: string;
+  // Audio data - lưu trữ để tái sử dụng, không cần sinh lại
+  audioUrl?: string;
+  audioTimestamps?: { startTime: number; endTime: number }[];
 }
 
 /**
@@ -293,6 +296,9 @@ export class HistoryService {
       userNotes: row.user_notes || null,
       createdAt: row.created_at,
       deletedAt: row.deleted_at,
+      // Audio data - trả về nếu đã có trong DB
+      audioUrl: row.audio_url || undefined,
+      audioTimestamps: row.audio_timestamps || undefined,
     };
   }
 

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Headphones, ListMusic, History, RotateCcw } from "lucide-react"
 import { FeatureHeader, RecentLessonsPanel } from "@/components/shared"
 import { useAuth } from "@/components/providers/auth-provider"
@@ -19,6 +20,7 @@ import { toast } from "sonner"
 import { generateConversation, generateConversationAudio } from "@/lib/api"
 import { useListeningPlaylist } from "@/hooks/use-listening-playlist"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
+import { useAudioPlayerStore } from "@/stores/audio-player-store"
 import type { 
   TopicScenario, 
   ConversationLine, 
@@ -37,6 +39,10 @@ const MOCK_CONVERSATION: ConversationLine[] = [
 ]
 
 export default function ListeningPage() {
+  // URL params - để restore session từ player
+  const searchParams = useSearchParams()
+  const shouldRestore = searchParams.get('session') === 'restore'
+
   // Mode & View state
   const [mode, setMode] = useState<ListeningMode>('passive')
   const [viewState, setViewState] = useState<ViewState>('config')
@@ -46,7 +52,15 @@ export default function ListeningPage() {
   // Hooks
   const { user } = useAuth()
   const playlists = useListeningPlaylist()
-  const { saveLesson } = useSaveLesson()
+  const { saveLesson, updateLessonAudio } = useSaveLesson()
+  
+  // Audio Player Store - để restore session khi navigate từ player
+  const playerTopic = useAudioPlayerStore((s) => s.topic)
+  const playerConversation = useAudioPlayerStore((s) => s.conversation)
+  const playerAudioUrl = useAudioPlayerStore((s) => s.audioUrl)
+  const playerTimestamps = useAudioPlayerStore((s) => s.timestamps)
+  const playerCategory = useAudioPlayerStore((s) => s.category)
+  const playerSubCategory = useAudioPlayerStore((s) => s.subCategory)
 
   // Config state
   const [selectedTopic, setSelectedTopic] = useState<TopicScenario | null>(null)
@@ -65,6 +79,21 @@ export default function ListeningPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Effect: Restore session từ audio player store khi navigate từ player
+  // Query param ?session=restore được set bởi compact-player khi click vào topic name
+  useEffect(() => {
+    if (shouldRestore && playerTopic && playerConversation.length > 0) {
+      // Restore session từ player store
+      setSelectedTopic(playerTopic)
+      setSelectedCategory(playerCategory)
+      setSelectedSubCategory(playerSubCategory)
+      setConversation(playerConversation)
+      setAudioUrl(playerAudioUrl || undefined)
+      setTimestamps(playerTimestamps)
+      setViewState('playing')
+    }
+  }, [shouldRestore, playerTopic, playerConversation, playerAudioUrl, playerTimestamps, playerCategory, playerSubCategory])
 
   // Handle topic selection
   const handleTopicSelect = useCallback((
@@ -114,8 +143,8 @@ export default function ListeningPage() {
       setConversation(conversationWithIds)
       setViewState('playing')
 
-      // Save to history (Database)
-      await saveLesson({
+      // Save to history (Database) - lấy lessonId để cập nhật audio sau
+      const saveResult = await saveLesson({
         type: 'listening',
         topic: selectedTopic.name,
         content: { script: conversationWithIds },
@@ -133,9 +162,15 @@ export default function ListeningPage() {
         setAudioUrl(audioResponse.audioUrl)
         setTimestamps(audioResponse.timestamps)
         
-        // Update history with audio? (The audio URL is saved, but we might need to update the lesson record text time)
-        // For now, saveLesson created the record. We might need a way to update it.
-        // But let's keep it simple as per plan.
+        // Lưu audio URL vào database để lần sau không cần sinh lại
+        if (saveResult?.lessonId) {
+          await updateLessonAudio(
+            saveResult.lessonId, 
+            audioResponse.audioUrl, 
+            audioResponse.timestamps
+          )
+          console.log('[Listening] Đã lưu audio URL vào lesson:', saveResult.lessonId)
+        }
       } catch (audioError) {
         console.error('Audio generation failed:', audioError)
       } finally {
@@ -150,7 +185,7 @@ export default function ListeningPage() {
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedTopic, duration, speakers, keywords, mode, saveLesson])
+  }, [selectedTopic, duration, speakers, keywords, mode, saveLesson, updateLessonAudio])
 
   // Reset to config view
   const handleReset = useCallback(() => {
@@ -160,23 +195,50 @@ export default function ListeningPage() {
     setTimestamps(undefined)
   }, [])
 
-  // Play from History/Playlist - regenerate audio
-  const handlePlaySession = useCallback(async (conversationData: ConversationLine[], topicName: string) => {
+  /**
+   * Play từ History/Playlist
+   * 
+   * Mục đích: Phát lại bài học từ lịch sử
+   * Tham số:
+   *   - conversationData: Script hội thoại đã lưu
+   *   - topicName: Tên chủ đề
+   *   - existingAudioUrl: Audio URL đã lưu (nếu có)
+   *   - existingTimestamps: Timestamps đã lưu (nếu có)
+   * Khi nào sử dụng: Click vào bản ghi gần đây hoặc playlist
+   */
+  const handlePlaySession = useCallback(async (
+    conversationData: ConversationLine[], 
+    topicName: string,
+    existingAudioUrl?: string,
+    existingTimestamps?: ConversationTimestamp[]
+  ) => {
     // Set state first to show UI immediately
     setSelectedTopic({ id: 'history', name: topicName, description: 'From History' })
     setConversation(conversationData)
-    setAudioUrl(undefined) // Reset audio first
-    setTimestamps(undefined)
     setViewState('playing')
     setIsPlaylistOpen(false)
     setIsRecentOpen(false)
     
-    // Generate audio in background
+    // Kiểm tra nếu đã có audio từ trước thì sử dụng lại
+    if (existingAudioUrl) {
+      console.log('[Listening] Sử dụng audio đã lưu:', existingAudioUrl)
+      setAudioUrl(existingAudioUrl)
+      setTimestamps(existingTimestamps)
+      toast.success('🎧 Audio đã sẵn sàng!')
+      return
+    }
+    
+    // Nếu chưa có audio, sinh mới
+    console.log('[Listening] Không có audio lưu, đang sinh mới...')
+    setAudioUrl(undefined)
+    setTimestamps(undefined)
     setIsGeneratingAudio(true)
+    
     try {
       const audioResponse = await generateConversationAudio(conversationData)
       setAudioUrl(audioResponse.audioUrl)
       setTimestamps(audioResponse.timestamps)
+      toast.success('🎧 Audio đã sẵn sàng!')
     } catch (audioError) {
       console.error('Audio regeneration failed:', audioError)
       toast.error('Không thể tạo audio', {
@@ -187,11 +249,28 @@ export default function ListeningPage() {
     }
   }, [])
 
-  // Xử lý khi chọn entry từ RecentLessonsDropdown
-  const handleRecentLessonPlay = useCallback((entry: { topic: string; content: Record<string, unknown> }) => {
+  /**
+   * Xử lý khi chọn entry từ RecentLessonsPanel
+   * 
+   * Mục đích: Chuyển đổi dữ liệu từ history entry sang format cần thiết
+   * Tham số: entry - Bản ghi từ API history
+   * Khi nào sử dụng: Khi user click vào bài học trong Recent popup
+   */
+  const handleRecentLessonPlay = useCallback((entry: { 
+    topic: string; 
+    content: Record<string, unknown>;
+    audioUrl?: string;
+    audioTimestamps?: ConversationTimestamp[];
+  }) => {
     const script = entry.content?.script as ConversationLine[]
     if (script) {
-      handlePlaySession(script, entry.topic)
+      // Truyền cả audioUrl và timestamps nếu có
+      handlePlaySession(
+        script, 
+        entry.topic, 
+        entry.audioUrl, 
+        entry.audioTimestamps
+      )
     }
   }, [handlePlaySession])
 

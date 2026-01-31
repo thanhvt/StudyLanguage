@@ -17,6 +17,9 @@ interface RecentLesson {
   createdAt: string
   durationMinutes?: number
   content: Record<string, unknown>
+  // Audio data - đã lưu để tái sử dụng, không cần sinh lại
+  audioUrl?: string
+  audioTimestamps?: { startTime: number; endTime: number }[]
 }
 
 interface RecentLessonsPanelProps {

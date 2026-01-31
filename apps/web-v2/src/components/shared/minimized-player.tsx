@@ -33,7 +33,14 @@ export function MinimizedPlayer() {
   
   const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
   const expand = useAudioPlayerStore((s) => s.expand)
+  const pause = useAudioPlayerStore((s) => s.pause)
   const close = useAudioPlayerStore((s) => s.close)
+  
+  // Đóng player và pause audio trước
+  const handleClose = React.useCallback(() => {
+    pause() // Pause audio trước khi close
+    close()
+  }, [pause, close])
   
   return (
     <div 
@@ -106,12 +113,12 @@ export function MinimizedPlayer() {
         <ChevronUp className="size-4" />
       </Button>
       
-      {/* Close */}
+      {/* Close - Pause audio trước khi đóng */}
       <Button
         variant="ghost"
         size="icon"
         className="size-8 text-muted-foreground hover:text-destructive rounded-full"
-        onClick={close}
+        onClick={handleClose}
         aria-label="Close player"
       >
         <X className="size-4" />

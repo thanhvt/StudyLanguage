@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { api } from '@/lib/api';
+import { api, apiJson } from '@/lib/api';
 import { toast } from 'sonner';
 
 export interface LessonData {
@@ -15,24 +15,38 @@ export interface LessonData {
   status?: string;
 }
 
+export interface SaveLessonResult {
+  lessonId: string;
+}
+
 export interface UseSaveLessonReturn {
-  saveLesson: (data: LessonData) => Promise<void>;
+  saveLesson: (data: LessonData) => Promise<SaveLessonResult | null>;
+  updateLessonAudio: (lessonId: string, audioUrl: string, timestamps?: { startTime: number; endTime: number }[]) => Promise<void>;
   isSaving: boolean;
 }
 
 /**
  * useSaveLesson - Hook để lưu bài học vào database
+ * 
+ * Mục đích: Lưu lesson và cập nhật audio URL sau khi sinh
+ * Tham số đầu vào: LessonData
+ * Tham số đầu ra: SaveLessonResult với lessonId
+ * Khi nào sử dụng: Sau khi sinh conversation, và sau khi sinh audio
  */
 export function useSaveLesson(): UseSaveLessonReturn {
   const [isSaving, setIsSaving] = useState(false);
 
-  const saveLesson = useCallback(async (data: LessonData) => {
+  /**
+   * Lưu lesson mới vào database
+   * Trả về lessonId để có thể cập nhật audio sau
+   */
+  const saveLesson = useCallback(async (data: LessonData): Promise<SaveLessonResult | null> => {
     setIsSaving(true);
     
     try {
       console.log('[useSaveLesson] Đang lưu bài học...', data.type, data.topic);
       
-      const response = await api('/lessons', {
+      const response = await apiJson<{ success: boolean; lesson: { id: string } }>('/lessons', {
         method: 'POST',
         body: JSON.stringify({
           type: data.type,
@@ -46,23 +60,55 @@ export function useSaveLesson(): UseSaveLessonReturn {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Không thể lưu bài học');
-      }
-
-      console.log('[useSaveLesson] Đã lưu bài học thành công');
+      console.log('[useSaveLesson] Đã lưu bài học thành công, lessonId:', response.lesson.id);
       toast.success('Đã lưu bài học');
+      
+      return { lessonId: response.lesson.id };
     } catch (error) {
       console.error('[useSaveLesson] Lỗi khi lưu:', error);
       toast.error('Không thể lưu bài học');
-      throw error;
+      return null;
     } finally {
       setIsSaving(false);
     }
   }, []);
 
+  /**
+   * Cập nhật audio URL và timestamps cho lesson đã lưu
+   * 
+   * Mục đích: Lưu audio URL sau khi TTS sinh xong để tái sử dụng
+   * Tham số:
+   *   - lessonId: ID lesson đã lưu
+   *   - audioUrl: URL audio từ storage
+   *   - timestamps: Timestamps từng câu
+   */
+  const updateLessonAudio = useCallback(async (
+    lessonId: string, 
+    audioUrl: string, 
+    timestamps?: { startTime: number; endTime: number }[]
+  ) => {
+    try {
+      console.log('[useSaveLesson] Đang cập nhật audio cho lesson:', lessonId);
+      
+      await api(`/lessons/${lessonId}/audio`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          audioUrl,
+          audioTimestamps: timestamps,
+        }),
+      });
+      
+      console.log('[useSaveLesson] Đã lưu audio URL thành công');
+    } catch (error) {
+      console.error('[useSaveLesson] Lỗi cập nhật audio:', error);
+      // Không throw error vì đây là optional update
+    }
+  }, []);
+
   return {
     saveLesson,
+    updateLessonAudio,
     isSaving,
   };
 }
+

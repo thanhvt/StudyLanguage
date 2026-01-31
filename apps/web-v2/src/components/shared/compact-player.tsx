@@ -23,8 +23,6 @@ import {
   Pause, 
   SkipBack, 
   SkipForward, 
-  Volume2, 
-  VolumeX,
   Gauge,
   X,
   ChevronDown,
@@ -82,16 +80,14 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
   const duration = useAudioPlayerStore((s) => s.duration)
   const progress = useAudioPlayerStore(selectProgress)
   const speed = useAudioPlayerStore((s) => s.speed)
-  const volume = useAudioPlayerStore((s) => s.volume)
-  const isMuted = useAudioPlayerStore((s) => s.isMuted)
   const isLoading = useAudioPlayerStore((s) => s.isLoading)
+  const topic = useAudioPlayerStore((s) => s.topic)
   
   // Store actions
   const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
   const seek = useAudioPlayerStore((s) => s.seek)
   const setSpeed = useAudioPlayerStore((s) => s.setSpeed)
-  const setVolume = useAudioPlayerStore((s) => s.setVolume)
-  const toggleMute = useAudioPlayerStore((s) => s.toggleMute)
+  const pause = useAudioPlayerStore((s) => s.pause)
   const close = useAudioPlayerStore((s) => s.close)
   const minimize = useAudioPlayerStore((s) => s.minimize)
   
@@ -99,11 +95,6 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
   const handleSeek = useCallback((value: number[]) => {
     seek(value[0])
   }, [seek])
-  
-  // Handle volume change
-  const handleVolumeChange = useCallback((value: number[]) => {
-    setVolume(value[0])
-  }, [setVolume])
   
   // Skip backward/forward
   const skipBackward = useCallback(() => {
@@ -114,12 +105,21 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
     seek(Math.min(duration, currentTime + 10))
   }, [currentTime, duration, seek])
   
-  // Navigate to listening
-  const goToListening = useCallback(() => {
-    router.push('/listening')
-  }, [router])
+  // Đóng player và pause audio trước
+  const handleClose = useCallback(() => {
+    pause() // Pause audio trước khi close
+    close()
+  }, [pause, close])
   
-  const [showVolume, setShowVolume] = React.useState(false)
+  // Navigate tới listening page - sử dụng query param để trigger viewState
+  const goToSession = useCallback(() => {
+    // Khi có topic trong store, navigate về /listening với query để restore session
+    if (topic?.id) {
+      router.push(`/listening?session=restore`)
+    } else {
+      router.push('/listening')
+    }
+  }, [router, topic])
   
   return (
     <div 
@@ -148,9 +148,9 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
       </div>
       
       <div className="p-3 flex items-center gap-3 max-w-5xl mx-auto">
-        {/* Track Info - Clickable to go to Listening */}
+        {/* Track Info - Click để chuyển về Listening page với transcript */}
         <button 
-          onClick={goToListening}
+          onClick={goToSession}
           className="flex items-center gap-3 flex-1 min-w-0 group cursor-pointer text-left"
         >
           {/* Icon */}
@@ -257,39 +257,7 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* Volume Control */}
-          <div 
-            className="relative hidden sm:block"
-            onMouseEnter={() => setShowVolume(true)}
-            onMouseLeave={() => setShowVolume(false)}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 text-muted-foreground hover:text-foreground"
-              onClick={toggleMute}
-              aria-label={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="size-4" />
-              ) : (
-                <Volume2 className="size-4" />
-              )}
-            </Button>
-            
-            {showVolume && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-popover border rounded-lg shadow-lg">
-                <Slider
-                  orientation="vertical"
-                  value={[isMuted ? 0 : volume]}
-                  max={1}
-                  step={0.1}
-                  className="h-20"
-                  onValueChange={handleVolumeChange}
-                />
-              </div>
-            )}
-          </div>
+
           
           {/* Separator */}
           <div className="w-px h-6 bg-border/50 mx-1" />
@@ -305,12 +273,12 @@ export function CompactPlayer({ isVisible }: CompactPlayerProps) {
             <ChevronDown className="size-4" />
           </Button>
           
-          {/* Close */}
+          {/* Close - Pause audio trước khi đóng */}
           <Button
             variant="ghost"
             size="icon"
             className="size-8 text-muted-foreground hover:text-destructive"
-            onClick={close}
+            onClick={handleClose}
             aria-label="Close player"
           >
             <X className="size-4" />
