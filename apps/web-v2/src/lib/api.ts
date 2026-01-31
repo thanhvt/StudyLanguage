@@ -226,3 +226,47 @@ export async function textToSpeech(
     }
   )
 }
+
+// ============================================
+// RADIO MODE API FUNCTIONS
+// ============================================
+
+export interface RadioPlaylistItem {
+  id: string
+  topic: string
+  conversation: { speaker: string; text: string }[]
+  duration: number
+  numSpeakers: number
+  category: string
+  subCategory: string
+  position: number
+}
+
+export interface RadioPlaylistResult {
+  playlist: {
+    id: string
+    name: string
+    description: string
+    duration: number
+    trackCount: number
+  }
+  items: RadioPlaylistItem[]
+}
+
+/**
+ * Generate a radio playlist with random topics
+ * Requires authentication
+ */
+export async function generateRadioPlaylist(
+  duration: number
+): Promise<RadioPlaylistResult> {
+  const response = await apiJson<{ success: boolean; data: RadioPlaylistResult }>(
+    '/radio/generate',
+    {
+      method: 'POST',
+      body: JSON.stringify({ duration }),
+    },
+    300000 // 5 minutes timeout for generating multiple tracks
+  )
+  return response.data
+}

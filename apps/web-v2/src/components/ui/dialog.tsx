@@ -39,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/92",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 backdrop-blur-sm",
         className
       )}
       {...props}
@@ -61,7 +61,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-lg overflow-hidden",
+          "bg-card/95 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border/50 p-6 shadow-2xl shadow-black/10 duration-200 outline-none sm:max-w-lg overflow-hidden",
           className
         )}
         {...props}
@@ -71,20 +71,18 @@ function DialogContent({
           <DialogPrimitive.Close
             data-slot="dialog-close"
             className={cn(
-              // Base layout & positioning
-              "absolute -top-2 -right-2 z-10",
-              // Size & shape - 44px touch target (WCAG compliant)
-              "size-9 flex items-center justify-center rounded-full",
-              // Premium glass-morphism background
-              "bg-background/80 backdrop-blur-sm",
-              "border border-border/50 shadow-lg shadow-black/5",
+              // Base layout & positioning - inside dialog
+              "absolute top-4 right-4 z-10",
+              // Size & shape - comfortable touch target
+              "size-8 flex items-center justify-center rounded-lg",
+              // Subtle background
+              "bg-muted/50",
               // Icon styling
               "text-muted-foreground",
-              // Hover state - subtle scale + color shift
-              "hover:bg-background hover:text-foreground hover:border-border",
-              "hover:scale-105 hover:shadow-xl hover:shadow-black/10",
+              // Hover state - subtle color shift
+              "hover:bg-muted hover:text-foreground",
               // Active state - press feedback
-              "active:scale-95 active:shadow-md",
+              "active:scale-95",
               // Focus state - accessibility
               "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background",
               // Smooth transitions
@@ -108,7 +106,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn("flex flex-col gap-1.5 text-center sm:text-left pb-2", className)}
       {...props}
     />
   )
@@ -126,7 +124,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-2",
         className
       )}
       {...props}
@@ -148,7 +146,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold", className)}
+      className={cn("text-lg leading-tight font-semibold text-foreground", className)}
       {...props}
     />
   )
@@ -161,7 +159,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-muted-foreground text-sm leading-relaxed", className)}
       {...props}
     />
   )

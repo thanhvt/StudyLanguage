@@ -9,7 +9,8 @@ import {
   Loader2,
   Clock,
   Music,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,9 +24,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { generateRadioPlaylist, type RadioPlaylistResult } from "@/lib/api"
+import { useAuth } from "@/components/providers/auth-provider"
 
 interface RadioModeProps {
-  onPlaylistGenerated?: (duration: number, trackCount: number) => void
+  onPlaylistGenerated?: (result: RadioPlaylistResult) => void
+  onRequireLogin?: () => void
 }
 
 const DURATION_OPTIONS = [
@@ -34,12 +38,14 @@ const DURATION_OPTIONS = [
   { value: 120, label: "2 hours", tracks: "~24 tracks" },
 ]
 
-export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
+export function RadioMode({ onPlaylistGenerated, onRequireLogin }: RadioModeProps) {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [selectedDuration, setSelectedDuration] = useState(60)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isShuffling, setIsShuffling] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Prevent hydration mismatch from Radix UI's auto-generated IDs
   useEffect(() => {
@@ -61,18 +67,28 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
     }, 100)
   }
 
-  // Generate playlist
+  // Generate playlist - calls real API
   const handleGenerate = async () => {
+    // Check if user is logged in
+    if (!user) {
+      onRequireLogin?.()
+      setError("Vui lòng đăng nhập để sử dụng Radio Mode")
+      return
+    }
+
     setIsGenerating(true)
+    setError(null)
     
-    // Simulate API call - in production, this would call the radio API
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    const trackCount = Math.floor(selectedDuration / 5)
-    onPlaylistGenerated?.(selectedDuration, trackCount)
-    
-    setIsGenerating(false)
-    setIsOpen(false)
+    try {
+      const result = await generateRadioPlaylist(selectedDuration)
+      onPlaylistGenerated?.(result)
+      setIsOpen(false)
+    } catch (err) {
+      console.error('Radio playlist generation failed:', err)
+      setError(err instanceof Error ? err.message : 'Không thể tạo playlist. Vui lòng thử lại.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const currentOption = DURATION_OPTIONS.find(o => o.value === selectedDuration)
@@ -170,6 +186,14 @@ export function RadioMode({ onPlaylistGenerated }: RadioModeProps) {
               </div>
             </div>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+              <AlertCircle className="size-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
           {/* Warning */}
           <p className="text-xs text-muted-foreground text-center">

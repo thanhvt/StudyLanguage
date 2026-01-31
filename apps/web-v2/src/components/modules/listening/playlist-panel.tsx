@@ -68,7 +68,7 @@ export function PlaylistPanel({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pr-8">
         <h3 className="font-semibold flex items-center gap-2">
           <ListMusic className="size-5 text-primary" />
           Playlists

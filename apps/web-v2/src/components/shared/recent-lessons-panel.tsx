@@ -157,15 +157,16 @@ export function RecentLessonsPanel({
 
         {/* Authenticated - has data */}
         {!authLoading && isAuthenticated && !isLoading && lessons.length > 0 && (
-          <div className="divide-y divide-border/30 overflow-hidden">
+          <div className="space-y-1 px-1">
             {lessons.map((lesson) => (
               <button
                 key={lesson.id}
                 onClick={() => handlePlayLesson(lesson)}
                 className={cn(
-                  "w-full px-4 py-3 flex items-center gap-3",
-                  "hover:bg-muted/50 transition-colors cursor-pointer",
-                  "text-left group overflow-hidden"
+                  "w-full px-3 py-3 flex items-center gap-3 rounded-xl mx-1",
+                  "border border-transparent hover:border-border/50",
+                  "hover:bg-muted/50 transition-all cursor-pointer",
+                  "text-left group"
                 )}
               >
                 <div className={cn(
@@ -177,7 +178,7 @@ export function RecentLessonsPanel({
                   <Play className="size-4" />
                 </div>
 
-                <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex-1 min-w-0 pr-2">
                   <p className="text-sm font-medium truncate">
                     {lesson.topic}
                   </p>
@@ -199,13 +200,13 @@ export function RecentLessonsPanel({
 
       {/* Footer - View all */}
       {!authLoading && isAuthenticated && (
-        <div className="pt-3 border-t border-border/50">
+        <div className="pt-3 border-t border-border/50 flex justify-center">
           <button
             onClick={handleViewAll}
             className={cn(
-              "w-full flex items-center justify-center gap-2",
-              "text-sm text-primary hover:text-primary/80",
-              "font-medium transition-colors cursor-pointer"
+              "flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
+              "text-sm text-primary hover:text-primary/80 hover:bg-primary/5",
+              "font-medium transition-all cursor-pointer"
             )}
           >
             Xem tất cả lịch sử

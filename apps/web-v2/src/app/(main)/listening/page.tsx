@@ -234,8 +234,15 @@ export default function ListeningPage() {
               {/* Radio Mode & Tips */}
               <div className="flex-none space-y-3">
                 <RadioMode 
-                  onPlaylistGenerated={(duration, count) => {
-                    console.log(`Generated: ${count} tracks`)
+                  onPlaylistGenerated={(result) => {
+                    console.log('Radio playlist generated:', result)
+                    // TODO: Implement playing radio playlist
+                    // For now, alert user
+                    alert(`🎵 Playlist "${result.playlist.name}" đã được tạo với ${result.items.length} bài!`)
+                  }}
+                  onRequireLogin={() => {
+                    // Optionally redirect to login or show modal
+                    console.log('User needs to login for Radio Mode')
                   }}
                 />
               </div>
