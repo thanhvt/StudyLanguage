@@ -211,13 +211,13 @@ export function TranscriptViewer({
       {/* Transcript Content */}
       <ScrollArea 
         className={cn(
-          "rounded-2xl border bg-card/30 backdrop-blur-sm shadow-inner transition-all duration-300",
+          "rounded-2xl border bg-card/30 backdrop-blur-sm shadow-inner transition-all duration-300 overflow-hidden",
           isCompact ? "h-[280px] p-3" : "h-[400px] p-4"
         )}
         role="region"
         aria-label="Conversation transcript"
       >
-        <div ref={containerRef} className={cn("space-y-3", isCompact && "space-y-2")}>
+        <div ref={containerRef} className={cn("space-y-3 pt-2", isCompact && "space-y-2")}>
           {conversation.map((line, index) => {
             const isActive = index === activeLineIndex
             const isPlayed = activeLineIndex >= 0 && index < activeLineIndex
