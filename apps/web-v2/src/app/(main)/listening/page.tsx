@@ -189,14 +189,14 @@ export default function ListeningPage() {
 
   // Xử lý khi chọn entry từ RecentLessonsDropdown
   const handleRecentLessonPlay = useCallback((entry: { topic: string; content: Record<string, unknown> }) => {
-    const script = entry.content?.script as ConversationLine[] | undefined
+    const script = entry.content?.script as ConversationLine[]
     if (script) {
       handlePlaySession(script, entry.topic)
     }
   }, [handlePlaySession])
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-6rem)] h-auto gap-4 px-4 lg:px-0 overflow-hidden">
+    <div className="flex flex-col h-full gap-4 px-4 lg:px-0 overflow-hidden">
       {/* Header */}
       <div className="flex-none">
         <FeatureHeader
@@ -223,7 +223,7 @@ export default function ListeningPage() {
               <TopicPicker 
                 onSelect={handleTopicSelect}
                 selectedTopic={selectedTopic}
-                className="h-full" 
+                className="lg:h-[70vh] h-auto"  
               />
             </div>
 
