@@ -179,7 +179,7 @@ export function RecentLessonsPanel({
                 </div>
 
                 <div className="flex-1 min-w-0 pr-2">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium line-clamp-2">
                     {lesson.topic}
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
