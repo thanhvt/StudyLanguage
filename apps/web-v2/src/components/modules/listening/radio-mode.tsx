@@ -33,6 +33,7 @@ interface RadioModeProps {
 }
 
 const DURATION_OPTIONS = [
+  { value: 1, label: "1 min", tracks: "~1 track" },
   { value: 30, label: "30 min", tracks: "~6 tracks" },
   { value: 60, label: "1 hour", tracks: "~12 tracks" },
   { value: 120, label: "2 hours", tracks: "~24 tracks" },

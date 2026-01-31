@@ -241,7 +241,63 @@ export default function ListeningPage() {
                       description: `${result.items.length} bài • ${result.playlist.duration} phút`,
                       duration: 5000,
                     })
-                    // TODO: Implement playing first track of radio playlist
+                    
+                    // Add playlist to local state for immediate visibility
+                    playlists.addRadioPlaylist({
+                      id: result.playlist.id,
+                      name: result.playlist.name,
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString(),
+                      items: result.items.map(item => ({
+                        id: item.id,
+                        topic: item.topic,
+                        duration: item.duration,
+                        speakers: item.numSpeakers,
+                        conversation: item.conversation.map((line, idx) => ({
+                          id: `${item.id}-${idx}`,
+                          speaker: line.speaker,
+                          text: line.text,
+                        })),
+                      })),
+                    })
+                    
+                    // Play first track immediately
+                    if (result.items.length > 0) {
+                      const firstItem = result.items[0]
+                      const conversationWithIds = firstItem.conversation.map((line, idx) => ({
+                        id: `${firstItem.id}-${idx}`,
+                        speaker: line.speaker,
+                        text: line.text,
+                      }))
+                      
+                      setSelectedTopic({ 
+                        id: firstItem.id, 
+                        name: firstItem.topic, 
+                        description: `Radio Mode - ${firstItem.category}` 
+                      })
+                      setSelectedCategory(firstItem.category)
+                      setSelectedSubCategory(firstItem.subCategory)
+                      setConversation(conversationWithIds)
+                      setViewState('playing')
+                      
+                      toast.info(`▶️ Đang phát: ${firstItem.topic}`, { duration: 3000 })
+                      
+                      // Auto-generate audio for radio track
+                      setIsGeneratingAudio(true)
+                      generateConversationAudio(conversationWithIds)
+                        .then((audioResponse) => {
+                          setAudioUrl(audioResponse.audioUrl)
+                          setTimestamps(audioResponse.timestamps)
+                          toast.success('🎧 Audio đã sẵn sàng!')
+                        })
+                        .catch((err) => {
+                          console.error('Radio audio generation failed:', err)
+                          toast.error('Không thể tạo audio. Vui lòng thử lại.')
+                        })
+                        .finally(() => {
+                          setIsGeneratingAudio(false)
+                        })
+                    }
                   }}
                   onRequireLogin={() => {
                     toast.error('Vui lòng đăng nhập để sử dụng Radio Mode')
@@ -311,6 +367,53 @@ export default function ListeningPage() {
             onRenamePlaylist={playlists.updatePlaylistName}
             onPlayPlaylist={(playlist) => {
               console.log('Play playlist', playlist)
+              
+              // Close dialog first
+              setIsPlaylistOpen(false)
+              
+              // Check if playlist has items
+              if (playlist.items.length === 0) {
+                toast.error('Playlist này chưa có bài nào')
+                return
+              }
+              
+              // Get first item to play
+              const firstItem = playlist.items[0]
+              
+              // Set up conversation and topic
+              const conversationWithIds = firstItem.conversation.map((line, idx) => ({
+                id: `${firstItem.id}-${idx}`,
+                speaker: line.speaker,
+                text: line.text,
+              }))
+              
+              setSelectedTopic({ 
+                id: firstItem.id, 
+                name: firstItem.topic, 
+                description: `Playlist: ${playlist.name}` 
+              })
+              setSelectedCategory('')
+              setSelectedSubCategory('')
+              setConversation(conversationWithIds)
+              setViewState('playing')
+              
+              toast.info(`▶️ Đang phát: ${firstItem.topic}`, { duration: 3000 })
+              
+              // Auto-generate audio
+              setIsGeneratingAudio(true)
+              generateConversationAudio(conversationWithIds)
+                .then((audioResponse) => {
+                  setAudioUrl(audioResponse.audioUrl)
+                  setTimestamps(audioResponse.timestamps)
+                  toast.success('🎧 Audio đã sẵn sàng!')
+                })
+                .catch((err) => {
+                  console.error('Playlist audio generation failed:', err)
+                  toast.error('Không thể tạo audio. Vui lòng thử lại.')
+                })
+                .finally(() => {
+                  setIsGeneratingAudio(false)
+                })
             }}
           />
         </DialogContent>

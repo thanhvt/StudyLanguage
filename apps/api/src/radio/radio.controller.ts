@@ -73,9 +73,9 @@ export class RadioController {
 
       const { duration } = body;
 
-      if (!duration || ![30, 60, 120].includes(duration)) {
+      if (!duration || ![1, 30, 60, 120].includes(duration)) {
         throw new HttpException(
-          'Duration phải là 30, 60, hoặc 120 phút',
+          'Duration phải là 1, 30, 60, hoặc 120 phút',
           HttpStatus.BAD_REQUEST,
         );
       }

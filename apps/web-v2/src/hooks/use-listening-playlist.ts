@@ -95,6 +95,10 @@ export function useListeningPlaylist() {
     ))
   }
 
+  const addRadioPlaylist = (playlist: Playlist) => {
+    setPlaylists(prev => [playlist, ...prev])
+  }
+
   return {
     playlists,
     createPlaylist,
@@ -102,6 +106,7 @@ export function useListeningPlaylist() {
     updatePlaylistName,
     addToPlaylist,
     removeFromPlaylist,
+    addRadioPlaylist,
     initialized
   }
 }
