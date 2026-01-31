@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Mic, Square, RotateCcw, Play, Pause, Loader2, Send, Save } from "lucide-react"
+import { Mic, Square, RotateCcw, Play, Pause, Loader2, Send, Save, Keyboard } from "lucide-react"
 import { useAudioRecorder } from "@/hooks/use-audio-recorder"
 import { useReadingFeedback } from "@/hooks/use-reading-feedback"
 import { ReadingFeedback } from "./reading-feedback"
@@ -29,14 +29,29 @@ export function ReadingPracticeSection({ articleContent, onSave }: ReadingPracti
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Handlers
-  const handleStart = async () => {
+  const handleStart = useCallback(async () => {
     resetFeedback()
     await startRecording()
-  }
+  }, [resetFeedback, startRecording])
 
-  const handleStop = async () => {
+  const handleStop = useCallback(async () => {
     await stopRecording()
-  }
+  }, [stopRecording])
+
+  /**
+   * Toggle ghi âm: bắt đầu nếu chưa ghi, dừng nếu đang ghi
+   * Được gọi khi click nút hoặc nhấn phím Space
+   */
+  const handleToggleRecording = useCallback(async () => {
+    if (isAnalyzing) return // Không toggle khi đang phân tích
+    
+    if (isRecording) {
+      await handleStop()
+    } else if (!audioBlob && !result) {
+      // Chỉ bắt đầu ghi khi chưa có audio hoặc result
+      await handleStart()
+    }
+  }, [isRecording, isAnalyzing, audioBlob, result, handleStart, handleStop])
 
   const handleAnalyze = async () => {
     if (audioBlob) {
@@ -91,6 +106,29 @@ export function ReadingPracticeSection({ articleContent, onSave }: ReadingPracti
       }
     }
   }, [audioBlob])
+
+  /**
+   * Keyboard shortcut: Space để toggle ghi âm
+   * Chỉ hoạt động khi không focus vào input/textarea
+   */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Chỉ xử lý phím Space, không repeat
+      if (e.code === "Space" && !e.repeat) {
+        // Không xử lý khi đang focus vào input hoặc textarea
+        const activeTag = document.activeElement?.tagName
+        if (activeTag === "INPUT" || activeTag === "TEXTAREA") {
+          return
+        }
+        
+        e.preventDefault()
+        handleToggleRecording()
+      }
+    }
+    
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleToggleRecording])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -208,6 +246,25 @@ export function ReadingPracticeSection({ articleContent, onSave }: ReadingPracti
           {/* Hidden audio element */}
           <audio ref={audioRef} className="hidden" />
         </div>
+
+        {/* Keyboard Shortcut Hint */}
+        {!isRecording && !audioBlob && !result && !isAnalyzing && (
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 py-2 px-3 rounded-lg border border-border/50">
+            <Keyboard className="size-3.5" />
+            <span>
+              Nhấn <kbd className="px-1.5 py-0.5 bg-background rounded text-[10px] font-mono mx-0.5 border border-border">Space</kbd> để bắt đầu ghi âm
+            </span>
+          </div>
+        )}
+        
+        {isRecording && (
+          <div className="flex items-center justify-center gap-2 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 py-2 px-3 rounded-lg border border-red-200 dark:border-red-800">
+            <Keyboard className="size-3.5" />
+            <span>
+              Nhấn <kbd className="px-1.5 py-0.5 bg-background rounded text-[10px] font-mono mx-0.5 border border-red-300 dark:border-red-700">Space</kbd> để dừng ghi âm
+            </span>
+          </div>
+        )}
 
         {/* Results */}
         {result && (

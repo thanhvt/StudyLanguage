@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { BookOpen, Minimize2, RotateCcw, History } from "lucide-react"
+import { BookOpen, Minimize2, RotateCcw, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -38,7 +38,7 @@ export default function ReadingPage() {
   
   // Hooks
   const { article: generatedArticle, isGenerating, error, generateArticle, reset: resetReading } = useReading()
-  const { saveLesson } = useSaveLesson()
+  const { saveLesson, isSaving } = useSaveLesson()
 
   // Use loaded article from history or generated article
   const article = loadedArticle || generatedArticle
@@ -58,6 +58,27 @@ export default function ReadingPage() {
     setLoadedArticle(null)
     setCurrentTopic("")
   }, [resetReading])
+
+  /**
+   * Lưu bài đọc vào history
+   * Cho phép lưu bài đọc ngay mà không cần luyện phát âm
+   */
+  const handleSaveArticle = useCallback(async () => {
+    if (!article) return
+    
+    await saveLesson({
+      type: 'reading',
+      topic: article.title || currentTopic,
+      content: {
+        title: article.title,
+        article: article.article,
+        questions: article.questions,
+        difficulty: currentDifficulty,
+      },
+      mode: 'passive',
+      status: 'completed'
+    })
+  }, [article, currentTopic, currentDifficulty, saveLesson])
 
   // Xử lý khi chọn entry từ RecentLessonsDropdown
   const handleRecentLessonPlay = useCallback((entry: { topic: string; content: Record<string, unknown> }) => {
@@ -196,6 +217,16 @@ export default function ReadingPage() {
               
               <div className="flex items-center gap-2">
                  <Button 
+                   variant="outline" 
+                   size="sm" 
+                   onClick={handleSaveArticle}
+                   disabled={isSaving}
+                   className="h-8"
+                 >
+                   <Save className="size-3.5 mr-2" />
+                   {isSaving ? 'Đang lưu...' : 'Lưu bài đọc'}
+                 </Button>
+                 <Button 
                    variant="ghost" 
                    size="sm" 
                    onClick={handleReset}
@@ -234,10 +265,13 @@ export default function ReadingPage() {
                   articleContent={article.article}
                   onSave={async (result: unknown) => {
                     await saveLesson({
-                      type: 'speaking',
-                      topic: `Practice: ${article.title}`,
+                      type: 'reading',
+                      topic: article.title || currentTopic,
                       content: {
-                        articleTitle: article.title,
+                        title: article.title,
+                        article: article.article,
+                        questions: article.questions,
+                        difficulty: currentDifficulty,
                         feedback: result,
                       },
                       mode: 'interactive',
