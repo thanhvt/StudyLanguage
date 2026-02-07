@@ -1,7 +1,7 @@
 # StudyLanguage Project Memory
 
 ## Production URLs
-- **Frontend (Vercel)**: https://study-language-web-hhd7.vercel.app
+- **Frontend (Vercel)**: https://study-language-web-v2.vercel.app
 - **Backend (Railway)**: https://api-production-3532.up.railway.app
 
 ## Notes
