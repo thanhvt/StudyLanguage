@@ -1,19 +1,23 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ConversationGeneratorService } from './conversation-generator.service';
 import {
   GenerateConversationDto,
   PracticeConversationDto,
 } from './dto/generate-conversation.dto';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 
 /**
  * ConversationGeneratorController - API endpoints cho sinh hội thoại
  *
  * Mục đích: Expose REST API để frontend gọi sinh hội thoại tiếng Anh
  * Khi nào sử dụng: Mobile/Web app gọi để lấy nội dung hội thoại học tập
+ * [SECURITY] Tất cả endpoints yêu cầu xác thực Supabase
  */
 @ApiTags('Conversation Generator')
+@ApiBearerAuth()
 @Controller('conversation-generator')
+@UseGuards(SupabaseAuthGuard)
 export class ConversationGeneratorController {
   constructor(
     private readonly conversationGeneratorService: ConversationGeneratorService,
