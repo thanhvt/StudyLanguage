@@ -82,7 +82,7 @@ export function useReadingFeedback(): UseReadingFeedbackReturn {
 
       // Step 2: Evaluate pronunciation (enhanced with word-by-word)
       console.log("[useReadingFeedback] Step 2: Evaluating pronunciation...")
-      const evaluateResponse = await api("/ai/evaluate-pronunciation", {
+      const evaluateResponse = await api("/conversation-generator/evaluate-pronunciation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -373,4 +373,348 @@ Return JSON format:
       };
     }
   }
+
+  // ============================================
+  // CÁC METHODS MIGRATE TỪ OpenAI → Groq
+  // ============================================
+
+  /**
+   * Sinh văn bản tổng quát bằng Groq
+   *
+   * Mục đích: Tạo nội dung bài đọc, câu hỏi, feedback
+   * Tham số đầu vào:
+   *   - prompt: Yêu cầu gửi đến LLM
+   *   - systemPrompt: Context/vai trò cho AI (optional)
+   * Tham số đầu ra: Văn bản được sinh ra (string)
+   * Luồng gọi: Controller -> Service -> Groq API
+   */
+  async generateText(
+    prompt: string,
+    systemPrompt?: string,
+  ): Promise<string> {
+    this.logger.log('Đang gọi Groq để sinh văn bản...');
+
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              systemPrompt ||
+              'Bạn là trợ lý học tiếng Anh, giúp tạo nội dung học tập chất lượng cao.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.9,
+        max_tokens: 4000,
+      });
+
+      const result = response.choices[0]?.message?.content || '';
+      this.logger.log('Đã sinh văn bản thành công');
+      return result;
+    } catch (error) {
+      this.logger.error('Lỗi khi gọi Groq generateText:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sinh hội thoại tương tác có chỗ trống cho user
+   *
+   * Mục đích: Tạo hội thoại với [YOUR_TURN] markers để user tham gia
+   * Tham số đầu vào:
+   *   - topic: Chủ đề hội thoại
+   *   - contextDescription: Mô tả ngữ cảnh cuộc hội thoại (optional)
+   * Tham số đầu ra: Script với isUserTurn markers + scenario
+   * Luồng gọi: Listening InteractiveMode -> Controller -> Service -> Groq API
+   */
+  async generateInteractiveConversation(
+    topic: string,
+    contextDescription?: string,
+  ): Promise<{
+    script: { speaker: string; text: string; isUserTurn: boolean }[];
+    scenario: string;
+  }> {
+    this.logger.log(`Đang sinh hội thoại tương tác về: ${topic}`);
+
+    const contextInstr = contextDescription
+      ? `Context: ${contextDescription}`
+      : '';
+
+    const prompt = `Create an interactive English conversation about "${topic}".
+${contextInstr}
+
+=== REQUIREMENTS ===
+- 2 participants: AI Partner and YOU (the learner)
+- Include 3-4 places where the learner participates (mark speaker = "YOU")
+- For each YOU turn, suggest what to say in square brackets
+- Make it natural, suitable for everyday communication
+- Each AI Partner turn: 2-3 sentences, approximately 40-60 words
+- Each YOU turn: Include a hint of what the learner should say
+
+=== OUTPUT FORMAT ===
+{
+  "scenario": "Brief description of the situation in Vietnamese (VD: Bạn đang ở quầy check-in khách sạn)",
+  "script": [
+    { "speaker": "AI Partner", "text": "Hello! Welcome to our hotel. How can I help you?", "isUserTurn": false },
+    { "speaker": "YOU", "text": "[Chào và nói bạn muốn đặt phòng]", "isUserTurn": true },
+    { "speaker": "AI Partner", "text": "Sure! How many nights would you like to stay?", "isUserTurn": false }
+  ]
+}
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert English teacher creating interactive conversations for Vietnamese learners. You always respond with valid JSON only.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.8,
+        max_tokens: 4000,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      this.logger.log(
+        `Sinh hội thoại tương tác thành công: ${parsed.script?.length || 0} lượt`,
+      );
+      return parsed;
+    } catch (error) {
+      this.logger.error('Lỗi generateInteractiveConversation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Tiếp tục hội thoại dựa trên input của user
+   *
+   * Mục đích: AI phản hồi tự nhiên + phát hiện lỗi ngữ pháp
+   * Tham số đầu vào:
+   *   - conversationHistory: Lịch sử hội thoại
+   *   - userInput: Câu user vừa nói
+   *   - topic: Chủ đề để giữ context
+   * Tham số đầu ra: Câu phản hồi + corrections nếu có lỗi
+   * Luồng gọi: Speaking/Listening InteractiveMode -> Controller -> Service -> Groq
+   */
+  async continueConversation(
+    conversationHistory: { speaker: string; text: string }[],
+    userInput: string,
+    topic: string,
+  ): Promise<{
+    response: string;
+    shouldEnd: boolean;
+    corrections?: {
+      original: string;
+      correction: string;
+      explanation: string;
+    }[];
+  }> {
+    this.logger.log('Đang tiếp tục hội thoại...');
+
+    const historyText = conversationHistory
+      .map((line) => `${line.speaker}: ${line.text}`)
+      .join('\n');
+
+    const prompt = `You are in an English conversation about "${topic}".
+
+History:
+${historyText}
+
+User just said: "${userInput}"
+
+=== YOUR TASKS ===
+1. Respond naturally with 1-2 sentences to continue the conversation
+2. ANALYZE the user's sentence for grammar, vocabulary, or expression errors
+3. If there are errors, list them in "corrections" array
+
+=== ERROR DETECTION CRITERIA ===
+- Tense errors: "I go yesterday" → "I went yesterday"
+- Subject-verb agreement: "She don't" → "She doesn't"
+- Wrong word usage for context
+- Missing articles, prepositions, etc.
+
+=== OUTPUT FORMAT ===
+{
+  "response": "Your natural response to continue the conversation",
+  "shouldEnd": false,
+  "corrections": [
+    {
+      "original": "I go to school yesterday",
+      "correction": "I went to school yesterday",
+      "explanation": "Use past tense 'went' for actions that happened in the past"
+    }
+  ]
+}
+
+If user's sentence has NO errors:
+{
+  "response": "Your response",
+  "shouldEnd": false,
+  "corrections": []
+}
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a friendly English speaking coach. Respond naturally and correct mistakes. Always respond with valid JSON only.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        response: parsed.response || content.trim(),
+        shouldEnd: parsed.shouldEnd ?? false,
+        corrections: parsed.corrections ?? [],
+      };
+    } catch (error) {
+      this.logger.error('Lỗi continueConversation:', error);
+      // Fallback nếu không parse được
+      return { response: 'Could you please repeat that?', shouldEnd: false, corrections: [] };
+    }
+  }
+
+  /**
+   * Đánh giá phát âm của user - Word-by-word scoring
+   *
+   * Mục đích: So sánh transcript user vs mẫu, đưa ra feedback chi tiết
+   * Tham số đầu vào:
+   *   - originalText: Văn bản gốc (mẫu)
+   *   - userTranscript: Văn bản user đọc (từ Whisper STT)
+   * Tham số đầu ra: Đánh giá chi tiết với scores cho từng từ
+   * Luồng gọi: Reading Feedback -> Controller -> Service -> Groq API
+   */
+  async evaluatePronunciation(
+    originalText: string,
+    userTranscript: string,
+  ): Promise<{
+    overallScore: number;
+    fluency: number;
+    pronunciation: number;
+    pace: number;
+    wordByWord: {
+      word: string;
+      correct: boolean;
+      score: number;
+      issue?: string;
+    }[];
+    patterns: string[];
+    feedback: {
+      wrongWords: { word: string; userSaid: string; suggestion: string }[];
+      tips: string[];
+      encouragement: string;
+    };
+  }> {
+    this.logger.log('Đang đánh giá phát âm...');
+
+    const prompt = `You are an expert English pronunciation evaluator. Analyze the user's reading in detail.
+
+ORIGINAL TEXT (reference):
+"${originalText}"
+
+USER READ (Whisper transcript):
+"${userTranscript}"
+
+=== ANALYSIS REQUIREMENTS ===
+1. Compare word by word: Score EVERY word in the original text
+2. Detect patterns: Common pronunciation issues (e.g., /th/, /r/, /l/, final sounds)
+3. Multi-dimensional scoring: Fluency, Pronunciation, Pace
+4. Actionable tips: Specific improvement suggestions
+
+=== OUTPUT FORMAT ===
+{
+  "overallScore": <0-100>,
+  "fluency": <0-100>,
+  "pronunciation": <0-100>,
+  "pace": <0-100>,
+  "wordByWord": [
+    { "word": "hello", "correct": true, "score": 95 },
+    { "word": "world", "correct": false, "score": 40, "issue": "pronounced as 'word'" }
+  ],
+  "patterns": [
+    "Need to practice /th/ sound - currently pronouncing as /t/ or /d/",
+    "Pay attention to -ed endings"
+  ],
+  "feedback": {
+    "wrongWords": [
+      { "word": "world", "userSaid": "word", "suggestion": "Curl tongue up for /r/ sound" }
+    ],
+    "tips": [
+      "Read slower for clearer pronunciation",
+      "Practice /θ/ by placing tongue between teeth"
+    ],
+    "encouragement": "Great job completing the reading! Keep practicing!"
+  }
+}
+
+IMPORTANT:
+- wordByWord MUST contain ALL words from original text
+- Score: 90+ Excellent, 70-89 Good, 50-69 Fair, <50 Needs Work
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a pronunciation evaluation expert. Analyze reading accuracy with detailed word-by-word scoring. Always respond with valid JSON only.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.3, // Thấp hơn để đánh giá chính xác
+        max_tokens: 4000,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Đảm bảo tất cả fields tồn tại với defaults
+      return {
+        overallScore: parsed.overallScore ?? 70,
+        fluency: parsed.fluency ?? parsed.overallScore ?? 70,
+        pronunciation: parsed.pronunciation ?? parsed.overallScore ?? 70,
+        pace: parsed.pace ?? parsed.overallScore ?? 70,
+        wordByWord: parsed.wordByWord ?? [],
+        patterns: parsed.patterns ?? [],
+        feedback: {
+          wrongWords: parsed.feedback?.wrongWords ?? [],
+          tips: parsed.feedback?.tips ?? [],
+          encouragement:
+            parsed.feedback?.encouragement ?? 'Tiếp tục luyện tập nhé!',
+        },
+      };
+    } catch (error) {
+      this.logger.error('Lỗi evaluatePronunciation:', error);
+      throw new Error('Không thể đánh giá phát âm');
+    }
+  }
 }

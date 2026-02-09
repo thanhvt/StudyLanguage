@@ -58,7 +58,7 @@ export function useReading(): UseReadingReturn {
         ? 'cơ bản (A1-A2)' 
         : 'nâng cao (B1-B2)';
 
-      const response = await api('/ai/generate-text', {
+      const response = await api('/conversation-generator/generate-text', {
         method: 'POST',
         body: JSON.stringify({
           prompt: `Tạo một bài đọc tiếng Anh về chủ đề "${topic}" ở mức độ ${difficultyText}.

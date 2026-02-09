@@ -162,7 +162,7 @@ export async function generateConversation(
   request: GenerateConversationRequest
 ): Promise<GenerateConversationResponse> {
   return apiJson<GenerateConversationResponse>(
-    '/ai/generate-conversation',
+    '/conversation-generator/generate',
     {
       method: 'POST',
       body: JSON.stringify(request),

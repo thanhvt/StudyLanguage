@@ -82,7 +82,7 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
     setError(null)
 
     try {
-      const response = await api('/ai/generate-interactive-conversation', {
+      const response = await api('/conversation-generator/generate-interactive', {
         method: 'POST',
         body: JSON.stringify({
           topic: `${topic.name}: ${topic.description}`,
@@ -284,7 +284,7 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
 
       // NEW: Gọi API continue-conversation để AI phản hồi tự nhiên
       try {
-        const continueRes = await api('/ai/continue-conversation', {
+        const continueRes = await api('/conversation-generator/continue-conversation', {
           method: 'POST',
           body: JSON.stringify({
             conversationHistory: conversationHistoryRef.current,

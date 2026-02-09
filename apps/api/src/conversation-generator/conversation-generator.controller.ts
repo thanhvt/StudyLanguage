@@ -4,6 +4,10 @@ import { ConversationGeneratorService } from './conversation-generator.service';
 import {
   GenerateConversationDto,
   PracticeConversationDto,
+  GenerateTextDto,
+  InteractiveConversationDto,
+  ContinueConversationDto,
+  EvaluatePronunciationDto,
 } from './dto/generate-conversation.dto';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 
@@ -97,6 +101,80 @@ export class ConversationGeneratorController {
     return this.conversationGeneratorService.generatePracticeConversation(body);
   }
 
+  // ============================================
+  // ENDPOINTS MIGRATE TỪ /ai/* → /conversation-generator/*
+  // ============================================
+
+  /**
+   * Sinh văn bản tổng quát (bài đọc, câu hỏi...)
+   *
+   * Mục đích: Thay thế /ai/generate-text (OpenAI → Groq)
+   * Endpoint: POST /conversation-generator/generate-text
+   * Luồng gọi: Reading module -> API -> Groq
+   */
+  @Post('generate-text')
+  @ApiOperation({ summary: 'Sinh văn bản (bài đọc, câu hỏi) bằng Groq' })
+  @ApiBody({ type: GenerateTextDto })
+  async generateText(@Body() body: GenerateTextDto) {
+    const result = await this.conversationGeneratorService.generateText(
+      body.prompt,
+      body.systemPrompt,
+    );
+    return { text: result };
+  }
+
+  /**
+   * Sinh hội thoại tương tác có chỗ trống cho user
+   *
+   * Mục đích: Thay thế /ai/generate-interactive-conversation (OpenAI → Groq)
+   * Endpoint: POST /conversation-generator/generate-interactive
+   * Luồng gọi: Listening InteractiveMode -> API -> Groq
+   */
+  @Post('generate-interactive')
+  @ApiOperation({ summary: 'Sinh hội thoại tương tác (có YOUR_TURN markers)' })
+  @ApiBody({ type: InteractiveConversationDto })
+  async generateInteractive(@Body() body: InteractiveConversationDto) {
+    return this.conversationGeneratorService.generateInteractiveConversation(
+      body.topic,
+      body.contextDescription,
+    );
+  }
+
+  /**
+   * Tiếp tục hội thoại - AI phản hồi + sửa lỗi
+   *
+   * Mục đích: Thay thế /ai/continue-conversation (OpenAI → Groq)
+   * Endpoint: POST /conversation-generator/continue-conversation
+   * Luồng gọi: Speaking + Listening InteractiveMode -> API -> Groq
+   */
+  @Post('continue-conversation')
+  @ApiOperation({ summary: 'AI phản hồi hội thoại + phát hiện lỗi ngữ pháp' })
+  @ApiBody({ type: ContinueConversationDto })
+  async continueConversation(@Body() body: ContinueConversationDto) {
+    return this.conversationGeneratorService.continueConversation(
+      body.conversationHistory,
+      body.userInput,
+      body.topic,
+    );
+  }
+
+  /**
+   * Đánh giá phát âm word-by-word
+   *
+   * Mục đích: Thay thế /ai/evaluate-pronunciation (OpenAI → Groq)
+   * Endpoint: POST /conversation-generator/evaluate-pronunciation
+   * Luồng gọi: Reading Feedback -> API -> Groq
+   */
+  @Post('evaluate-pronunciation')
+  @ApiOperation({ summary: 'Đánh giá phát âm chi tiết từng từ' })
+  @ApiBody({ type: EvaluatePronunciationDto })
+  async evaluatePronunciation(@Body() body: EvaluatePronunciationDto) {
+    return this.conversationGeneratorService.evaluatePronunciation(
+      body.originalText,
+      body.userTranscript,
+    );
+  }
+
   /**
    * Health check cho Groq API
    *
@@ -109,3 +187,4 @@ export class ConversationGeneratorController {
     return this.conversationGeneratorService.checkHealth();
   }
 }
+

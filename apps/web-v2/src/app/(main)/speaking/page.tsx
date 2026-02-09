@@ -168,8 +168,8 @@ export default function SpeakingPage() {
           text: msg.text,
         }))
 
-        console.log("[SpeakingPage] Calling AI continue-conversation...")
-        const response = await api("/ai/continue-conversation", {
+        console.log("[SpeakingPage] Calling Groq continue-conversation...")
+        const response = await api("/conversation-generator/continue-conversation", {
           method: "POST",
           body: JSON.stringify({
             conversationHistory,
