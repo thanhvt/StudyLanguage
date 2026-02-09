@@ -22,25 +22,31 @@ export class ConversationGeneratorService {
   }
 
   /**
-   * Sinh hội thoại tiếng Anh theo chủ đề và trình độ
+   * Sinh hội thoại tiếng Anh theo chủ đề và thời lượng
    *
    * Mục đích: Tạo đoạn hội thoại tự nhiên để học tiếng Anh
    * Tham số đầu vào:
    *   - topic: Chủ đề hội thoại (vd: "ordering coffee", "job interview")
+   *   - durationMinutes: Thời lượng hội thoại (5 | 10 | 15 phút)
    *   - level: Trình độ (beginner | intermediate | advanced)
-   *   - numExchanges: Số lượt trao đổi (mặc định 8-12)
    *   - includeVietnamese: Có thêm bản dịch tiếng Việt không
-   * Tham số đầu ra: Object chứa script hội thoại với translations
+   * Tham số đầu ra: Object chứa script hội thoại
    * Luồng gọi: Controller -> Service -> Groq API -> Parse JSON
+   *
+   * Tính toán:
+   *   - Tốc độ TTS: ~150 từ/phút
+   *   - 5 phút = 750 từ = 10 lượt (mỗi lượt ~75 từ)
+   *   - 10 phút = 1500 từ = 20 lượt (mỗi lượt ~75 từ)
+   *   - 15 phút = 2250 từ = 30 lượt (mỗi lượt ~75 từ)
    */
   async generateConversation(options: {
     topic: string;
+    durationMinutes?: number;
     level?: 'beginner' | 'intermediate' | 'advanced';
     numExchanges?: number;
     includeVietnamese?: boolean;
-    speakers?: { name: string; description: string }[];
+    keywords?: string;
   }): Promise<{
-    scenario: string;
     script: {
       speaker: string;
       text: string;
@@ -51,26 +57,22 @@ export class ConversationGeneratorService {
   }> {
     const {
       topic,
+      durationMinutes = 5,
       level = 'intermediate',
-      numExchanges = 10,
       includeVietnamese = true,
-      speakers = [
-        { name: 'Alex', description: 'native English speaker' },
-        { name: 'Minh', description: 'Vietnamese learning English' },
-      ],
+      keywords,
     } = options;
 
+    // Tính toán số lượt trao đổi dựa trên thời lượng
+    // Mỗi người nói = durationMinutes lần → tổng = durationMinutes * 2
+    const totalExchanges = options.numExchanges || durationMinutes * 2;
+    const exchangesPerPerson = Math.ceil(totalExchanges / 2);
+    const totalWords = durationMinutes * 150; // 150 từ/phút (tốc độ TTS)
+    const maxTokens = Math.min(8000, totalWords * 4); // Buffer x4 vì có thêm translation + vocabulary
+
     this.logger.log(
-      `Đang sinh hội thoại về "${topic}" - Level: ${level} - Exchanges: ${numExchanges}`,
+      `Đang sinh hội thoại: "${topic}" - ${durationMinutes} phút - ${totalExchanges} lượt - Level: ${level}`,
     );
-
-    const speakersInfo = speakers
-      .map((s) => `- ${s.name} (${s.description})`)
-      .join('\n');
-
-    const translationInstruction = includeVietnamese
-      ? `Include Vietnamese translation for each line in the "translation" field.`
-      : `Do not include translations.`;
 
     const levelGuide = {
       beginner: 'Use simple vocabulary, short sentences, common phrases only.',
@@ -80,48 +82,54 @@ export class ConversationGeneratorService {
         'Use sophisticated vocabulary, complex structures, idioms, and slang.',
     };
 
-    const prompt = `
-Generate a natural English conversation about "${topic}".
-
-=== SPEAKERS ===
-${speakersInfo}
+    const translationInstruction = includeVietnamese
+      ? `- Include a "translation" field with Vietnamese translation for each turn`
+      : `- Do NOT include "translation" field`;
+    const keywordsInstruction = keywords
+      ? `- Use the following keywords in the conversation: ${keywords}`
+      : '';
+    const prompt = `Generate a natural English conversation about "${topic}".
 
 === REQUIREMENTS ===
+- Speakers: 2 (Person A and Person B)
+- Target duration: ${durationMinutes} minutes (approximately ${totalWords} words total)
+- Total exchanges: exactly ${totalExchanges} turns (Person A speaks ${exchangesPerPerson} times, Person B speaks ${exchangesPerPerson} times, alternating)
+- Each turn: 3 to 4 sentences, approximately 60-80 words per turn
 - Level: ${level.toUpperCase()} - ${levelGuide[level]}
-- Number of exchanges: ${numExchanges}
-- Make it natural, realistic, and useful for language learning
-- Include common expressions and phrases used in real life
-- ${translationInstruction}
-- Highlight 2-3 key phrases per exchange that are useful to learn
+- Tone: casual, everyday, natural
+- DO NOT use one-word or one-sentence responses
+- DO NOT write paragraph-length monologues either
+- Each turn should feel like how real people talk: express a thought, add a detail, then ask or respond
+- DO NOT repeat the same ideas or phrases across turns
+- Include natural elements: opinions, questions, reactions, follow-ups
+${translationInstruction}
+${keywordsInstruction}
+- Include 2-3 key phrases per turn that are useful to learn (in "keyPhrases" field)
+- Include a "vocabulary" array with 5-8 useful words/phrases from the conversation
 
-=== OUTPUT FORMAT (JSON ONLY) ===
+=== EXAMPLE OF GOOD TURN LENGTH ===
+"I've been meaning to try this place for a while. A friend recommended their iced latte and said it was amazing. Do you come here often? I'm not sure what to order so I might need some help with the menu."
+
+=== OUTPUT FORMAT ===
 {
-  "scenario": "Brief description of the situation (in Vietnamese)",
   "script": [
     {
-      "speaker": "Alex",
-      "text": "Hey! Would you like to grab a coffee?",
-      "translation": "Này! Bạn có muốn đi uống cà phê không?",
-      "keyPhrases": ["grab a coffee - đi uống cà phê"]
-    },
-    {
-      "speaker": "Minh", 
-      "text": "Sure, that sounds great! Do you know any good places nearby?",
-      "translation": "Chắc chắn rồi, nghe tuyệt đấy! Bạn có biết quán nào ngon gần đây không?",
-      "keyPhrases": ["sounds great - nghe tuyệt", "nearby - gần đây"]
+      "speaker": "Person A",
+      "text": "I've been meaning to try this place for a while...",
+      "translation": "Tôi đã định thử quán này từ lâu rồi...",
+      "keyPhrases": ["been meaning to - đã định làm gì đó", "for a while - từ lâu rồi"]
     }
   ],
   "vocabulary": [
     {
-      "word": "grab",
-      "meaning": "lấy nhanh, đi lấy (cách nói informal)",
-      "example": "Let's grab lunch together."
+      "word": "grab a coffee",
+      "meaning": "đi uống cà phê (cách nói informal)",
+      "example": "Let's grab a coffee after work."
     }
   ]
 }
 
-RETURN ONLY VALID JSON, NO OTHER TEXT.
-`;
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
     try {
       const response = await this.groq.chat.completions.create({
@@ -135,7 +143,7 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.
           { role: 'user', content: prompt },
         ],
         temperature: 0.8,
-        max_tokens: 4000,
+        max_tokens: maxTokens,
       });
 
       const content = response.choices[0]?.message?.content || '';
@@ -148,8 +156,16 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
+
+      // Log thống kê để debug
+      const scriptLength = parsed.script?.length || 0;
+      const totalWordCount = parsed.script?.reduce(
+        (sum: number, line: { text: string }) =>
+          sum + line.text.split(/\s+/).length,
+        0,
+      ) || 0;
       this.logger.log(
-        `Sinh hội thoại thành công: ${parsed.script?.length || 0} lượt thoại`,
+        `Sinh hội thoại thành công: ${scriptLength} lượt, ${totalWordCount} từ / ${totalWords} mục tiêu, ${parsed.vocabulary?.length || 0} từ vựng`,
       );
 
       return parsed;
@@ -231,9 +247,8 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.
 
     return this.generateConversation({
       topic: fullTopic,
+      durationMinutes: 5,
       level: 'intermediate',
-      numExchanges: 12,
-      includeVietnamese: true,
     });
   }
 

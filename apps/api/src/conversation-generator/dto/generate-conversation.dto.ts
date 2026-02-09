@@ -16,6 +16,17 @@ export class GenerateConversationDto {
   topic: string;
 
   @ApiPropertyOptional({
+    description: 'Thời lượng hội thoại (phút)',
+    enum: [5, 10, 15],
+    default: 5,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(5)
+  @Max(15)
+  durationMinutes?: number;
+
+  @ApiPropertyOptional({
     description: 'Trình độ tiếng Anh',
     enum: ['beginner', 'intermediate', 'advanced'],
     default: 'intermediate',
@@ -25,10 +36,9 @@ export class GenerateConversationDto {
   level?: 'beginner' | 'intermediate' | 'advanced';
 
   @ApiPropertyOptional({
-    description: 'Số lượt trao đổi trong hội thoại',
+    description: 'Số lượt trao đổi (nếu không truyền sẽ tự tính từ duration)',
     minimum: 4,
     maximum: 30,
-    default: 10,
   })
   @IsOptional()
   @IsNumber()
@@ -38,7 +48,7 @@ export class GenerateConversationDto {
 
   @ApiPropertyOptional({
     description: 'Có bao gồm bản dịch tiếng Việt không',
-    default: true,
+    default: false,
   })
   @IsOptional()
   @IsBoolean()
