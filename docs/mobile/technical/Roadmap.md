@@ -170,21 +170,19 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 ## 3. Phase 2: Enhanced UX (3-4 tuần)
 
-> **Goal:** Polish UX, offline support, vocabulary
+> **Goal:** Polish UX, offline support
 
-### 3.1 Week 7-8: Vocabulary & Offline
+### 3.1 Week 7-8: Saved Words & Offline
 
-#### Vocabulary System
+#### Saved Words (tích hợp trong History)
 
 | Task | Est. | Priority |
 |------|------|----------|
-| Word list screen | 4h | P1 |
-| Word detail view | 4h | P1 |
-| Flashcard UI | 6h | P1 |
-| Swipe gestures | 4h | P1 |
-| Spaced repetition logic | 4h | P1 |
-| Save word from reading | 2h | P1 |
-| Review session | 4h | P1 |
+| Saved Words tab trong History | 4h | P1 |
+| Save word from Reading/Listening | 2h | P1 |
+| Word detail popup | 2h | P1 |
+
+> 💡 **Future Phase:** Full Vocabulary module (Flashcard + Spaced Repetition) sẽ triển khai sau khi core features ổn định.
 
 #### Offline Support
 
@@ -235,8 +233,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 | Feature | Status |
 |---------|--------|
-| ☐ Vocabulary flashcards | |
-| ☐ Spaced repetition | |
+| ☐ Saved Words trong History | |
 | ☐ Offline download | |
 | ☐ Background audio | |
 | ☐ Push notifications | |
@@ -361,6 +358,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 - [ ] Calendar integration
 - [ ] Screenshot translate
 - [ ] More AI voices
+- [ ] **Vocabulary Module** (Flashcard + Spaced Repetition + Review Notifications)
 
 ### 8.2 Continuous Improvement
 

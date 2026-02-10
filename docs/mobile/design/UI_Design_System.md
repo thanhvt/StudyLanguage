@@ -202,6 +202,14 @@ Size: 44px × 44px
 Border Radius: 22px (circle)
 ```
 
+**Usage Guidance:**
+- **Primary:** Main CTA on the screen (max 1 visible at a time). E.g., "Bắt đầu nghe", "Tạo bài đọc"
+- **Secondary:** Cancel or alternative actions alongside Primary. E.g., "Hủy", "Bỏ qua"
+- **Ghost:** Tertiary actions, links, or "View All →" navigation
+- **Icon:** Toolbar/header actions (⚙️, 🔔, ⋮). Always 44×44 minimum
+- **Destructive variant:** Use Primary style with Error color for delete/logout
+- See [Style_Convention.md §1.2](Style_Convention.md#12-button-variants-reference) for full decision matrix
+
 ### 6.2 Cards
 
 ```
@@ -225,6 +233,14 @@ Session Card:
 Padding: 12px 16px
 Border Radius: 12px
 ```
+
+**Usage Guidance:**
+- **Feature Card:** Dashboard quick actions, topic/scenario selection grids
+- **Session Card:** History timeline items. Use left accent border for skill identification (🎧 Blue `#4F46E5`, 🗣️ Green `#16A34A`, 📖 Amber `#D97706`)
+- **Stat Card:** Horizontal layout for metrics display (streak, time, count)
+- **Alert/Tip Card:** Inline AI feedback, pronunciation corrections
+- Card press: Apply `scale(0.95)` 150ms + haptic light impact
+- See [Style_Convention.md §1.3](Style_Convention.md#13-card-types-reference) for full reference
 
 ### 6.3 Input Fields
 
@@ -262,6 +278,12 @@ Border: 2px primary-500
 Border Radius (top): 24px
 Handle: 36px × 4px, centered
 ```
+
+**Usage Guidance:**
+- Use for: Advanced config options, action menus (long-press), speed selector, filter options
+- **Not for:** Simple yes/no confirmations (use Alert Dialog instead)
+- Dismiss: Swipe down or tap backdrop
+- See [Style_Convention.md §1.4](Style_Convention.md#14-bottom-sheet-vs-modal-vs-alert) for Bottom Sheet vs Modal vs Alert decision guide
 
 ### 6.5 Toggle Switch
 
@@ -303,6 +325,12 @@ Height: 36px
 Padding: 8px 16px
 Border Radius: 18px
 ```
+
+**Usage Guidance:**
+- Use for: Single-select from 2-5 options (e.g., Duration: 5 | 10 | 15 min, Level: Beginner | Intermediate | Advanced)
+- For binary on/off, use Toggle Switch instead
+- For 2-3 segment options that are part of a control, use Segmented Control (e.g., Light | Dark | Auto)
+- Horizontal scroll when options exceed screen width
 
 ---
 
@@ -519,6 +547,7 @@ module.exports = {
 
 ## 14. Related Documents
 
+- [Style_Convention.md](Style_Convention.md) - **Usage patterns, screen templates, UX states, navigation rules**
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [Architecture.md](../technical/Architecture.md) - Technical implementation
 - [Roadmap.md](../technical/Roadmap.md) - Development timeline

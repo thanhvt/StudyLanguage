@@ -108,7 +108,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | 🎧 **Listening** | Podcast mode, Basic player | TTS Provider Panel, Radio Mode | Background audio, Lock screen |
 | 🗣️ **Speaking** | Voice Recorder | Conversation Coach (Basic) | Realtime Transcription, AI Feedback |
 | 📖 **Reading** | Article view, Focus Mode | Tap-to-translate, Quiz | Reading Practice with AI |
-| 📚 **Vocabulary** | Word list | Flashcard review | Spaced repetition, Notifications |
+
 | 📜 **History** | Timeline view | Analytics (Stats, Chart) | Heatmap, AI Insights, Pinned Items |
 
 ### 5.2 Mobile-Specific Features
@@ -130,16 +130,13 @@ Tab Navigator (Bottom)
 ├── 🏠 Home (Dashboard)
 │   ├── Greeting + Streak
 │   ├── Study Goal + Next Lesson
-│   ├── Quick Actions (Listening, Speaking, Reading, Vocabulary)
+│   ├── Quick Actions (Listening, Speaking, Reading)
 │   └── Recent Activity (MVP)
 │
 ├── 📜 History
 │   ├── Filter Tabs (All, Listening, Speaking, Reading)
-│   └── Timeline List
-│
-├── 📚 Vocabulary
-│   ├── Word List
-│   └── Flashcard Review
+│   ├── Timeline List
+│   └── 📚 Saved Words (từ vựng đã lưu từ các module)
 │
 └── 👤 Profile
     ├── User Info
@@ -155,7 +152,7 @@ Tab Navigator (Bottom)
 > Setup project, Auth, Navigation, 4 Skills basic, History
 
 ### Phase 2: Enhanced UX (3-4 tuần)
-> Offline manager, Vocabulary, Notifications, Widgets, Background audio
+> Offline manager, Notifications, Widgets, Background audio
 
 ### Phase 3: Advanced Features (4-6 tuần)
 > Car/Bedtime mode, Roleplay, Gamification, Family leaderboard
@@ -172,7 +169,7 @@ Tab Navigator (Bottom)
 - [02_Listening.md](features/02_Listening.md) - Listening module
 - [03_Speaking.md](features/03_Speaking.md) - Speaking module
 - [04_Reading.md](features/04_Reading.md) - Reading module
-- [06_Vocabulary.md](features/06_Vocabulary.md) - Vocabulary system
+
 - [07_History.md](features/07_History.md) - History module
 - [08_Profile_Settings.md](features/08_Profile_Settings.md) - Profile & Settings
 - [09_Special_Modes.md](features/09_Special_Modes.md) - Special modes
@@ -184,6 +181,7 @@ Tab Navigator (Bottom)
 
 ### Design
 - [UI_Design_System.md](design/UI_Design_System.md) - Design tokens
+- [Style_Convention.md](design/Style_Convention.md) - UI/UX usage patterns & conventions
 
 ---
 

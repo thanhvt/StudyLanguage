@@ -42,6 +42,7 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 │  │ 🔥 Streak│ ⏱️ Time │ 📚 Words││
 │  │  7 days │ 3.5 hrs │  156   ││
 │  └─────────┴─────────┴────────┘│
+│  🗣️ Speaking Goal: 8/10 (NEW ✨) │
 ├─────────────────────────────────┤
 │  📈 This Week                   │
 │  ┌─────────────────────────┐   │

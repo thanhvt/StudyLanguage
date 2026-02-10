@@ -8,18 +8,15 @@
 
 ## 1. Overview
 
-Module đọc hiểu với AI-generated articles, tối ưu cho màn hình nhỏ với tap-to-translate và comprehension quiz.
+Module đọc hiểu với AI-generated articles, tối ưu cho màn hình nhỏ với tap-to-translate và reading practice.
 
 ### 1.1 Key Features
 
 | Feature | Description |
 |---------|-------------|
 | **Tap-to-Translate** | Chạm từ để xem nghĩa |
-| **Listen Mode** | AI đọc bài cho user |
-| **Quiz** | Kiểm tra hiểu bài |
-| **Night Mode** | Tự động đổi màu khi tối |
-| **Direct Save** | Lưu bài đọc trực tiếp không cần quiz (NEW ✨) |
-| **Recording Shortcut** | Phím Space để bắt đầu/dừng ghi âm practice (NEW ✨) |
+| **Focus Mode** | Ẩn UI, tập trung đọc bài (NEW ✨) |
+| **Reading Practice** | Luyện đọc với AI phân tích phát âm (NEW ✨) |
 
 ### 1.2 Reading Practice Mode (NEW ✨)
 
@@ -41,8 +38,8 @@ Chế độ luyện đọc với AI phản hồi:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│ [Home]  →  [Config]  →  [Generate]  →  [Read]  →  [Quiz]   │
-│             Topic          AI          Article     Test    │
+│ [Home]  →  [Config]  →  [Generate]  →  [Read]  →  [Save]    │
+│             Topic          AI          Article    History  │
 │             Level                                          │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -138,7 +135,7 @@ Chế độ luyện đọc với AI phản hồi:
 │     [Swipe up để tiếp tục]      │
 │                                 │
 ├─────────────────────────────────┤
-│  Aa  │  🌙  │  📝 Quiz  │  📚   │
+│  Aa  │  🔲 Focus  │  � Save  │  📚   │
 └─────────────────────────────────┘
 ```
 
@@ -147,7 +144,7 @@ Chế độ luyện đọc với AI phản hồi:
 - Meta: Reading time, level, word count
 - Content: Readable font size (16-18sp)
 - Highlighted words: Tap-able (new vocabulary)
-- Bottom bar: Font size, Night mode, Quiz, Save
+- Bottom bar: Font size, Focus mode, Save, Vocabulary
 
 ### 3.3 Article View - Focus Mode (NEW ✨)
 
@@ -247,157 +244,6 @@ Chế độ luyện đọc với AI phản hồi:
 - Audio: Tap to hear pronunciation
 - Save: Add to vocabulary list
 
-### 3.6 Listen Mode (TTS)
-
-```
-┌─────────────────────────────────┐
-│  ← Climate Change           ⏸️  │
-├─────────────────────────────────┤
-│  🔊 Listening Mode Active       │
-│  ────●────────────────── 2:30   │
-├─────────────────────────────────┤
-│                                 │
-│  Climate change is one of the   │
-│  most [pressing] issues facing  │
-│  ████████████                   │
-│  our planet today. Scientists   │
-│  around the world warn that     │
-│  global temperatures are rising │
-│  at an unprecedented rate.      │
-│                                 │
-│  [Highlighted = currently       │
-│   being read]                   │
-│                                 │
-├─────────────────────────────────┤
-│    ⏪    │    ⏸️    │    ⏩     │
-└─────────────────────────────────┘
-```
-
-**Specs:**
-- Progress bar: Synced with TTS
-- Highlight: Current sentence/word
-- Auto-scroll: Follow reading position
-- Controls: Pause, skip, speed
-
-### 3.7 Comprehension Quiz
-
-```
-┌─────────────────────────────────┐
-│  📝 Reading Quiz            3/5 │
-├─────────────────────────────────┤
-│                                 │
-│  What is the main topic of      │
-│  the article?                   │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │ ○ Climate solutions     │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ ● Climate change impact │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ ○ Scientific research   │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ ○ Government policies   │   │
-│  └─────────────────────────┘   │
-│                                 │
-│       [Kiểm tra]                │
-│                                 │
-└─────────────────────────────────┘
-```
-
-**Specs:**
-- Progress: Question x/total
-- Options: Radio buttons, large touch targets
-- Submit: Check answer button
-
-### 3.8 Quiz - Correct Answer
-
-```
-┌─────────────────────────────────┐
-│  📝 Reading Quiz            3/5 │
-├─────────────────────────────────┤
-│                                 │
-│         🎉                      │
-│      Chính xác!                 │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │ ✅ Climate change impact│   │
-│  └─────────────────────────┘   │
-│                                 │
-│  📝 Giải thích:                 │
-│  Bài viết tập trung vào tác    │
-│  động của biến đổi khí hậu...   │
-│                                 │
-│       [Câu tiếp theo →]         │
-│                                 │
-└─────────────────────────────────┘
-```
-
-**Specs:**
-- Confetti animation
-- Haptic: Success notification
-- Explanation: Why this is correct
-- Auto-advance after 2 seconds
-
-### 3.9 Quiz - Wrong Answer
-
-```
-┌─────────────────────────────────┐
-│  📝 Reading Quiz            3/5 │
-├─────────────────────────────────┤
-│                                 │
-│         ❌                      │
-│     Chưa đúng rồi              │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │ ❌ Scientific research  │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ ✅ Climate change impact│   │
-│  └─────────────────────────┘   │
-│                                 │
-│  📝 Giải thích:                 │
-│  Bài viết không tập trung vào   │
-│  nghiên cứu khoa học mà...      │
-│                                 │
-│       [Câu tiếp theo →]         │
-│                                 │
-└─────────────────────────────────┘
-```
-
-**Specs:**
-- Shake animation
-- Haptic: Warning notification
-- Show correct answer
-- Explanation: Why it's wrong
-
-### 3.8 Quiz Results
-
-```
-┌─────────────────────────────────┐
-│  ← Quiz Results             ✅  │
-├─────────────────────────────────┤
-│                                 │
-│         🎯                      │
-│      Kết quả                    │
-│        4/5                      │
-│       80%                       │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │ ✅ Question 1            │   │
-│  │ ✅ Question 2            │   │
-│  │ ✅ Question 3            │   │
-│  │ ❌ Question 4            │   │
-│  │ ✅ Question 5            │   │
-│  └─────────────────────────┘   │
-│                                 │
-│  [📖 Đọc lại]  [🏠 Trang chủ]  │
-│                                 │
-└─────────────────────────────────┘
-```
-
 ### 3.9 Font Size & Display Settings
 
 ```
@@ -430,9 +276,6 @@ Chế độ luyện đọc với AI phản hồi:
 | Tap word | Single tap | Dictionary popup |
 | Long press word | Long press | Highlight & save |
 | Pinch | Pinch in/out | Zoom text |
-| Listen | Tap 🔊 | AI reads article |
-| Night mode | Tap 🌙 | Dark theme |
-| **Space key** | Press Space | Toggle recording (NEW ✨) |
 
 ### 4.2 Dictionary Lookup
 
@@ -493,14 +336,7 @@ interface ReadingState {
     isListening: boolean;
     currentPosition: number;
   };
-  
-  // Quiz
-  quiz: {
-    questions: Question[];
-    answers: number[];
-    currentIndex: number;
-  };
-  
+
   // Dictionary
   dictionary: {
     selectedWord: string | null;
@@ -532,13 +368,10 @@ function handleWordTap(event: TextTouchEvent) {
 - [ ] Generate article via API
 - [ ] Article display with scrolling
 - [ ] Tap-to-translate popup
-- [ ] Basic quiz (multiple choice)
-- [ ] Quiz results screen
+
 
 ### Enhanced Phase
-- [ ] Listen mode (TTS)
 - [ ] Font size controls
-- [ ] Night mode (auto-detect)
 - [ ] Save words to vocabulary
 - [ ] Highlight new vocabulary
 - [ ] **Direct save reading articles** (NEW ✨)
@@ -551,5 +384,5 @@ function handleWordTap(event: TextTouchEvent) {
 ## 7. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
-- [06_Vocabulary.md](06_Vocabulary.md) - Saved words
+- [07_History.md](07_History.md) - Saved words & History
 - [UI_Design_System.md](../design/UI_Design_System.md) - Typography

@@ -44,13 +44,6 @@ Các tính năng đặc thù mobile platform, tận dụng hardware và OS capab
 | Double tap | Play/Pause |
 | Long press sentence | Save bookmark |
 
-### 2.3 Flashcard Gestures
-
-| Gesture | Action |
-|---------|--------|
-| Swipe left | Don't know |
-| Swipe right | Know it |
-| Tap | Flip card |
 
 ### 2.4 Reading Gestures
 
@@ -77,6 +70,25 @@ Các tính năng đặc thù mobile platform, tận dụng hardware và OS capab
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### 2.6 Speaking Gestures (NEW ✨)
+
+| Gesture | Context | Action |
+|---------|---------|--------|
+| Long press mic | Speaking screen | Bắt đầu ghi âm |
+| Release mic | Speaking screen | Dừng ghi âm |
+| Swipe up | Đang ghi âm | Hủy recording |
+| Tap word | Practice screen | Hiện IPA + audio |
+| Tap "Luyện âm" | Feedback screen | Navigate đến practice âm yếu |
+
+**Haptic patterns mới:**
+
+| Event | Haptic Type |
+|-------|-------------|
+| Badge unlock | Heavy impact + success notification |
+| Confetti trigger (score ≥90) | Success notification |
+| Countdown tick | Selection (mỗi số) |
+| Swipe-to-cancel confirm | Warning notification |
 
 ---
 
@@ -197,9 +209,9 @@ Similar to iOS but with more customization options:
 | Widget Element | Tap Action |
 |----------------|------------|
 | Streak | Open Profile |
-| Word of Day | Open Vocabulary |
+| Word of Day | Open History (Saved Words) |
 | Continue | Resume last lesson |
-| Word count | Open Vocabulary |
+| Word count | Open History (Saved Words) |
 
 ---
 
@@ -358,7 +370,7 @@ Khi người dùng đang nghe passive listening và rời khỏi app:
 | Achievement | Heavy impact | Unlock badge |
 | Recording start | Medium impact | Begin recording |
 | Recording end | Light impact | Stop recording |
-| Swipe complete | Light impact | Flashcard swiped |
+
 | Long press | Selection | Context menu |
 
 ### 7.2 Implementation
@@ -396,7 +408,7 @@ ReactNativeHapticFeedback.trigger('selection');
 |---------|-----------------|
 | Play downloaded lessons | ✅ Full |
 | View history | ✅ Cached |
-| Review vocabulary | ✅ Full |
+| Review saved words | ✅ Full |
 | Read saved articles | ✅ Full |
 | Generate new content | ❌ Requires network |
 | Speaking practice | ❌ Requires AI |
@@ -441,7 +453,7 @@ ReactNativeHapticFeedback.trigger('selection');
 │                                 │
 │  Bạn vẫn có thể:                │
 │  ✅ Nghe bài đã download        │
-│  ✅ Ôn từ vựng                  │
+│  ✅ Xem từ đã lưu              │
 │  ✅ Đọc bài đã lưu              │
 │                                 │
 │        [Thử kết nối lại]        │
@@ -468,8 +480,7 @@ ReactNativeHapticFeedback.trigger('selection');
 studylanguage://                      # Open app
 studylanguage://listening             # Open Listening
 studylanguage://listening/123         # Open specific lesson
-studylanguage://vocabulary            # Open Vocabulary
-studylanguage://vocabulary/review     # Start review
+studylanguage://history/saved-words   # Open Saved Words
 studylanguage://profile               # Open Profile
 ```
 
@@ -484,7 +495,7 @@ https://studylanguage.app/share/abc   # Shared content
 
 | Source | Link | Action |
 |--------|------|--------|
-| Push notification | studylanguage://vocabulary/review | Open review |
+| Push notification | studylanguage://history/saved-words | Open saved words |
 | Widget | studylanguage://listening | Open Listening |
 | Share | https://studylanguage.app/... | Open shared |
 
@@ -550,5 +561,5 @@ React Native Linking (built-in) // No extra lib needed
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [02_Listening.md](02_Listening.md) - Player gestures
-- [06_Vocabulary.md](06_Vocabulary.md) - Flashcard gestures
+- [07_History.md](07_History.md) - Saved words
 - [09_Special_Modes.md](09_Special_Modes.md) - Voice commands

@@ -16,13 +16,16 @@ Module lịch sử học tập với timeline view, filter theo skill, và sync 
 |---------|-------------|
 | **Timeline View** | Grouped by date |
 | **Filter by Skill** | Listening, Speaking, Reading |
+| **Filter by Date Range** | Tuần này, Tháng này, Custom range (NEW ✨) |
 | **Detail View** | Full session info |
-| **Quick Actions** | Replay, practice again |
+| **Quick Actions** | Replay, practice again, swipe gestures |
 | **Recent Lessons Panel** | Quick access từ skill pages (NEW ✨) |
 | **Session Restoration** | Resume session từ audio player (NEW ✨) |
 | **Persist Audio Data** | Lưu audio URL để replay không cần regenerate (NEW ✨) |
 | **Analytics Dashboard** | Stats cards, heatmap, charts (NEW ✨) |
 | **AI Insights** | Phân tích thói quen học tập (NEW ✨) |
+| **Batch Actions** | Multi-select, delete nhiều sessions (NEW ✨) |
+| **Export/Share** | Share session dạng image card hoặc PDF (NEW ✨) |
 
 ### 1.2 Analytics Features (NEW ✨)
 
@@ -31,11 +34,13 @@ Bổ sung các biểu đồ và thống kê chi tiết như web-v2:
 | Feature | Description |
 |---------|-------------|
 | **Stats Cards** | Tổng quan hôm nay, tuần này, streak, tổng giờ học |
-
+| **Weekly Heatmap** | Calendar contribution graph (giống GitHub) |
+| **Progress Chart** | Line chart tiến trình theo tuần/tháng |
+| **Skill Distribution** | Pie/donut chart phân bổ kỹ năng |
 | **AI Insights** | Tips cá nhân hóa dựa trên dữ liệu học tập |
 | **Pinned Items** | Ghim các session quan trọng lên đầu |
 
-### 1.2 Recent Lessons Panel (NEW ✨)
+### 1.3 Recent Lessons Panel (NEW ✨)
 
 Quick access panel hiển thị các bài học gần đây, tích hợp trực tiếp vào các skill pages.
 
@@ -50,7 +55,7 @@ Quick access panel hiển thị các bài học gần đây, tích hợp trực 
 - **Guest**: Hiển thị CTA đăng nhập
 - **Logged in**: Hiển thị danh sách bài học gần đây
 
-### 1.3 Session Restoration (NEW ✨)
+### 1.4 Session Restoration (NEW ✨)
 
 Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 
@@ -77,11 +82,35 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 2.2 Filter Flow (NEW ✨)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│ [Skill Filter]  →  [Date Range]  →  [Sort Order]  →  [List]│
+│  All/🎧/🗣️/📖    Week/Month/Custom  Newest/Oldest  Results│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2.3 Batch Actions Flow (NEW ✨)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│ [Long Press Card] → [Multi-Select Mode] → [Select Cards]   │
+│                             │                               │
+│                    [Batch Actions Bar]                      │
+│                    [🗑️ Delete] [⭐ Favorite] [Cancel]       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 3. UI Mockups
 
-### 3.0 Recent Lessons Panel (NEW ✨)
+### 3.1 Recent Lessons Panel (NEW ✨)
 
 **Guest State (Not Logged In):**
 ```
@@ -130,13 +159,14 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 - Relative time display (Vừa xong, X phút trước, X giờ trước, X ngày trước)
 - Footer link → Navigate to History page with filter
 
-### 3.1 History Timeline & Analytics (Updated)
+### 3.2 History Timeline & Analytics (Updated)
 
 ```
 ┌─────────────────────────────────┐
 │  📜 Lịch sử học tập         🔍  │
 ├─────────────────────────────────┤
 │  [All] [🎧] [🗣️] [📖]    │
+│  [Tuần này ▼]  [Mới nhất ▼]    │
 ├─────────────────────────────────┤
 │                                 │
 │  📊 Tổng quan                   │
@@ -145,19 +175,35 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │  │ Streak  │ Total  │ Lesson│ │
 │  └───────────────────────────┘ │
 │                                 │
-
+│  📈 Tuần này                    │
+│  ┌───────────────────────────┐ │
+│  │     ╭╮                    │ │
+│  │  ╭──╯╰╮   ╭╮             │ │
+│  │ ─╯     ╰──╯╰─            │ │
+│  │ T2  T3  T4  T5  T6  T7 CN│ │
+│  └───────────────────────────┘ │
+│                                 │
+│  🗓️ Hoạt động                   │
+│  ┌───────────────────────────┐ │
+│  │ ░░█░░█░██░█░░░█░██░█░░░  │ │
+│  │ [Calendar Heatmap]        │ │
+│  └───────────────────────────┘ │
 │                                 │
 │  💡 AI Insight                  │
 │  ┌───────────────────────────┐ │
+│  │ ✨ gradient-bg             │ │
 │  │ Bạn học tốt nhất vào buổi │ │
 │  │ sáng (06:00 - 08:00). Hãy │ │
 │  │ duy trì thói quen này!    │ │
+│  │                           │ │
+│  │ [📊 Xem chi tiết]         │ │
 │  └───────────────────────────┘ │
 │                                 │
 │  📌 Pinned                      │
 │  ┌─────────────────────────┐   │
 │  │ 🎧 Coffee Shop Talk ⭐  │   │
 │  │ 09:30 • 15 min • 80%    │   │
+│  │ ▎blue accent             │   │
 │  └─────────────────────────┘   │
 │                                 │
 │  ─── Hôm nay ───────────────── │
@@ -167,12 +213,57 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 
 **Specs:**
 - Stats Cards: Horizontal scroll or Grid
-- Charts: Recharts or Victory Native
-- Heatmap: Calendar contribution graph
-- AI Insight: Dynamic text box with icon
+- Progress Chart: Victory Native line chart, tuần/tháng toggle
+- Heatmap: Calendar contribution graph (giống GitHub)
+- AI Insight: **Gradient background card** với subtle fade-in animation, có action button
 - Pinned: Section riêng trên cùng list
+- Date Filter: Dropdown (Tuần này / Tháng này / 3 tháng / Custom range)
+- Sort: Dropdown (Mới nhất / Cũ nhất)
 
-### 3.2 Filtered View (Listening Only)
+### 3.3 Session Cards - Visual Identity (NEW ✨)
+
+Mỗi skill type có accent color riêng, consistent với Dashboard:
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│  ─── Hôm nay ───────────────── │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │▎🎧 Coffee Shop Talk     │   │  ← Blue accent (left border)
+│  │▎09:30 • 15 min    [80%] │   │  ← Score badge (top right)
+│  │▎⭐ Pinned               │   │  ← Pin/Favorite indicator
+│  └─────────────────────────┘   │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │▎🗣️ Tech Pronunciation   │   │  ← Green accent
+│  │▎10:15 • 8 min     [85]  │   │  ← Score badge
+│  └─────────────────────────┘   │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │▎📖 Climate Change       │   │  ← Amber accent
+│  │▎14:30 • 5 min     [4/5] │   │  ← Quiz score badge
+│  └─────────────────────────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Accent Colors (Consistent with Dashboard):**
+
+| Skill | Accent Color | Icon |
+|-------|-------------|------|
+| Listening | Blue/Indigo (`#4F46E5`) | 🎧 |
+| Speaking | Green (`#16A34A`) | 🗣️ |
+| Reading | Amber (`#D97706`) | 📖 |
+
+**Interaction:**
+- Tap: Navigate to session detail
+- Long press: Quick Actions bottom sheet
+- **Swipe left**: Delete (red background)
+- **Swipe right**: Pin/Favorite (yellow background)
+- Press animation: Scale 0.95x + haptic light impact
+
+### 3.4 Filtered View (Listening Only)
 
 ```
 ┌─────────────────────────────────┐
@@ -183,31 +274,37 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │    (Selected)                   │
 ├─────────────────────────────────┤
 │  📊 Listening: 12 sessions      │
-│  ⏱️ Total: 3.5 hours            │
+│  ⏱️ Total: 3.5h │ Avg: 78%      │
+│  🏆 Best: 95% │ 📈 ↑ Improving  │
 ├─────────────────────────────────┤
 │                                 │
 │  ─── Hôm nay ───────────────── │
 │                                 │
 │  ┌─────────────────────────┐   │
-│  │ 🎧 Coffee Shop Talk ⭐  │   │
-│  │ 09:30 • 15 min • 80%    │   │
+│  │▎🎧 Coffee Shop Talk ⭐  │   │
+│  │▎09:30 • 15 min    [80%] │   │
 │  └─────────────────────────┘   │
 │                                 │
 │  ─── Hôm qua ───────────────── │
 │                                 │
 │  ┌─────────────────────────┐   │
-│  │ 🎧 Airport Dialogue     │   │
-│  │ 08:00 • 20 min • 92%    │   │
+│  │▎🎧 Airport Dialogue     │   │
+│  │▎08:00 • 20 min    [92%] │   │
 │  └─────────────────────────┘   │
 │  ┌─────────────────────────┐   │
-│  │ 🎧 Restaurant Order     │   │
-│  │ 12:30 • 10 min • 88%    │   │
+│  │▎🎧 Restaurant Order     │   │
+│  │▎12:30 • 10 min    [88%] │   │
 │  └─────────────────────────┘   │
 │                                 │
 └─────────────────────────────────┘
 ```
 
-### 3.3 Session Detail - Listening
+**Filter Stats Enhancement:**
+- **Average score**: Trung bình điểm qua các session
+- **Best score**: Điểm cao nhất gần đây
+- **Trend arrow**: ↑ Improving / ↓ Declining / → Stable (so sánh tuần này vs tuần trước)
+
+### 3.5 Session Detail - Listening
 
 ```
 ┌─────────────────────────────────┐
@@ -249,7 +346,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 └─────────────────────────────────┘
 ```
 
-### 3.4 Session Detail - Speaking
+### 3.6 Session Detail - Speaking
 
 ```
 ┌─────────────────────────────────┐
@@ -259,6 +356,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │  🗣️ Speaking Session            │
 │  📅 26/01/2026, 10:15           │
 │  ⏱️ Duration: 8 minutes         │
+│  Mode: Practice                 │
 │                                 │
 ├─────────────────────────────────┤
 │  📊 Performance                 │
@@ -281,11 +379,66 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │  • technology (95/100)          │
 │                                 │
 ├─────────────────────────────────┤
-│  [🔊 Play Recordings] [🔄 Retry] │
+│  🔥 Phoneme Heatmap (NEW ✨)    │
+│  /θ/ 🟢  /ʃ/ 🟡  /ð/ 🔴       │
+│  [Luyện âm yếu →]              │
+│                                 │
+├─────────────────────────────────┤
+│  [🔊 Play] [🤖 AI Clone]       │
+│  [📤 Share] [🔄 Retry]          │
 └─────────────────────────────────┘
 ```
 
-### 3.5 Session Detail - Reading
+### 3.6.1 Session Detail - Coach (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Daily Routine Coach      ⋮  │
+├─────────────────────────────────┤
+│                                 │
+│  💬 Conversation Coach          │
+│  📅 26/01/2026, 15:00           │
+│  ⏱️ Duration: 10 minutes        │
+│                                 │
+├─────────────────────────────────┤
+│  📊 Summary                     │
+│  Turns: 12 | Score: 82/100      │
+│                                 │
+│  📝 Transcript:                 │
+│  AI: "What do you usually..."   │
+│  You: "I usually wake up..."    │
+│  ⚠️ "usually" → /ˈjuːʒuəli/    │
+│  AI: "That sounds nice!..."     │
+│                                 │
+├─────────────────────────────────┤
+│  [🔊 Replay] [📤 Share]         │
+└─────────────────────────────────┘
+```
+
+### 3.6.2 Session Detail - Roleplay (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Restaurant Roleplay      ⋮  │
+├─────────────────────────────────┤
+│                                 │
+│  🎭 Roleplay Session            │
+│  📅 26/01/2026, 16:30           │
+│  Scenario: Restaurant           │
+│  Turns: 8/10 | Score: 78/100    │
+│                                 │
+├─────────────────────────────────┤
+│  📝 Turn Review:                │
+│  Turn 1: ✅ (92/100)            │
+│  Turn 2: ✅ (88/100)            │
+│  Turn 3: ⚠️ (65/100)           │
+│  ...                            │
+├─────────────────────────────────┤
+│  [🔊 Replay] [🔄 Retry]         │
+└─────────────────────────────────┘
+```
+
+### 3.7 Session Detail - Reading
 
 ```
 ┌─────────────────────────────────┐
@@ -321,79 +474,300 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 └─────────────────────────────────┘
 ```
 
+### 3.8 Empty State (NEW ✨)
 
-
-### 3.7 Quick Actions (Long Press)
+Khi user chưa có lịch sử học tập:
 
 ```
 ┌─────────────────────────────────┐
-│         Quick Actions           │
+│  📜 Lịch sử học tập         🔍  │
+├─────────────────────────────────┤
+│  [All] [🎧] [🗣️] [📖]    │
 ├─────────────────────────────────┤
 │                                 │
-│  ▶️  Replay session             │
 │                                 │
-│  🔄  Practice again             │
+│         ┌───────────┐           │
+│         │  📚 ✨     │           │
+│         │  (empty)   │           │
+│         └───────────┘           │
 │                                 │
-│  ⭐  Add to favorites           │
+│    Chưa có lịch sử học tập      │
 │                                 │
-│  📤  Share                      │
+│    Bắt đầu bài học đầu tiên     │
+│    để theo dõi tiến trình!      │
 │                                 │
-│  🗑️  Delete                     │
+│     [🎧 Bắt đầu nghe]          │
+│     [🗣️ Bắt đầu nói]           │
+│     [📖 Bắt đầu đọc]           │
+│                                 │
 │                                 │
 └─────────────────────────────────┘
 ```
 
-### 3.8 Search History
+**Empty State cho Filtered View:**
+```
+┌─────────────────────────────────┐
+│  [All] [🎧] [🗣️] [📖]    │
+│                ▲                │
+│           (Selected)            │
+├─────────────────────────────────┤
+│                                 │
+│         ┌───────────┐           │
+│         │  🗣️       │           │
+│         └───────────┘           │
+│                                 │
+│   Chưa có bài Speaking nào      │
+│                                 │
+│     [🗣️ Luyện nói ngay]        │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Illustration: Lottie animation (book/sparkle)
+- CTA buttons: Navigate đến skill pages tương ứng
+- Fade-in animation khi render
+
+### 3.9 Skeleton Loading (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  📜 Lịch sử học tập         🔍  │
+├─────────────────────────────────┤
+│  [All] [🎧] [🗣️] [📖]    │
+├─────────────────────────────────┤
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │ ░░░░░░░░ │ ░░░░░░ │ ░░░░ │ │  ← Stats skeleton
+│  └───────────────────────────┘ │
+│                                 │
+│  ─── ░░░░░░░░ ──────────────── │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │▎░░░░░░░░░░░░░░░░░░░░   │   │  ← Card skeleton
+│  │▎░░░░░░░░░░ • ░░░░░░░   │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │▎░░░░░░░░░░░░░░░░░░░░   │   │
+│  │▎░░░░░░░░░░ • ░░░░░░░   │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │▎░░░░░░░░░░░░░░░░░░░░   │   │
+│  │▎░░░░░░░░░░ • ░░░░░░░   │   │
+│  └─────────────────────────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Shimmer animation (left → right gradient pulse)
+- 3-4 skeleton cards
+- Skeleton cho stats cards area
+- Hiển thị filter tabs ngay, skeleton cho content
+
+### 3.10 Quick Actions - Swipe & Long Press (Updated)
+
+**Swipe Actions (NEW ✨):**
+```
+┌─────────────────────────────────┐
+│                                 │
+│  ← Swipe Left (Delete)         │
+│  ┌─────────────────────────┐   │
+│  │▎🎧 Coffee Shop Talk [🗑️]│   │  ← Red background reveal
+│  │▎09:30 • 15 min    [80%] │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  Swipe Right (Pin/Favorite) →   │
+│  ┌─────────────────────────┐   │
+│  │[⭐]🎧 Airport Dialogue ▎│   │  ← Yellow background reveal
+│  │     08:00 • 20 min [92%]▎│   │
+│  └─────────────────────────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Long Press Bottom Sheet:**
+```
+┌─────────────────────────────────┐
+│  ━━━━━                          │
+│  Coffee Shop Talk               │
+├─────────────────────────────────┤
+│                                 │
+│  ▶️  Phát lại                   │
+│                                 │
+│  🔄  Luyện tập lại              │
+│                                 │
+│  📌  Ghim lên đầu               │
+│                                 │
+│  ⭐  Thêm vào yêu thích         │
+│                                 │
+│  📤  Chia sẻ                    │
+│                                 │
+│  🗑️  Xóa                       │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Swipe: `react-native-gesture-handler` Swipeable
+- Left swipe threshold: 80px → confirm delete
+- Right swipe threshold: 80px → toggle pin/favorite
+- Long press: Bottom sheet với full action list
+- Haptic feedback on swipe complete + long press trigger
+
+### 3.11 Search History (Updated)
 
 ```
 ┌─────────────────────────────────┐
 │  🔍 Search history              │
 ├─────────────────────────────────┤
 │  ┌─────────────────────────┐   │
-│  │ 🔍 coffee shop          │   │
+│  │ 🔍 coffee shop     ✕    │   │
 │  └─────────────────────────┘   │
-├─────────────────────────────────┤
+│                                 │
+│  Filter: [All ▼]                │
 │                                 │
 │  Results (3 sessions)           │
 │                                 │
 │  ┌─────────────────────────┐   │
-│  │ 🎧 Coffee Shop Talk     │   │
-│  │ 26/01/2026 • 15 min     │   │
+│  │▎🎧 **Coffee** Shop Talk │   │  ← Highlight match
+│  │▎26/01/2026 • 15 min     │   │
 │  └─────────────────────────┘   │
 │  ┌─────────────────────────┐   │
-│  │ 🎧 Coffee Order         │   │
-│  │ 20/01/2026 • 10 min     │   │
+│  │▎🎧 **Coffee** Order     │   │
+│  │▎20/01/2026 • 10 min     │   │
 │  └─────────────────────────┘   │
 │  ┌─────────────────────────┐   │
-│  │ ✍️ Coffee Shop Journal   │   │
-│  │ 15/01/2026 • 8 min      │   │
+│  │▎📖 **Coffee** Shop Journal│  │
+│  │▎15/01/2026 • 8 min      │   │
 │  └─────────────────────────┘   │
 │                                 │
 └─────────────────────────────────┘
 ```
 
+**Search - Suggestions State (before typing):**
+```
+┌─────────────────────────────────┐
+│  ┌─────────────────────────┐   │
+│  │ 🔍                      │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🕐 Tìm kiếm gần đây           │
+│  • coffee shop                  │
+│  • airport                      │
+│  • restaurant                   │
+│                                 │
+│  🔥 Phổ biến                    │
+│  • daily conversation           │
+│  • travel                       │
+│  • business                     │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- **Debounce**: 300ms delay trước khi search
+- **Highlight**: Bold text match trong kết quả
+- **Filter chips**: Kết hợp search + skill type filter
+- **Recent searches**: Lưu 5 lần search gần nhất (AsyncStorage)
+- **Clear search**: Nút ✕ trong input field
+
+### 3.12 Export/Share Session (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ━━━━━                          │
+│  Chia sẻ kết quả                │
+├─────────────────────────────────┤
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ ┌─────────────────────┐ │   │
+│  │ │ 📚 StudyLanguage     │ │   │  ← Preview card
+│  │ │                     │ │   │
+│  │ │ 🎧 Coffee Shop Talk │ │   │
+│  │ │ Score: 80%          │ │   │
+│  │ │ 🔥 12 day streak    │ │   │
+│  │ │ 26/01/2026          │ │   │
+│  │ └─────────────────────┘ │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  [📱 Share Image]               │
+│  [📄 Export PDF]                │
+│  [📋 Copy Link]                │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- **Share Image**: Tạo image card (ViewShot → Share API)
+- **Export PDF**: Session detail + transcript (nếu có)
+- **Copy Link**: Deep link đến session (requires backend support)
+- Gradient background cho share card, app branding
+
+### 3.13 Batch Actions Mode (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ✕ Chọn       3 đã chọn   [⋮] │
+├─────────────────────────────────┤
+│                                 │
+│  ─── Hôm nay ───────────────── │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ ☑️ 🎧 Coffee Shop Talk  │   │  ← Selected
+│  │    09:30 • 15 min       │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ ☑️ 🗣️ Tech Pronunciation│   │  ← Selected
+│  │    10:15 • 8 min        │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ ☐  📖 Climate Change    │   │  ← Not selected
+│  │    14:30 • 5 min        │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  ─── Hôm qua ───────────────── │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ ☑️ 🎧 Airport Dialogue  │   │  ← Selected
+│  │    08:00 • 20 min       │   │
+│  └─────────────────────────┘   │
+│                                 │
+├─────────────────────────────────┤
+│ [Chọn tất cả] [🗑️ Xóa (3)] [⭐]│
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Trigger: Long press bất kỳ card nào
+- Header: Hiện count đã chọn + cancel button
+- Actions bar: Fixed bottom, show available actions
+- Select all: Chọn tất cả visible cards
+- Confirm dialog trước khi xóa hàng loạt4
+- Haptic selection feedback on each tap
+
 ---
 
 ## 4. Features Detail
 
-### 4.1 Session Types
+### 4.1 Session Types & Visual Identity
 
-| Type | Icon | Data Shown |
-|------|------|------------|
-| Listening | 🎧 | Duration, comprehension %, bookmarks |
-| Speaking | 🗣️ | Duration, score, sentences count |
-| Reading | 📖 | Duration, quiz score, words read |
-
+| Type | Icon | Accent Color | Data Shown |
+|------|------|-------------|------------|
+| Listening | 🎧 | Blue/Indigo `#4F46E5` | Duration, comprehension %, bookmarks |
+| Speaking | 🗣️ | Green `#16A34A` | Duration, score, sentences count |
+| Reading | 📖 | Amber `#D97706` | Duration, quiz score, words read |
 
 ### 4.2 Quick Actions
 
-| Action | Description |
-|--------|-------------|
-| Replay | Play audio again (Listening) |
-| Practice Again | Start new session with same config |
-| Favorite | Mark as important |
-| Share | Export session data |
-| Delete | Remove from history |
+| Action | Trigger | Description |
+|--------|---------|-------------|
+| Replay | Tap / Swipe | Play audio again (Listening) |
+| Practice Again | Tap | Start new session with same config |
+| Pin | Swipe right / Long press | Ghim lên đầu list |
+| Favorite | Swipe right / Long press | Mark as important |
+| Share | Long press | Export session data |
+| Delete | Swipe left / Long press | Remove from history (confirm dialog) |
 
 ### 4.3 Sync Strategy
 
@@ -403,6 +777,33 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 | Offline | Queue for sync, show pending icon |
 | Conflict | Latest timestamp wins |
 
+### 4.4 Gestures (NEW ✨)
+
+Consistent với Listening module gesture system:
+
+| Context | Gesture | Action |
+|---------|---------|--------|
+| Session Card | Tap | Navigate to detail |
+| Session Card | Long press | Quick Actions bottom sheet |
+| Session Card | Swipe left | Delete (confirm) |
+| Session Card | Swipe right | Pin/Favorite toggle |
+| Detail view | Swipe down | Back to list |
+| Detail transcript | Double tap | Quick bookmark |
+| List | Pull down | Refresh data |
+
+### 4.5 Animations & Transitions (NEW ✨)
+
+| Element | Animation | Spec |
+|---------|-----------|------|
+| Card press | Scale down | `transform: scale(0.95)`, 150ms ease |
+| Card tap | Haptic | Light impact feedback |
+| Card delete | Slide + Fade | Slide left + opacity → 0, 300ms |
+| Detail open | Shared element | Card → Full screen transition |
+| Empty state | Fade in | Opacity 0 → 1, 500ms delay |
+| Skeleton | Shimmer | Gradient pulse left → right, 1.5s loop |
+| AI Insight | Slide up | Translate Y 20px → 0, 400ms fade-in |
+| Pull refresh | Spring | Spring animation on release |
+
 ---
 
 ## 5. Technical Implementation
@@ -411,19 +812,32 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 
 ```typescript
 interface HistoryState {
-  // Sessions
+  // Danh sách sessions
   sessions: Session[];
   
-  // Filters
+  // Bộ lọc kỹ năng
   filter: 'all' | 'listening' | 'speaking' | 'reading';
   
-  // Search
-  searchQuery: string;
+  // Bộ lọc thời gian (NEW ✨)
+  dateRange: 'week' | 'month' | '3months' | 'custom';
+  customDateStart?: Date;
+  customDateEnd?: Date;
   
-  // Pagination
+  // Sắp xếp (NEW ✨)
+  sortOrder: 'newest' | 'oldest';
+  
+  // Tìm kiếm
+  searchQuery: string;
+  recentSearches: string[]; // NEW ✨
+  
+  // Phân trang
   page: number;
   hasMore: boolean;
   loading: boolean;
+  
+  // Chế độ chọn nhiều (NEW ✨)
+  selectionMode: boolean;
+  selectedIds: string[];
 }
 
 interface Session {
@@ -431,20 +845,27 @@ interface Session {
   type: 'listening' | 'speaking' | 'reading';
   title: string;
   date: Date;
-  duration: number; // minutes
+  duration: number; // phút
   score?: number;
   config: SessionConfig;
   data: SessionData;
   isFavorite: boolean;
+  isPinned?: boolean;
   syncStatus: 'synced' | 'pending' | 'error';
-  isPinned?: boolean; // NEW ✨
+  audioUrl?: string; // Lưu audio URL để replay (NEW ✨)
 }
 
 interface UserStats {
   streak: number;
   totalHours: number;
   totalLessons: number;
-
+  // Thống kê nâng cao (NEW ✨)
+  averageScore: number;
+  bestScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  weeklyData: { day: string; minutes: number }[];
+  heatmapData: { date: string; count: number }[];
+  skillDistribution: { skill: string; count: number }[];
   aiInsight: string;
 }
 ```
@@ -461,6 +882,18 @@ interface UserStats {
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 5.3 Libraries (NEW ✨)
+
+```typescript
+react-native-gesture-handler   // Swipe actions trên session cards
+react-native-reanimated        // Animations (skeleton, transitions)
+react-native-haptic-feedback   // Haptic trên tap, swipe, long press
+victory-native                 // Charts (progress, distribution)
+react-native-view-shot         // Tạo share image card
+react-native-share             // Share API
+@react-native-async-storage/async-storage // Recent searches
+```
+
 ---
 
 ## 6. Implementation Tasks
@@ -468,27 +901,47 @@ interface UserStats {
 ### MVP Phase
 - [ ] History list screen
 - [ ] Filter by skill type
-- [ ] Session detail view
+- [ ] Session detail view (Listening, Speaking, Reading)
 - [ ] Replay functionality
 - [ ] Practice again action
+- [ ] **Empty state UI** (NEW ✨)
+- [ ] **Skeleton loading** (NEW ✨)
+- [ ] **Pull-to-refresh** (NEW ✨)
 
 ### Enhanced Phase
-- [ ] Search functionality
+- [ ] Search functionality with debounce
+- [ ] **Search suggestions & recent searches** (NEW ✨)
+- [ ] **Search result highlight** (NEW ✨)
 - [ ] Favorites
-- [ ] Quick actions (long press)
+- [ ] Quick actions (long press bottom sheet)
+- [ ] **Swipe-to-action (delete/pin)** (NEW ✨)
 - [ ] Infinite scroll pagination
 - [ ] Offline sync queue
-- [ ] **Session restoration from audio player** (NEW ✨)
-- [ ] **Persist audio URL in history** (NEW ✨)
-- [ ] **Navigate to skill page from player** (NEW ✨)
-- [ ] **Stats cards implementation** (NEW ✨)
+- [ ] **Session restoration from audio player**
+- [ ] **Persist audio URL in history**
+- [ ] **Navigate to skill page from player**
+- [ ] **Date range filter** (NEW ✨)
+- [ ] **Sort order toggle** (NEW ✨)
+- [ ] **Visual identity cards (accent colors)** (NEW ✨)
+- [ ] **Card press animation + haptic** (NEW ✨)
+- [ ] Stats cards implementation
+- [ ] Pinned sessions
+- [ ] **AI Insight card (gradient + action)** (NEW ✨)
 
-- [ ] **Pinned sessions** (NEW ✨)
+### Advanced Phase
+- [ ] **Batch actions (multi-select mode)** (NEW ✨)
+- [ ] **Export/Share session (image card, PDF)** (NEW ✨)
+- [ ] **Weekly activity heatmap** (NEW ✨)
+- [ ] **Progress chart (line chart)** (NEW ✨)
+- [ ] **Skill distribution chart** (NEW ✨)
+- [ ] **Detail view shared element transition** (NEW ✨)
 
 ---
 
 ## 7. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
+- [00_Dashboard.md](00_Dashboard.md) - Visual identity consistency (accent colors)
+- [02_Listening.md](02_Listening.md) - Gesture system reference
 - [10_Native_Features.md](10_Native_Features.md) - Offline sync
 - [Architecture.md](../technical/Architecture.md) - Data sync

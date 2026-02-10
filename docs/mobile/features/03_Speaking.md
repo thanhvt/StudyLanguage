@@ -15,10 +15,12 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | **Practice Mode** | Đọc theo mẫu, AI chấm điểm | Luyện từng câu |
-| **Conversation Coach** | AI coach hội thoại realtime (NEW ✨) | Luyện giao tiếp tự nhiên |
+| **Shadowing Mode** | Nhại theo AI đồng thời, so sánh real-time (NEW ✨) | Luyện ngữ điệu, nhịp nói |
+| **Conversation Coach** | AI coach hội thoại realtime | Luyện giao tiếp tự nhiên |
 | **Roleplay Mode** | Đóng vai tình huống | Advanced practice |
+| **Tongue Twister Mode** | Luyện phát âm vui với câu nói lái (NEW ✨) | Luyện âm khó |
 
-### 1.2 AI Conversation Coach (NEW ✨)
+### 1.2 AI Conversation Coach
 
 Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc gõ, AI phản hồi realtime với feedback phát âm.
 
@@ -29,11 +31,93 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 | **Real-time Transcription** | STT via `/ai/transcribe` |
 | **AI Response** | AI tiếp tục hội thoại qua `/conversation-generator/continue-conversation` |
 | **Pronunciation Alert** | Inline feedback khi phát âm sai |
+| **Grammar Correction** | Sửa ngữ pháp inline (NEW ✨) |
+| **Suggested Responses** | 2-3 gợi ý câu trả lời cho beginner (NEW ✨) |
 | **Voice Visualizer** | Waveform animation khi đang ghi âm |
 | **Session Transcript** | Scrollable conversation history |
 | **Session Timer** | Countdown theo duration đã chọn, auto-end |
 | **Feedback Mode** | Beginner / Intermediate / Advanced |
 | **Save to History** | Tự động lưu khi kết thúc session |
+
+### 1.3 Shadowing Mode (NEW ✨)
+
+Technique luyện nói hiệu quả: nghe AI → nhại lại đồng thời → AI so sánh real-time.
+
+| Feature | Description |
+|---------|-------------|
+| **AI Playback** | Phát câu mẫu với tốc độ tùy chỉnh (0.5x - 1.5x) |
+| **Simultaneous Record** | Ghi âm đồng thời khi AI đang phát |
+| **Real-time Comparison** | So sánh pitch, tempo, intonation |
+| **Delay Control** | Chỉnh delay 0-2s giữa AI và user |
+| **Score Breakdown** | Điểm riêng cho rhythm, intonation, accuracy |
+
+### 1.4 Tongue Twister Mode (NEW ✨)
+
+Luyện phát âm vui vẻ với tongue twisters, phân loại theo âm cần luyện.
+
+| Feature | Description |
+|---------|-------------|
+| **Phoneme Categories** | Phân loại theo âm: `/θ/`, `/ʃ/`, `/r/ vs /l/`... |
+| **Speed Challenge** | Tăng tốc dần → thử thách phản xạ |
+| **Leaderboard** | Bảng xếp hạng tốc độ + chính xác |
+| **Unlock System** | Hoàn thành level dễ → mở khóa level khó |
+
+### 1.5 Custom Speaking Scenarios (NEW ✨)
+
+Tương tự Listening Custom Scenarios, cho phép user tạo scenario riêng để luyện nói.
+
+| Feature | Description |
+|---------|-------------|
+| **Create** | Tạo scenario với tên + mô tả chi tiết |
+| **Quick Use** | Dùng ngay không lưu vào database |
+| **Save** | Lưu vào database để dùng lại |
+| **Favorite** | Đánh dấu yêu thích |
+| **Delete** | Xóa scenario đã lưu |
+
+### 1.6 TTS Provider Settings (NEW ✨)
+
+Cấu hình giọng AI mẫu khi phát âm sample (parity với Listening):
+
+| Feature | Description |
+|---------|-------------|
+| **Provider** | Dùng chung config từ Listening (OpenAI / Azure) |
+| **Emotion Context** | AI mẫu nói với emotion phù hợp context câu |
+| **Voice Selection** | Chọn giọng mẫu hoặc random |
+
+### 1.7 Gamification & Progress (NEW ✨)
+
+Hệ thống gamification nâng cao cho Speaking:
+
+| Feature | Description |
+|---------|-------------|
+| **Achievement Badges** | 🏆 100 câu, 1000 câu, streak 7/30 ngày... |
+| **Daily Speaking Goal** | Target nói X câu/ngày, hiện trên Dashboard |
+| **Weekly Report** | Trend điểm số, thời gian luyện, weak sounds |
+| **Progress Radar** | Biểu đồ radar: Pronunciation / Fluency / Vocabulary / Grammar |
+| **Weak Sounds Heatmap** | Hiển thị âm hay sai: `/θ/`, `/ð/`, `/ʃ/`... |
+| **Calendar Heatmap** | Ngày nào luyện, ngày nào không |
+
+### 1.8 Save & Share Results (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| **Share Card** | Export kết quả dưới dạng image card đẹp (share social) |
+| **Recording History** | Lưu recordings để nghe lại sự tiến bộ |
+| **Progress Timeline** | So sánh recording cũ vs mới cho cùng câu |
+
+### 1.9 Background Audio cho Coach (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| **AI Response Notification** | Notification khi AI response đến (nếu minimize app) |
+| **Session Persist** | Giữ session khi chuyển app, resume khi quay lại |
+
+### 1.10 AI Voice Clone Replay (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| **Corrected Replay** | Nghe lại giọng mình được AI "sửa" phát âm đúng |
+| **Before/After** | So sánh bản gốc vs bản AI-corrected |
 
 ---
 
@@ -88,6 +172,40 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 2.4 Shadowing Flow (NEW ✨)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│ [Select Sentence]  →  [AI Plays]  →  [User Shadows]        │
+│                        (Mẫu)         (Ghi âm đồng thời)   │
+│                                           │                 │
+│                                    [Real-time Compare]      │
+│                                           │                 │
+│                                    [Score: Rhythm,          │
+│                                     Intonation, Accuracy]   │
+│                                           │                 │
+│                                    [Repeat / Next]          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2.5 Tongue Twister Flow (NEW ✨)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│ [Chọn Phoneme]  →  [Level Select]  →  [Practice]           │
+│  (/θ/, /ʃ/...)     (Easy → Hard)     (Record + Score)      │
+│                                           │                 │
+│                                    [Speed Challenge]        │
+│                                    (Tăng tốc dần)          │
+│                                           │                 │
+│                                    [Leaderboard]            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 3. UI Mockups
@@ -137,6 +255,16 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │   is revolutionizing the way    │
 │   we live and work."            │
 │                                 │
+│  📖 /ˌɑːr.tɪˈfɪʃ.əl ɪnˈtel.ɪ. │
+│     dʒəns ɪz ˌrev.əˈluː.ʃən.  │
+│     aɪ.zɪŋ ðə weɪ/             │
+│  [🔤 IPA: ON/OFF]               │
+│                                 │
+│  💡 Nhấn âm: ar-ti-FI-cial     │
+│     in-TEL-li-gence is          │
+│     RE-vo-lu-tion-IZ-ing        │
+│  [📝 Stress: ON/OFF]            │
+│                                 │
 │  🔊 [Nghe AI phát âm mẫu]       │
 │                                 │
 ├─────────────────────────────────┤
@@ -155,6 +283,9 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 **Specs:**
 - Score: Running average
 - Sentence: Large, readable font
+- **IPA Toggle** (NEW ✨): Hiển thị phiên âm IPA bên dưới câu mẫu
+- **Word Stress** (NEW ✨): In đậm âm tiết nhấn, toggle ON/OFF
+- **Tap any word** (NEW ✨): Popup IPA + audio riêng từ đó
 - AI Audio: Play sample pronunciation
 - Mic button: Large (80px), center-bottom
 - Haptic: Light impact when ready
@@ -199,6 +330,7 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │  ← Pronunciation Result     ✅  │
 ├─────────────────────────────────┤
 │                                 │
+│      🎉🎊 (confetti if ≥90)    │
 │         🎯 Score                │
 │          88/100                 │
 │   [████████████░░] Great job!   │
@@ -209,6 +341,7 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │  ✅ Artificial        (95/100)  │
 │  ✅ Intelligence      (90/100)  │
 │  ⚠️ Revolutionizing  (75/100)  │
+│     → [🎯 Luyện âm này]        │
 │  ✅ Live              (92/100)  │
 │  ✅ Work              (88/100)  │
 │                                 │
@@ -217,17 +350,37 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │   cần nhấn mạnh hơn"            │
 │                                 │
 ├─────────────────────────────────┤
+│  🔥 Phoneme Heatmap (NEW ✨)    │
+│  ┌─────────────────────────┐   │
+│  │  /θ/ 🟢  /ʃ/ 🟡  /r/ 🟢 │   │
+│  │  /ð/ 🔴  /v/ 🟢  /z/ 🟡 │   │
+│  └─────────────────────────┘   │
+│                                 │
+├─────────────────────────────────┤
+│  🤖 AI Voice Clone (NEW ✨)     │
+│  ┌─────────────────────────┐   │
+│  │ ▶️ Giọng bạn (gốc)       │   │
+│  │ ▶️ Giọng bạn (AI sửa)    │   │
+│  └─────────────────────────┘   │
+│                                 │
+├─────────────────────────────────┤
 │  🔊 Nghe lại     🔊 So sánh AI  │
 ├─────────────────────────────────┤
-│  [🔁 Luyện lại]  [➡️ Tiếp theo] │
+│  [🔁 Luyện lại] [📤 Chia sẻ]   │
+│  [➡️ Tiếp theo]                 │
 └─────────────────────────────────┘
 ```
 
 **Specs:**
 - Score: Animated counter (0 → 88)
+- **Confetti** (NEW ✨): Animated confetti khi score ≥ 90
 - Progress bar: Gradient fill
 - Word scores: Color-coded (✅ ≥85, ⚠️ <85)
+- **"Luyện âm này"** (NEW ✨): Tap → auto navigate đến practice âm yếu
+- **Phoneme Heatmap** (NEW ✨): Visual map các âm cần cải thiện (🟢 tốt, 🟡 trung bình, 🔴 cần luyện)
+- **AI Voice Clone** (NEW ✨): Nghe bản gốc vs bản AI-corrected
 - Tips: AI-generated suggestions
+- **Share** (NEW ✨): Export result card đẹp (share social)
 - Haptic: Success notification
 
 ### 3.5 Feedback - Waveform Comparison
@@ -315,6 +468,7 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │  │ I usually wake up at    │   │
 │  │ 7 o'clock and have      │   │
 │  │ breakfast.              │   │
+│  │              [🔁 Nói lại]│   │
 │  └─────────────────────────┘   │
 │                                 │
 │  ⚠️ Pronunciation tip:         │
@@ -323,11 +477,25 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 │  │ Nhấn âm đầu "YOO"       │   │
 │  └─────────────────────────┘   │
 │                                 │
+│  📝 Grammar fix (NEW ✨):       │
+│  ┌─────────────────────────┐   │
+│  │ "have breakfast"         │   │
+│  │ → "have my breakfast"    │   │
+│  │ (thêm tính từ sở hữu)   │   │
+│  └─────────────────────────┘   │
+│                                 │
 │  👤 AI:                         │
 │  ┌─────────────────────────┐   │
 │  │ That sounds nice! Do    │   │
 │  │ you prefer tea or       │   │
 │  │ coffee?             🔊  │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  💬 Gợi ý (NEW ✨):             │
+│  ┌─────────────────────────┐   │
+│  │ "I prefer coffee..."    │   │
+│  │ "I usually have tea..." │   │
+│  │ "It depends on..."      │   │
 │  └─────────────────────────┘   │
 │                                 │
 ├─────────────────────────────────┤
@@ -338,8 +506,10 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 **Specs:**
 - Timer: Countdown ở header, auto-end khi hết
 - AI bubbles: Left-aligned, có nút 🔊 phát audio
-- User bubbles: Right-aligned
+- User bubbles: Right-aligned, **có nút "Nói lại"** (NEW ✨)
 - Pronunciation Alert: Inline card giữa messages
+- **Grammar Fix** (NEW ✨): Inline grammar correction card
+- **Suggested Responses** (NEW ✨): 2-3 gợi ý câu trả lời cho beginner
 - Bottom bar: Voice (hold-to-record), Text toggle, End session
 - Voice Visualizer: Hiện khi đang recording (thay thế bottom bar)
 
@@ -366,9 +536,56 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 └─────────────────────────────────┘
 ```
 
-### 3.9 Roleplay - Scenario Selection
+### 3.9 Roleplay - Scenario Selection (NEW ✨)
 
-### 3.7 Roleplay - Conversation
+```
+┌─────────────────────────────────┐
+│  ← Roleplay Scenarios       ⋮  │
+├─────────────────────────────────┤
+│                                 │
+│  Chọn tình huống luyện tập      │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ 🍽️ Restaurant            │   │
+│  │ Gọi món, thanh toán      │   │
+│  │ ⭐ Easy  •  5-8 turns    │   │
+│  │ Preview: "Hi! Welcome   │   │
+│  │  to our restaurant..."   │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ ✈️ Airport               │   │
+│  │ Check-in, boarding       │   │
+│  │ ⭐⭐ Medium • 8-10 turns │   │
+│  │ Preview: "Good morning, │   │
+│  │  may I see your..."      │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ 🏥 Doctor Visit          │   │
+│  │ Khám bệnh, triệu chứng  │   │
+│  │ ⭐⭐ Medium • 6-10 turns │   │
+│  │ Preview: "What seems to │   │
+│  │  be the problem today?"  │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ 💼 Job Interview         │   │
+│  │ Phỏng vấn xin việc       │   │
+│  │ ⭐⭐⭐ Hard • 10 turns   │   │
+│  │ Preview: "Tell me about │   │
+│  │  yourself..."            │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  ▼ More scenarios...            │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Scenario cards: Icon + title + description + difficulty badge + turn count
+- Difficulty: ⭐ Easy, ⭐⭐ Medium, ⭐⭐⭐ Hard
+- Preview: 2-3 câu đầu tiên của scenario
+- Tap card → Bắt đầu roleplay
+
+### 3.10 Roleplay - Conversation
 
 ```
 ┌─────────────────────────────────┐
@@ -406,6 +623,182 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 - Script: Show expected dialogue
 - Skip: Move to next turn
 
+### 3.11 First-time Onboarding Overlay (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│         ┌─────────┐             │
+│         │  💡 TIP  │             │
+│         └─────────┘             │
+│                                 │
+│    Giữ nút 🎤 và nói rõ ràng   │
+│    Thả ra khi nói xong          │
+│                                 │
+│    ┌─────────────────┐          │
+│    │  [Thử ngay]     │          │
+│    │  [Bỏ qua]       │          │
+│    └─────────────────┘          │
+│                                 │
+│  ● ○ ○  (3 bước)                │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- 3-step onboarding: 1) Hold-to-record, 2) Listen to feedback, 3) Streak system
+- Hiện 1 lần cho user mới, lưu flag vào AsyncStorage
+- Dimmed background + spotlight trên nút mic
+
+### 3.12 Shadowing Mode Screen (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Shadowing Practice       ⚙️  │
+├─────────────────────────────────┤
+│  📊 Score: 78/100               │
+├─────────────────────────────────┤
+│                                 │
+│  "The weather is beautiful      │
+│   today, isn't it?"             │
+│                                 │
+│  🔊 AI:  ████████████░░░░       │
+│  🎤 You: ██████████░░░░░░       │
+│  (Real-time waveform compare)   │
+│                                 │
+│  ⏱️ Delay: [0s] [0.5s] [1s] [2s]│
+│  🐢 Speed: [0.5x] [1.0x] [1.5x]│
+│                                 │
+├─────────────────────────────────┤
+│  📊 Rhythm:     ⭐⭐⭐⭐☆      │
+│  🎵 Intonation: ⭐⭐⭐☆☆      │
+│  🎯 Accuracy:   ⭐⭐⭐⭐⭐      │
+├─────────────────────────────────┤
+│  [🔁 Lại]  [▶️ Bắt đầu Shadow]  │
+└─────────────────────────────────┘
+```
+
+### 3.13 Tongue Twister Mode (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Tongue Twisters          🏆  │
+├─────────────────────────────────┤
+│  Chọn âm cần luyện:            │
+│  [/θ/ th] [/ʃ/ sh] [/r/ vs /l/]│
+│  [/v/ vs /w/] [/ð/ th] [/z/]   │
+├─────────────────────────────────┤
+│  🎯 /θ/ - Level 1 (Easy)       │
+│                                 │
+│  "Three thin thieves thought    │
+│   a thousand thoughts"          │
+│                                 │
+│  🔊 [Nghe mẫu]                  │
+│                                 │
+│  ⏱️ Speed Challenge:            │
+│  [Slow] [Normal] [Fast] [🔥]   │
+│                                 │
+│  Best: 2.3s  |  🏆 Top: 1.8s   │
+│                                 │
+├─────────────────────────────────┤
+│       🎤 [Giữ để ghi âm]        │
+└─────────────────────────────────┘
+```
+
+### 3.14 Custom Scenarios Panel (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← My Scenarios             ＋  │
+├─────────────────────────────────┤
+│                                 │
+│  ★ Business Negotiation         │
+│    "Negotiate a deal with..."   │
+│    [▶️ Practice]  [✏️]  [🗑️]    │
+│                                 │
+│    Travel Emergency             │
+│    "Lost passport at airport"   │
+│    [▶️ Practice]  [✏️]  [🗑️]    │
+│                                 │
+├─────────────────────────────────┤
+│  ＋ Create New Scenario          │
+│  ┌─────────────────────────┐   │
+│  │ Scenario name:           │   │
+│  │ [____________________]   │   │
+│  │ Description:             │   │
+│  │ [____________________]   │   │
+│  │ [Quick Use] [Save]       │   │
+│  └─────────────────────────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+### 3.15 Speaking Progress Dashboard (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Speaking Progress        📊  │
+├─────────────────────────────────┤
+│  🔥 Streak: 12 days             │
+│  🎯 Daily Goal: 8/10 sentences  │
+│  ⏱️ Total: 5.2 hours            │
+├─────────────────────────────────┤
+│  📊 Radar Chart                 │
+│  ┌─────────────────────────┐   │
+│  │     Pronunciation        │   │
+│  │       ╱ 85 ╲             │   │
+│  │ Gram /       \ Fluency   │   │
+│  │  72 \       / 80         │   │
+│  │       ╲ 88 ╱             │   │
+│  │     Vocabulary           │   │
+│  └─────────────────────────┘   │
+├─────────────────────────────────┤
+│  📅 Calendar Heatmap            │
+│  ┌─────────────────────────┐   │
+│  │ M  T  W  T  F  S  S     │   │
+│  │ 🟢 🟢 🟡 🟢 🟢 ⚪ ⚪     │   │
+│  │ 🟢 🟢 🟢 🟡 🟢 🟢 ⚪     │   │
+│  └─────────────────────────┘   │
+├─────────────────────────────────┤
+│  🔥 Weak Sounds                 │
+│  /ð/ 38%  /θ/ 52%  /ʃ/ 65%    │
+│  [Luyện âm yếu]                │
+├─────────────────────────────────┤
+│  🏆 Badges                      │
+│  [🎤 100 câu] [🔥 7-day]       │
+│  [🏅 Perfect] [🌟 Shadower]    │
+│  [🔓 2 locked]                  │
+└─────────────────────────────────┘
+```
+
+### 3.16 Recording UX Enhancements (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  🎬 Countdown (3→2→1→GO!)       │
+│                                 │
+│           3️⃣                    │
+│     (animation scale + fade)    │
+│                                 │
+├─────────────────────────────────┤
+│  🎤 Recording (swipe to cancel) │
+│                                 │
+│     🌊🌊🌊🌊🌊🌊🌊🌊            │
+│           🔴 0:03               │
+│                                 │
+│     ↑ Vuốt lên để hủy          │
+│                                 │
+├─────────────────────────────────┤
+│  ✅ Preview (before submit)     │
+│                                 │
+│     ▶️ Nghe lại bản ghi         │
+│     ████████████████ 0:04       │
+│                                 │
+│  [🔁 Ghi lại]    [✅ Gửi]       │
+│                                 │
+└─────────────────────────────────┘
+```
+
 ---
 
 ## 4. Features Detail
@@ -414,31 +807,56 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 
 | Feature | Description |
 |---------|-------------|
-| Hold-to-record | Press and hold mic button |
-| Visual feedback | Waveform animation while recording |
-| Haptic start | Medium impact when recording starts |
-| Haptic end | Light impact when released |
-| Countdown | Optional 3-2-1 before recording |
-| Max duration | 15 seconds default |
+| Hold-to-record | Giữ nút mic để ghi âm |
+| Visual feedback | Waveform animation khi đang ghi |
+| Haptic start | Medium impact khi bắt đầu |
+| Haptic end | Light impact khi thả |
+| **Countdown** (NEW ✨) | Animated 3→2→1→GO! trước khi ghi |
+| **Swipe-to-cancel** (NEW ✨) | Vuốt lên để hủy recording |
+| **Preview before submit** (NEW ✨) | Nghe lại bản ghi trước khi gửi |
+| Max duration | 15 giây default |
 
 ### 4.2 AI Feedback
 
 | Feedback Type | Description |
 |---------------|-------------|
 | Overall Score | 0-100 score with grade |
-| Word-by-word | Score for each word |
+| Word-by-word | Score cho từng word |
 | Phoneme breakdown | IPA transcription |
-| Tips | AI suggestions for improvement |
+| **Phoneme Heatmap** (NEW ✨) | Visual map âm cần cải thiện |
+| Tips | AI-generated suggestions |
 | Comparison | User vs AI waveform |
+| **AI Voice Clone** (NEW ✨) | Nghe giọng mình được AI sửa |
+| **Confetti** (NEW ✨) | Animation mừng khi ≥90 |
 
 ### 4.3 Progress Tracking
 
 | Metric | Description |
 |--------|-------------|
-| Session score | Average of all attempts |
-| Streak | Consecutive correct sentences |
-| History | All attempts saved |
-| Improvement | Score trend over time |
+| Session score | Trung bình tất cả attempts |
+| Streak | Liên tục câu đúng |
+| History | Tất cả attempts saved |
+| Improvement | Score trend theo thời gian |
+| **Radar Chart** (NEW ✨) | Pronunciation/Fluency/Vocab/Grammar |
+| **Calendar Heatmap** (NEW ✨) | Ngày luyện / không |
+| **Weak Sounds** (NEW ✨) | Âm hay sai cần cải thiện |
+
+### 4.4 Gamification (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| Daily Goal | X câu/ngày, progress bar |
+| Badges | 🎤100 câu, 🔥streak, 🏅perfect, 🌟shadower |
+| Weekly Report | Trend + thống kê + weak sounds |
+| Leaderboard | Tongue Twister mode |
+
+### 4.5 Save & Share (NEW ✨)
+
+| Feature | Description |
+|---------|-------------|
+| Share Card | Export kết quả → image card đẹp |
+| Recording History | Lưu recordings, nghe lại tiến bộ |
+| Progress Timeline | So sánh recording cũ vs mới cùng câu |
 
 ---
 
@@ -447,10 +865,13 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 ### 5.1 Libraries
 
 ```typescript
-react-native-audio-recorder-player // Robust audio recording
-react-native-haptic-feedback // Haptic feedback
-react-native-reanimated    // Waveform animation
-@tanstack/react-query      // AI feedback caching
+react-native-audio-recorder-player // Ghi âm và phát lại audio
+react-native-haptic-feedback       // Phản hồi rung
+react-native-reanimated            // Animation waveform, confetti
+@tanstack/react-query              // Caching AI feedback
+react-native-share                 // Chia sẻ kết quả (NEW ✨)
+react-native-view-shot             // Chụp result card (NEW ✨)
+lottie-react-native                // Animation confetti, countdown (NEW ✨)
 ```
 
 ### 5.2 State Structure
@@ -462,22 +883,43 @@ interface SpeakingState {
     topic: string;
     sentences: Sentence[];
     currentIndex: number;
-    mode: 'practice' | 'coach' | 'roleplay';
+    mode: 'practice' | 'coach' | 'roleplay' | 'shadowing' | 'tongue-twister';
   };
   
-  // Recording
+  // Ghi âm
   recording: {
     isRecording: boolean;
     duration: number;
     audioUri?: string;
+    showCountdown: boolean; // Countdown animation trước khi ghi
+    showPreview: boolean;   // Preview trước khi submit
   };
   
-  // Feedback
+  // Phản hồi từ AI
   feedback: {
     loading: boolean;
     score?: number;
     wordScores?: WordScore[];
+    phonemeHeatmap?: PhonemeScore[]; // Heatmap các âm
     tips?: string[];
+    aiCorrectedAudioUrl?: string;    // AI Voice Clone URL
+  };
+  
+  // Gamification
+  gamification: {
+    dailyGoal: { target: number; completed: number };
+    streak: number;
+    badges: Badge[];
+    weakSounds: PhonemeScore[];
+  };
+  
+  // Custom scenarios
+  customScenarios: CustomScenario[];
+  
+  // Cài đặt hiển thị
+  displaySettings: {
+    showIPA: boolean;
+    showStress: boolean;
   };
 }
 
@@ -486,6 +928,27 @@ interface WordScore {
   score: number;
   phonemes?: string;
   issues?: string[];
+}
+
+interface PhonemeScore {
+  phoneme: string;     // Ví dụ: '/θ/'
+  accuracy: number;    // 0-100
+  totalAttempts: number;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  unlockedAt?: Date;
+}
+
+interface CustomScenario {
+  id: string;
+  name: string;
+  description: string;
+  isFavorite: boolean;
+  createdAt: Date;
 }
 ```
 
@@ -538,25 +1001,23 @@ interface PronunciationFeedback {
 | `/ai/transcribe` | POST | Chuyển audio → text (STT) |
 | `/conversation-generator/continue-conversation` | POST | AI tiếp tục hội thoại |
 | `/ai/generate-conversation-audio` | POST | Generate audio cho AI response |
-```
 
-### 5.3 Recording Flow
+### 5.5 Recording Flow
 
 ```typescript
 // Pseudo-code for recording
 async function handleRecordStart() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  await Audio.setAudioModeAsync({ allowsRecordingIOS: true });
-  await recording.startAsync();
+  ReactNativeHapticFeedback.trigger('impactMedium');
+  await AudioRecorderPlayer.startRecorder();
 }
 
 async function handleRecordStop() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  const uri = await recording.stopAndUnloadAsync();
+  ReactNativeHapticFeedback.trigger('impactLight');
+  const uri = await AudioRecorderPlayer.stopRecorder();
   
-  // Upload and get AI feedback
+  // Gửi audio lên server và nhận AI feedback
   const feedback = await speakingAPI.analyze(uri, targetSentence);
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  ReactNativeHapticFeedback.trigger('notificationSuccess');
 }
 ```
 
@@ -566,11 +1027,15 @@ async function handleRecordStop() {
 
 | Context | Gesture | Action |
 |---------|---------|--------|
-| Mic button | Long press | Start recording |
-| Mic button | Release | Stop recording |
-| Feedback | Swipe right | Next sentence |
+| Mic button | Long press | Bắt đầu ghi âm |
+| Mic button | Release | Dừng ghi âm |
+| **Recording** | **Swipe up** (NEW ✨) | **Hủy recording** |
+| Feedback | Swipe right | Câu tiếp theo |
 | Feedback | Swipe left | Retry |
-| Word | Tap | Show phoneme detail |
+| Word | Tap | Hiển IPA + audio (NEW ✨) |
+| **Weak sound** | **Tap** (NEW ✨) | **Navigate đến practice âm đó** |
+| **Preview** | **Tap play** (NEW ✨) | **Nghe lại bản ghi** |
+| **Share card** | **Tap share** (NEW ✨) | **Export result → social** |
 
 ---
 
@@ -590,40 +1055,56 @@ async function handleRecordStop() {
 
 ### MVP Phase
 - [ ] Topic selection screen
-- [ ] Practice sentence display
+- [ ] Practice sentence display (có IPA toggle, word stress)
 - [ ] Hold-to-record button
-- [ ] Audio recording with react-native-audio-recorder-player
+- [ ] Audio recording với react-native-audio-recorder-player
 - [ ] Send to backend for AI analysis
 - [ ] Display feedback with scores
+- [ ] **Onboarding overlay** cho user mới
 
 ### Enhanced Phase
-- [ ] **Conversation Coach setup screen** (NEW ✨)
-- [ ] **Conversation Coach session UI** (NEW ✨)
-- [ ] **Voice/Text input toggle** (NEW ✨)
-- [ ] **Real-time transcription (STT)** (NEW ✨)
-- [ ] **AI response generation** (NEW ✨)
-- [ ] **Pronunciation Alert inline** (NEW ✨)
-- [ ] **Voice Visualizer** (NEW ✨)
-- [ ] **Session Transcript** (NEW ✨)
-- [ ] **Session Timer with auto-end** (NEW ✨)
-- [ ] **Save coach session to History** (NEW ✨)
-- [ ] Waveform visualization
-- [ ] Phoneme breakdown view
-- [ ] Waveform comparison
+- [ ] **Conversation Coach setup screen**
+- [ ] **Conversation Coach session UI** (với suggested responses, grammar fix, re-speak)
+- [ ] **Voice/Text input toggle**
+- [ ] **Real-time transcription (STT)**
+- [ ] **AI response generation**
+- [ ] **Pronunciation Alert inline**
+- [ ] **Voice Visualizer**
+- [ ] **Session Transcript**
+- [ ] **Session Timer with auto-end**
+- [ ] **Save coach session to History**
+- [ ] Waveform visualization + comparison
+- [ ] Phoneme breakdown view + **Phoneme Heatmap**
 - [ ] Progress tracking
 - [ ] Haptic feedback
+- [ ] **Recording UX: countdown, swipe-to-cancel, preview**
+- [ ] **Custom Speaking Scenarios** (create/save/favorite/delete)
+- [ ] **Shadowing Mode** (real-time compare, delay/speed control)
+- [ ] **IPA toggle + word stress display**
+- [ ] **Tap-to-pronounce word**
 
 ### Advanced Phase
-- [ ] Roleplay scenarios
+- [ ] Roleplay scenarios + **Scenario Selection UI**
 - [ ] Multi-turn conversations
 - [ ] Difficulty levels
 - [ ] Overall session feedback
+- [ ] **Tongue Twister Mode** (phoneme categories, speed challenge, leaderboard)
+- [ ] **Gamification** (daily goals, badges, weekly report)
+- [ ] **Speaking Progress Dashboard** (radar chart, calendar heatmap, weak sounds)
+- [ ] **AI Voice Clone Replay** (corrected + before/after)
+- [ ] **Save & Share Results** (share card, recording history, timeline)
+- [ ] **Background Audio for Coach** (notification, session persist)
+- [ ] **TTS Provider Settings** (parity với Listening)
+- [ ] **Confetti animation** khi score ≥90
 
 ---
 
 ## 9. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
-- [10_Native_Features.md](10_Native_Features.md) - Haptic feedback
+- [02_Listening.md](02_Listening.md) - Parity: Custom Scenarios, TTS Settings
+- [07_History.md](07_History.md) - Speaking session history & analytics
+- [08_Profile_Settings.md](08_Profile_Settings.md) - Speaking goals, achievements
+- [10_Native_Features.md](10_Native_Features.md) - Haptic feedback, gestures
 - [Architecture.md](../technical/Architecture.md) - Audio handling
 - [UI_Design_System.md](../design/UI_Design_System.md) - Button specs
