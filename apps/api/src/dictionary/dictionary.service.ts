@@ -3,7 +3,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 /**
  * Interface cho kết quả tra từ
  */
-interface DictionaryResult {
+export interface DictionaryResult {
   word: string;
   ipa: string | null;
   audio: string | null;

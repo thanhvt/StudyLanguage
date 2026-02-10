@@ -12,7 +12,7 @@ import { StorageService } from '../storage/storage.service';
 /**
  * Interface cho response user stats
  */
-interface UserStats {
+export interface UserStats {
   streak: number;
   totalMinutes: number;
   totalSessions: number;
@@ -28,7 +28,7 @@ interface UserStats {
 /**
  * Interface cho Word of the Day
  */
-interface WordOfTheDay {
+export interface WordOfTheDay {
   word: string;
   ipa: string | null;
   meaningVi: string | null;
@@ -39,7 +39,7 @@ interface WordOfTheDay {
 /**
  * Interface cho Gamification data
  */
-interface GamificationData {
+export interface GamificationData {
   xp: number;
   level: number;
   badges: any[];
