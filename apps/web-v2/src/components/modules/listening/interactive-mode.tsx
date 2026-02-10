@@ -19,12 +19,13 @@ import { VoiceVisualizer } from "@/components/modules/speaking/voice-visualizer"
 import { cn } from "@/lib/utils"
 import { api, textToSpeech, transcribeAudio } from "@/lib/api"
 import { useSaveLesson } from "@/hooks/use-save-lesson"
-import type { ConversationLine, TopicScenario } from "@/types/listening-types"
+import type { ConversationLine, TopicScenario, TtsSettings } from "@/types/listening-types"
 
 interface InteractiveModeProps {
   topic: TopicScenario
   duration: number
   onBack: () => void
+  ttsSettings?: TtsSettings
 }
 
 interface ScriptLine {
@@ -35,7 +36,7 @@ interface ScriptLine {
   status: 'pending' | 'playing' | 'waiting' | 'completed'
 }
 
-export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProps) {
+export function InteractiveMode({ topic, duration, onBack, ttsSettings }: InteractiveModeProps) {
   // Script state
   const [script, setScript] = useState<ScriptLine[]>([])
   const [currentLineIndex, setCurrentLineIndex] = useState(0)
@@ -169,30 +170,44 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
       return
     }
 
-    // Play AI speech
+    // Phát audio AI — hỗ trợ cả OpenAI và Azure TTS
     if (!isMuted) {
       setIsPlaying(true)
       try {
-        const { audioUrl } = await textToSpeech(line.text, 'nova')
+        const ttsResult = await textToSpeech(
+          line.text,
+          ttsSettings?.voice || 'nova',
+          ttsSettings?.provider === 'azure' ? ttsSettings : undefined
+        )
+        
+        // Chuyển base64 thành URL phát audio
+        const audioBytes = atob(ttsResult.audio)
+        const audioArray = new Uint8Array(audioBytes.length)
+        for (let i = 0; i < audioBytes.length; i++) {
+          audioArray[i] = audioBytes.charCodeAt(i)
+        }
+        const blob = new Blob([audioArray], { type: 'audio/mpeg' })
+        const audioSrc = URL.createObjectURL(blob)
         
         if (audioRef.current) {
-          audioRef.current.src = audioUrl
+          audioRef.current.src = audioSrc
           audioRef.current.onended = () => {
             setIsPlaying(false)
-            // Add to conversation history
+            URL.revokeObjectURL(audioSrc)
+            // Thêm vào conversation history
             conversationHistoryRef.current.push({
               speaker: line.speaker,
               text: line.text,
             })
-            // Auto-advance to next line
+            // Tự động chuyển sang câu tiếp theo
             playNextLine(currentScript, index + 1)
           }
           audioRef.current.play()
         }
       } catch (err) {
-        console.error('TTS failed:', err)
+        console.error('TTS lỗi:', err)
         setIsPlaying(false)
-        // Continue anyway
+        // Tiếp tục dù lỗi
         conversationHistoryRef.current.push({
           speaker: line.speaker,
           text: line.text,
@@ -346,20 +361,34 @@ export function InteractiveMode({ topic, duration, onBack }: InteractiveModeProp
   const speakAiResponse = async (text: string) => {
     setIsPlaying(true)
     try {
-      const { audioUrl } = await textToSpeech(text, 'nova')
+      const ttsResult = await textToSpeech(
+        text,
+        ttsSettings?.voice || 'nova',
+        ttsSettings?.provider === 'azure' ? ttsSettings : undefined
+      )
+      
+      // Chuyển base64 thành URL audio
+      const audioBytes = atob(ttsResult.audio)
+      const audioArray = new Uint8Array(audioBytes.length)
+      for (let i = 0; i < audioBytes.length; i++) {
+        audioArray[i] = audioBytes.charCodeAt(i)
+      }
+      const blob = new Blob([audioArray], { type: 'audio/mpeg' })
+      const audioSrc = URL.createObjectURL(blob)
       
       if (audioRef.current) {
-        audioRef.current.src = audioUrl
+        audioRef.current.src = audioSrc
         await new Promise<void>((resolve) => {
           audioRef.current!.onended = () => {
             setIsPlaying(false)
+            URL.revokeObjectURL(audioSrc)
             resolve()
           }
           audioRef.current!.play()
         })
       }
     } catch (err) {
-      console.error('TTS for AI response failed:', err)
+      console.error('TTS cho AI response lỗi:', err)
       setIsPlaying(false)
     }
   }

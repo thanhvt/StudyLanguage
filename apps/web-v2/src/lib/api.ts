@@ -152,7 +152,11 @@ import type {
   GenerateConversationRequest, 
   GenerateConversationResponse,
   GenerateAudioResponse,
-  ConversationLine 
+  ConversationLine,
+  TtsSettings,
+  TtsProvider,
+  VoicesResponse,
+  WordTimestamp,
 } from '@/types/listening-types'
 
 /**
@@ -172,10 +176,18 @@ export async function generateConversation(
 }
 
 /**
- * Generate audio for a conversation (TTS)
+ * Sinh audio cho hội thoại (TTS) — hỗ trợ OpenAI và Azure
+ *
+ * Mục đích: Gọi API sinh audio cho conversation
+ * Tham số đầu vào:
+ *   - conversation: Danh sách câu hội thoại
+ *   - ttsSettings: Cấu hình TTS (provider, voice, emotion...)
+ * Tham số đầu ra: GenerateAudioResponse (audioUrl + timestamps + wordTimestamps)
+ * Khi nào sử dụng: Sau khi generate conversation xong → gen audio
  */
 export async function generateConversationAudio(
-  conversation: ConversationLine[]
+  conversation: ConversationLine[],
+  ttsSettings?: TtsSettings
 ): Promise<GenerateAudioResponse> {
   return apiJson<GenerateAudioResponse>(
     '/ai/generate-conversation-audio',
@@ -186,9 +198,21 @@ export async function generateConversationAudio(
           speaker: line.speaker,
           text: line.text,
         })),
+        ...(ttsSettings ? {
+          provider: ttsSettings.provider,
+          voice: ttsSettings.voice,
+          emotion: ttsSettings.emotion,
+          randomVoice: ttsSettings.randomVoice,
+          randomEmotion: ttsSettings.randomEmotion,
+          multiTalker: ttsSettings.multiTalker,
+          multiTalkerPairIndex: ttsSettings.multiTalkerPairIndex,
+          pitch: ttsSettings.pitch,
+          rate: ttsSettings.rate,
+          volume: ttsSettings.volume,
+        } : {}),
       }),
     },
-    180000 // 3 minute timeout for audio generation
+    180000 // 3 phút timeout cho sinh audio
   )
 }
 
@@ -212,18 +236,56 @@ export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }
 }
 
 /**
- * Text to Speech - single text
+ * Text to Speech - hỗ trợ OpenAI và Azure
+ *
+ * Mục đích: Chuyển text thành audio
+ * Tham số đầu vào:
+ *   - text: Văn bản cần đọc
+ *   - voice: Tên giọng
+ *   - ttsSettings: Cấu hình TTS (tuỳ chọn)
+ * Tham số đầu ra: { audio, contentType, wordTimestamps? }
+ * Khi nào sử dụng: Interactive mode phát audio từng câu
  */
 export async function textToSpeech(
   text: string, 
-  voice: 'alloy' | 'nova' | 'onyx' = 'alloy'
-): Promise<{ audioUrl: string }> {
-  return apiJson<{ audioUrl: string }>(
+  voice: string = 'alloy',
+  ttsSettings?: Partial<TtsSettings>
+): Promise<{ audio: string; contentType: string; wordTimestamps?: WordTimestamp[] }> {
+  return apiJson<{ audio: string; contentType: string; wordTimestamps?: WordTimestamp[] }>(
     '/ai/text-to-speech',
     {
       method: 'POST',
-      body: JSON.stringify({ text, voice }),
+      body: JSON.stringify({
+        text,
+        voice,
+        ...(ttsSettings ? {
+          provider: ttsSettings.provider,
+          emotion: ttsSettings.emotion,
+          randomVoice: ttsSettings.randomVoice,
+          randomEmotion: ttsSettings.randomEmotion,
+          pitch: ttsSettings.pitch,
+          rate: ttsSettings.rate,
+          volume: ttsSettings.volume,
+        } : {}),
+      }),
     }
+  )
+}
+
+/**
+ * Lấy danh sách voices khả dụng
+ *
+ * Mục đích: Hiển thị dropdown chọn voice trên frontend
+ * Tham số đầu vào: provider (openai hoặc azure)
+ * Tham số đầu ra: VoicesResponse
+ * Khi nào sử dụng: TTS Settings Panel load voices
+ */
+export async function getAvailableVoices(
+  provider: TtsProvider = 'openai'
+): Promise<VoicesResponse> {
+  return apiJson<VoicesResponse>(
+    `/ai/voices?provider=${provider}`,
+    { method: 'GET' }
   )
 }
 

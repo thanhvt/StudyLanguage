@@ -14,6 +14,7 @@ import {
   RadioMode,
   PlaylistPanel
 } from "@/components/modules/listening"
+import { TtsSettingsPanel, DEFAULT_TTS_SETTINGS } from "@/components/modules/listening/tts-settings-panel"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -26,7 +27,9 @@ import type {
   ConversationLine, 
   ConversationTimestamp,
   HistoryEntry,
-  Playlist
+  Playlist,
+  TtsSettings,
+  WordTimestamp,
 } from "@/types/listening-types"
 
 type ListeningMode = 'passive' | 'interactive'
@@ -79,6 +82,23 @@ export default function ListeningPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // TTS Settings state (lưu vào localStorage)
+  const [ttsSettings, setTtsSettings] = useState<TtsSettings>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('tts-settings')
+      if (saved) {
+        try { return JSON.parse(saved) } catch { /* sử dụng mặc định */ }
+      }
+    }
+    return DEFAULT_TTS_SETTINGS
+  })
+  const [wordTimestamps, setWordTimestamps] = useState<WordTimestamp[][] | undefined>()
+
+  // Lưu TTS settings vào localStorage khi thay đổi
+  useEffect(() => {
+    localStorage.setItem('tts-settings', JSON.stringify(ttsSettings))
+  }, [ttsSettings])
 
   // Effect: Restore session từ audio player store khi navigate từ player
   // Query param ?session=restore được set bởi compact-player khi click vào topic name
@@ -158,9 +178,10 @@ export default function ListeningPage() {
       // Generate audio in background
       setIsGeneratingAudio(true)
       try {
-        const audioResponse = await generateConversationAudio(conversationWithIds)
+        const audioResponse = await generateConversationAudio(conversationWithIds, ttsSettings)
         setAudioUrl(audioResponse.audioUrl)
         setTimestamps(audioResponse.timestamps)
+        setWordTimestamps(audioResponse.wordTimestamps)
         
         // Lưu audio URL vào database để lần sau không cần sinh lại
         if (saveResult?.lessonId) {
@@ -185,7 +206,7 @@ export default function ListeningPage() {
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedTopic, duration, speakers, keywords, mode, saveLesson, updateLessonAudio])
+  }, [selectedTopic, duration, speakers, keywords, mode, saveLesson, updateLessonAudio, ttsSettings])
 
   // Reset to config view
   const handleReset = useCallback(() => {
@@ -235,9 +256,10 @@ export default function ListeningPage() {
     setIsGeneratingAudio(true)
     
     try {
-      const audioResponse = await generateConversationAudio(conversationData)
+      const audioResponse = await generateConversationAudio(conversationData, ttsSettings)
       setAudioUrl(audioResponse.audioUrl)
       setTimestamps(audioResponse.timestamps)
+      setWordTimestamps(audioResponse.wordTimestamps)
       toast.success('🎧 Audio đã sẵn sàng!')
     } catch (audioError) {
       console.error('Audio regeneration failed:', audioError)
@@ -247,7 +269,7 @@ export default function ListeningPage() {
     } finally {
       setIsGeneratingAudio(false)
     }
-  }, [])
+  }, [ttsSettings])
 
   /**
    * Xử lý khi chọn entry từ RecentLessonsPanel
@@ -310,6 +332,13 @@ export default function ListeningPage() {
             ...(viewState === 'playing' ? [{ icon: RotateCcw, label: "Mới", onClick: handleReset }] : []),
           ]}
         />
+        {/* TTS Settings trong toolbar (compact mode) */}
+        <TtsSettingsPanel
+          settings={ttsSettings}
+          onSettingsChange={setTtsSettings}
+          compact
+          className="mt-2"
+        />
       </div>
 
       {/* Main Content Area - Flexible height on desktop, Auto on mobile */}
@@ -348,6 +377,14 @@ export default function ListeningPage() {
                   onGenerate={handleGenerate}
                   isGenerating={isGenerating}
                   disabled={!selectedTopic}
+                />
+              </div>
+
+              {/* TTS Settings Panel (full mode) */}
+              <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm flex-none">
+                <TtsSettingsPanel
+                  settings={ttsSettings}
+                  onSettingsChange={setTtsSettings}
                 />
               </div>
 
@@ -403,10 +440,11 @@ export default function ListeningPage() {
                       
                       // Auto-generate audio for radio track
                       setIsGeneratingAudio(true)
-                      generateConversationAudio(conversationWithIds)
+                      generateConversationAudio(conversationWithIds, ttsSettings)
                         .then((audioResponse) => {
                           setAudioUrl(audioResponse.audioUrl)
                           setTimestamps(audioResponse.timestamps)
+                          setWordTimestamps(audioResponse.wordTimestamps)
                           toast.success('🎧 Audio đã sẵn sàng!')
                         })
                         .catch((err) => {
@@ -434,6 +472,7 @@ export default function ListeningPage() {
               topic={selectedTopic}
               duration={duration}
               onBack={handleReset}
+              ttsSettings={ttsSettings}
             />
           </div>
         )}
@@ -520,10 +559,11 @@ export default function ListeningPage() {
               
               // Auto-generate audio
               setIsGeneratingAudio(true)
-              generateConversationAudio(conversationWithIds)
+              generateConversationAudio(conversationWithIds, ttsSettings)
                 .then((audioResponse) => {
                   setAudioUrl(audioResponse.audioUrl)
                   setTimestamps(audioResponse.timestamps)
+                  setWordTimestamps(audioResponse.wordTimestamps)
                   toast.success('🎧 Audio đã sẵn sàng!')
                 })
                 .catch((err) => {

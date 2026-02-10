@@ -8,4 +8,6 @@ export * from './interactive-mode'
 export * from './radio-mode'
 export * from './playlist-panel'
 export * from './custom-scenario-input'
+export * from './tts-settings-panel'
+export * from './word-highlight-player'
 

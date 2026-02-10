@@ -116,6 +116,48 @@ export interface AudioPlayerState {
 }
 
 // ============================================
+// TTS SETTINGS TYPES
+// ============================================
+
+/** TTS Provider khả dụng */
+export type TtsProvider = 'openai' | 'azure'
+
+/** Cấu hình TTS chung cho frontend */
+export interface TtsSettings {
+  provider: TtsProvider
+  voice?: string
+  emotion?: string
+  randomVoice: boolean
+  randomEmotion: boolean
+  pitch?: string
+  rate?: string
+  volume?: string
+  multiTalker?: boolean
+  multiTalkerPairIndex?: number
+}
+
+/** Thông tin giọng Azure */
+export interface AzureVoice {
+  name: string
+  displayName: string
+  gender: string
+  styles: string[]
+}
+
+/** Timestamp cho từng từ (word-level highlight) */
+export interface WordTimestamp {
+  word: string
+  startTime: number
+  endTime: number
+}
+
+/** Kết quả lấy danh sách voices */
+export interface VoicesResponse {
+  voices: AzureVoice[]
+  multiTalker: { name: string; speakers: string[] }[]
+}
+
+// ============================================
 // API TYPES
 // ============================================
 
@@ -137,6 +179,7 @@ export interface GenerateAudioRequest {
 export interface GenerateAudioResponse {
   audioUrl: string
   timestamps: ConversationTimestamp[]
+  wordTimestamps?: WordTimestamp[][]
 }
 
 // ============================================

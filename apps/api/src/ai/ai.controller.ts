@@ -2,7 +2,9 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
   UploadedFile,
@@ -13,6 +15,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiService } from './ai.service';
+import { TtsProviderService } from './tts-provider.service';
+import type { TtsProvider } from './tts-provider.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import {
   IsString,
@@ -20,6 +24,7 @@ import {
   IsOptional,
   IsEnum,
   IsArray,
+  IsBoolean,
   ValidateNested,
   IsNotEmpty,
 } from 'class-validator';
@@ -66,7 +71,10 @@ class GenerateConversationDto {
 }
 
 /**
- * DTO cho request TTS
+ * DTO cho request TTS - Hỗ trợ cả OpenAI và Azure
+ *
+ * Mục đích: Validate input cho text-to-speech endpoint
+ * Khi nào sử dụng: POST /ai/text-to-speech
  */
 class TextToSpeechDto {
   @IsString()
@@ -75,8 +83,36 @@ class TextToSpeechDto {
 
   @IsString()
   @IsOptional()
-  @IsEnum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'])
-  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+  voice?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['openai', 'azure'])
+  provider?: TtsProvider;
+
+  @IsString()
+  @IsOptional()
+  emotion?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  randomVoice?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  randomEmotion?: boolean;
+
+  @IsString()
+  @IsOptional()
+  pitch?: string;
+
+  @IsString()
+  @IsOptional()
+  rate?: string;
+
+  @IsString()
+  @IsOptional()
+  volume?: string;
 }
 
 /**
@@ -93,13 +129,57 @@ class EvaluatePronunciationDto {
 }
 
 /**
- * DTO cho request sinh audio hội thoại
+ * DTO cho request sinh audio hội thoại - Hỗ trợ cả OpenAI và Azure
+ *
+ * Mục đích: Validate input cho generate-conversation-audio endpoint
+ * Khi nào sử dụng: POST /ai/generate-conversation-audio
  */
 class GenerateConversationAudioDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ConversationItemDto)
   conversation: ConversationItemDto[];
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['openai', 'azure'])
+  provider?: TtsProvider;
+
+  @IsString()
+  @IsOptional()
+  voice?: string;
+
+  @IsString()
+  @IsOptional()
+  emotion?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  randomVoice?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  randomEmotion?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  multiTalker?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  multiTalkerPairIndex?: number;
+
+  @IsString()
+  @IsOptional()
+  pitch?: string;
+
+  @IsString()
+  @IsOptional()
+  rate?: string;
+
+  @IsString()
+  @IsOptional()
+  volume?: string;
 }
 
 /**
@@ -143,7 +223,10 @@ class ContinueConversationDto {
 @Controller('ai')
 @UseGuards(SupabaseAuthGuard)
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly ttsProviderService: TtsProviderService,
+  ) {}
 
   /**
    * POST /api/ai/generate-conversation
@@ -184,15 +267,37 @@ export class AiController {
   /**
    * POST /api/ai/text-to-speech
    *
-   * Mục đích: Chuyển text thành audio (OpenAI TTS)
-   * Body: { text, voice? }
-   * Trả về: Audio file (binary)
+   * Mục đích: Chuyển text thành audio (OpenAI hoặc Azure TTS)
+   * Body: { text, voice?, provider?, emotion?, randomVoice?, ... }
+   * Trả về: { audio: base64, contentType, wordTimestamps? }
    */
   @Post('text-to-speech')
   @HttpCode(HttpStatus.OK)
   async textToSpeech(@Body() dto: TextToSpeechDto) {
-    const audioBuffer = await this.aiService.textToSpeech(dto.text, dto.voice);
-    // Trả về base64 để dễ xử lý ở frontend
+    // Nếu provider = azure → dùng TtsProviderService với word timestamps
+    if (dto.provider === 'azure') {
+      const result = await this.ttsProviderService.textToSpeechWithTimestamps(
+        dto.text,
+        {
+          provider: dto.provider,
+          voice: dto.voice,
+          emotion: dto.emotion,
+          randomVoice: dto.randomVoice,
+          randomEmotion: dto.randomEmotion,
+          pitch: dto.pitch,
+          rate: dto.rate,
+          volume: dto.volume,
+        },
+      );
+      return {
+        audio: result.audioBuffer.toString('base64'),
+        contentType: 'audio/mpeg',
+        wordTimestamps: result.wordTimestamps,
+      };
+    }
+
+    // OpenAI (code gốc giữ nguyên)
+    const audioBuffer = await this.aiService.textToSpeech(dto.text, dto.voice as any);
     return {
       audio: audioBuffer.toString('base64'),
       contentType: 'audio/mpeg',
@@ -243,23 +348,49 @@ export class AiController {
    * POST /api/ai/generate-conversation-audio
    *
    * Mục đích: Sinh audio cho toàn bộ hội thoại với nhiều giọng
-   * Body: { conversation: [{ speaker, text }] }
-   * Trả về: { audio: base64, timestamps: [{ startTime, endTime }] }
+   * Body: { conversation, provider?, voice?, emotion?, multiTalker?, ... }
+   * Trả về: { audio: base64, timestamps, wordTimestamps?, audioUrl }
    */
   @Post('generate-conversation-audio')
   @HttpCode(HttpStatus.OK)
   async generateConversationAudio(@Body() dto: GenerateConversationAudioDto) {
-    const result = await this.aiService.generateConversationAudio(
+    const result = await this.ttsProviderService.generateConversationAudio(
       dto.conversation,
+      {
+        provider: dto.provider,
+        voice: dto.voice,
+        emotion: dto.emotion,
+        randomVoice: dto.randomVoice,
+        randomEmotion: dto.randomEmotion,
+        multiTalker: dto.multiTalker,
+        multiTalkerPairIndex: dto.multiTalkerPairIndex,
+        pitch: dto.pitch,
+        rate: dto.rate,
+        volume: dto.volume,
+      },
     );
 
-    // Trả về base64 audio + timestamps + audioUrl
+    // Trả về base64 audio + timestamps + wordTimestamps + audioUrl
     return {
       audio: result.audioBuffer.toString('base64'),
       contentType: 'audio/mpeg',
       timestamps: result.timestamps,
+      wordTimestamps: result.wordTimestamps,
       audioUrl: result.audioUrl,
     };
+  }
+
+  /**
+   * GET /api/ai/voices
+   *
+   * Mục đích: Lấy danh sách voices khả dụng theo provider
+   * Query: ?provider=azure|openai
+   * Trả về: { voices: [...], multiTalker: [...] }
+   */
+  @Get('voices')
+  @HttpCode(HttpStatus.OK)
+  getAvailableVoices(@Query('provider') provider?: TtsProvider) {
+    return this.ttsProviderService.getAvailableVoices(provider || 'openai');
   }
 
   /**
