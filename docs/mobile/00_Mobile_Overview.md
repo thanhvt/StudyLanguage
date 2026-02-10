@@ -104,7 +104,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 
 | Module | MVP | Enhanced | Advanced |
 |--------|-----|----------|----------|
-| � **Dashboard** | Greeting + Streak, Study Goal | Quick Actions, Next Lesson | Weekly Chart, Streak Calendar (Heatmap) |
+| � **Dashboard** | Greeting + Streak | Quick Actions | - |
 | �🎧 **Listening** | Podcast mode, Basic player | Interactive mode, TTS Provider Panel | Background audio, Lock screen |
 | 🗣️ **Speaking** | Voice Recorder | Conversation Coach (Basic) | Realtime Transcription, AI Feedback |
 | 📖 **Reading** | Article view, Focus Mode | Tap-to-translate, Quiz | Reading Practice with AI |

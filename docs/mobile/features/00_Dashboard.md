@@ -14,7 +14,7 @@ Module trang chủ hiển thị tổng quan tiến trình học tập, gợi ý 
 
 | View | Condition | Key Elements |
 |------|-----------|--------------|
-| **Auth Dashboard** | User đã đăng nhập | Greeting, Streak, Quick Actions, Study Goal, Next Lesson |
+| **Auth Dashboard** | User đã đăng nhập | Greeting, Streak, Quick Actions |
 | **Guest Dashboard** | Chưa đăng nhập | Hero banner, CTA Login, Quick Actions (demo) |
 
 ### 1.2 Widget Selection (Mobile-Optimized)
@@ -25,11 +25,7 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 |--------|-----|----------|-------|
 | **Greeting + Streak** | ✅ | ✅ | Nhẹ, motivating |
 | **Quick Actions** (3 skills) | ✅ | ✅ | Navigation chính |
-| **Study Time Goal** | ✅ | ✅ | Progress circle đơn giản |
-| **Next Lesson Card** | ✅ | ✅ | Gợi ý cá nhân hóa |
-| **Streak Calendar** | ❌ | ✅ | Heatmap phức tạp → Enhanced |
-| **Weekly Activity Chart** | ❌ | ✅ | Bar chart → Enhanced |
-| **Skill Radar Chart** | ❌ | ❌ | Quá phức tạp cho mobile |
+
 
 ---
 
@@ -42,12 +38,10 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 │                                                             │
 │ [App Launch] → [Splash] → [Dashboard]                       │
 │                              │                              │
-│                    ┌─────────┼─────────┐                    │
-│                    │         │         │                     │
-│              [Next Lesson] [Quick] [Study Goal]              │
-│                    │       Actions    │                      │
-│                    ↓         ↓        ↓                     │
-│              [Listening] [Speaking] [Reading]                 │
+│                              │                              │
+│                       [Quick Actions]                       │
+│                              ↓                              │
+│              [Listening] [Speaking] [Reading]               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -82,24 +76,10 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 │  🔥 12 ngày liên tiếp           │
 │                                 │
 ├─────────────────────────────────┤
-│  📊 Mục tiêu hôm nay            │
-│  ┌─────────────────────────┐   │
-│  │     ╭──────╮            │   │
-│  │     │ 25   │  25/30 phút│   │
-│  │     │ phút │  ████████░░│   │
-│  │     ╰──────╯            │   │
-│  │   Còn 5 phút nữa! 💪    │   │
-│  └─────────────────────────┘   │
+
 │                                 │
 ├─────────────────────────────────┤
-│  🎯 Tiếp tục học                │
-│  ┌─────────────────────────┐   │
-│  │ 🎧 Coffee Shop Talk     │   │
-│  │ Listening • 15 phút      │   │
-│  │ Chưa hoàn thành          │   │
-│  │           [▶️ Tiếp tục]  │   │
-│  └─────────────────────────┘   │
-│                                 │
+
 ├─────────────────────────────────┤
 │  📚 Bắt đầu luyện tập          │
 │  ┌────────┐┌────────┐┌────────┐│
@@ -115,8 +95,7 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 **Specs:**
 - Greeting: Dynamic theo thời gian (Sáng/Chiều/Tối)
 - Streak: Inline với greeting, icon 🔥
-- Study Goal: Progress circle + progress bar
-- Next Lesson: Card với resume action
+
 - Quick Actions: 3 skill cards, equal width, tap to navigate
 
 ### 3.2 Guest Dashboard
@@ -174,41 +153,9 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 | 18:00 - 21:59 | Chào buổi tối 🌙 |
 | 22:00 - 04:59 | Chào khuya 🌃 |
 
-### 4.2 Study Time Goal
 
-| Element | Description |
-|---------|-------------|
-| Progress Circle | Animated ring (0% → current%) |
-| Current/Goal | Ví dụ: 25/30 phút |
-| Motivational text | Thay đổi theo progress |
-| Daily reset | Reset lúc 00:00 |
 
-**Motivational Messages:**
-
-| Progress | Message |
-|----------|---------|
-| 0% | Bắt đầu nào! 🚀 |
-| 1-49% | Đang tiến bộ! 💪 |
-| 50-89% | Sắp đạt mục tiêu! 🎯 |
-| 90-99% | Còn chút nữa thôi! 🔥 |
-| 100% | Hoàn thành! Tuyệt vời! 🎉 |
-
-### 4.3 Next Lesson Card
-
-| Element | Description |
-|---------|-------------|
-| Icon | Skill icon (🎧/🗣️/📖) |
-| Title | Lesson title |
-| Skill + Duration | Ví dụ: "Listening • 15 phút" |
-| Status | "Chưa hoàn thành" / "Mới" |
-| CTA | "Tiếp tục" hoặc "Bắt đầu" |
-
-**Logic chọn Next Lesson:**
-1. Bài chưa hoàn thành gần nhất
-2. Nếu không có → gợi ý bài mới theo skill ít luyện nhất
-3. Nếu first-time → gợi ý Listening (dễ nhất)
-
-### 4.4 Quick Actions
+### 4.2 Quick Actions
 
 | Skill | Icon | Color | Navigate To |
 |-------|------|-------|-------------|
@@ -232,20 +179,7 @@ interface DashboardState {
   // User stats
   stats: {
     streak: number;
-    totalMinutesToday: number;
-    dailyGoalMinutes: number; // default: 30
-    level: string;
-  };
-  
-  // Next lesson
-  nextLesson: {
-    id: string;
-    title: string;
-    skill: 'listening' | 'speaking' | 'reading';
-    duration: number; // minutes
-    isNew: boolean;
-    progress?: number; // 0-100
-  } | null;
+
   
   // Loading
   loading: boolean;
@@ -257,8 +191,7 @@ interface DashboardState {
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/user/stats` | GET | Streak, total minutes, level |
-| `/api/user/next-lesson` | GET | Gợi ý bài học tiếp theo |
-| `/api/user/daily-goal` | GET/PUT | Get/Set mục tiêu hàng ngày |
+
 
 ### 5.3 Data Flow
 
@@ -276,7 +209,7 @@ interface DashboardState {
 ### 5.4 Libraries
 
 ```typescript
-react-native-svg          // Progress circle
+
 react-native-reanimated   // Animations
 react-native-haptic-feedback // Tap feedback
 ```
@@ -289,18 +222,16 @@ react-native-haptic-feedback // Tap feedback
 - [ ] Dashboard screen layout (auth/guest views)
 - [ ] Greeting component (time-based)
 - [ ] Streak display (inline)
-- [ ] Study Time Goal (progress circle + bar)
-- [ ] Next Lesson Card (resume/start)
+
 - [ ] Quick Actions (3 skill cards)
 - [ ] Guest Dashboard hero + CTA
 - [ ] Navigate to skill pages
 
 ### Enhanced Phase
-- [ ] Streak Calendar (heatmap view)
-- [ ] Weekly Activity Chart (bar chart)
+
 - [ ] Pull-to-refresh stats
 - [ ] Animated transitions
-- [ ] Personalized lesson suggestions
+
 
 ---
 

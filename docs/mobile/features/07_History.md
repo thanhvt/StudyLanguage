@@ -31,8 +31,7 @@ Bổ sung các biểu đồ và thống kê chi tiết như web-v2:
 | Feature | Description |
 |---------|-------------|
 | **Stats Cards** | Tổng quan hôm nay, tuần này, streak, tổng giờ học |
-| **Weekly Activity** | Bar chart số phút học trong 7 ngày |
-| **Learning Heatmap** | Calendar view hiển thị tần suất học (tương tự GitHub) |
+
 | **AI Insights** | Tips cá nhân hóa dựa trên dữ liệu học tập |
 | **Pinned Items** | Ghim các session quan trọng lên đầu |
 
@@ -146,19 +145,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │  │ Streak  │ Total  │ Lesson│ │
 │  └───────────────────────────┘ │
 │                                 │
-│  📅 Hoạt động tuần này          │
-│  ┌───────────────────────────┐ │
-│  │       ▄             ▄     │ │
-│  │   ▄   █   ▄     ▄   █     │ │
-│  │   █   █   █  ▄  █   █     │ │
-│  │ M T W T F S S │ │
-│  └───────────────────────────┘ │
-│                                 │
-│  🧩 Learning Heatmap            │
-│  ┌───────────────────────────┐ │
-│  │ ⬜🟩🟩⬜🟩🟩🟩 (Jan)      │ │
-│  │ 🟩🟩🟩🟩⬜🟩🟩 (Feb)      │ │
-│  └───────────────────────────┘ │
+
 │                                 │
 │  💡 AI Insight                  │
 │  ┌───────────────────────────┐ │
@@ -457,8 +444,7 @@ interface UserStats {
   streak: number;
   totalHours: number;
   totalLessons: number;
-  weeklyActivity: { day: string; minutes: number }[];
-  heatmapData: { date: string; count: number }[];
+
   aiInsight: string;
 }
 ```
@@ -496,8 +482,7 @@ interface UserStats {
 - [ ] **Persist audio URL in history** (NEW ✨)
 - [ ] **Navigate to skill page from player** (NEW ✨)
 - [ ] **Stats cards implementation** (NEW ✨)
-- [ ] **Weekly activity chart** (NEW ✨)
-- [ ] **Learning heatmap** (NEW ✨)
+
 - [ ] **Pinned sessions** (NEW ✨)
 
 ---

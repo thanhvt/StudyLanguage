@@ -66,7 +66,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Tab navigator | 2h | P0 |
 | Stack navigators | 2h | P0 |
 | Home screen layout | 4h | P0 |
-| Dashboard widgets (Streak/Goal) | 4h | P0 |
+| Dashboard widgets (Streak) | 4h | P0 |
 | Quick Actions component | 2h | P0 |
 | Safe area handling | 1h | P0 |
 
@@ -140,8 +140,8 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Task | Est. | Priority |
 |------|------|----------|
 | History timeline | 6h | P0 |
-| Stats Cards & Chart | 6h | P1 |
-| Heatmap visualization | 4h | P1 |
+| Stats Cards | 6h | P1 |
+
 | Filter by skill | 2h | P0 |
 | Session detail view | 4h | P0 |
 | Profile screen | 4h | P0 |
