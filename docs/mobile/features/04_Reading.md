@@ -369,11 +369,13 @@ function handleWordTap(event: TextTouchEvent) {
 - [ ] Article display with scrolling
 - [ ] Tap-to-translate popup
 
-
 ### Enhanced Phase
-- [ ] Font size controls
+- [ ] Font size controls + **Display settings** (line spacing, theme toggle) (NEW ✨)
 - [ ] Save words to vocabulary
 - [ ] Highlight new vocabulary
+- [ ] **Dictionary popup: save word + audio playback** (NEW ✨)
+- [ ] **Pinch-to-zoom text** (NEW ✨)
+- [ ] **TTS auto-read article** (NEW ✨)
 - [ ] **Direct save reading articles** (NEW ✨)
 - [ ] **Space shortcut for recording** (NEW ✨)
 - [ ] **Reading practice with AI analysis** (NEW ✨)

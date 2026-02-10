@@ -442,10 +442,13 @@ interface SpecialModesState {
 - [ ] Bluetooth detection
 - [ ] Bedtime mode UI
 - [ ] Sleep timer functionality
+- [ ] **Ambient sounds** (rain/ocean/forest fade-in at end) (NEW ✨)
 - [ ] Workout mode UI
+- [ ] **Workout content playlists** (Quick Tips, Podcast Lite, Motivation) (NEW ✨)
 - [ ] Pocket mode gestures
 - [ ] Motion detection
 - [ ] Mode settings screen
+- [ ] **Quick Settings Panel UI** (toggle all modes) (NEW ✨)
 
 ---
 

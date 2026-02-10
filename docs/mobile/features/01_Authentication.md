@@ -222,8 +222,11 @@ interface AuthState {
 - [ ] Setup @react-native-google-signin
 - [ ] Implement Google OAuth flow
 - [ ] Create auth screens (Splash, Onboarding, Login)
+- [ ] **Onboarding slides** (3 swipeable slides + Skip/Next/Get Started) (NEW ✨)
 - [ ] Token storage with SecureStore
 - [ ] Auto-relogin on app start
+- [ ] **Auto-relogin loading state** (token check UX) (NEW ✨)
+- [ ] **Error handling UI** (Toast cancelled, Alert + Retry network, Account not found) (NEW ✨)
 
 ### Enhanced Phase
 - [ ] Session management UI

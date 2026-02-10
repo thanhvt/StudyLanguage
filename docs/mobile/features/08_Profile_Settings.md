@@ -422,13 +422,18 @@ interface SettingsState {
 ### MVP Phase
 - [ ] Profile screen with user info
 - [ ] Basic stats display
+- [ ] **Week activity chart component** (dots + minutes) (NEW ✨)
 - [ ] Theme toggle (Light/Dark)
 - [ ] Logout functionality
 - [ ] About screen
 
 ### Enhanced Phase
 - [ ] Full appearance settings
+- [ ] **Accent color picker** (6 colors) (NEW ✨)
+- [ ] **Avatar change** (camera/gallery picker) (NEW ✨)
+- [ ] **Speaking goal display** (e.g. 8/10) (NEW ✨)
 - [ ] Notification settings
+- [ ] **Notification schedule** (time picker, quiet hours, streak warning) (NEW ✨)
 - [ ] Audio settings (Music, SFX, Speed)
 - [ ] Auto-play & Hands-free logic
 - [ ] Storage management

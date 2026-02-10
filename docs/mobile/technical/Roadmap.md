@@ -1,7 +1,7 @@
 # 📅 Implementation Roadmap - Mobile
 
 > **Project:** StudyLanguage Mobile App  
-> **Duration:** ~12-14 tuần  
+> **Duration:** ~18-20 tuần  
 > **Team Size:** 1-2 developers
 
 ---
@@ -17,7 +17,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 │                    IMPLEMENTATION ROADMAP                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  Week 1-2   │  Week 3-4   │  Week 5-6   │  Week 7-10  │ 11-14│
+│  Week 1-2   │  Week 3-4   │  Week 5-6   │  Week 7-12  │ 13-20│
 │  ─────────  │  ─────────  │  ─────────  │  ─────────  │ ─────│
 │  SETUP &    │  LISTENING  │  SPEAKING   │  ENHANCED   │ ADV  │
 │  AUTH       │  & READING  │  & HISTORY  │  UX         │      │
@@ -168,11 +168,53 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 ---
 
-## 3. Phase 2: Enhanced UX (3-4 tuần)
+## 3. Phase 2: Enhanced UX (5-6 tuần)
 
-> **Goal:** Polish UX, offline support
+> **Goal:** Polish UX, offline support, và các Enhanced features mới
 
-### 3.1 Week 7-8: Saved Words & Offline
+### 3.1 Week 7-8: Audio & Speaking Enhancements
+
+#### Audio System
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Background audio + Lock screen controls | 6h | P1 |
+| Audio interruption handling (ducking/pause/resume) | 4h | P1 |
+| Android notification player (foreground service) | 4h | P1 |
+| Bookmark sentences | 2h | P1 |
+| Global Audio Player - Compact mode | 6h | P1 |
+| Session restoration from player | 4h | P1 |
+
+#### Speaking Enhanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Conversation Coach setup screen | 6h | P1 |
+| Conversation Coach session UI | 8h | P1 |
+| Voice/Text input toggle + Real-time STT | 6h | P1 |
+| AI response generation | 4h | P1 |
+| Recording UX (countdown, swipe-to-cancel, preview) | 4h | P1 |
+| Voice Visualizer + Waveform | 4h | P1 |
+| Session Transcript + Timer + Save to History | 6h | P1 |
+| Pronunciation Alert inline | 2h | P1 |
+| IPA toggle + word stress + Tap-to-pronounce | 4h | P1 |
+| Phoneme breakdown view + Phoneme Heatmap | 4h | P1 |
+| Progress tracking | 2h | P1 |
+| Haptic feedback integration | 2h | P1 |
+| Custom Speaking Scenarios (create/save/favorite/delete) | 6h | P1 |
+| Shadowing Mode (real-time compare, delay/speed) | 6h | P1 |
+
+#### Listening Enhanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Custom Scenarios UI | 4h | P1 |
+| Radio Mode: 1-min duration + progress tracking | 4h | P1 |
+| Topic picker subcategory highlight | 2h | P1 |
+| TTS Provider Settings UI + Azure TTS Integration | 6h | P1 |
+| Multi-talker logic | 4h | P1 |
+
+### 3.2 Week 9-10: History, Offline & Notifications
 
 #### Saved Words (tích hợp trong History)
 
@@ -190,96 +232,172 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 |------|------|----------|
 | SQLite setup | 4h | P1 |
 | Download lesson | 6h | P1 |
-| Download manager UI | 4h | P1 |
-| Offline indicator | 2h | P1 |
-| Sync queue | 4h | P1 |
-| Auto-sync on WiFi | 2h | P1 |
-
-### 3.2 Week 9-10: Polish & Notifications
-
-#### Audio Enhancements
-
-| Task | Est. | Priority |
-|------|------|----------|
-| Background audio | 4h | P1 |
-| Lock screen controls | 4h | P1 |
-
-| Bookmark sentences | 2h | P1 |
+| Download manager UI (progress, storage breakdown) | 4h | P1 |
+| Offline indicator UI (limited features banner) | 2h | P1 |
+| Sync queue + Auto-sync on WiFi | 4h | P1 |
 
 #### Notifications
 
 | Task | Est. | Priority |
 |------|------|----------|
 | Push notification setup | 4h | P1 |
-| Daily reminder | 2h | P1 |
-| Streak warning | 2h | P1 |
+| Daily reminder + Streak warning | 4h | P1 |
 | Review reminder | 2h | P1 |
-| Notification settings | 4h | P1 |
+| Notification schedule (time picker, quiet hours) | 4h | P1 |
+
+### 3.3 Week 11-12: Reading, History & Profile Enhancements
+
+#### Reading Enhanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Dictionary popup: save word + audio playback | 3h | P1 |
+| Display settings (font size, line spacing) | 3h | P1 |
+| Pinch-to-zoom text | 2h | P1 |
+| TTS auto-read article | 4h | P1 |
+| Direct save reading articles | 2h | P1 |
+| Reading practice with AI analysis | 6h | P1 |
+| Focus Mode toggle | 3h | P1 |
+
+#### History Enhanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Search with debounce + suggestions + highlight | 4h | P1 |
+| Swipe-to-action (delete/pin) | 3h | P1 |
+| Date range filter + Sort order toggle | 3h | P1 |
+| Visual identity cards (accent colors) | 3h | P1 |
+| Card press animation + haptic | 2h | P1 |
+| Session restoration + Persist audio URL | 4h | P1 |
+| AI Insight card (gradient + action) | 3h | P1 |
+| Recent Lessons Panel integration | 4h | P1 |
+
+#### Profile Enhanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Full appearance settings + Accent color picker | 4h | P1 |
+| Avatar change (camera/gallery picker) | 2h | P1 |
+| Speaking goal display | 2h | P1 |
+| Week activity chart component | 3h | P1 |
+| Audio settings (Music, SFX, Speed, Hands-free) | 4h | P1 |
+| Storage management + Privacy settings | 4h | P1 |
+| Export/Delete data | 3h | P1 |
 
 #### UI Polish
 
 | Task | Est. | Priority |
 |------|------|----------|
-| Full gesture system | 6h | P1 |
-| Haptic feedback | 2h | P1 |
-| Loading skeletons | 4h | P1 |
-| Error states | 4h | P1 |
-| Empty states | 2h | P1 |
+| Full gesture system + Speaking gestures | 6h | P1 |
+| Loading skeletons + Error states + Empty states | 6h | P1 |
 | Pull-to-refresh | 2h | P1 |
 
 ---
 
-### 3.3 Phase 2 Checklist
+### 3.4 Phase 2 Checklist
 
 | Feature | Status |
 |---------|--------|
+| ☐ Background audio + Lock screen + Interruption handling | |
+| ☐ Global Audio Player (compact) | |
+| ☐ Conversation Coach (setup + session) | |
+| ☐ Shadowing Mode | |
+| ☐ Custom Scenarios (Listening + Speaking) | |
+| ☐ Recording UX improvements | |
+| ☐ Listening: Radio Mode, TTS Settings, Multi-talker | |
 | ☐ Saved Words trong History | |
-| ☐ Offline download | |
-| ☐ Background audio | |
-| ☐ Push notifications | |
-| ☐ Gesture system | |
-| ☐ Haptic feedback | |
+| ☐ Offline download + indicator | |
+| ☐ Push notifications + scheduling | |
+| ☐ Reading: Focus Mode, Practice, Dictionary popup | |
+| ☐ History: Search, Swipe, Analytics, Recent Lessons | |
+| ☐ Profile: Appearance, Avatar, Audio settings | |
+| ☐ Gesture system + Haptic feedback | |
 
 ---
 
-## 4. Phase 3: Advanced Features (4-6 tuần)
+## 4. Phase 3: Advanced Features (6-8 tuần)
 
-> **Goal:** Special modes, voice commands, widgets
+> **Goal:** Special modes, voice commands, widgets, gamification, advanced analytics
 
-### 4.1 Week 11-12: Special Modes
+### 4.1 Week 13-14: Special Modes & Voice
 
 | Task | Est. | Priority |
 |------|------|----------|
-| Car mode UI | 6h | P2 |
+| Car mode UI + voice commands | 8h | P2 |
 | Bluetooth detection | 4h | P2 |
-| Voice commands | 8h | P2 |
-| Bedtime mode UI | 4h | P2 |
-| Sleep timer | 4h | P2 |
-| Workout mode | 4h | P2 |
-| Pocket mode gestures | 4h | P2 |
-| Motion detection | 4h | P2 |
+| Bedtime mode UI + Sleep timer | 6h | P2 |
+| Ambient sounds (rain/ocean/forest) | 3h | P2 |
+| Workout mode UI + content playlists | 4h | P2 |
+| Pocket mode gestures + Motion detection | 6h | P2 |
+| Quick Settings Panel UI (toggle all modes) | 3h | P2 |
+| Voice wake word ("Hey Study") | 6h | P2 |
 
-### 4.2 Week 13-14: Advanced
+### 4.2 Week 15-16: Speaking Advanced
 
 | Task | Est. | Priority |
 |------|------|----------|
-| Speaking roleplay | 8h | P2 |
-| Conversation scenarios | 4h | P2 |
-| iOS widgets | 8h | P2 |
+| Roleplay scenarios + Scenario Selection UI | 8h | P2 |
+| Multi-turn conversations + Difficulty levels | 6h | P2 |
+| Overall session feedback | 4h | P2 |
+| Tongue Twister Mode (phoneme categories, speed challenge, leaderboard) | 8h | P2 |
+| Gamification (daily goals, badges, weekly report) | 8h | P2 |
+| Speaking Progress Dashboard (radar chart, calendar heatmap, weak sounds) | 8h | P2 |
+| AI Voice Clone Replay (corrected + before/after) | 6h | P2 |
+| Save & Share Results (share card, recording history, timeline) | 6h | P2 |
+| Background Audio for Coach (notification, session persist) | 4h | P2 |
+| TTS Provider Settings (parity với Listening) | 3h | P2 |
+| Confetti animation khi score ≥90 | 2h | P2 |
+
+### 4.3 Week 17-18: Listening Advanced & History Advanced
+
+#### Listening Advanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Pocket mode with gestures | 4h | P2 |
+| Voice commands for player | 4h | P2 |
+| Radio mode (playlists) | 6h | P2 |
+| Custom Scenarios CRUD | 4h | P2 |
+| Global Audio Player - Minimized mode | 4h | P2 |
+| Audio change confirmation dialog | 2h | P2 |
+
+#### History Advanced
+
+| Task | Est. | Priority |
+|------|------|----------|
+| Batch actions (multi-select mode) | 4h | P2 |
+| Export/Share session (image card, PDF) | 6h | P2 |
+| Weekly activity heatmap | 4h | P2 |
+| Progress chart (line chart) | 3h | P2 |
+| Skill distribution chart | 3h | P2 |
+| Detail view shared element transition | 4h | P2 |
+
+### 4.4 Week 19-20: Widgets, Deep Linking & Native Polish
+
+| Task | Est. | Priority |
+|------|------|----------|
+| iOS widgets (small, medium, large) | 8h | P2 |
 | Android widgets | 6h | P2 |
-| Deep linking | 4h | P2 |
+| Deep linking (URL scheme + Universal Links) | 4h | P2 |
+| Rich notifications (iOS) | 4h | P2 |
+| Lock screen controls | 4h | P2 |
 
 ---
 
-### 4.3 Phase 3 Checklist
+### 4.5 Phase 3 Checklist
 
 | Feature | Status |
 |---------|--------|
-| ☐ Car mode | |
-| ☐ Bedtime mode | |
-| ☐ Voice commands | |
-| ☐ Speaking roleplay | |
-| ☐ Widgets | |
+| ☐ Special Modes (Car, Bedtime, Workout, Pocket) | |
+| ☐ Quick Settings Panel | |
+| ☐ Voice wake word + commands | |
+| ☐ Speaking: Roleplay, Tongue Twister, Gamification | |
+| ☐ Speaking: Progress Dashboard, AI Voice Clone | |
+| ☐ Speaking: Save & Share, Background Audio Coach | |
+| ☐ Listening: Radio playlists, Pocket mode, Voice | |
+| ☐ History: Batch actions, Export, Charts, Heatmap | |
+| ☐ iOS + Android Widgets | |
+| ☐ Deep linking + Rich notifications | |
 
 ---
 
@@ -353,12 +471,13 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 ### 8.1 Version 1.1 Ideas
 
-- [ ] Family leaderboard
-- [ ] Gamification (XP, badges)
-- [ ] Calendar integration
-- [ ] Screenshot translate
-- [ ] More AI voices
 - [ ] **Vocabulary Module** (Flashcard + Spaced Repetition + Review Notifications)
+- [ ] Family leaderboard
+- [ ] Calendar integration (study reminders in calendar app)
+- [ ] Screenshot translate (OCR → translate)
+- [ ] More AI voices + custom voice profiles
+- [ ] Social features (friends, challenges)
+- [ ] Podcast-style content import
 
 ### 8.2 Continuous Improvement
 

@@ -541,11 +541,16 @@ React Native Linking (built-in) // No extra lib needed
 
 ### Enhanced Phase
 - [ ] Gesture system implementation
+- [ ] **Speaking gestures** (swipe-to-cancel, countdown haptic, tap-to-pronounce) (NEW ✨)
 - [ ] Voice command recognition
 - [ ] Push notifications setup
+- [ ] **Android notification player** (foreground service MediaSession) (NEW ✨)
 - [ ] Background audio player
+- [ ] **Audio interruption handling** (ducking, pause/resume per source) (NEW ✨)
 - [ ] Haptic feedback integration
 - [ ] Offline download manager
+- [ ] **Download manager UI** (progress, storage breakdown) (NEW ✨)
+- [ ] **Offline indicator UI** (limited features banner) (NEW ✨)
 
 ### Advanced Phase
 - [ ] iOS widgets
