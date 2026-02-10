@@ -17,6 +17,9 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/web-v2/package.json ./apps/web-v2/
 COPY packages/shared/package.json ./packages/shared/
 
+# Tắt husky trong Docker (husky là devDependency, không cần trong container)
+ENV HUSKY=0
+
 # Cài đặt dependencies - chỉ cho api workspace
 RUN pnpm install --frozen-lockfile --filter api...
 
@@ -43,6 +46,9 @@ COPY apps/mobile/package.json ./apps/mobile/
 COPY apps/web/package.json ./apps/web/
 COPY apps/web-v2/package.json ./apps/web-v2/
 COPY packages/shared/package.json ./packages/shared/
+
+# Tắt husky trong Docker
+ENV HUSKY=0
 
 # Cài đặt production dependencies
 RUN pnpm install --frozen-lockfile --prod --filter api...
