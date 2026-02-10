@@ -15,7 +15,6 @@ Module nghe hiểu với AI-generated conversations, tối ưu cho học trên d
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | **Podcast Mode** | Nghe thụ động, có transcript | Commute, Workout |
-| **Interactive Mode** | AI pause, user respond | Focused learning |
 | **Radio Mode** | Continuous playlists với duration options | Background learning |
 
 ### 1.2 Custom Scenarios (NEW ✨)
@@ -56,14 +55,8 @@ Cải tiến Radio Mode với nhiều tính năng mới:
 | **Progress Tracking** | Hiển thị progress khi đang generate playlist |
 | **Toast Notifications** | Thông báo feedback khi generate hoàn tất |
 | **Immediate Playback** | Phát ngay sau khi generate hoặc chọn existing playlist |
-| **Real API Integration** | Sử dụng API thực với authentication và error handling |
 
-### 1.5 Topic Picker Improvements (NEW ✨)
 
-| Feature | Description |
-|---------|-------------|
-| **Highlight Subcategory** | Tự động highlight subcategory chứa topic đang chọn |
-| **Two-line Topic Display** | Recent lessons hiển thị topic trên 2 dòng cho dễ đọc |
 
 ### 1.6 TTS Provider Settings (NEW ✨)
 
@@ -76,6 +69,7 @@ Cấu hình nâng cao cho giọng đọc AI (Web-v2 parity):
 | **Emotion** | Cảm xúc giọng đọc (Azure only: Cheerful, Sad, Angry...) |
 | **Multi-talker** | Chế độ 2 người nói (Azure only) |
 | **Advanced** | Pitch, Rate, Volume tuning |
+| **Randomize** | Ngẫu nhiên giọng đọc và/hoặc cảm xúc mỗi bài nghe |
 
 ### 1.7 Background Playback Requirements (NEW ✨)
 
@@ -166,25 +160,30 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 ├─────────────────────────────────┤
 │                                 │
 │  📝 Chủ đề                      │
+│  Chọn chủ đề bạn muốn luyện    │
 │  ┌─────────────────────────┐   │
 │  │ Cuộc sống hằng ngày   ▼│   │
 │  └─────────────────────────┘   │
 │                                 │
 │  ⏱️ Thời lượng                  │
 │  ┌─────────────────────────┐   │
-│  │  5  10 (15) 20  30  min │   │
+│  │  5   (10)  15   Custom  │   │
 │  └─────────────────────────┘   │
-│                                 │
-│  🎙️ Chế độ                      │
-│  ┌────────────┬────────────┐   │
-│  │  Podcast   │Interactive │   │
-│  │    ●       │     ○      │   │
-│  └────────────┴────────────┘   │
+│  ┌─────────────────────────┐   │
+│  │ Nhập số phút: [    ]    │   │  ← Hiện khi chọn Custom
+│  └─────────────────────────┘   │
 │                                 │
 │  👥 Số người nói                │
 │  ┌─────────────────────────┐   │
-│  │   [ 2 ]  [ 3 ]  [ 4 ]   │   │
+│  │   (2)    [ 3 ]   [ 4 ]   │   │
 │  └─────────────────────────┘   │
+│                                 │
+│  🔑 Từ khóa (tuỳ chọn)         │
+│  ┌─────────────────────────┐   │
+│  │ vd: coffee, meeting     │   │
+│  └─────────────────────────┘   │
+│  Gợi ý nội dung xoay quanh     │
+│  các từ khóa này                │
 │                                 │
 │  ▼ Tùy chọn nâng cao            │
 │                                 │
@@ -195,11 +194,12 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 ```
 
 **Specs:**
-- Topic: Dropdown with categories
-- Duration: Pill buttons (5, 10, 15, 20, 30)
+- Topic: Dropdown with categories + subtitle gợi ý
+- Duration: Pill buttons (5, **10 (default)**, 15, **Custom**). Chọn Custom → hiện input nhập số phút
+- Keywords: Text input trên main screen (optional), placeholder gợi ý ví dụ
 - Mode: Toggle switches
-- Speakers: Stepper or chips
-- Advanced: Bottom sheet (keywords, custom settings)
+- Speakers: Chips, default **2 người**
+- Advanced: Bottom sheet (difficulty, voice settings)
 
 ### 3.2 Advanced Options (Bottom Sheet)
 
@@ -209,20 +209,37 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 │  Tùy chọn nâng cao              │
 ├─────────────────────────────────┤
 │                                 │
-│  🔑 Từ khóa (Optional)          │
-│  ┌─────────────────────────┐   │
-│  │ coffee, meeting         │   │
-│  └─────────────────────────┘   │
-│                                 │
 │  🎯 Độ khó                      │
-│  ○ Beginner  ● Intermediate ○ Advanced │
+│  ○ Beginner  ● Intermediate     │
+│  ○ Advanced                     │
 │                                 │
 │  🔊 Giọng đọc                   │
-│  ○ Alloy  ● Nova  ○ Onyx        │
+│  ┌─────────────────────────┐   │
+│  │ 🎲 Ngẫu nhiên      [ON] │   │
+│  └─────────────────────────┘   │
+│  ┌─────────────────────────┐   │  ← Ẩn khi Random ON
+│  │ Chọn giọng: Aria     ▼ │   │
+│  └─────────────────────────┘   │
+│  ℹ️ Hệ thống tự gán giọng      │
+│    xen kẽ nam/nữ cho mỗi       │
+│    người nói                    │
+│                                 │
+│  � Multi-talker (Azure)        │  ← Chỉ hiện khi 2 speakers
+│  ┌─────────────────────────┐   │
+│  │ [OFF]  Ava & Andrew     │   │
+│  └─────────────────────────┘   │
+│  ℹ️ 2 giọng AI tự nhiên trong  │
+│    1 lần phát                   │
 │                                 │
 │       [Áp dụng]                 │
 └─────────────────────────────────┘
 ```
+
+**Specs:**
+- Difficulty: Radio buttons (Beginner / Intermediate / Advanced)
+- Voice: Toggle Random ON → hệ thống tự chọn giọng. OFF → hiện dropdown chọn giọng cụ thể
+- Auto-assign: Khi 3-4 speakers, hệ thống tự gán giọng xen kẽ nam/nữ (Aria → Guy → Jenny → Davis)
+- Multi-talker: Chỉ hiện khi chọn **2 speakers**. Nếu 3-4 speakers → ẩn (không hỗ trợ DragonHD)
 
 ### 3.3 Player - Podcast Mode
 
@@ -262,44 +279,9 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 - Progress bar: Draggable, shows time
 - Controls: Play/Pause (center, large), Skip ±15s
 - Transcript: Auto-scroll with highlight
-- Bottom bar: Bookmark, A-B Loop, Speed
+- Bottom bar: Bookmark, Repeat, Speed, Translation toggle
 
-### 3.4 Player - Interactive Mode
-
-```
-┌─────────────────────────────────┐
-│  ← Job Interview Practice   ⋮  │
-├─────────────────────────────────┤
-│                                 │
-│     👤 AI                       │
-│     ┌─────────────────────┐    │
-│     │ Tell me about       │    │
-│     │ your experience     │    │
-│     └─────────────────────┘    │
-│              🔊                 │
-│                                 │
-├─────────────────────────────────┤
-│                                 │
-│        Đến lượt bạn!            │
-│                                 │
-│         🎤                      │
-│    [Giữ để ghi âm]              │
-│                                 │
-│     ⏱️ Time: 0:00 / 0:15        │
-│                                 │
-├─────────────────────────────────┤
-│  💡 Gợi ý  │  ⏭️ Bỏ qua        │
-└─────────────────────────────────┘
-```
-
-**Specs:**
-- AI speech: Bubble with audio icon
-- User turn: Mic button (hold-to-record)
-- Timer: Countdown for response
-- Hints: Tap to see suggestion
-- Skip: Move to next exchange
-
-### 3.5 Speed Control Popup
+### 3.4 Speed Control Popup
 
 ```
 ┌─────────────────────────────────┐
@@ -312,23 +294,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 └─────────────────────────────────┘
 ```
 
-### 3.6 A-B Loop Selection
-
-```
-┌─────────────────────────────────┐
-│         Chọn đoạn lặp           │
-├─────────────────────────────────┤
-│                                 │
-│  Start: 02:30  ────  End: 03:15 │
-│                                 │
-│  ──────[====]─────────────────  │
-│        A     B                  │
-│                                 │
-│  [Hủy]           [Áp dụng]     │
-└─────────────────────────────────┘
-```
-
-### 3.7 Pocket Mode (Lock Screen Compatible)
+### 3.5 Pocket Mode (Lock Screen Compatible)
 
 ```
 ┌─────────────────────────────────┐
@@ -523,17 +489,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 | Long press | Save sentence to bookmarks |
 | Swipe sentence | Repeat that sentence |
 
-### 4.3 A-B Loop
-
-| Feature | Description |
-|---------|-------------|
-| Set A | Mark start point |
-| Set B | Mark end point |
-| Loop | Auto-repeat between A-B |
-| Clear | Remove loop markers |
-| Adjust | Drag markers to adjust |
-
-### 4.4 Background Audio
+### 4.3 Background Audio
 
 | Feature | Description |
 |---------|-------------|
@@ -575,7 +531,7 @@ interface ListeningState {
   config: {
     topic: string;
     duration: number;
-    mode: 'podcast' | 'interactive';
+    mode: 'podcast';
     speakers: number;
     keywords?: string[];
   };
@@ -732,7 +688,7 @@ interface TtsSettings {
 - [ ] Generate conversation via API
 
 ### Enhanced Phase
-- [ ] A-B Loop feature
+
 - [ ] Bookmark sentences
 - [ ] Offline download
 - [ ] Background audio
@@ -748,7 +704,7 @@ interface TtsSettings {
 - [ ] **Multi-talker logic** (NEW ✨)
 
 ### Advanced Phase
-- [ ] Interactive mode with recording
+
 - [ ] Pocket mode with gestures
 - [ ] Voice commands
 - [ ] Radio mode (playlists)
