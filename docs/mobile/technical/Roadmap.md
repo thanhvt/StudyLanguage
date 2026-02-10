@@ -81,7 +81,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Config screen UI | 4h | P0 |
 | Topic dropdown | 2h | P0 |
 | Duration selector | 2h | P0 |
-| Mode toggle (Podcast/Interactive) | 2h | P0 |
+| Speaker selector | 2h | P0 |
 | Generate API integration | 4h | P0 |
 | Loading state | 2h | P0 |
 | Audio player - basic | 6h | P0 |
@@ -205,7 +205,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 |------|------|----------|
 | Background audio | 4h | P1 |
 | Lock screen controls | 4h | P1 |
-| A-B Loop | 4h | P1 |
+
 | Bookmark sentences | 2h | P1 |
 
 #### Notifications

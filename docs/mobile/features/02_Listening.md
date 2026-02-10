@@ -317,7 +317,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 - Large gesture areas
 - Black/OLED background
 
-### 3.8 Lock Screen Controls (iOS/Android)
+### 3.6 Lock Screen Controls (iOS/Android)
 
 ```
 ┌─────────────────────────────────┐
@@ -334,7 +334,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 └─────────────────────────────────┘
 ```
 
-### 3.9 Custom Scenarios Panel (NEW ✨)
+### 3.7 Custom Scenarios Panel (NEW ✨)
 
 ```
 ┌─────────────────────────────────┐
@@ -374,7 +374,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 - Favorite: Toggle star icon
 - Delete: Xác nhận trước khi xóa
 
-### 3.10 Global Audio Player - Compact Mode (NEW ✨)
+### 3.8 Global Audio Player - Compact Mode (NEW ✨)
 
 ```
 ┌─────────────────────────────────┐
@@ -399,7 +399,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 - Basic controls: prev, play/pause, next, speed
 - Minimize (▼) / Close (✕) buttons
 
-### 3.11 Global Audio Player - Minimized Mode (NEW ✨)
+### 3.9 Global Audio Player - Minimized Mode (NEW ✨)
 
 ```
 ┌─────────────────────────────────┐
@@ -499,7 +499,7 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 | Notification | Persistent player notification |
 | Auto-pause | Pause on call/another audio |
 
-### 4.5 Offline Support
+### 4.4 Offline Support
 
 | Feature | Description |
 |---------|-------------|
