@@ -618,6 +618,105 @@ export function useRecording() {
 }
 ```
 
+### 8.4 Audio Focus & Interruption Hook
+
+```typescript
+// hooks/useAudioFocus.ts
+import TrackPlayer, { Event, AppKilledPlaybackBehavior } from 'react-native-track-player';
+
+/**
+ * Mục đích: Xử lý audio focus và interruption (cuộc gọi, app khác, tai nghe)
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: void (tự động xử lý pause/resume/duck)
+ * Khi nào sử dụng: Gọi 1 lần khi khởi tạo audio service
+ */
+
+// Cấu hình Track Player với audio focus
+export async function setupTrackPlayer() {
+  await TrackPlayer.setupPlayer();
+  
+  await TrackPlayer.updateOptions({
+    // Cho phép phát khi app ở background
+    android: {
+      appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
+    },
+    
+    // Controls hiển thị trên lock screen / notification
+    capabilities: [
+      TrackPlayer.CAPABILITY_PLAY,
+      TrackPlayer.CAPABILITY_PAUSE,
+      TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+      TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+      TrackPlayer.CAPABILITY_SEEK_TO,
+    ],
+    
+    // Controls trên compact notification (Android)
+    compactCapabilities: [
+      TrackPlayer.CAPABILITY_PLAY,
+      TrackPlayer.CAPABILITY_PAUSE,
+      TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+    ],
+  });
+}
+
+// Xử lý audio interruption (cuộc gọi, app khác)
+export function useAudioFocus() {
+  const wasPlayingBeforeInterruption = useRef(false);
+  
+  useEffect(() => {
+    // Lắng nghe sự kiện audio focus thay đổi
+    const focusListener = TrackPlayer.addEventListener(
+      Event.RemoteDuck,
+      async ({ paused, permanent }) => {
+        if (permanent) {
+          // Mất focus vĩnh viễn (app khác chiếm audio)
+          // → Pause, không tự resume
+          await TrackPlayer.pause();
+          console.log('[AudioFocus] Mất focus vĩnh viễn, tạm dừng');
+          return;
+        }
+        
+        if (paused) {
+          // Tạm mất focus (cuộc gọi, Siri, notification)
+          // → Lưu trạng thái + Pause
+          const state = await TrackPlayer.getPlaybackState();
+          wasPlayingBeforeInterruption.current = state.state === State.Playing;
+          await TrackPlayer.pause();
+          console.log('[AudioFocus] Tạm mất focus, đã pause');
+        } else {
+          // Lấy lại focus (cuộc gọi kết thúc, app khác dừng)
+          // → Resume nếu trước đó đang phát
+          if (wasPlayingBeforeInterruption.current) {
+            await TrackPlayer.play();
+            console.log('[AudioFocus] Đã lấy lại focus, tự động phát lại');
+          }
+        }
+      }
+    );
+    
+    return () => focusListener.remove();
+  }, []);
+}
+```
+
+#### Cấu hình Native (bắt buộc)
+
+```typescript
+// iOS: ios/StudyLanguage/Info.plist
+// Thêm key để cho phép background audio:
+// <key>UIBackgroundModes</key>
+// <array><string>audio</string></array>
+
+// Android: android/app/src/main/AndroidManifest.xml
+// Thêm permissions cho foreground service:
+// <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+// <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+// <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+// Track Player service: android/app/src/main/java/.../TrackPlayerService.java
+// (Tự động tạo bởi react-native-track-player khi link)
+```
+
 ---
 
 ## 9. Background Services

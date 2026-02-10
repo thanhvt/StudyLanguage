@@ -304,12 +304,44 @@ Similar to iOS but with more customization options:
 
 ### 6.4 Audio Interruption Handling
 
-| Interruption | Behavior |
-|--------------|----------|
-| Incoming call | Pause, resume after |
-| Another app plays | Pause (or duck volume) |
-| Headphones unplugged | Pause |
-| Car Bluetooth connected | Continue playing |
+| Interruption | Behavior | Auto-Resume? |
+|--------------|----------|:---:|
+| Incoming/outgoing call | Pause hoàn toàn | ✅ Sau khi kết thúc |
+| Video/Music app khác phát | Pause hoàn toàn | ✅ Khi app khác dừng |
+| Navigation app (Maps) | Duck volume 30% | ✅ Tự khôi phục volume |
+| Notification sound | Duck volume 50% | ✅ Tự khôi phục volume |
+| Siri / Google Assistant | Pause hoàn toàn | ✅ Sau khi kết thúc |
+| Headphones unplugged | Pause | ❌ Người dùng bấm play |
+| Bluetooth connected | Tiếp tục phát | — |
+| App bị kill bởi OS | Dừng hẳn | ❌ Cần mở lại app |
+
+#### Background Playback Requirements
+
+```
+Khi người dùng đang nghe passive listening và rời khỏi app:
+
+✅ Âm thanh TIẾP TỤC PHÁT khi:
+   • Minimize app (Home button / swipe up)
+   • Chuyển sang app khác (multitasking)
+   • Tắt màn hình (lock screen)
+
+⏸️ Âm thanh TẠM DỪNG + TỰ BẬT LẠI khi:
+   • Có cuộc gọi đến → kết thúc cuộc gọi → phát lại
+   • App khác phát nhạc → app khác dừng → phát lại
+   • Siri/Assistant kích hoạt → kết thúc → phát lại
+
+⏸️ Âm thanh TẠM DỪNG + KHÔNG tự bật khi:
+   • Rút tai nghe (an toàn, tránh phát qua loa ngoài)
+```
+
+#### Platform Implementation
+
+| Platform | Mechanism | Library |
+|----------|-----------|---------|
+| **iOS** | `AVAudioSession` category `.playback` + `UIBackgroundModes: audio` | `react-native-track-player` |
+| **Android** | `MediaSession` + Foreground Service + `AudioFocus` | `react-native-track-player` |
+
+> **Note:** `react-native-track-player` xử lý hầu hết audio focus tự động qua native layer. Chỉ cần cấu hình đúng capabilities khi setup.
 
 ---
 

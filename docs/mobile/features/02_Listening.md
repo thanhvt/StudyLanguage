@@ -77,6 +77,55 @@ Cấu hình nâng cao cho giọng đọc AI (Web-v2 parity):
 | **Multi-talker** | Chế độ 2 người nói (Azure only) |
 | **Advanced** | Pitch, Rate, Volume tuning |
 
+### 1.7 Background Playback Requirements (NEW ✨)
+
+Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive listening):
+
+| Requirement | Description |
+|-------------|-------------|
+| **Background Play** | Âm thanh tiếp tục phát khi người dùng minimize app hoặc chuyển sang app khác |
+| **Lock Screen** | Hiển thị controls (Play/Pause/Next/Previous) trên lock screen |
+| **Auto-Pause on Call** | Tự động tạm dừng khi có cuộc gọi đến (incoming/outgoing call) |
+| **Auto-Resume after Call** | Tự động phát lại khi cuộc gọi kết thúc |
+| **Duck on Other Audio** | Khi app khác phát âm thanh: tạm dừng hoặc giảm volume (ducking) |
+| **Resume after Duck** | Tự động phát lại khi app khác dừng phát âm thanh |
+| **Headphone Unplug** | Tự động tạm dừng khi rút tai nghe (safety) |
+| **Bluetooth Connect** | Tiếp tục phát khi kết nối Bluetooth headphone/car audio |
+
+#### Audio Interruption Flow
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  [Đang phát bài nghe]                                        │
+│         │                                                    │
+│         ├── Cuộc gọi đến ──► [PAUSE] ──► Cuộc gọi kết thúc  │
+│         │                                  ──► [AUTO RESUME] │
+│         │                                                    │
+│         ├── App khác phát ──► [PAUSE/DUCK] ──► App khác dừng │
+│         │                                  ──► [AUTO RESUME] │
+│         │                                                    │
+│         ├── Rút tai nghe ──► [PAUSE] (không tự phát lại)     │
+│         │                                                    │
+│         └── Minimize app ──► [TIẾP TỤC PHÁT] ✅              │
+│                                                              │
+│  Platform: Track Player xử lý native audio focus tự động     │
+│  iOS: AVAudioSession category .playback                      │
+│  Android: AudioFocus với AUDIOFOCUS_GAIN                     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### Ducking vs Pause Strategy
+
+| Interruption Type | Strategy | Lý do |
+|-------------------|----------|-------|
+| Phone call | **Pause + Resume** | Cuộc gọi quan trọng, cần im lặng hoàn toàn |
+| Navigation app (Google Maps) | **Duck volume 30%** | Chỉ announce ngắn, có thể nghe cùng lúc |
+| Video/Music app | **Pause + Resume** | Cả 2 là audio chính, không nên mix |
+| Notification sound | **Duck volume 50%** | Rất ngắn, không cần pause |
+| Siri/Google Assistant | **Pause + Resume** | Cần im lặng để nhận diện giọng nói |
+
 ---
 
 ## 2. User Flows
