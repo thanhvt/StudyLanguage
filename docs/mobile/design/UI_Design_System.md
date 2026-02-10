@@ -333,7 +333,6 @@ Border Radius: 18px
 | Listening | 🎧 headphones | Blue |
 | Speaking | 🗣️ waveform | Orange |
 | Reading | 📖 book-open | Green |
-| Writing | ✍️ pen-tool | Purple |
 
 ---
 

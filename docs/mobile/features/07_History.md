@@ -15,7 +15,7 @@ Module lịch sử học tập với timeline view, filter theo skill, và sync 
 | Feature | Description |
 |---------|-------------|
 | **Timeline View** | Grouped by date |
-| **Filter by Skill** | Listening, Speaking, Reading, Writing |
+| **Filter by Skill** | Listening, Speaking, Reading |
 | **Detail View** | Full session info |
 | **Quick Actions** | Replay, practice again |
 | **Recent Lessons Panel** | Quick access từ skill pages (NEW ✨) |
@@ -137,7 +137,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 ┌─────────────────────────────────┐
 │  📜 Lịch sử học tập         🔍  │
 ├─────────────────────────────────┤
-│  [All] [🎧] [🗣️] [📖] [✍️]    │
+│  [All] [🎧] [🗣️] [📖]    │
 ├─────────────────────────────────┤
 │                                 │
 │  📊 Tổng quan                   │
@@ -191,7 +191,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 ┌─────────────────────────────────┐
 │  📜 Lịch sử học tập         🔍  │
 ├─────────────────────────────────┤
-│  [All] [🎧] [🗣️] [📖] [✍️]    │
+│  [All] [🎧] [🗣️] [📖]    │
 │         ▲                       │
 │    (Selected)                   │
 ├─────────────────────────────────┤
@@ -334,40 +334,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 └─────────────────────────────────┘
 ```
 
-### 3.6 Session Detail - Writing
 
-```
-┌─────────────────────────────────┐
-│  ← Daily Journal            ⋮  │
-├─────────────────────────────────┤
-│                                 │
-│  ✍️ Writing Session             │
-│  📅 25/01/2026, 21:00           │
-│  ⏱️ Duration: 10 minutes        │
-│                                 │
-├─────────────────────────────────┤
-│  📊 Performance                 │
-│                                 │
-│  Score: 78/100                  │
-│  [███████████████░░░░░]         │
-│                                 │
-│  📝 Words written: 156          │
-│  ⚠️ Errors fixed: 5             │
-│                                 │
-├─────────────────────────────────┤
-│  📝 Your Writing                │
-│  ┌─────────────────────────┐   │
-│  │ Today I went to the     │   │
-│  │ coffee shop and met my  │   │
-│  │ friend. We talked about │   │
-│  │ our plans for...        │   │
-│  │ [View full text]        │   │
-│  └─────────────────────────┘   │
-│                                 │
-├─────────────────────────────────┤
-│  [📝 View Corrections]  [✍️ Edit]│
-└─────────────────────────────────┘
-```
 
 ### 3.7 Quick Actions (Long Press)
 
@@ -429,7 +396,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 | Listening | 🎧 | Duration, comprehension %, bookmarks |
 | Speaking | 🗣️ | Duration, score, sentences count |
 | Reading | 📖 | Duration, quiz score, words read |
-| Writing | ✍️ | Duration, score, word count |
+
 
 ### 4.2 Quick Actions
 
@@ -461,7 +428,7 @@ interface HistoryState {
   sessions: Session[];
   
   // Filters
-  filter: 'all' | 'listening' | 'speaking' | 'reading' | 'writing';
+  filter: 'all' | 'listening' | 'speaking' | 'reading';
   
   // Search
   searchQuery: string;
@@ -474,7 +441,7 @@ interface HistoryState {
 
 interface Session {
   id: string;
-  type: 'listening' | 'speaking' | 'reading' | 'writing';
+  type: 'listening' | 'speaking' | 'reading';
   title: string;
   date: Date;
   duration: number; // minutes

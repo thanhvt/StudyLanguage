@@ -67,12 +67,9 @@ apps/mobile/
 │   │   ├── speaking/           # Speaking module
 │   │   │   ├── SetupScreen.tsx
 │   │   │   └── PracticeScreen.tsx
-│   │   ├── reading/            # Reading module
-│   │   │   ├── ConfigScreen.tsx
-│   │   │   └── ArticleScreen.tsx
-│   │   └── writing/            # Writing module
-│   │       ├── InputScreen.tsx
-│   │       └── ReviewScreen.tsx
+│   │   └── reading/            # Reading module
+│   │       ├── ConfigScreen.tsx
+│   │       └── ArticleScreen.tsx
 │   ├── components/
 │   │   ├── ui/                 # Reusable UI components
 │   │   │   ├── Button.tsx
@@ -85,8 +82,7 @@ apps/mobile/
 │   │   └── modules/            # Feature-specific components
 │   │       ├── listening/
 │   │       ├── speaking/
-│   │       ├── reading/
-│   │       └── writing/
+│   │       └── reading/
 │   ├── navigation/             # React Navigation config
 │   │   ├── RootNavigator.tsx
 │   │   ├── AuthStack.tsx
@@ -156,12 +152,9 @@ Root Navigator (Stack)
     │       ├── Speaking Stack
     │       │   ├── Setup
     │       │   └── Practice
-    │       ├── Reading Stack
-    │       │   ├── Config
-    │       │   └── Article
-    │       └── Writing Stack
-    │           ├── Input
-    │           └── Review
+    │       └── Reading Stack
+    │           ├── Config
+    │           └── Article
     │
     ├── History Tab
     │   └── History Stack

@@ -108,7 +108,6 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | �🎧 **Listening** | Podcast mode, Basic player | Interactive mode, TTS Provider Panel | Background audio, Lock screen |
 | 🗣️ **Speaking** | Voice Recorder | Conversation Coach (Basic) | Realtime Transcription, AI Feedback |
 | 📖 **Reading** | Article view, Focus Mode | Tap-to-translate, Quiz | Reading Practice with AI |
-| ✍️ **Writing** | Basic input, AI correction | Voice input | Paraphrase suggestions |
 | 📚 **Vocabulary** | Word list | Flashcard review | Spaced repetition, Notifications |
 | 📜 **History** | Timeline view | Analytics (Stats, Chart) | Heatmap, AI Insights, Pinned Items |
 
@@ -131,11 +130,11 @@ Tab Navigator (Bottom)
 ├── 🏠 Home (Dashboard)
 │   ├── Greeting + Streak
 │   ├── Study Goal + Next Lesson
-│   ├── Quick Actions (Listening, Speaking, Reading)
+│   ├── Quick Actions (Listening, Speaking, Reading, Vocabulary)
 │   └── Recent Activity (MVP)
 │
 ├── 📜 History
-│   ├── Filter Tabs (All, Listening, Speaking, Reading, Writing)
+│   ├── Filter Tabs (All, Listening, Speaking, Reading)
 │   └── Timeline List
 │
 ├── 📚 Vocabulary
@@ -173,7 +172,6 @@ Tab Navigator (Bottom)
 - [02_Listening.md](features/02_Listening.md) - Listening module
 - [03_Speaking.md](features/03_Speaking.md) - Speaking module
 - [04_Reading.md](features/04_Reading.md) - Reading module
-- [05_Writing.md](features/05_Writing.md) - Writing module
 - [06_Vocabulary.md](features/06_Vocabulary.md) - Vocabulary system
 - [07_History.md](features/07_History.md) - History module
 - [08_Profile_Settings.md](features/08_Profile_Settings.md) - Profile & Settings

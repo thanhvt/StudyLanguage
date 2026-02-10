@@ -20,7 +20,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 │  Week 1-2   │  Week 3-4   │  Week 5-6   │  Week 7-10  │ 11-14│
 │  ─────────  │  ─────────  │  ─────────  │  ─────────  │ ─────│
 │  SETUP &    │  LISTENING  │  SPEAKING   │  ENHANCED   │ ADV  │
-│  AUTH       │  & READING  │  & WRITING  │  UX         │      │
+│  AUTH       │  & READING  │  & HISTORY  │  UX         │      │
 │             │             │             │             │      │
 │  ◄────────── MVP (6 weeks) ──────────►│◄── Phase 2 ─►│◄ P3 ►│
 │                                                              │
@@ -31,7 +31,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 ## 2. Phase 1: MVP (4-6 tuần)
 
-> **Goal:** Core functionality, all 4 skills working
+> **Goal:** Core functionality, all 3 skills working
 
 ### 2.1 Week 1-2: Foundation
 
@@ -135,20 +135,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 ---
 
-### 2.5 Week 6: Writing & History
-
-#### Writing Module
-
-| Task | Est. | Priority |
-|------|------|----------|
-| Writing type selection | 2h | P0 |
-| Text input screen | 4h | P0 |
-| Word counter | 1h | P0 |
-| Auto-save | 2h | P1 |
-| AI correction API | 4h | P0 |
-| Corrections display | 6h | P0 |
-
-#### History & Profile
+### 2.5 Week 6: History & Profile
 
 | Task | Est. | Priority |
 |------|------|----------|
@@ -162,7 +149,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Theme toggle | 2h | P0 |
 | Logout | 1h | P0 |
 
-**Deliverable Week 6:** ✅ MVP complete - all 4 skills functional
+**Deliverable Week 6:** ✅ MVP complete - all 3 skills functional
 
 ---
 
@@ -174,7 +161,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | ✅ Listening - Generate & Play | |
 | ✅ Speaking - Record & Feedback | |
 | ✅ Reading - Article & Quiz | |
-| ✅ Writing - Input & Corrections | |
+
 | ✅ History - Timeline view | |
 | ✅ Profile - Basic info | |
 | ✅ Light/Dark mode | |
@@ -281,8 +268,6 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 |------|------|----------|
 | Speaking roleplay | 8h | P2 |
 | Conversation scenarios | 4h | P2 |
-| Voice input (writing) | 6h | P2 |
-| Paraphrase suggestions | 4h | P2 |
 | iOS widgets | 8h | P2 |
 | Android widgets | 6h | P2 |
 | Magic link login | 4h | P2 |
@@ -299,7 +284,6 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | ☐ Bedtime mode | |
 | ☐ Voice commands | |
 | ☐ Speaking roleplay | |
-| ☐ Voice input | |
 | ☐ Widgets | |
 | ☐ Biometric login | |
 
