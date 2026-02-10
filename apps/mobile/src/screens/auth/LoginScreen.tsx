@@ -31,11 +31,18 @@ export default function LoginScreen() {
   const setSession = useAuthStore(state => state.setSession);
 
   useEffect(() => {
-    // Cấu hình Google Sign-In với Web Client ID từ .env
+    // Cấu hình Google Sign-In với Web Client ID và iOS Client ID từ .env
     GoogleSignin.configure({
       webClientId: Config.GOOGLE_WEB_CLIENT_ID,
+      iosClientId: Config.GOOGLE_IOS_CLIENT_ID,
       offlineAccess: true,
     });
+
+    if (!Config.GOOGLE_IOS_CLIENT_ID) {
+      console.warn(
+        '⚠️ [Login] GOOGLE_IOS_CLIENT_ID chưa được cấu hình trong .env. Google Sign-In trên iOS sẽ không hoạt động.',
+      );
+    }
     console.log('🔧 [Login] Google Sign-In đã cấu hình');
   }, []);
 

@@ -42,6 +42,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false, // Không cần cho React Native
     lock: processLock, // Tránh race condition khi nhiều process cùng refresh token
+    // @ts-expect-error - lockAcquireTimeout tồn tại trong GoTrueClientOptions nhưng supabase-js wrapper không expose type
+    lockAcquireTimeout: 5000, // Tăng timeout lên 5 giây, tránh warning "Lock acquisition timed out after 0ms"
   },
 });
 
