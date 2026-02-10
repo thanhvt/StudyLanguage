@@ -3084,10 +3084,10 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 79721265b1c5eba0d893e5f6c79d0a1f277d246d
   RNKeychain: f9022b0a123bb459ba2e6045f79203a7c7e54956
   RNLocalize: ca8ab6235c5e178b75ab8af89e19e55ade5c9c8b
-  RNReanimated: d1d9e2ee81e11ad64addc604e43cd50faa1677ad
+  RNReanimated: 7a5c057b1db27bfeaddd9a7cb60bd68266ecd22f
   RNScreens: bcdac59a65c0aa26853e1bb20061edec34d475f2
   RNSVG: 2c6c05601a53297d217d3ac9c2846c9655e7c8ae
-  RNWorklets: 6297f2e84d7297ab2aef315a1f4a00b23d1fa604
+  RNWorklets: 967057cbb5986c9cc2b3ace3f2d856dc48487a55
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftAudioEx: f6aa653770f3a0d3851edaf8d834a30aee4a7646
   Yoga: fb21153542336c6e7c4855022f4a93a286865259
