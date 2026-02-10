@@ -270,8 +270,6 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Conversation scenarios | 4h | P2 |
 | iOS widgets | 8h | P2 |
 | Android widgets | 6h | P2 |
-| Magic link login | 4h | P2 |
-| Biometric login | 4h | P2 |
 | Deep linking | 4h | P2 |
 
 ---
@@ -285,7 +283,6 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | ☐ Voice commands | |
 | ☐ Speaking roleplay | |
 | ☐ Widgets | |
-| ☐ Biometric login | |
 
 ---
 

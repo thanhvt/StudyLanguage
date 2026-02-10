@@ -79,11 +79,11 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 
 ### 3.1. Authentication (Xác thực)
 
-#### A. Đăng nhập Google (Primary Method)
+#### A. Đăng nhập Google (Phương thức duy nhất)
 - **UI Flow:**
   1. Splash screen với logo \u0026 animation
   2. Welcome screen: "Bắt đầu học tiếng Anh"
-  3. Nút "Tiếp tục với Google" (lớn, nổi bật)
+  3. Nút "Tiếp tục với Google" (lớn, nổi bật, là nút đăng nhập duy nhất)
   4. Tự động chuyển qua Home khi đăng nhập thành công
 
 - **Technical:**
@@ -91,16 +91,9 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
   - Google OAuth flow trong WebView
   - Lưu token vào Secure Storage (Expo SecureStore)
 
-#### B. Magic Link (Email)
-- Nhập email → Nhận link → Click vào email → Auto login
-- Phù hợp khi thiết bị lạ không có Google account đã login
+- **Yêu cầu:** Người dùng phải có tài khoản Gmail
 
-#### C. Biometric Login (Vân tay/Face ID)
-- **Mục tiêu:** Đăng nhập nhanh sau lần đầu tiên
-- Sử dụng Expo Local Authentication
-- Option trong Settings: "Bật đăng nhập bằng vân tay"
-
-#### D. Auto-Relogin
+#### B. Auto-Relogin
 - Token lưu trong SecureStore, tự động login khi mở app
 - Không yêu cầu login lại trừ khi token expire
 

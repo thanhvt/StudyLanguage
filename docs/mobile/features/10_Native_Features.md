@@ -487,7 +487,6 @@ https://studylanguage.app/share/abc   # Shared content
 | Push notification | studylanguage://vocabulary/review | Open review |
 | Widget | studylanguage://listening | Open Listening |
 | Share | https://studylanguage.app/... | Open shared |
-| Email | studylanguage://auth/magic/... | Magic link login |
 
 ---
 

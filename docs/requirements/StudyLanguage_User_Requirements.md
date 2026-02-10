@@ -19,8 +19,7 @@
 
 ### 2.1. Nhóm Tính năng Nền tảng (Core System)
 *   **Đăng ký/Đăng nhập:**
-    *   Sử dụng **Google Login** (Google OAuth) là phương thức chính: Nhanh, tiện lợi, không cần nhớ mật khẩu.
-    *   Hỗ trợ thêm Magic Link (Gửi link đăng nhập qua Email) nếu muốn login trên thiết bị lạ.
+    *   Sử dụng **Google Login** (Google OAuth) là phương thức **duy nhất**: Nhanh, tiện lợi, không cần nhớ mật khẩu. Yêu cầu người dùng có tài khoản Gmail.
 *   **Giao diện & Chủ đề (UI & Themes):**
     *   Hỗ trợ chuyển đổi **Light/Dark Mode**.
     *   Nút chuyển đổi rõ ràng trên cả Web & Mobile.

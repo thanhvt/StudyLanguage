@@ -261,11 +261,6 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 │  │ all your devices        │   │
 │  └─────────────────────────┘   │
 │                                 │
-│  👆 Biometric Login             │
-│  ┌─────────────────────────┐   │
-│  │ [ON]                    │   │
-│  │ Use Face ID / Touch ID  │   │
-│  └─────────────────────────┘   │
 │                                 │
 │  ┌─────────────────────────┐   │
 │  │   📤 Export My Data     │   │
@@ -363,7 +358,6 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 | Save Recordings | ON/OFF | ON |
 | Auto-delete | 30/60/90 days | 60 days |
 | Data Sync | ON/OFF | ON |
-| Biometric | ON/OFF | OFF |
 
 ---
 
@@ -416,7 +410,6 @@ interface SettingsState {
     saveRecordings: boolean;
     autoDeleteDays: 30 | 60 | 90;
     dataSync: boolean;
-    biometric: boolean;
   };
 }
 ```
@@ -447,4 +440,4 @@ interface SettingsState {
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [01_Authentication.md](01_Authentication.md) - Login/Logout
-- [10_Native_Features.md](10_Native_Features.md) - Notifications, Biometric
+- [10_Native_Features.md](10_Native_Features.md) - Notifications

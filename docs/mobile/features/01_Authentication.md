@@ -8,15 +8,13 @@
 
 ## 1. Overview
 
-Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm nhanh gọn, bảo mật, và hỗ trợ đăng nhập lại tự động.
+Hệ thống xác thực cho mobile app sử dụng **Google OAuth** là phương thức đăng nhập duy nhất. Yêu cầu người dùng có tài khoản Gmail.
 
 ### 1.1 Auth Methods
 
 | Method | Priority | Use Case |
 |--------|----------|----------|
-| **Google OAuth** | Primary | Đăng nhập nhanh, đã có Google account |
-| **Magic Link** | Secondary | Thiết bị lạ, không có Google |
-| **Biometric** | Optional | Đăng nhập nhanh lần sau |
+| **Google OAuth** | Primary | Đăng nhập nhanh, yêu cầu Google account |
 | **Auto-Relogin** | Background | Token refresh tự động |
 
 ---
@@ -41,7 +39,7 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│ [Tap Google]  →  [WebView OAuth]  →  [Callback]  →  [Home] │
+│ [Tap Google]  →  [WebView OAuth]  →  [Callback]  →  [Home]  │
 │                      │                   │                  │
 │                      └── Google UI ──────┘                  │
 │                                                             │
@@ -52,31 +50,7 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.3 Magic Link Flow
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Enter Email]  →  [Send Link]  →  [Check Email]  →  [Home] │
-│                        │               │                    │
-│                        └─── Supabase ──┘                    │
-│                              email                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.4 Biometric Flow (Return User)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [App Launch]  →  [Biometric Prompt]  →  [Verify]  →  [Home]│
-│                        │                   │                │
-│                   Face ID /            SecureStore          │
-│                  Fingerprint            verify              │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -156,10 +130,6 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 │  │  🔵 Tiếp tục với Google │   │
 │  └─────────────────────────┘   │
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │  📧 Đăng nhập bằng Email│   │
-│  └─────────────────────────┘   │
-│                                 │
 │  ─────────────────────────────  │
 │           Chính sách            │
 │                                 │
@@ -167,53 +137,8 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 ```
 
 **Specs:**
-- Google button: Primary, prominent
-- Email button: Secondary style
+- Google button: Primary, prominent, là nút đăng nhập duy nhất
 - Policy links at bottom
-
-### 3.4 Magic Link Input
-
-```
-┌─────────────────────────────────┐
-│  ← Đăng nhập bằng Email        │
-├─────────────────────────────────┤
-│                                 │
-│  Email của bạn                  │
-│  ┌─────────────────────────┐   │
-│  │ example@email.com       │   │
-│  └─────────────────────────┘   │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │      Gửi link           │   │
-│  └─────────────────────────┘   │
-│                                 │
-│  💡 Chúng tôi sẽ gửi 1 link    │
-│     đăng nhập đến email của bạn │
-│                                 │
-└─────────────────────────────────┘
-```
-
-### 3.5 Biometric Prompt
-
-```
-┌─────────────────────────────────┐
-│                                 │
-│         📚                      │
-│    StudyLanguage               │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │                         │   │
-│  │      👆                  │   │
-│  │   Face ID / Touch ID    │   │
-│  │                         │   │
-│  │  Xác thực để tiếp tục   │   │
-│  │                         │   │
-│  └─────────────────────────┘   │
-│                                 │
-│      [Dùng mật khẩu khác]       │
-│                                 │
-└─────────────────────────────────┘
-```
 
 ---
 
@@ -234,7 +159,6 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 // Required packages
 @react-native-google-signin/google-signin // OAuth flows
 react-native-keychain    // Token storage (Keychain/Keystore)
-react-native-biometrics  // Biometric (FaceID/TouchID)
 @supabase/supabase-js    // Auth provider
 ```
 
@@ -248,9 +172,7 @@ interface AuthState {
   
   // Actions
   signInWithGoogle: () => Promise<void>;
-  signInWithMagicLink: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
-  enableBiometric: () => Promise<void>;
 }
 ```
 
@@ -280,8 +202,6 @@ interface AuthState {
 |-------|-------------|
 | Google OAuth cancelled | Toast: "Đã hủy đăng nhập" |
 | Network error | Alert + Retry button |
-| Invalid magic link | Screen: "Link đã hết hạn" + Resend |
-| Biometric failed | Fallback to password/retry |
 | Account not found | Create account option |
 
 ---
@@ -293,11 +213,6 @@ interface AuthState {
 - ✅ No sensitive data in AsyncStorage
 - ✅ HTTPS only for all API calls
 - ✅ Session timeout after 30 days inactivity
-- ✅ Biometric data never leaves device
-
-### 6.2 Permission Handling
-- Biometric: Ask once, explain why
-- Save preference in settings
 
 ---
 
@@ -309,11 +224,8 @@ interface AuthState {
 - [ ] Create auth screens (Splash, Onboarding, Login)
 - [ ] Token storage with SecureStore
 - [ ] Auto-relogin on app start
-- [ ] Magic Link flow
 
 ### Enhanced Phase
-- [ ] Biometric login setup
-- [ ] Settings: Enable/disable biometric
 - [ ] Session management UI
 
 ---

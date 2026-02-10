@@ -806,7 +806,6 @@ export const secureStorage = {
 | API calls | HTTPS only |
 | Sensitive logs | Disabled in production |
 | SSL Pinning | react-native-ssl-pinning |
-| Biometric | react-native-biometrics |
 
 ---
 
