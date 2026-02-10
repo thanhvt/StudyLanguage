@@ -355,6 +355,91 @@ Khi người dùng đang nghe passive listening và rời khỏi app:
 
 > **Note:** `react-native-track-player` xử lý hầu hết audio focus tự động qua native layer. Chỉ cần cấu hình đúng capabilities khi setup.
 
+### 6.5 Background Music (NEW ✨)
+
+Nhạc nền Lofi/Chill du dương chạy song song với bài học — feature parity với web-v2.
+
+#### Nguyên tắc Mobile
+
+| Đặc điểm | Mô tả |
+|-----------|--------|
+| **Chỉ in-app controls** | Không hiện trên lock screen — lock screen chỉ dành cho lesson audio |
+| **Tách biệt audio** | Music dùng `Audio` API riêng, lesson dùng `react-native-track-player` |
+| **Smart Ducking** | Tự giảm volume 80% khi lesson audio đang phát |
+| **Persist state** | Lưu volume, track, playing state vào AsyncStorage |
+| **Auto-pause** | Dừng khi app bị kill hoặc rút tai nghe |
+
+#### Danh sách nhạc (từ Pixabay — Free, no attribution)
+
+| # | Track Name | Style |
+|---|-----------|-------|
+| 1 | Good Night Lofi | Chill, sleepy |
+| 2 | Lofi Study Chill | Study vibes |
+| 3 | Tactical Pause Lofi | Calm focus |
+| 4 | Relax Lofi Beat | Relaxing |
+| 5 | Lofi Girl Ambient | Ambient |
+| 6 | Lofi Chill Background | Background |
+| 7 | Lofi Instrumental | Instrumental |
+| 8 | Lofi Girl Chill | Soft chill |
+
+> 💡 Tracks được bundle sẵn trong app hoặc stream từ CDN (Pixabay URLs).
+
+#### In-App Music Controls UI
+
+```
+┌─────────────────────────────────┐
+│  🎵 Nhạc nền                    │
+├─────────────────────────────────┤
+│                                 │
+│  🎵 Lofi Study Chill     ▶️     │
+│  ────────●────────── Vol: 30%  │
+│                                 │
+│  [⏮️ Prev] [⏯️ Play] [⏭️ Next]  │
+│  [🔀 Shuffle]                   │
+│                                 │
+│  🔉 Smart Ducking        [ON]   │
+│  Tự giảm nhạc khi AI nói       │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Vị trí UI:** Trong Audio Settings (`08_Profile_Settings.md`) hoặc mini player widget trên Dashboard.
+
+#### State Structure
+
+```typescript
+interface BackgroundMusicState {
+  // Trạng thái phát nhạc nền
+  isPlaying: boolean;
+  volume: number; // 0.0 - 1.0, default 0.3
+  currentTrackIndex: number;
+  
+  // Smart Ducking: giảm volume khi lesson audio phát
+  isDucking: boolean;
+  smartDuckingEnabled: boolean; // default true
+  
+  // Danh sách tracks
+  tracks: {
+    id: string;
+    name: string;
+    url: string;
+  }[];
+}
+```
+
+#### So sánh Web vs Mobile
+
+| Feature | Web-v2 | Mobile |
+|---------|:------:|:------:|
+| Track list (8 Lofi) | ✅ | ✅ |
+| Play/Pause/Next/Prev/Shuffle | ✅ | ✅ |
+| Volume control | ✅ | ✅ |
+| Smart Ducking | ✅ | ✅ |
+| Persist state | ✅ localStorage | ✅ AsyncStorage |
+| Lock screen controls | N/A (web) | ❌ **Không** (chỉ lesson audio) |
+| Sidebar controls | ✅ | ❌ → In-app widget |
+| Loop single track | ✅ | ✅ |
+
 ---
 
 ## 7. Haptic Feedback 📳
@@ -546,6 +631,7 @@ React Native Linking (built-in) // No extra lib needed
 - [ ] Push notifications setup
 - [ ] **Android notification player** (foreground service MediaSession) (NEW ✨)
 - [ ] Background audio player
+- [ ] **Background Music** (Lofi tracks, in-app controls, smart ducking, persist) (NEW ✨)
 - [ ] **Audio interruption handling** (ducking, pause/resume per source) (NEW ✨)
 - [ ] Haptic feedback integration
 - [ ] Offline download manager

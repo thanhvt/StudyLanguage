@@ -179,6 +179,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Task | Est. | Priority |
 |------|------|----------|
 | Background audio + Lock screen controls | 6h | P1 |
+| **Background Music** (Lofi tracks, in-app controls, smart ducking) | 6h | P1 |
 | Audio interruption handling (ducking/pause/resume) | 4h | P1 |
 | Android notification player (foreground service) | 4h | P1 |
 | Bookmark sentences | 2h | P1 |
