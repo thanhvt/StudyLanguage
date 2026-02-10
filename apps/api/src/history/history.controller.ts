@@ -61,6 +61,8 @@ export class HistoryController {
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'dateFrom', required: false, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'dateTo', required: false, description: 'YYYY-MM-DD' })
   async getHistory(
     @Req() req: any,
     @Query('type') type?: string,
@@ -68,6 +70,8 @@ export class HistoryController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
   ) {
     const userId = req.user.id;
     return this.historyService.getHistory(userId, {
@@ -76,6 +80,8 @@ export class HistoryController {
       search,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
+      dateFrom,
+      dateTo,
     });
   }
 
@@ -88,6 +94,40 @@ export class HistoryController {
   async getStats(@Req() req: any) {
     const userId = req.user.id;
     return this.historyService.getStats(userId);
+  }
+
+  /**
+   * Lấy analytics data cho biểu đồ
+   *
+   * Mục đích: Trả về data aggregated theo period cho charts
+   * @param period - 'week' | 'month' | 'year'
+   * Khi nào sử dụng: GET /history/analytics → History analytics screen
+   */
+  @Get('analytics')
+  @ApiOperation({ summary: 'Lấy analytics data cho biểu đồ' })
+  @ApiQuery({ name: 'period', required: false, enum: ['week', 'month', 'year'] })
+  async getAnalytics(
+    @Req() req: any,
+    @Query('period') period?: string,
+  ) {
+    const userId = req.user.id;
+    return this.historyService.getAnalytics(userId, period);
+  }
+
+  /**
+   * Batch action trên nhiều entries
+   *
+   * Mục đích: Delete/pin/favorite nhiều entries cùng lúc
+   * Khi nào sử dụng: POST /history/batch-action → chọn nhiều rồi thao tác
+   */
+  @Post('batch-action')
+  @ApiOperation({ summary: 'Batch action trên nhiều bản ghi' })
+  async batchAction(
+    @Req() req: any,
+    @Body() body: { ids: string[]; action: 'delete' | 'pin' | 'unpin' | 'favorite' | 'unfavorite' },
+  ) {
+    const userId = req.user.id;
+    return this.historyService.batchAction(userId, body.ids, body.action);
   }
 
   /**
@@ -132,6 +172,19 @@ export class HistoryController {
   ) {
     const userId = req.user.id;
     return this.historyService.updateNotes(userId, id, notes || '');
+  }
+
+  /**
+   * Export session summary
+   *
+   * Mục đích: Tạo text summary cho 1 session để share
+   * Khi nào sử dụng: POST /history/:id/export → Share/Export button
+   */
+  @Post(':id/export')
+  @ApiOperation({ summary: 'Export session summary' })
+  async exportSession(@Req() req: any, @Param('id') id: string) {
+    const userId = req.user.id;
+    return this.historyService.exportSession(userId, id);
   }
 
   /**

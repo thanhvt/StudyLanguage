@@ -1,145 +1,72 @@
-import React from "react";
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import {RootStackParamList} from "./types";
-import MainTabNavigator from "./MainTabNavigator";
-import SettingsScreen from "@/screens/SettingsScreen";
-import ComponentsDemo from "@/screens/ComponentsDemo";
-import CustomScreenHeader from "@/navigation/components/ScreenHeader.tsx";
-import AppButtonDemoScreen from "@/screens/demos/AppButtonDemoScreen";
-import AvatarDemoScreen from "@/screens/demos/AvatarDemoScreen";
-import BadgeDemoScreen from "@/screens/demos/BadgeDemoScreen";
-import ChipDemoScreen from "@/screens/demos/ChipDemoScreen";
-import CheckboxDemoScreen from "@/screens/demos/CheckboxDemoScreen";
-import ProgressBarDemoScreen from "@/screens/demos/ProgressBarDemoScreen";
-import SliderDemoScreen from "@/screens/demos/SliderDemoScreen";
-import SwitchDemoScreen from "@/screens/demos/SwitchDemoScreen";
-import SelectDemoScreen from "@/screens/demos/SelectDemoScreen";
-import AppTextDemoScreen from "@/screens/demos/AppTextDemoScreen";
-import LoginScreen from "@/screens/auth/LoginScreen";
-import RegisterScreen from "@/screens/auth/RegisterScreen";
-import AboutScreen from "@/screens/AboutScreen";
+import React, {useEffect} from 'react';
+import {useAuthStore} from '@/store/useAuthStore';
+import {authService} from '@/services/supabase/auth';
+import AuthStack from './AuthStack';
+import MainStack from './MainTabNavigator';
+import SplashScreen from '@/screens/SplashScreen';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+/**
+ * Mục đích: Navigator gốc quyết định hiển thị Auth hay Main dựa trên trạng thái đăng nhập
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: App.tsx render component này bên trong NavigationContainer
+ *
+ * Luồng:
+ *   1. App khởi động → hiển thị SplashScreen
+ *   2. Kiểm tra Supabase session đã lưu
+ *   3. Nếu có session → setUser, setSession → hiển thị MainStack
+ *   4. Nếu không có session → hiển thị AuthStack (Onboarding/Login)
+ *   5. Lắng nghe onAuthStateChange để cập nhật realtime
+ */
+export default function RootNavigator() {
+  const isInitialized = useAuthStore(state => state.isInitialized);
+  const session = useAuthStore(state => state.session);
+  const setUser = useAuthStore(state => state.setUser);
+  const setSession = useAuthStore(state => state.setSession);
+  const setInitialized = useAuthStore(state => state.setInitialized);
 
-export default function RootStackNavigator() {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        header: (props) => <CustomScreenHeader {...props} />,
-      }}
-    >
-      <Stack.Screen
-        name="Main"
-        component={MainTabNavigator}
-        options={{
-          headerShown: false
-        }}
-      />
-      <Stack.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          title: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="ComponentsDemo"
-        component={ComponentsDemo}
-        options={{
-          title: "Components Demo",
-        }}
-      />
-      <Stack.Screen
-        name="AppButtonDemo"
-        component={AppButtonDemoScreen}
-        options={{
-          title: "Button Component",
-        }}
-      />
-      <Stack.Screen
-        name="AvatarDemo"
-        component={AvatarDemoScreen}
-        options={{
-          title: "Avatar Component",
-        }}
-      />
-      <Stack.Screen
-        name="BadgeDemo"
-        component={BadgeDemoScreen}
-        options={{
-          title: "Badge Component",
-        }}
-      />
-      <Stack.Screen
-        name="ChipDemo"
-        component={ChipDemoScreen}
-        options={{
-          title: "Chip Component",
-        }}
-      />
-      <Stack.Screen
-        name="CheckboxDemo"
-        component={CheckboxDemoScreen}
-        options={{
-          title: "Checkbox Component",
-        }}
-      />
-      <Stack.Screen
-        name="ProgressBarDemo"
-        component={ProgressBarDemoScreen}
-        options={{
-          title: "Progress Bar Component",
-        }}
-      />
-      <Stack.Screen
-        name="SliderDemo"
-        component={SliderDemoScreen}
-        options={{
-          title: "Slider Component",
-        }}
-      />
-      <Stack.Screen
-        name="SwitchDemo"
-        component={SwitchDemoScreen}
-        options={{
-          title: "Switch Component",
-        }}
-      />
-      <Stack.Screen
-        name="SelectDemo"
-        component={SelectDemoScreen}
-        options={{
-          title: "Select Component",
-        }}
-      />
-      <Stack.Screen
-        name="AppTextDemo"
-        component={AppTextDemoScreen}
-        options={{
-          title: "Typography",
-        }}
-      />
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{
-          title: "Login",
-        }}
-      />
-      <Stack.Screen
-        name="Register"
-        component={RegisterScreen}
-        options={{
-          title: "Register",
-        }}
-      />
-      <Stack.Screen
-        name="About"
-        component={AboutScreen}
-        options={{
-          title: "About",
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
+  useEffect(() => {
+    // Kiểm tra session đã lưu khi app khởi động
+    const initAuth = async () => {
+      try {
+        console.log('🔐 [Auth] Đang kiểm tra session...');
+        const existingSession = await authService.getSession();
+
+        if (existingSession) {
+          console.log('✅ [Auth] Đã tìm thấy session, auto-login');
+          setUser(existingSession.user);
+          setSession(existingSession);
+        } else {
+          console.log('ℹ️ [Auth] Không có session, yêu cầu đăng nhập');
+        }
+      } catch (error) {
+        console.error('❌ [Auth] Lỗi kiểm tra session:', error);
+      } finally {
+        setInitialized();
+      }
+    };
+
+    initAuth();
+
+    // Lắng nghe thay đổi auth state (login/logout/token refresh)
+    const {data: subscription} = authService.onAuthStateChange(
+      (newSession, newUser) => {
+        console.log('🔄 [Auth] State thay đổi:', newUser?.email ?? 'null');
+        setSession(newSession);
+        setUser(newUser);
+      },
+    );
+
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, [setUser, setSession, setInitialized]);
+
+  // Hiển thị Splash Screen trong khi kiểm tra auth
+  if (!isInitialized) {
+    return <SplashScreen />;
+  }
+
+  // Conditional render: Auth hoặc Main
+  return session ? <MainStack /> : <AuthStack />;
+}

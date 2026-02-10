@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -10,6 +10,8 @@ export interface HistoryFilters {
   search?: string;
   page?: number;
   limit?: number;
+  dateFrom?: string; // ISO date string (YYYY-MM-DD)
+  dateTo?: string; // ISO date string (YYYY-MM-DD)
 }
 
 /**
@@ -54,6 +56,7 @@ export interface HistoryEntry {
  */
 @Injectable()
 export class HistoryService {
+  private readonly logger = new Logger(HistoryService.name);
   private supabase: SupabaseClient;
 
   constructor() {
@@ -72,7 +75,7 @@ export class HistoryService {
    * @returns Danh sách entries và metadata phân trang
    */
   async getHistory(userId: string, filters: HistoryFilters) {
-    const { type, status, search, page = 1, limit = 20 } = filters;
+    const { type, status, search, page = 1, limit = 20, dateFrom, dateTo } = filters;
     const offset = (page - 1) * limit;
 
     // Build query
@@ -108,6 +111,14 @@ export class HistoryService {
     // Search theo topic hoặc keywords
     if (search) {
       query = query.or(`topic.ilike.%${search}%,keywords.ilike.%${search}%`);
+    }
+
+    // Filter theo date range
+    if (dateFrom) {
+      query = query.gte('created_at', `${dateFrom}T00:00:00.000Z`);
+    }
+    if (dateTo) {
+      query = query.lte('created_at', `${dateTo}T23:59:59.999Z`);
     }
 
     // Phân trang
@@ -447,6 +458,186 @@ export class HistoryService {
       streak,
       heatmapData,
       weeklyData,
+    };
+  }
+
+  /**
+   * Batch action trên nhiều entries
+   *
+   * Mục đích: Thực hiện cùng 1 hành động trên nhiều bản ghi
+   * @param userId - ID của user hiện tại
+   * @param ids - Danh sách IDs
+   * @param action - Hành động: 'delete' | 'pin' | 'unpin' | 'favorite' | 'unfavorite'
+   * @returns Kết quả batch action
+   * Khi nào sử dụng: POST /history/batch-action → chọn nhiều items rồi xóa/pin
+   */
+  async batchAction(
+    userId: string,
+    ids: string[],
+    action: 'delete' | 'pin' | 'unpin' | 'favorite' | 'unfavorite',
+  ) {
+    let updateData: Record<string, any> = {};
+    let message = '';
+
+    switch (action) {
+      case 'delete':
+        updateData = { deleted_at: new Date().toISOString() };
+        message = `Đã xóa ${ids.length} bản ghi`;
+        break;
+      case 'pin':
+        updateData = { is_pinned: true };
+        message = `Đã ghim ${ids.length} bản ghi`;
+        break;
+      case 'unpin':
+        updateData = { is_pinned: false };
+        message = `Đã bỏ ghim ${ids.length} bản ghi`;
+        break;
+      case 'favorite':
+        updateData = { is_favorite: true };
+        message = `Đã yêu thích ${ids.length} bản ghi`;
+        break;
+      case 'unfavorite':
+        updateData = { is_favorite: false };
+        message = `Đã bỏ yêu thích ${ids.length} bản ghi`;
+        break;
+    }
+
+    const { error } = await this.supabase
+      .from('lessons')
+      .update(updateData)
+      .in('id', ids)
+      .eq('user_id', userId);
+
+    if (error) {
+      this.logger.error('[HistoryService] Lỗi batch action:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      affected: ids.length,
+      message,
+    };
+  }
+
+  /**
+   * Lấy analytics data cho charts
+   *
+   * Mục đích: Aggregate data theo thời gian cho biểu đồ
+   * @param userId - ID của user hiện tại
+   * @param period - 'week' | 'month' | 'year'
+   * @returns Analytics data cho charts
+   * Khi nào sử dụng: GET /history/analytics → History analytics screen
+   */
+  async getAnalytics(userId: string, period: string = 'month') {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (period) {
+      case 'week':
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case 'year':
+        startDate = new Date(now);
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        break;
+      case 'month':
+      default:
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+    }
+
+    const { data: lessons, error } = await this.supabase
+      .from('lessons')
+      .select('type, duration_minutes, created_at')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      this.logger.error('[HistoryService] Lỗi lấy analytics:', error);
+      throw error;
+    }
+
+    const data = lessons || [];
+
+    // Phân bố theo loại bài
+    const typeDistribution = {
+      listening: data.filter((l: any) => l.type === 'listening').length,
+      speaking: data.filter((l: any) => l.type === 'speaking').length,
+      reading: data.filter((l: any) => l.type === 'reading').length,
+    };
+
+    // Tổng thời gian
+    const totalMinutes = data.reduce(
+      (sum: number, l: any) => sum + (l.duration_minutes || 0),
+      0,
+    );
+
+    // Aggregate theo ngày
+    const dailyData: Record<string, { count: number; minutes: number }> = {};
+    for (const lesson of data) {
+      const date = new Date(lesson.created_at).toISOString().split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { count: 0, minutes: 0 };
+      }
+      dailyData[date].count++;
+      dailyData[date].minutes += (lesson as any).duration_minutes || 0;
+    }
+
+    return {
+      success: true,
+      analytics: {
+        period,
+        totalSessions: data.length,
+        totalMinutes,
+        avgMinutesPerDay: Math.round(totalMinutes / Math.max(Object.keys(dailyData).length, 1)),
+        typeDistribution,
+        dailyData: Object.entries(dailyData).map(([date, val]) => ({
+          date,
+          ...val,
+        })),
+      },
+    };
+  }
+
+  /**
+   * Export session summary dạng text
+   *
+   * Mục đích: Tạo summary text cho 1 session để share/export
+   * @param userId - ID của user hiện tại
+   * @param id - ID của session
+   * @returns Text summary
+   * Khi nào sử dụng: POST /history/:id/export → Export/Share
+   */
+  async exportSession(userId: string, id: string) {
+    const entry = await this.getHistoryEntry(userId, id);
+
+    // Tạo summary text
+    const lines: string[] = [
+      `📚 StudyLanguage - Bản ghi học tập`,
+      ``,
+      `📌 Chủ đề: ${entry.topic}`,
+      `📝 Loại: ${entry.type}`,
+      `⏱ Thời lượng: ${entry.durationMinutes || 0} phút`,
+      `📅 Ngày học: ${new Date(entry.createdAt).toLocaleDateString('vi-VN')}`,
+    ];
+
+    if (entry.keywords) {
+      lines.push(`🔑 Từ khóa: ${entry.keywords}`);
+    }
+
+    if (entry.userNotes) {
+      lines.push(``, `📝 Ghi chú: ${entry.userNotes}`);
+    }
+
+    return {
+      success: true,
+      summary: lines.join('\n'),
+      entry,
     };
   }
 }

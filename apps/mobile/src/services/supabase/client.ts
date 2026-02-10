@@ -1,5 +1,6 @@
 import 'react-native-url-polyfill/auto';
-import {createClient} from '@supabase/supabase-js';
+import {AppState} from 'react-native';
+import {createClient, processLock} from '@supabase/supabase-js';
 import {MMKV} from 'react-native-mmkv';
 import Config from 'react-native-config';
 
@@ -40,5 +41,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // Không cần cho React Native
+    lock: processLock, // Tránh race condition khi nhiều process cùng refresh token
   },
+});
+
+// ===========================
+// Auto-refresh token theo AppState
+// ===========================
+// Khi app ở foreground → liên tục refresh session token
+// Khi app ở background → tắt refresh để tiết kiệm tài nguyên
+// Tránh bị logout bất ngờ khi token hết hạn
+AppState.addEventListener('change', state => {
+  if (state === 'active') {
+    supabase.auth.startAutoRefresh();
+  } else {
+    supabase.auth.stopAutoRefresh();
+  }
 });

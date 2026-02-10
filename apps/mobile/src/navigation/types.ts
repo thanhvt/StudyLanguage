@@ -1,46 +1,52 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {NavigatorScreenParams} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-// Root Stack Navigator
-export type RootStackParamList = {
-  Main?: NavigatorScreenParams<MainTabParamList>;
-  Settings: undefined;
-  ComponentsDemo: undefined;
-  AvatarDemo: undefined;
-  BadgeDemo: undefined;
-  ChipDemo: undefined;
-  CheckboxDemo: undefined;
-  ProgressBarDemo: undefined;
-  AppButtonDemo: undefined;
-  SliderDemo: undefined;
-  SwitchDemo: undefined;
-  SelectDemo: undefined;
-  AppTextDemo: undefined;
+// ===========================
+// Auth Stack (chưa đăng nhập)
+// ===========================
+export type AuthStackParamList = {
+  Onboarding: undefined;
   Login: undefined;
-  Register: undefined;
-  About: undefined;
 };
 
-// Main Tab Navigator
+// ===========================
+// Main Tab Navigator (đã đăng nhập)
+// ===========================
 export type MainTabParamList = {
-  HOME: undefined;
-  MORE: undefined;
+  Home: undefined;
+  History: undefined;
+  Profile: undefined;
 };
 
-// Screen props types
-export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
-  RootStackParamList,
-  T
->;
+// ===========================
+// App Stack (màn hình con bên trong Main)
+// ===========================
+export type AppStackParamList = {
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  Settings: undefined;
+  About: undefined;
+  Listening: undefined;
+  // Demo screens (giữ cho development)
+  ComponentsDemo: undefined;
+};
 
-export type MainTabScreenProps<T extends keyof MainTabParamList> = NativeStackScreenProps<
-  MainTabParamList,
-  T
->;
+// ===========================
+// Screen Props Types
+// ===========================
+export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
+  NativeStackScreenProps<AuthStackParamList, T>;
 
-// Navigation prop types
+export type MainTabScreenProps<T extends keyof MainTabParamList> =
+  NativeStackScreenProps<MainTabParamList, T>;
+
+export type AppStackScreenProps<T extends keyof AppStackParamList> =
+  NativeStackScreenProps<AppStackParamList, T>;
+
+// ===========================
+// Global Navigation Types
+// ===========================
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends AppStackParamList {}
   }
 }

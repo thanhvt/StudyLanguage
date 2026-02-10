@@ -5,7 +5,7 @@ import {StatusBar, View} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {useAppStore} from '@/store/useAppStore';
-import RootStackNavigator from '@/navigation/RootStackNavigator';
+import RootNavigator from '@/navigation/RootStackNavigator';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {useColors} from '@/hooks/useColors';
 import InsetsHelper from '@/components/helpers/InsetsHelper';
@@ -56,7 +56,7 @@ const AppContent: React.FC = () => {
                 <ToastProvider>
                   <InsetsHelper />
                   <LanguageHelper />
-                  <RootStackNavigator />
+                  <RootNavigator />
                 </ToastProvider>
               </DialogProvider>
             </SafeAreaProvider>

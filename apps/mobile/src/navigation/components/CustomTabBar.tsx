@@ -1,49 +1,58 @@
 import React from 'react';
-import {Dimensions, Text, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
-import {useColors} from '@/hooks/useColors.ts';
-import {Home, Menu} from 'lucide-react-native';
-import {AppText} from "@/components/ui";
-import {useTranslation} from "react-i18next";
+import {useColors} from '@/hooks/useColors';
+import {Home, Clock, User} from 'lucide-react-native';
+import {AppText} from '@/components/ui';
+import {useTranslation} from 'react-i18next';
 
-const {width: screenWidth} = Dimensions.get('window');
-
-interface TabIconProps {
-  name: string;
-  color: string;
-  size: number;
-}
-
-const TabIcon: React.FC<TabIconProps> = ({name, color, size}) => {
+/**
+ * Mục đích: Lấy icon tương ứng với từng tab
+ * Tham số đầu vào: name (tên tab), color (màu icon), size (kích thước)
+ * Tham số đầu ra: JSX.Element (icon component)
+ * Khi nào sử dụng: Render icon cho mỗi tab trong CustomTabBar
+ */
+const TabIcon: React.FC<{name: string; color: string; size: number}> = ({
+  name,
+  color,
+  size,
+}) => {
   switch (name) {
-    case 'HOME':
-      return <Home size={size} color={color} fill={color}/>;
-    case 'MORE':
-      return <Menu size={size} color={color} fill={color}/>;
+    case 'Home':
+      return <Home size={size} color={color} />;
+    case 'History':
+      return <Clock size={size} color={color} />;
+    case 'Profile':
+      return <User size={size} color={color} />;
     default:
-      return <Home size={size} color={color} fill={color}/>;
+      return <Home size={size} color={color} />;
   }
 };
 
+/**
+ * Mục đích: Custom tab bar cho bottom navigation
+ * Tham số đầu vào: BottomTabBarProps (state, descriptors, navigation)
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Được truyền vào Tab.Navigator qua tabBar prop
+ */
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
-                                                     state,
-                                                     descriptors,
-                                                     navigation
-                                                   }) => {
+  state,
+  descriptors,
+  navigation,
+}) => {
   const colors = useColors();
   const {t} = useTranslation();
 
   return (
-    <View
-      className={'bg-background flex-row py-2 border-t border-neutrals900 pb-safe-offset-0'}
-    >
+    <View className="bg-background flex-row py-2 border-t border-neutrals900 pb-safe-offset-0">
       {state.routes.map((route, index) => {
         const {options} = descriptors[route.key];
-        const label = options.tabBarLabel !== undefined
-          ? options.tabBarLabel
-          : options.title !== undefined
-            ? options.title
-            : route.name;
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+              ? options.title
+              : route.name;
 
         const isFocused = state.index === index;
 
@@ -66,18 +75,13 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           });
         };
 
-        const iconColor = isFocused
-          ? colors.primary
-          : colors.neutrals400;
-
-        const labelColor = isFocused
-          ? colors.primary
-          : colors.neutrals400;
+        const iconColor = isFocused ? colors.primary : colors.neutrals400;
+        const labelColor = isFocused ? colors.primary : colors.neutrals400;
 
         return (
           <TouchableOpacity
             key={route.key}
-            activeOpacity={.9}
+            activeOpacity={0.9}
             accessibilityRole="button"
             accessibilityState={isFocused ? {selected: true} : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -91,20 +95,14 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
               paddingVertical: 8,
               borderRadius: 12,
               marginHorizontal: 4,
-            }}
-          >
+            }}>
             <View
               style={{
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 4,
-              }}
-            >
-              <TabIcon
-                name={route.name}
-                color={iconColor}
-                size={24}
-              />
+              }}>
+              <TabIcon name={route.name} color={iconColor} size={24} />
             </View>
 
             <AppText
@@ -113,8 +111,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 fontSize: 12,
                 fontWeight: isFocused ? '600' : '400',
                 textAlign: 'center',
-              }}
-            >
+              }}>
               {t(label as string)}
             </AppText>
           </TouchableOpacity>

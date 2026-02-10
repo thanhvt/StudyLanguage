@@ -157,11 +157,10 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 | Feature | Status |
 |---------|--------|
-| ✅ Google Login | |
-| ✅ Listening - Generate & Play | |
+| ✅ Google Login | ✅ Done |
+| ✅ Listening - Generate & Play | ✅ Done |
 | ✅ Speaking - Record & Feedback | |
 | ✅ Reading - Article & Quiz | |
-
 | ✅ History - Timeline view | |
 | ✅ Profile - Basic info | |
 | ✅ Light/Dark mode | |

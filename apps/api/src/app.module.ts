@@ -17,6 +17,12 @@ import { LoggingModule } from './common/logging/logging.module';
 import { ConversationGeneratorModule } from './conversation-generator/conversation-generator.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { UserModule } from './user/user.module';
+import { DictionaryModule } from './dictionary/dictionary.module';
+import { ReadingModule } from './reading/reading.module';
+import { SpeakingModule } from './speaking/speaking.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SyncModule } from './sync/sync.module';
 
 @Module({
   imports: [
@@ -47,6 +53,12 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     CustomScenariosModule, // Module tính năng Custom Scenarios
     FeedbackModule, // Module tính năng Góp ý/Phản hồi
     ConversationGeneratorModule, // Module sinh hội thoại tiếng Anh với Groq API
+    UserModule, // Module quản lý user: profile, gamification, settings
+    DictionaryModule, // Module tra từ điển (Free Dictionary API)
+    ReadingModule, // Module reading: generate articles, saved words
+    SpeakingModule, // Module speaking: tongue twisters, stats, voice clone
+    NotificationsModule, // Module push notifications
+    SyncModule, // Module offline sync
   ],
   controllers: [AppController],
   providers: [
