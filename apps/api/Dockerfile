@@ -17,7 +17,6 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/web-v2/package.json ./apps/web-v2/
 COPY packages/shared/package.json ./packages/shared/
 
-# Tắt husky trong Docker
 ENV HUSKY=0
 
 # Cài đặt dependencies - chỉ cho api workspace
