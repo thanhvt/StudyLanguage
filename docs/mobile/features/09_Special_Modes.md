@@ -374,10 +374,10 @@ Chế độ khi điện thoại trong túi/không nhìn màn hình, chỉ dùng 
 ### 7.1 Libraries
 
 ```typescript
-expo-sensors              // Motion detection
-expo-location             // GPS speed
+react-native-sensors      // Motion detection (gyro, accel)
+react-native-geolocation-service // GPS speed
 @react-native-community/blur // Night mode overlay
-expo-haptics              // Gesture feedback
+react-native-haptic-feedback // Gesture feedback
 ```
 
 ### 7.2 Mode Detection Logic

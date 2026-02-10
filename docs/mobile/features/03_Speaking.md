@@ -15,8 +15,25 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | **Practice Mode** | Đọc theo mẫu, AI chấm điểm | Luyện từng câu |
-| **Topic Practice** | Tập theo chủ đề | Học từ vựng theo ngữ cảnh |
+| **Conversation Coach** | AI coach hội thoại realtime (NEW ✨) | Luyện giao tiếp tự nhiên |
 | **Roleplay Mode** | Đóng vai tình huống | Advanced practice |
+
+### 1.2 AI Conversation Coach (NEW ✨)
+
+Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc gõ, AI phản hồi realtime với feedback phát âm.
+
+| Feature | Description |
+|---------|-------------|
+| **Voice Input** | Hold-to-record, gửi audio để transcribe |
+| **Text Input** | Gõ text khi không tiện nói |
+| **Real-time Transcription** | STT via `/ai/transcribe` |
+| **AI Response** | AI tiếp tục hội thoại qua `/conversation-generator/continue-conversation` |
+| **Pronunciation Alert** | Inline feedback khi phát âm sai |
+| **Voice Visualizer** | Waveform animation khi đang ghi âm |
+| **Session Transcript** | Scrollable conversation history |
+| **Session Timer** | Countdown theo duration đã chọn, auto-end |
+| **Feedback Mode** | Beginner / Intermediate / Advanced |
+| **Save to History** | Tự động lưu khi kết thúc session |
 
 ---
 
@@ -36,7 +53,29 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Roleplay Flow
+### 2.2 Conversation Coach Flow (NEW ✨)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│ [Setup Screen]  →  [AI Greeting]  →  [Conversation Loop]   │
+│  Topic, Duration     (First msg)       │                    │
+│  Feedback Mode                    [Voice/Text Input]        │
+│                                        │                    │
+│                                   [AI Transcribe]           │
+│                                        │                    │
+│                                   [AI Response]             │
+│                                        │                    │
+│                                   [Pronunciation Alert?]    │
+│                                        │                    │
+│                                   [Loop until timer ends]   │
+│                                        │                    │
+│                                   [Save to History]         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2.3 Roleplay Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -221,38 +260,113 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 └─────────────────────────────────┘
 ```
 
-### 3.6 Roleplay - Scenario Selection
+### 3.6 Conversation Coach - Setup (NEW ✨)
 
 ```
 ┌─────────────────────────────────┐
-│  ← Conversation Roleplay    ⋮  │
+│  ← Conversation Coach       ⋮  │
 ├─────────────────────────────────┤
 │                                 │
-│  Chọn tình huống                │
+│  📝 Chủ đề                      │
+│  ┌─────────────────────────┐   │
+│  │ Tình huống hằng ngày   ▼│   │
+│  └─────────────────────────┘   │
+│                                 │
+│  ⏱️ Thời lượng                  │
+│  ┌─────────────────────────┐   │
+│  │  3   5  (10)  15  20 min│   │
+│  └─────────────────────────┘   │
+│                                 │
+│  📊 Mức độ phản hồi             │
+│  ┌─────────────────────────┐   │
+│  │ ○ Beginner              │   │
+│  │   (Sửa mọi lỗi)        │   │
+│  │ ● Intermediate          │   │
+│  │   (Sửa lỗi quan trọng) │   │
+│  │ ○ Advanced              │   │
+│  │   (Chỉ sửa lỗi nghiêm  │   │
+│  │    trọng)               │   │
+│  └─────────────────────────┘   │
 │                                 │
 │  ┌─────────────────────────┐   │
-│  │  🍽️ Restaurant          │   │
-│  │  Order food & drinks    │   │
-│  │  ○ Easy ● Medium ○ Hard │   │
+│  │    🗣️ Bắt đầu nói       │   │
 │  └─────────────────────────┘   │
+└─────────────────────────────────┘
+```
+
+### 3.7 Conversation Coach - Session (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Conversation       ⏱️ 08:30  │
+├─────────────────────────────────┤
+│                                 │
+│  👤 AI:                         │
 │  ┌─────────────────────────┐   │
-│  │  ✈️ Airport             │   │
-│  │  Check-in & boarding    │   │
-│  │  ○ Easy ● Medium ○ Hard │   │
+│  │ Hi! Let me ask you      │   │
+│  │ about your daily        │   │
+│  │ routine. What do you    │   │
+│  │ usually do in the       │   │
+│  │ morning?            🔊  │   │
 │  └─────────────────────────┘   │
+│                                 │
+│                 👤 You:         │
 │  ┌─────────────────────────┐   │
-│  │  🏨 Hotel               │   │
-│  │  Booking & check-in     │   │
-│  │  ○ Easy ● Medium ○ Hard │   │
+│  │ I usually wake up at    │   │
+│  │ 7 o'clock and have      │   │
+│  │ breakfast.              │   │
 │  └─────────────────────────┘   │
+│                                 │
+│  ⚠️ Pronunciation tip:         │
 │  ┌─────────────────────────┐   │
-│  │  💼 Job Interview       │   │
-│  │  Interview preparation  │   │
-│  │  ○ Easy ● Medium ○ Hard │   │
+│  │ "usually" → /ˈjuːʒuəli/ │   │
+│  │ Nhấn âm đầu "YOO"       │   │
 │  └─────────────────────────┘   │
+│                                 │
+│  👤 AI:                         │
+│  ┌─────────────────────────┐   │
+│  │ That sounds nice! Do    │   │
+│  │ you prefer tea or       │   │
+│  │ coffee?             🔊  │   │
+│  └─────────────────────────┘   │
+│                                 │
+├─────────────────────────────────┤
+│  [🎤 Hold]  [⌨️ Text]   [⏹️]   │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Timer: Countdown ở header, auto-end khi hết
+- AI bubbles: Left-aligned, có nút 🔊 phát audio
+- User bubbles: Right-aligned
+- Pronunciation Alert: Inline card giữa messages
+- Bottom bar: Voice (hold-to-record), Text toggle, End session
+- Voice Visualizer: Hiện khi đang recording (thay thế bottom bar)
+
+### 3.8 Conversation Coach - Voice Recording (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Conversation       ⏱️ 08:15  │
+├─────────────────────────────────┤
+│                                 │
+│     [Chat messages above]       │
+│                                 │
+├─────────────────────────────────┤
+│                                 │
+│     🌊🌊🌊🌊🌊🌊🌊🌊             │
+│     [Voice Visualizer]          │
+│                                 │
+│           🔴                    │
+│      Đang ghi âm...             │
+│      ⏱️ 0:03                    │
+│                                 │
+│     [Thả để gửi]                │
 │                                 │
 └─────────────────────────────────┘
 ```
+
+### 3.9 Roleplay - Scenario Selection
 
 ### 3.7 Roleplay - Conversation
 
@@ -333,10 +447,10 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 ### 5.1 Libraries
 
 ```typescript
-expo-av                    // Audio recording
-expo-haptics               // Haptic feedback
-react-native-reanimated   // Waveform animation
-@tanstack/react-query     // AI feedback caching
+react-native-audio-recorder-player // Robust audio recording
+react-native-haptic-feedback // Haptic feedback
+react-native-reanimated    // Waveform animation
+@tanstack/react-query      // AI feedback caching
 ```
 
 ### 5.2 State Structure
@@ -348,7 +462,7 @@ interface SpeakingState {
     topic: string;
     sentences: Sentence[];
     currentIndex: number;
-    mode: 'practice' | 'roleplay';
+    mode: 'practice' | 'coach' | 'roleplay';
   };
   
   // Recording
@@ -373,6 +487,57 @@ interface WordScore {
   phonemes?: string;
   issues?: string[];
 }
+```
+
+### 5.3 Conversation Coach State (NEW ✨)
+
+```typescript
+interface ConversationCoachState {
+  // Setup
+  setup: {
+    topic: string;
+    duration: number; // minutes: 3, 5, 10, 15, 20
+    feedbackMode: 'beginner' | 'intermediate' | 'advanced';
+  };
+  
+  // Session
+  session: {
+    isActive: boolean;
+    messages: ConversationMessage[];
+    remainingTime: number; // seconds
+    inputMode: 'voice' | 'text';
+  };
+  
+  // AI
+  ai: {
+    isThinking: boolean;
+    isTranscribing: boolean;
+  };
+}
+
+interface ConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  audioUrl?: string;
+  timestamp: Date;
+  pronunciationFeedback?: PronunciationFeedback;
+}
+
+interface PronunciationFeedback {
+  word: string;
+  ipa: string;
+  tip: string;
+}
+```
+
+### 5.4 API Endpoints (NEW ✨)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/ai/transcribe` | POST | Chuyển audio → text (STT) |
+| `/conversation-generator/continue-conversation` | POST | AI tiếp tục hội thoại |
+| `/ai/generate-conversation-audio` | POST | Generate audio cho AI response |
 ```
 
 ### 5.3 Recording Flow
@@ -427,11 +592,21 @@ async function handleRecordStop() {
 - [ ] Topic selection screen
 - [ ] Practice sentence display
 - [ ] Hold-to-record button
-- [ ] Audio recording with Expo AV
+- [ ] Audio recording with react-native-audio-recorder-player
 - [ ] Send to backend for AI analysis
 - [ ] Display feedback with scores
 
 ### Enhanced Phase
+- [ ] **Conversation Coach setup screen** (NEW ✨)
+- [ ] **Conversation Coach session UI** (NEW ✨)
+- [ ] **Voice/Text input toggle** (NEW ✨)
+- [ ] **Real-time transcription (STT)** (NEW ✨)
+- [ ] **AI response generation** (NEW ✨)
+- [ ] **Pronunciation Alert inline** (NEW ✨)
+- [ ] **Voice Visualizer** (NEW ✨)
+- [ ] **Session Transcript** (NEW ✨)
+- [ ] **Session Timer with auto-end** (NEW ✨)
+- [ ] **Save coach session to History** (NEW ✨)
 - [ ] Waveform visualization
 - [ ] Phoneme breakdown view
 - [ ] Waveform comparison

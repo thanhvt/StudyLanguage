@@ -318,7 +318,7 @@ Module luyện viết với AI correction, tối ưu cho mobile với voice inpu
 ### 5.1 Libraries
 
 ```typescript
-expo-speech                // Voice input
+react-native-tts           // Voice input (TTS)
 @react-native-community/async-storage // Auto-save
 react-native-keyboard-aware-scroll-view // Keyboard handling
 ```

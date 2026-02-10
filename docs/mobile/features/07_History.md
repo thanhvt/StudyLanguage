@@ -21,6 +21,20 @@ Module lịch sử học tập với timeline view, filter theo skill, và sync 
 | **Recent Lessons Panel** | Quick access từ skill pages (NEW ✨) |
 | **Session Restoration** | Resume session từ audio player (NEW ✨) |
 | **Persist Audio Data** | Lưu audio URL để replay không cần regenerate (NEW ✨) |
+| **Analytics Dashboard** | Stats cards, heatmap, charts (NEW ✨) |
+| **AI Insights** | Phân tích thói quen học tập (NEW ✨) |
+
+### 1.2 Analytics Features (NEW ✨)
+
+Bổ sung các biểu đồ và thống kê chi tiết như web-v2:
+
+| Feature | Description |
+|---------|-------------|
+| **Stats Cards** | Tổng quan hôm nay, tuần này, streak, tổng giờ học |
+| **Weekly Activity** | Bar chart số phút học trong 7 ngày |
+| **Learning Heatmap** | Calendar view hiển thị tần suất học (tương tự GitHub) |
+| **AI Insights** | Tips cá nhân hóa dựa trên dữ liệu học tập |
+| **Pinned Items** | Ghim các session quan trọng lên đầu |
 
 ### 1.2 Recent Lessons Panel (NEW ✨)
 
@@ -117,7 +131,7 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 - Relative time display (Vừa xong, X phút trước, X giờ trước, X ngày trước)
 - Footer link → Navigate to History page with filter
 
-### 3.1 History Timeline
+### 3.1 History Timeline & Analytics (Updated)
 
 ```
 ┌─────────────────────────────────┐
@@ -126,48 +140,50 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 │  [All] [🎧] [🗣️] [📖] [✍️]    │
 ├─────────────────────────────────┤
 │                                 │
-│  ─── Hôm nay ───────────────── │
+│  📊 Tổng quan                   │
+│  ┌───────────────────────────┐ │
+│  │ 🔥 12   │ ⏱️ 3.5h │ 📚 42 │ │
+│  │ Streak  │ Total  │ Lesson│ │
+│  └───────────────────────────┘ │
 │                                 │
+│  📅 Hoạt động tuần này          │
+│  ┌───────────────────────────┐ │
+│  │       ▄             ▄     │ │
+│  │   ▄   █   ▄     ▄   █     │ │
+│  │   █   █   █  ▄  █   █     │ │
+│  │ M T W T F S S │ │
+│  └───────────────────────────┘ │
+│                                 │
+│  🧩 Learning Heatmap            │
+│  ┌───────────────────────────┐ │
+│  │ ⬜🟩🟩⬜🟩🟩🟩 (Jan)      │ │
+│  │ 🟩🟩🟩🟩⬜🟩🟩 (Feb)      │ │
+│  └───────────────────────────┘ │
+│                                 │
+│  💡 AI Insight                  │
+│  ┌───────────────────────────┐ │
+│  │ Bạn học tốt nhất vào buổi │ │
+│  │ sáng (06:00 - 08:00). Hãy │ │
+│  │ duy trì thói quen này!    │ │
+│  └───────────────────────────┘ │
+│                                 │
+│  📌 Pinned                      │
 │  ┌─────────────────────────┐   │
 │  │ 🎧 Coffee Shop Talk ⭐  │   │
 │  │ 09:30 • 15 min • 80%    │   │
-│  │ Podcast mode            │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ 🗣️ Tech Pronunciation   │   │
-│  │ 10:15 • 8 min • 85/100  │   │
-│  │ 12 sentences practiced  │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ 📖 Climate Change       │   │
-│  │ 14:30 • 5 min • Quiz 4/5│   │
-│  │ 384 words read          │   │
 │  └─────────────────────────┘   │
 │                                 │
-│  ─── Hôm qua ───────────────── │
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │ 🎧 Airport Dialogue     │   │
-│  │ 08:00 • 20 min • 92%    │   │
-│  │ Interactive mode        │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ ✍️ Daily Journal         │   │
-│  │ 21:00 • 10 min • 78/100 │   │
-│  │ 156 words written       │   │
-│  └─────────────────────────┘   │
-│                                 │
-│     [Load more...]              │
-│                                 │
+│  ─── Hôm nay ───────────────── │
+│  (Session List continues...)    │
 └─────────────────────────────────┘
 ```
 
 **Specs:**
-- Filter tabs: All, Listening, Speaking, Reading, Writing
-- Date headers: Today, Yesterday, Date (26/01/2026)
-- Session card: Icon, title, time, duration, score
-- Star: Favorites/bookmarked
-- Infinite scroll with pagination
+- Stats Cards: Horizontal scroll or Grid
+- Charts: Recharts or Victory Native
+- Heatmap: Calendar contribution graph
+- AI Insight: Dynamic text box with icon
+- Pinned: Section riêng trên cùng list
 
 ### 3.2 Filtered View (Listening Only)
 
@@ -467,6 +483,16 @@ interface Session {
   data: SessionData;
   isFavorite: boolean;
   syncStatus: 'synced' | 'pending' | 'error';
+  isPinned?: boolean; // NEW ✨
+}
+
+interface UserStats {
+  streak: number;
+  totalHours: number;
+  totalLessons: number;
+  weeklyActivity: { day: string; minutes: number }[];
+  heatmapData: { date: string; count: number }[];
+  aiInsight: string;
 }
 ```
 
@@ -502,6 +528,10 @@ interface Session {
 - [ ] **Session restoration from audio player** (NEW ✨)
 - [ ] **Persist audio URL in history** (NEW ✨)
 - [ ] **Navigate to skill page from player** (NEW ✨)
+- [ ] **Stats cards implementation** (NEW ✨)
+- [ ] **Weekly activity chart** (NEW ✨)
+- [ ] **Learning heatmap** (NEW ✨)
+- [ ] **Pinned sessions** (NEW ✨)
 
 ---
 

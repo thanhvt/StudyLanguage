@@ -46,7 +46,7 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 │                      └── Google UI ──────┘                  │
 │                                                             │
 │  Technical:                                                 │
-│  - Expo AuthSession + Supabase Auth                         │
+│  - @react-native-google-signin + Supabase Auth              │
 │  - Token → SecureStore                                      │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -232,9 +232,9 @@ Hệ thống xác thực cho mobile app với trọng tâm vào trải nghiệm 
 
 ```typescript
 // Required packages
-expo-auth-session        // OAuth flows
-expo-secure-store        // Token storage
-expo-local-authentication // Biometric
+@react-native-google-signin/google-signin // OAuth flows
+react-native-keychain    // Token storage (Keychain/Keystore)
+react-native-biometrics  // Biometric (FaceID/TouchID)
 @supabase/supabase-js    // Auth provider
 ```
 
@@ -304,7 +304,7 @@ interface AuthState {
 ## 7. Implementation Tasks
 
 ### MVP Phase
-- [ ] Setup Expo AuthSession
+- [ ] Setup @react-native-google-signin
 - [ ] Implement Google OAuth flow
 - [ ] Create auth screens (Splash, Onboarding, Login)
 - [ ] Token storage with SecureStore

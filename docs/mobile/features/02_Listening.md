@@ -65,6 +65,18 @@ Cải tiến Radio Mode với nhiều tính năng mới:
 | **Highlight Subcategory** | Tự động highlight subcategory chứa topic đang chọn |
 | **Two-line Topic Display** | Recent lessons hiển thị topic trên 2 dòng cho dễ đọc |
 
+### 1.6 TTS Provider Settings (NEW ✨)
+
+Cấu hình nâng cao cho giọng đọc AI (Web-v2 parity):
+
+| Feature | Description |
+|---------|-------------|
+| **Provider** | Chọn OpenAI (default) hoặc Azure (advanced) |
+| **Voice** | Chọn giọng đọc theo provider (Alloy, Nova / Jenny, Guy...) |
+| **Emotion** | Cảm xúc giọng đọc (Azure only: Cheerful, Sad, Angry...) |
+| **Multi-talker** | Chế độ 2 người nói (Azure only) |
+| **Advanced** | Pitch, Rate, Volume tuning |
+
 ---
 
 ## 2. User Flows
@@ -393,6 +405,53 @@ Cải tiến Radio Mode với nhiều tính năng mới:
 
 ---
 
+## 3.12 TTS Settings Panel (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← TTS Settings             💾  │
+├─────────────────────────────────┤
+│                                 │
+│  🤖 Provider                    │
+│  ┌─────────────────────────┐   │
+│  │ [OpenAI]    Azure       │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🗣️ Voice                       │
+│  ┌─────────────────────────┐   │
+│  │ Alloy (Neural)        ▼ │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🎭 Emotion (Azure only)        │
+│  ┌─────────────────────────┐   │
+│  │ Cheerful              ▼ │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  👥 Multi-talker                │
+│  ┌─────────────────────────┐   │
+│  │ [ON] Pair: Male/Female  │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🎚️ Fine Tuning                 │
+│  Speed:  0.5 ────●──── 2.0      │
+│  Pitch:  Low ────●──── High     │
+│  Volume: Low ────────● Max      │
+│                                 │
+│  🎲 Randomize                   │
+│  ☑️ Random Voice                │
+│  ☑️ Random Emotion              │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Provider toggle: OpenAI / Azure
+- Dynamic dropdowns: Load voices based on provider
+- Sliders: Custom controls for audio params
+- Random toggles: Cho phép trải nghiệm đa dạng
+
+---
+
 ## 4. Features Detail
 
 ### 4.1 Playback Controls
@@ -452,10 +511,10 @@ Cải tiến Radio Mode với nhiều tính năng mới:
 ### 5.1 Libraries
 
 ```typescript
-expo-av                    // Audio playback
+react-native-track-player // Professional audio playback & background controls
 @react-native-community/slider // Progress bar
-expo-file-system          // Offline storage
-expo-media-library        // Background audio
+react-native-fs           // Robust file system access
+notifee                   // Advanced media notifications
 react-native-reanimated   // Waveform animation
 ```
 
@@ -560,6 +619,30 @@ interface AudioPlayerState {
 
 // Store: useAudioPlayerStore (Zustand with persist)
 // Persists: volume, speed, isMuted
+// Store: useAudioPlayerStore (Zustand with persist)
+
+### 5.6 TTS Settings State (NEW ✨)
+
+```typescript
+interface TtsSettings {
+  provider: 'openai' | 'azure';
+  voice?: string;
+  emotion?: string; // Azure only
+  
+  // Randomization
+  randomVoice: boolean;
+  randomEmotion: boolean;
+  
+  // Audio params
+  pitch?: number; // 0.5 - 2.0
+  rate?: number;  // 0.5 - 2.0
+  volume?: number;// 0.0 - 1.0
+  
+  // Multi-speaker
+  multiTalker?: boolean;
+  multiTalkerPairIndex?: number;
+}
+```
 ```
 
 ---
@@ -611,6 +694,9 @@ interface AudioPlayerState {
 - [ ] **Radio Mode: Progress tracking UI** (NEW ✨)
 - [ ] **Session restoration from player** (NEW ✨)
 - [ ] **Topic picker subcategory highlight** (NEW ✨)
+- [ ] **TTS Provider Settings UI** (NEW ✨)
+- [ ] **Azure TTS Integration** (NEW ✨)
+- [ ] **Multi-talker logic** (NEW ✨)
 
 ### Advanced Phase
 - [ ] Interactive mode with recording

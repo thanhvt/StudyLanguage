@@ -204,18 +204,32 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 │  │ lesson is playing       │   │
 │  └─────────────────────────┘   │
 │                                 │
-│  ⚡ Default Playback Speed      │
+│  🔊 Sound Effects               │
 │  ┌─────────────────────────┐   │
-│  │ 0.5x 0.75x [1.0x] 1.25x │   │
+│  │ [ON]                    │   │
+│  │ Success/Error sounds    │   │
 │  └─────────────────────────┘   │
 │                                 │
-│  🗣️ AI Voice                    │
+│  ⚡ Default Playback Speed      │
 │  ┌─────────────────────────┐   │
-│  │ ○ Alloy (neutral)       │   │
-│  │ ● Nova (friendly)       │   │
-│  │ ○ Onyx (deep)           │   │
+│  │ 0.5 0.8 [1.0] 1.2 1.5 2.0 │   │
 │  └─────────────────────────┘   │
-│  [▶️ Preview voice]             │
+│                                 │
+│  🤖 Auto-play Audio             │
+│  ┌─────────────────────────┐   │
+│  │ [ON]                    │   │
+│  │ Auto play next sentence │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🙌 Hands-free Mode             │
+│  ┌─────────────────────────┐   │
+│  │ [OFF]                   │   │
+│  │ Complete lesson without │   │
+│  │ touching screen         │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  🗣️ AI Voice Settings           │
+│  [ Configure in Listening > ]   │
 │                                 │
 └─────────────────────────────────┘
 ```
@@ -336,8 +350,11 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 |---------|---------|---------|
 | Background Music | ON/OFF + Volume | ON, 50% |
 | Music Ducking | ON/OFF | ON |
-| Playback Speed | 0.5x - 1.5x | 1.0x |
-| AI Voice | Alloy / Nova / Onyx | Nova |
+| Sound Effects | ON/OFF | ON |
+| Playback Speed | 0.5x - 2.0x | 1.0x |
+| Auto-play | ON/OFF | ON |
+| Hands-free | ON/OFF | OFF |
+| AI Voice | Config in Listening | - |
 
 ### 3.4 Privacy Options
 
@@ -389,8 +406,10 @@ interface SettingsState {
   audio: {
     backgroundMusic: { enabled: boolean; volume: number };
     musicDucking: boolean;
-    playbackSpeed: number;
-    aiVoice: 'alloy' | 'nova' | 'onyx';
+    soundEffects: boolean; // NEW ✨
+    playbackSpeed: number; // 0.5 - 2.0
+    autoPlay: boolean; // NEW ✨
+    handsFree: boolean; // NEW ✨
   };
   
   privacy: {
@@ -416,7 +435,8 @@ interface SettingsState {
 ### Enhanced Phase
 - [ ] Full appearance settings
 - [ ] Notification settings
-- [ ] Audio settings
+- [ ] Audio settings (Music, SFX, Speed)
+- [ ] Auto-play & Hands-free logic
 - [ ] Storage management
 - [ ] Privacy settings
 - [ ] Export/Delete data

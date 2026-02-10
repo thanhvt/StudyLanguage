@@ -39,13 +39,14 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 
 | Task | Est. | Priority |
 |------|------|----------|
-| Initialize Expo project | 2h | P0 |
+| Initialize React Native CLI project | 2h | P0 |
 | Setup NativeWind (Tailwind) | 2h | P0 |
-| Configure Expo Router | 2h | P0 |
+| Configure React Navigation | 2h | P0 |
 | Setup Zustand stores | 2h | P0 |
 | Setup TanStack Query | 2h | P0 |
 | Configure Supabase client | 2h | P0 |
 | Setup API client (Axios) | 2h | P0 |
+| Setup Track Player & Notifee | 4h | P0 |
 
 #### Authentication
 
@@ -65,6 +66,8 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Tab navigator | 2h | P0 |
 | Stack navigators | 2h | P0 |
 | Home screen layout | 4h | P0 |
+| Dashboard widgets (Streak/Goal) | 4h | P0 |
+| Quick Actions component | 2h | P0 |
 | Safe area handling | 1h | P0 |
 
 **Deliverable Week 2:** ✅ User can login, see home screen with 4 skill cards
@@ -86,6 +89,8 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Transcript display | 4h | P0 |
 | Auto-scroll transcript | 4h | P1 |
 | Speed control | 2h | P1 |
+| TTS Provider Settings | 4h | P1 |
+| Azure TTS Integration | 4h | P1 |
 
 **Deliverable Week 3:** ✅ User can generate and listen to conversations
 
@@ -99,6 +104,8 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Topic/Level selection | 2h | P0 |
 | Generate article API | 4h | P0 |
 | Article view | 4h | P0 |
+| Focus Mode UI | 2h | P1 |
+| Reading Practice (Recording) | 6h | P1 |
 | Tap-to-translate popup | 6h | P0 |
 | Dictionary lookup | 4h | P0 |
 | Comprehension quiz | 6h | P0 |
@@ -114,10 +121,12 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 |------|------|----------|
 | Topic selection UI | 4h | P0 |
 | Practice screen | 4h | P0 |
-| Audio recording (Expo AV) | 6h | P0 |
+| Audio recording (react-native-audio-recorder-player) | 6h | P0 |
 | Hold-to-record button | 4h | P0 |
 | Recording visualization | 4h | P1 |
 | Submit for AI analysis | 4h | P0 |
+| Conversation Coach UI | 6h | P1 |
+| Realtime Transcription | 4h | P1 |
 | Feedback display | 6h | P0 |
 | Word scores | 4h | P0 |
 | Haptic feedback | 2h | P1 |
@@ -144,6 +153,8 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Task | Est. | Priority |
 |------|------|----------|
 | History timeline | 6h | P0 |
+| Stats Cards & Chart | 6h | P1 |
+| Heatmap visualization | 4h | P1 |
 | Filter by skill | 2h | P0 |
 | Session detail view | 4h | P0 |
 | Profile screen | 4h | P0 |
@@ -335,7 +346,7 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Backend API | Critical | Use mock data first |
 | OpenAI API | Critical | Have fallback content |
 | Supabase | Critical | Test auth early |
-| Expo | High | Use stable SDK |
+| React Native CLI | High | Test native modules early |
 
 ### 6.2 Risks
 

@@ -1,6 +1,6 @@
 # 🏗️ Technical Architecture - Mobile
 
-> **Scope:** React Native + Expo Architecture
+> **Scope:** React Native CLI Architecture
 
 ---
 
@@ -29,7 +29,7 @@ Kiến trúc kỹ thuật cho mobile app StudyLanguage, tối ưu cho offline-fi
 │                     Native Modules                           │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
 │  │  Audio  │  │ Storage │  │Sensors  │  │  Notif  │        │
-│  │ (Expo)  │  │(SQLite) │  │(Motion) │  │ (Push)  │        │
+│  │(Native) │  │(SQLite) │  │(Motion) │  │ (Push)  │        │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │
 └─────────────────────────────────────────────────────────────┘
                             │
@@ -51,73 +51,85 @@ Kiến trúc kỹ thuật cho mobile app StudyLanguage, tối ưu cho offline-fi
 
 ```
 apps/mobile/
-├── app/                        # Expo Router pages
-│   ├── (tabs)/                 # Tab navigation
-│   │   ├── index.tsx           # Home
-│   │   ├── history.tsx         # History
-│   │   ├── vocabulary.tsx      # Vocabulary
-│   │   └── profile.tsx         # Profile
-│   ├── (auth)/                 # Auth flow
-│   │   ├── login.tsx
-│   │   └── onboarding.tsx
-│   ├── listening/              # Listening module
-│   │   ├── index.tsx           # Config
-│   │   └── [id].tsx            # Player
-│   ├── speaking/               # Speaking module
-│   │   ├── index.tsx           # Setup
-│   │   └── practice.tsx        # Practice
-│   ├── reading/                # Reading module
-│   │   ├── index.tsx           # Config
-│   │   └── [id].tsx            # Article
-│   └── writing/                # Writing module
-│       ├── index.tsx           # Input
-│       └── review.tsx          # Corrections
-├── components/
-│   ├── ui/                     # Reusable UI components
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   ├── Input.tsx
+├── src/                        # Source code
+│   ├── screens/                # Screen components
+│   │   ├── tabs/               # Tab screens
+│   │   │   ├── HomeScreen.tsx
+│   │   │   ├── HistoryScreen.tsx
+│   │   │   ├── VocabularyScreen.tsx
+│   │   │   └── ProfileScreen.tsx
+│   │   ├── auth/               # Auth flow
+│   │   │   ├── LoginScreen.tsx
+│   │   │   └── OnboardingScreen.tsx
+│   │   ├── listening/          # Listening module
+│   │   │   ├── ConfigScreen.tsx
+│   │   │   └── PlayerScreen.tsx
+│   │   ├── speaking/           # Speaking module
+│   │   │   ├── SetupScreen.tsx
+│   │   │   └── PracticeScreen.tsx
+│   │   ├── reading/            # Reading module
+│   │   │   ├── ConfigScreen.tsx
+│   │   │   └── ArticleScreen.tsx
+│   │   └── writing/            # Writing module
+│   │       ├── InputScreen.tsx
+│   │       └── ReviewScreen.tsx
+│   ├── components/
+│   │   ├── ui/                 # Reusable UI components
+│   │   │   ├── Button.tsx
+│   │   │   ├── Card.tsx
+│   │   │   ├── Input.tsx
+│   │   │   └── ...
+│   │   ├── layouts/            # Layout components
+│   │   │   ├── SafeAreaLayout.tsx
+│   │   │   └── TabLayout.tsx
+│   │   └── modules/            # Feature-specific components
+│   │       ├── listening/
+│   │       ├── speaking/
+│   │       ├── reading/
+│   │       └── writing/
+│   ├── navigation/             # React Navigation config
+│   │   ├── RootNavigator.tsx
+│   │   ├── AuthStack.tsx
+│   │   ├── MainTabs.tsx
+│   │   └── stacks/
+│   │       ├── ListeningStack.tsx
+│   │       ├── SpeakingStack.tsx
+│   │       └── ReadingStack.tsx
+│   ├── hooks/                  # Custom hooks
+│   │   ├── useAudio.ts
+│   │   ├── useRecording.ts
+│   │   ├── useOffline.ts
 │   │   └── ...
-│   ├── layouts/                # Layout components
-│   │   ├── SafeAreaLayout.tsx
-│   │   └── TabLayout.tsx
-│   └── modules/                # Feature-specific components
-│       ├── listening/
-│       ├── speaking/
-│       ├── reading/
-│       └── writing/
-├── hooks/                      # Custom hooks
-│   ├── useAudio.ts
-│   ├── useRecording.ts
-│   ├── useOffline.ts
-│   └── ...
-├── services/                   # API & external services
-│   ├── api/
-│   │   ├── client.ts
+│   ├── services/               # API & external services
+│   │   ├── api/
+│   │   │   ├── client.ts
+│   │   │   ├── listening.ts
+│   │   │   ├── speaking.ts
+│   │   │   └── ...
+│   │   ├── supabase/
+│   │   │   ├── client.ts
+│   │   │   └── auth.ts
+│   │   └── storage/
+│   │       ├── secure.ts
+│   │       ├── async.ts
+│   │       └── sqlite.ts
+│   ├── store/                  # Zustand stores
+│   │   ├── auth.ts
+│   │   ├── settings.ts
 │   │   ├── listening.ts
-│   │   ├── speaking.ts
 │   │   └── ...
-│   ├── supabase/
-│   │   ├── client.ts
-│   │   └── auth.ts
-│   └── storage/
-│       ├── secure.ts
-│       ├── async.ts
-│       └── sqlite.ts
-├── store/                      # Zustand stores
-│   ├── auth.ts
-│   ├── settings.ts
-│   ├── listening.ts
-│   └── ...
-├── utils/                      # Utilities
-│   ├── helpers.ts
-│   └── constants.ts
-├── types/                      # TypeScript types
-│   └── ...
+│   ├── utils/                  # Utilities
+│   │   ├── helpers.ts
+│   │   └── constants.ts
+│   └── types/                  # TypeScript types
+│       └── ...
 ├── assets/                     # Static assets
 │   ├── images/
 │   └── fonts/
-├── app.json                    # Expo config
+├── ios/                        # iOS native project
+├── android/                    # Android native project
+├── react-native.config.js      # RN CLI config
+├── .env                        # Environment variables
 ├── tailwind.config.js          # NativeWind config
 └── package.json
 ```
@@ -173,40 +185,63 @@ Root Navigator (Stack)
                 └── Privacy
 ```
 
-### 4.2 Expo Router Configuration
+### 4.2 React Navigation Configuration
 
 ```typescript
-// app/_layout.tsx
-export default function RootLayout() {
+// src/navigation/RootNavigator.tsx
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AuthStack } from './AuthStack';
+import { MainTabs } from './MainTabs';
+import { useAuthStore } from '@/store/auth';
+
+const Stack = createNativeStackNavigator();
+
+export default function RootNavigator() {
+  const { session } = useAuthStore();
+  
   return (
-    <Stack>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!session ? (
+          <Stack.Screen name="Auth" component={AuthStack} />
+        ) : (
+          <Stack.Screen name="Main" component={MainTabs} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-// app/(tabs)/_layout.tsx
-export default function TabLayout() {
+// src/navigation/MainTabs.tsx
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+const Tab = createBottomTabNavigator();
+
+export default function MainTabs() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index"
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
         options={{ title: 'Home', tabBarIcon: HomeIcon }}
       />
-      <Tabs.Screen
-        name="history"
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
         options={{ title: 'History', tabBarIcon: HistoryIcon }}
       />
-      <Tabs.Screen
-        name="vocabulary"
+      <Tab.Screen
+        name="Vocabulary"
+        component={VocabularyScreen}
         options={{ title: 'Vocabulary', tabBarIcon: BookIcon }}
       />
-      <Tabs.Screen
-        name="profile"
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
         options={{ title: 'Profile', tabBarIcon: UserIcon }}
       />
-    </Tabs>
+    </Tab.Navigator>
   );
 }
 ```
@@ -403,7 +438,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
 
 const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: Config.API_URL, // react-native-config
   timeout: 30000,
 });
 
@@ -464,60 +499,62 @@ export const listeningAPI = {
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │                   Expo AV                             │   │
+│  │            react-native-track-player                  │   │
 │  │  ┌──────────────┐    ┌──────────────┐                │   │
-│  │  │  Audio.Sound │    │Audio.Recording│               │   │
-│  │  │  (Playback)  │    │  (Record)     │               │   │
+│  │  │   Playback   │    │  Queue Mgmt  │                │   │
+│  │  │ (Background) │    │  (Playlist)  │                │   │
 │  │  └──────────────┘    └──────────────┘                │   │
 │  └──────────────────────────────────────────────────────┘   │
-│                          │                                   │
+│                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │               Audio Session Config                    │   │
-│  │  • Background mode                                    │   │
-│  │  • Interruption handling                             │   │
-│  │  • Audio focus                                        │   │
+│  │      react-native-audio-recorder-player               │   │
+│  │  ┌──────────────┐                                     │   │
+│  │  │  Recording   │ (Speaking module)                   │   │
+│  │  └──────────────┘                                     │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │               Native Audio Services                   │   │
+│  │  • iOS: AVAudioSession (background mode)              │   │
+│  │  • Android: MediaSession + Foreground Service         │   │
+│  │  • Lock screen controls (built-in with Track Player)  │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 8.2 Audio Hook
+### 8.2 Audio Hook (Track Player)
 
 ```typescript
 // hooks/useAudio.ts
-import { Audio } from 'expo-av';
+import TrackPlayer, { State, useProgress, usePlaybackState } from 'react-native-track-player';
 
+/**
+ * Mục đích: Quản lý audio playback qua Track Player
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: { load, play, pause, seek, setRate, progress, isPlaying }
+ * Khi nào sử dụng: Listening module, Reading TTS playback
+ */
 export function useAudio() {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [status, setStatus] = useState<AVPlaybackStatus | null>(null);
+  const progress = useProgress();
+  const playbackState = usePlaybackState();
+  const isPlaying = playbackState.state === State.Playing;
   
-  const load = async (uri: string) => {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
+  const load = async (uri: string, title: string) => {
+    await TrackPlayer.reset();
+    await TrackPlayer.add({
+      id: uri,
+      url: uri,
+      title,
     });
-    
-    const { sound } = await Audio.Sound.createAsync(
-      { uri },
-      { shouldPlay: false },
-      (status) => setStatus(status)
-    );
-    setSound(sound);
   };
   
-  const play = () => sound?.playAsync();
-  const pause = () => sound?.pauseAsync();
-  const seek = (position: number) => sound?.setPositionAsync(position);
-  const setRate = (rate: number) => sound?.setRateAsync(rate, true);
+  const play = () => TrackPlayer.play();
+  const pause = () => TrackPlayer.pause();
+  const seek = (position: number) => TrackPlayer.seekTo(position);
+  const setRate = (rate: number) => TrackPlayer.setRate(rate);
   
-  useEffect(() => {
-    return () => {
-      sound?.unloadAsync();
-    };
-  }, [sound]);
-  
-  return { load, play, pause, seek, setRate, status };
+  return { load, play, pause, seek, setRate, progress, isPlaying };
 }
 ```
 
@@ -525,39 +562,59 @@ export function useAudio() {
 
 ```typescript
 // hooks/useRecording.ts
-import { Audio } from 'expo-av';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import { PermissionsAndroid, Platform } from 'react-native';
 
+const audioRecorderPlayer = new AudioRecorderPlayer();
+
+/**
+ * Mục đích: Quản lý audio recording
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: { start, stop, isRecording, duration, metering }
+ * Khi nào sử dụng: Speaking module (hold-to-record)
+ */
 export function useRecording() {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [metering, setMetering] = useState(0);
   
   const start = async () => {
-    await Audio.requestPermissionsAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
+    // Yêu cầu quyền trên Android
+    if (Platform.OS === 'android') {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+      );
+    }
+    
+    const path = Platform.select({
+      ios: 'recording.m4a',
+      android: `${Date.now()}.mp4`,
     });
     
-    const { recording } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY
-    );
+    await audioRecorderPlayer.startRecorder(path, {
+      // Cấu hình chất lượng cao
+      SampleRate: 44100,
+      Channels: 1,
+      AudioEncoding: 'aac',
+    });
     
-    setRecording(recording);
+    audioRecorderPlayer.addRecordBackListener((e) => {
+      setDuration(e.currentPosition);
+      setMetering(e.currentMetering ?? 0);
+    });
+    
     setIsRecording(true);
   };
   
   const stop = async () => {
-    if (!recording) return null;
-    
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    setRecording(null);
+    const uri = await audioRecorderPlayer.stopRecorder();
+    audioRecorderPlayer.removeRecordBackListener();
     setIsRecording(false);
-    
+    setDuration(0);
     return uri;
   };
   
-  return { start, stop, isRecording };
+  return { start, stop, isRecording, duration, metering };
 }
 ```
 
@@ -568,48 +625,52 @@ export function useRecording() {
 ### 9.1 Background Audio
 
 ```typescript
-// app.json
-{
-  "expo": {
-    "ios": {
-      "infoPlist": {
-        "UIBackgroundModes": ["audio"]
-      }
-    },
-    "android": {
-      "foregroundService": {
-        "name": "Audio Player",
-        "icon": "./assets/icon.png"
-      }
-    }
-  }
-}
+// ios/StudyLanguage/Info.plist (cần thêm)
+// <key>UIBackgroundModes</key>
+// <array><string>audio</string></array>
+
+// android/app/src/main/AndroidManifest.xml (cần thêm)
+// <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+// <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+// Track Player tự xử lý foreground service trên Android
+// và background audio session trên iOS
 ```
 
 ### 9.2 Background Sync
 
 ```typescript
 // services/backgroundSync.ts
-import * as BackgroundFetch from 'expo-background-fetch';
-import * as TaskManager from 'expo-task-manager';
+import BackgroundFetch from 'react-native-background-fetch';
 
 const BACKGROUND_SYNC_TASK = 'background-sync';
 
-TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
-  try {
-    await syncService.syncPendingData();
-    return BackgroundFetch.BackgroundFetchResult.NewData;
-  } catch (error) {
-    return BackgroundFetch.BackgroundFetchResult.Failed;
-  }
-});
-
+/**
+ * Mục đích: Đăng ký background sync task
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: void
+ * Khi nào sử dụng: Gọi 1 lần khi app khởi động
+ */
 export async function registerBackgroundSync() {
-  await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-    minimumInterval: 15 * 60, // 15 minutes
-    stopOnTerminate: false,
-    startOnBoot: true,
-  });
+  await BackgroundFetch.configure(
+    {
+      minimumFetchInterval: 15, // phút
+      stopOnTerminate: false,
+      startOnBoot: true,
+      enableHeadless: true,
+    },
+    async (taskId) => {
+      // Đồng bộ dữ liệu chờ
+      console.log('[BackgroundFetch] Bắt đầu đồng bộ:', taskId);
+      await syncService.syncPendingData();
+      BackgroundFetch.finish(taskId);
+    },
+    async (taskId) => {
+      // Timeout handler
+      console.log('[BackgroundFetch] Hết thời gian:', taskId);
+      BackgroundFetch.finish(taskId);
+    }
+  );
 }
 ```
 
@@ -621,19 +682,26 @@ export async function registerBackgroundSync() {
 
 ```typescript
 // services/storage/secure.ts
-import * as SecureStore from 'expo-secure-store';
+import * as Keychain from 'react-native-keychain';
 
+/**
+ * Mục đích: Lưu trữ bảo mật (tokens, credentials)
+ * Tham số đầu vào: key, value (string)
+ * Tham số đầu ra: string | null
+ * Khi nào sử dụng: Auth tokens, refresh tokens
+ */
 export const secureStorage = {
   set: async (key: string, value: string) => {
-    await SecureStore.setItemAsync(key, value);
+    await Keychain.setGenericPassword(key, value, { service: key });
   },
   
   get: async (key: string) => {
-    return await SecureStore.getItemAsync(key);
+    const credentials = await Keychain.getGenericPassword({ service: key });
+    return credentials ? credentials.password : null;
   },
   
   delete: async (key: string) => {
-    await SecureStore.deleteItemAsync(key);
+    await Keychain.resetGenericPassword({ service: key });
   },
 };
 ```
@@ -642,11 +710,11 @@ export const secureStorage = {
 
 | Item | Implementation |
 |------|---------------|
-| Tokens | SecureStore (encrypted) |
+| Tokens | react-native-keychain (iOS Keychain / Android Keystore) |
 | API calls | HTTPS only |
 | Sensitive logs | Disabled in production |
-| SSL Pinning | Expo Plugin |
-| Biometric | expo-local-authentication |
+| SSL Pinning | react-native-ssl-pinning |
+| Biometric | react-native-biometrics |
 
 ---
 
@@ -668,7 +736,7 @@ export const secureStorage = {
 |--------|------|
 | Crashes | Sentry |
 | Performance | Firebase Performance |
-| Analytics | Expo Analytics |
+| Analytics | Firebase Analytics |
 
 ---
 

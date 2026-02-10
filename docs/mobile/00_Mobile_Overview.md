@@ -2,7 +2,7 @@
 
 > **Phiên bản:** 1.1  
 > **Ngày:** 01/02/2026  
-> **Nền tảng:** React Native + Expo
+> **Nền tảng:** React Native CLI
 
 ---
 
@@ -45,7 +45,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 |------------|-------|
 | 🔘 **Thumb-Friendly** | Các nút bấm chính nằm trong vùng ngón tay cái dễ chạm |
 | 📴 **Offline-First** | Hoạt động tốt ngay cả khi mất mạng |
-| 🔋 **Battery-Optimized** | Tối ưu pin, không drain battery khi chạy nền |
+| 🔋 **Battery-Optimized** | Tối ưu pin, không drain battery khi chạy nền nhưng khi người dùng cho app chạy foreground / background thì vẫn hoạt động tốt (vẫn phát ra âm thanh, nhận được thông báo, v.v.)|
 | ⚡ **Fast Loading** | Skeleton loading, progressive image loading |
 | 📳 **Native Feel** | Haptic feedback, native transitions |
 
@@ -56,10 +56,10 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 ### 4.1 Core Framework
 ```
 ┌─────────────────────────────────────────────┐
-│              React Native + Expo            │
+│              React Native CLI.              │
 │    (Cross-platform iOS & Android)           │
 ├─────────────────────────────────────────────┤
-│  Navigation: Expo Router (file-based)       │
+│  Navigation: React Navigation (file-based)  │
 │  Styling: NativeWind (Tailwind for RN)      │
 │  Animation: Reanimated + Gesture Handler    │
 └─────────────────────────────────────────────┘
@@ -72,23 +72,24 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | Client State | Zustand | Global state (lightweight) |
 | Local Storage | AsyncStorage | Settings, preferences |
 | Offline DB | SQLite | Downloaded content |
-| Secure Storage | Expo SecureStore | Tokens, credentials |
+| Secure Storage | react-native-keychain | Tokens, credentials (Keychain/Keystore) |
 
 ### 4.3 Audio & Media
 | Feature | Technology |
 |---------|------------|
-| Play/Record Audio | Expo AV |
-| Text-to-Speech | Expo Speech (fallback) |
-| Background Audio | Expo Audio |
+| Playback & Background | react-native-track-player | Best-in-class background audio & lock screen controls |
+| Recording | react-native-audio-recorder-player | Robust recording with metering |
+| Text-to-Speech | Azure Speech SDK / OpenAI API | High quality cloud TTS |
+| Sound Effects | react-native-sound | Low latency UI sounds |
 
 ### 4.4 Native Features
-- **Push Notifications:** Expo Notifications
-- **Calendar Integration:** Expo Calendar
-- **File System:** Expo File System
-- **Motion Detection:** Expo Sensors
-- **Location:** Expo Location
-- **Deep Linking:** Expo Linking
-- **Haptic Feedback:** Expo Haptics
+- **Push Notifications:** Notifee + @react-native-firebase/messaging
+- **Calendar Integration:** react-native-calendar-events
+- **File System:** react-native-fs
+- **Motion Detection:** react-native-sensors
+- **Location:** react-native-geolocation-service
+- **Deep Linking:** React Native Linking (built-in)
+- **Haptic Feedback:** react-native-haptic-feedback
 
 ### 4.5 Backend
 - **Auth & Database:** Supabase JS Client
@@ -103,12 +104,13 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 
 | Module | MVP | Enhanced | Advanced |
 |--------|-----|----------|----------|
-| 🎧 **Listening** | Podcast mode, Basic player | Interactive mode, A-B Loop | Background audio, Lock screen |
-| 🗣️ **Speaking** | Record & AI feedback | Waveform comparison | Conversation roleplay |
-| 📖 **Reading** | Article view, Tap-to-translate | Dictionary, Quiz | Night mode |
+| � **Dashboard** | Greeting + Streak, Study Goal | Quick Actions, Next Lesson | Weekly Chart, Streak Calendar (Heatmap) |
+| �🎧 **Listening** | Podcast mode, Basic player | Interactive mode, TTS Provider Panel | Background audio, Lock screen |
+| 🗣️ **Speaking** | Voice Recorder | Conversation Coach (Basic) | Realtime Transcription, AI Feedback |
+| 📖 **Reading** | Article view, Focus Mode | Tap-to-translate, Quiz | Reading Practice with AI |
 | ✍️ **Writing** | Basic input, AI correction | Voice input | Paraphrase suggestions |
 | 📚 **Vocabulary** | Word list | Flashcard review | Spaced repetition, Notifications |
-| 📜 **History** | Timeline view | Detail view | Replay, Sync |
+| 📜 **History** | Timeline view | Analytics (Stats, Chart) | Heatmap, AI Insights, Pinned Items |
 
 ### 5.2 Mobile-Specific Features
 
@@ -126,11 +128,11 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 
 ```
 Tab Navigator (Bottom)
-├── 🏠 Home
-│   ├── Header (Avatar, Notifications, Settings)
-│   ├── Greeting + Daily Stats
-│   ├── 4 Skill Cards (Listening, Speaking, Reading, Writing)
-│   └── Progress Summary
+├── 🏠 Home (Dashboard)
+│   ├── Greeting + Streak
+│   ├── Study Goal + Next Lesson
+│   ├── Quick Actions (Listening, Speaking, Reading)
+│   └── Recent Activity (MVP)
 │
 ├── 📜 History
 │   ├── Filter Tabs (All, Listening, Speaking, Reading, Writing)
@@ -166,6 +168,7 @@ Tab Navigator (Bottom)
 ## 8. Related Documents
 
 ### Features
+- [00_Dashboard.md](features/00_Dashboard.md) - Home & Analytics (NEW ✨)
 - [01_Authentication.md](features/01_Authentication.md) - Auth flows
 - [02_Listening.md](features/02_Listening.md) - Listening module
 - [03_Speaking.md](features/03_Speaking.md) - Speaking module

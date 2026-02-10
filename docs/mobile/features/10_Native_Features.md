@@ -117,7 +117,7 @@ Các tính năng đặc thù mobile platform, tận dụng hardware và OS capab
 
 ```typescript
 // Libraries
-expo-speech-recognition    // Online (accurate)
+@react-native-voice/voice  // Speech recognition
 @react-native-voice/voice  // Offline fallback
 
 // Flow
@@ -332,19 +332,19 @@ Similar to iOS but with more customization options:
 ### 7.2 Implementation
 
 ```typescript
-import * as Haptics from 'expo-haptics';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-// Light tap
-Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+// Nhẹ tap
+ReactNativeHapticFeedback.trigger('impactLight');
 
-// Success
-Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+// Thành công
+ReactNativeHapticFeedback.trigger('notificationSuccess');
 
-// Error
-Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+// Lỗi
+ReactNativeHapticFeedback.trigger('notificationError');
 
 // Selection
-Haptics.selectionAsync();
+ReactNativeHapticFeedback.trigger('selection');
 ```
 
 ### 7.3 Settings
@@ -469,29 +469,28 @@ react-native-gesture-handler
 react-native-reanimated
 
 // Voice
-expo-speech-recognition
-@react-native-voice/voice
+@react-native-voice/voice   // Speech recognition (online + offline)
 
 // Widgets (iOS)
 react-native-widget-extension
 
 // Notifications
-expo-notifications
+notifee                     // Local & rich notifications
+@react-native-firebase/messaging // Remote push
 
 // Background Audio
-expo-av
-react-native-track-player
+react-native-track-player   // Playback + lock screen controls
 
 // Haptics
-expo-haptics
+react-native-haptic-feedback
 
 // Offline
 @react-native-async-storage/async-storage
-expo-file-system
-expo-sqlite
+react-native-fs             // File system access
+react-native-sqlite-storage // SQLite database
 
 // Deep Linking
-expo-linking
+React Native Linking (built-in) // No extra lib needed
 ```
 
 ---

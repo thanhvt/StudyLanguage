@@ -149,7 +149,73 @@ Chế độ luyện đọc với AI phản hồi:
 - Highlighted words: Tap-able (new vocabulary)
 - Bottom bar: Font size, Night mode, Quiz, Save
 
-### 3.3 Dictionary Popup
+### 3.3 Article View - Focus Mode (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│  Climate change is one of the   │
+│  most pressing issues facing    │
+│  our planet today. Scientists   │
+│  around the world warn that     │
+│  global temperatures are rising │
+│  at an unprecedented rate.      │
+│                                 │
+│  The effects of climate change  │
+│  are already visible. Extreme   │
+│  weather events, rising sea     │
+│  levels, and melting glaciers   │
+│  are just a few examples of     │
+│  how our world is changing.     │
+│                                 │
+│     [Tap center to exit]        │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Hidden: Header, Bottom bar, Status bar
+- Font size: Increased by 1 step
+- Background: High contrast (or dark mode)
+- Interaction: Tap anywhere to show controls
+
+### 3.4 Reading Practice (NEW ✨)
+
+```
+┌─────────────────────────────────┐
+│  ← Practice Reading         💾  │
+├─────────────────────────────────┤
+│  Climate change is one of...    │
+│  (Original text context)        │
+├─────────────────────────────────┤
+│                                 │
+│  🗣️ Your Turn:                  │
+│  "Climate change is one of      │
+│   the most pressing issues..."  │
+│                                 │
+│  📊 Feedback:                   │
+│  Accuracy: 92%                  │
+│  Words: 15/16                   │
+│                                 │
+│  ⚠️ Improve:                    │
+│  "pressing" (/ˈpres.ɪŋ/)        │
+│                                 │
+├─────────────────────────────────┤
+│  [🎤 Hold Space / Tap to Record]│
+│                                 │
+│  [▶️ Nghe lại]  [Thử lại]       │
+└─────────────────────────────────┘
+```
+
+**Specs:**
+- Split screen: Text top, Practice bottom
+- Hardware Keyboard: Spacebar toggle recording
+- Visualizer: When recording
+- Feedback: Immediate score + pronunciation tips
+
+
+
+### 3.5 Dictionary Popup
 
 ```
 ┌─────────────────────────────────┐
@@ -181,7 +247,7 @@ Chế độ luyện đọc với AI phản hồi:
 - Audio: Tap to hear pronunciation
 - Save: Add to vocabulary list
 
-### 3.4 Listen Mode (TTS)
+### 3.6 Listen Mode (TTS)
 
 ```
 ┌─────────────────────────────────┐
@@ -213,7 +279,7 @@ Chế độ luyện đọc với AI phản hồi:
 - Auto-scroll: Follow reading position
 - Controls: Pause, skip, speed
 
-### 3.5 Comprehension Quiz
+### 3.7 Comprehension Quiz
 
 ```
 ┌─────────────────────────────────┐
@@ -246,7 +312,7 @@ Chế độ luyện đọc với AI phản hồi:
 - Options: Radio buttons, large touch targets
 - Submit: Check answer button
 
-### 3.6 Quiz - Correct Answer
+### 3.8 Quiz - Correct Answer
 
 ```
 ┌─────────────────────────────────┐
@@ -275,7 +341,7 @@ Chế độ luyện đọc với AI phản hồi:
 - Explanation: Why this is correct
 - Auto-advance after 2 seconds
 
-### 3.7 Quiz - Wrong Answer
+### 3.9 Quiz - Wrong Answer
 
 ```
 ┌─────────────────────────────────┐
@@ -394,8 +460,7 @@ Chế độ luyện đọc với AI phản hồi:
 ### 5.1 Libraries
 
 ```typescript
-expo-speech               // Text-to-Speech
-react-native-tts          // TTS alternative
+react-native-tts          // Text-to-Speech
 @react-native-async-storage // Font preferences
 ```
 
@@ -479,6 +544,7 @@ function handleWordTap(event: TextTouchEvent) {
 - [ ] **Direct save reading articles** (NEW ✨)
 - [ ] **Space shortcut for recording** (NEW ✨)
 - [ ] **Reading practice with AI analysis** (NEW ✨)
+- [ ] **Focus Mode toggle** (NEW ✨)
 
 ---
 

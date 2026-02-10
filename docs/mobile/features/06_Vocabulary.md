@@ -331,7 +331,7 @@ Haptic: Light impact on swipe complete
 ```typescript
 react-native-gesture-handler  // Swipe gestures
 react-native-reanimated       // Card animations
-expo-notifications            // Review reminders
+notifee                       // Review reminders (local notifications)
 ```
 
 ### 5.2 State Structure
