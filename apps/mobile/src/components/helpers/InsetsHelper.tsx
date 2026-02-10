@@ -1,14 +1,14 @@
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {useAppDispatch} from "@/store/hooks.ts";
-import {useEffect} from "react";
-import {setInsets} from "@/store/slices/appSlice.ts";
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useEffect} from 'react';
+import {useAppStore} from '@/store/useAppStore';
 
 export default function InsetsHelper() {
   const insets = useSafeAreaInsets();
-  const dispatch = useAppDispatch();
+  const setInsets = useAppStore(state => state.setInsets);
 
   useEffect(() => {
-    dispatch(setInsets(insets));
-  }, [insets, dispatch]);
-  return <></>
+    setInsets(insets);
+  }, [insets, setInsets]);
+
+  return <></>;
 }

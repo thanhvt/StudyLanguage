@@ -1,39 +1,33 @@
-import React from "react";
-import {Text, View} from "react-native";
-import {useNavigation} from "@react-navigation/native";
-import MenuList from "@/components/ui/MenuList.tsx";
-import Icon from "@/components/ui/Icon.tsx";
-import {AppText, Avatar} from "@/components/ui";
-import {useAppSelector} from "@/store/hooks.ts";
-
+import React from 'react';
+import {Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import MenuList from '@/components/ui/MenuList';
+import Icon from '@/components/ui/Icon';
+import {AppText, Avatar} from '@/components/ui';
+import {useAppStore} from '@/store/useAppStore';
 
 const MoreScreen = () => {
   const navigation = useNavigation();
-  const {theme} = useAppSelector(state => state.app);
+  const theme = useAppStore(state => state.theme);
 
   const handleSettings = () => {
-    navigation.navigate("Settings");
+    navigation.navigate('Settings');
   };
 
   const handleComponentsDemo = () => {
-    navigation.navigate("ComponentsDemo");
+    navigation.navigate('ComponentsDemo');
   };
 
   const handleAbout = () => {
-    navigation.navigate("About");
+    navigation.navigate('About');
   };
 
   return (
-    <View className='flex-1 p-4 pt-safe-offset-4'>
-      <AppText variant={'heading1'}>
-        MORE
-      </AppText>
+    <View className="flex-1 p-4 pt-safe-offset-4">
+      <AppText variant={'heading1'}>MORE</AppText>
 
       <View className={'bg-neutrals1000 flex flex-row p-4 rounded-3xl'}>
-        <Avatar
-          text={'John Doe'}
-          size={'xl'}
-        />
+        <Avatar text={'John Doe'} size={'xl'} />
         <View className={'flex-1 justify-center ml-4'}>
           <Text className={'text-foreground font-sans-bold text-lg'}>
             John Doe
@@ -49,20 +43,22 @@ const MoreScreen = () => {
       <MenuList
         data={[
           {
-            icon: () => <Icon
-              name={'SunMoon'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "Theme",
-            value: <AppText className={'capitalize text-neutrals100'}>{theme}</AppText>,
-            onPress: handleSettings
+            icon: () => (
+              <Icon name={'SunMoon'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'Theme',
+            value: (
+              <AppText className={'capitalize text-neutrals100'}>
+                {theme}
+              </AppText>
+            ),
+            onPress: handleSettings,
           },
           {
-            icon: () => <Icon
-              name={'Bell'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "Notifications",
+            icon: () => (
+              <Icon name={'Bell'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'Notifications',
           },
         ]}
       />
@@ -72,35 +68,31 @@ const MoreScreen = () => {
       <MenuList
         data={[
           {
-            icon: () => <Icon
-              name={'Settings'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "Settings",
-            onPress: handleSettings
+            icon: () => (
+              <Icon name={'Settings'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'Settings',
+            onPress: handleSettings,
           },
           {
-            icon: () => <Icon
-              name={'Palette'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "Components Demo",
-            onPress: handleComponentsDemo
+            icon: () => (
+              <Icon name={'Palette'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'Components Demo',
+            onPress: handleComponentsDemo,
           },
           {
-            icon: () => <Icon
-              name={'Gavel'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "Privacy Policy",
+            icon: () => (
+              <Icon name={'Gavel'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'Privacy Policy',
           },
           {
-            icon: () => <Icon
-              name={'Info'}
-              className={"size-22 text-neutrals100"}
-            />,
-            title: "About",
-            onPress: handleAbout
+            icon: () => (
+              <Icon name={'Info'} className={'size-22 text-neutrals100'} />
+            ),
+            title: 'About',
+            onPress: handleAbout,
           },
         ]}
       />

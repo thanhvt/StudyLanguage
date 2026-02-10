@@ -1,27 +1,32 @@
-import "@/config/global.css"
-import "@/config/i18n"; // Initialize i18n
+import '@/config/global.css';
+import '@/config/i18n';
 import React from 'react';
 import {StatusBar, View} from 'react-native';
-import {Provider} from 'react-redux';
-import {PersistGate} from 'redux-persist/integration/react';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {persistor, store} from '@/store';
-import {useAppSelector} from '@/store/hooks';
-import RootStackNavigator from '@/navigation/RootStackNavigator.tsx';
-import LoadingScreen from '@/components/LoadingScreen';
-import {DefaultTheme, NavigationContainer} from "@react-navigation/native";
-import {useColors} from "@/hooks/useColors";
-import InsetsHelper from "@/components/helpers/InsetsHelper.tsx";
-import {GestureHandlerRootView} from "react-native-gesture-handler";
-import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {LanguageHelper} from "@/components/helpers/LanguageHelper.tsx";
-import '@/config/i18n.ts'
-import {DialogProvider} from "@/components/ui/DialogProvider.tsx";
-import {ToastProvider} from "@/components/ui/ToastProvider.tsx";
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {useAppStore} from '@/store/useAppStore';
+import RootStackNavigator from '@/navigation/RootStackNavigator';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
+import {useColors} from '@/hooks/useColors';
+import InsetsHelper from '@/components/helpers/InsetsHelper';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import {LanguageHelper} from '@/components/helpers/LanguageHelper';
+import {DialogProvider} from '@/components/ui/DialogProvider';
+import {ToastProvider} from '@/components/ui/ToastProvider';
 
+// Cấu hình QueryClient cho TanStack Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 phút trước khi data coi là cũ
+      retry: 2, // Retry tối đa 2 lần khi lỗi
+    },
+  },
+});
 
 const AppContent: React.FC = () => {
-  const {theme} = useAppSelector(state => state.app);
+  const theme = useAppStore(state => state.theme);
   const colors = useColors();
 
   return (
@@ -35,7 +40,7 @@ const AppContent: React.FC = () => {
         <NavigationContainer
           theme={{
             ...DefaultTheme,
-            dark: theme === "dark",
+            dark: theme === 'dark',
             colors: {
               primary: colors.primary,
               background: colors.background,
@@ -44,15 +49,14 @@ const AppContent: React.FC = () => {
               border: colors.neutrals700,
               notification: colors.primary,
             },
-          }}
-        >
+          }}>
           <BottomSheetModalProvider>
             <SafeAreaProvider>
               <DialogProvider>
                 <ToastProvider>
-                  <InsetsHelper/>
-                  <LanguageHelper/>
-                  <RootStackNavigator/>
+                  <InsetsHelper />
+                  <LanguageHelper />
+                  <RootStackNavigator />
                 </ToastProvider>
               </DialogProvider>
             </SafeAreaProvider>
@@ -65,11 +69,9 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <Provider store={store}>
-      <PersistGate loading={<LoadingScreen/>} persistor={persistor}>
-        <AppContent/>
-      </PersistGate>
-    </Provider>
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
   );
 }
 

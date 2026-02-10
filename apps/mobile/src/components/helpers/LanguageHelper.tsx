@@ -1,15 +1,15 @@
-import {useAppSelector} from "@/store/hooks.ts";
-import {useEffect} from "react";
-import {changeLanguage} from "@/config/i18n.ts";
+import {useEffect} from 'react';
+import {changeLanguage} from '@/config/i18n';
+import {useAppStore} from '@/store/useAppStore';
 
 export const LanguageHelper = () => {
-  const {language} = useAppSelector(state => state.app);
+  const language = useAppStore(state => state.language);
 
   useEffect(() => {
     changeLanguage(language).then(() => {
-      console.log('Changed to', language);
-    })
+      console.log('Đã chuyển ngôn ngữ sang', language);
+    });
   }, [language]);
 
   return <></>;
-}
+};
