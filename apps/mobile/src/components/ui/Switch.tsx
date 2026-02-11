@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { cn } from '@/utils';
 import { cva } from 'class-variance-authority';
+import { useColors } from '@/hooks/useColors';
 
 interface SwitchProps {
   value: boolean;
@@ -67,6 +68,7 @@ export default function Switch({
 }: SwitchProps) {
   const translateX = useSharedValue(value ? 1 : 0);
   const scale = useSharedValue(1);
+  const colors = useColors();
 
   useEffect(() => {
     translateX.value = withSpring(value ? 1 : 0, {
@@ -79,7 +81,7 @@ export default function Switch({
     const backgroundColor = interpolateColor(
       translateX.value,
       [0, 1],
-      ['rgb(113, 113, 122)', 'rgb(232, 90, 90)'] // neutrals500 to primary
+      ['rgb(113, 113, 122)', colors.primary] // neutrals500 → primary token
     );
 
     return {

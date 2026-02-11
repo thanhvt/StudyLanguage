@@ -12,6 +12,16 @@ export {default as Slider} from './Slider';
 export {default as Switch} from './Switch';
 export {default as AppText} from './AppText';
 
+// Phase 3: Các component mới bổ sung theo Design System
+export {default as Skeleton} from './Skeleton';
+export {default as EmptyState} from './EmptyState';
+export {default as ErrorState} from './ErrorState';
+export {default as FeatureCard} from './FeatureCard';
+export {default as SessionCard} from './SessionCard';
+export {default as SegmentedControl} from './SegmentedControl';
+export {default as StatCard} from './StatCard';
+export {default as AlertCard} from './AlertCard';
+
 export {
   Form,
   FormField,

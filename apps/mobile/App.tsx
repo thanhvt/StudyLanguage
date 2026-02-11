@@ -30,8 +30,10 @@ const AppContent: React.FC = () => {
   const colors = useColors();
 
   return (
-    <GestureHandlerRootView>
-      <View style={{flex: 1}} className={theme === 'dark' ? 'dark' : ''}>
+    <GestureHandlerRootView style={{flex: 1}}>
+      {/* NativeWind v4 xử lý dark mode qua colorScheme.set(), không cần className="dark" */}
+      {/* Fallback backgroundColor đảm bảo hiển thị đúng ngay cả khi NativeWind chưa tải CSS */}
+      <View style={{flex: 1, backgroundColor: colors.background}}>
         <StatusBar
           translucent
           backgroundColor="transparent"

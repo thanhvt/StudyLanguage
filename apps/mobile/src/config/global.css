@@ -1,4 +1,66 @@
-@import "generated/colors.css";
+/* ===========================
+   Theme-dependent color definitions
+   NativeWind v4 sử dụng CSS variables để define colors theo theme
+   colorScheme.set('dark') sẽ kích hoạt .dark selector
+   =========================== */
+
+:root {
+  /* Light theme colors */
+  --color-primary: 34 197 94; /* #22c55e */
+  --color-secondary: 45 156 219; /* #2d9cdb */
+  --color-primary-foreground: 255 255 255; /* #ffffff */
+  --color-secondary-foreground: 255 255 255; /* #ffffff */
+  --color-foreground: 23 23 23; /* #171717 */
+  --color-background: 255 255 255; /* #ffffff */
+  --color-surface: 245 245 245; /* #f5f5f5 */
+  --color-surface-raised: 255 255 255; /* #ffffff */
+  --color-success: 34 197 94; /* #22c55e */
+  --color-warning: 245 158 11; /* #f59e0b */
+  --color-error: 239 68 68; /* #ef4444 */
+  --color-border: 229 229 229; /* #e5e5e5 */
+  --color-neutrals100: 108 108 108; /* #6c6c6c */
+  --color-neutrals200: 128 128 128; /* #808080 */
+  --color-neutrals300: 158 158 158; /* #9e9e9e */
+  --color-neutrals400: 180 180 180; /* #b4b4b4 */
+  --color-neutrals500: 193 193 193; /* #c1c1c1 */
+  --color-neutrals600: 211 211 211; /* #d3d3d3 */
+  --color-neutrals700: 217 217 217; /* #d9d9d9 */
+  --color-neutrals800: 221 221 221; /* #dddddd */
+  --color-neutrals900: 242 242 242; /* #f2f2f2 */
+  --color-neutrals1000: 245 245 245; /* #f5f5f5 */
+  --color-skill-listening: 79 70 229; /* #4F46E5 */
+  --color-skill-speaking: 22 163 74; /* #16A34A */
+  --color-skill-reading: 217 119 6; /* #D97706 */
+}
+
+.dark {
+  /* Dark theme colors */
+  --color-primary: 74 222 128; /* #4ade80 */
+  --color-secondary: 0 123 255; /* #007bff */
+  --color-primary-foreground: 0 0 0; /* #000000 */
+  --color-secondary-foreground: 255 255 255; /* #ffffff */
+  --color-foreground: 250 250 250; /* #fafafa */
+  --color-background: 0 0 0; /* #000000 - OLED pure black */
+  --color-surface: 10 10 10; /* #0a0a0a */
+  --color-surface-raised: 23 23 23; /* #171717 */
+  --color-success: 74 222 128; /* #4ade80 */
+  --color-warning: 251 191 36; /* #fbbf24 */
+  --color-error: 248 113 113; /* #f87171 */
+  --color-border: 38 38 38; /* #262626 */
+  --color-neutrals100: 148 148 148; /* #949494 */
+  --color-neutrals200: 133 133 133; /* #858585 */
+  --color-neutrals300: 122 122 122; /* #7a7a7a */
+  --color-neutrals400: 110 110 110; /* #6e6e6e */
+  --color-neutrals500: 94 94 94; /* #5e5e5e */
+  --color-neutrals600: 77 77 77; /* #4d4d4d */
+  --color-neutrals700: 65 66 64; /* #414240 */
+  --color-neutrals800: 29 29 29; /* #1d1d1d */
+  --color-neutrals900: 28 28 28; /* #1c1c1c */
+  --color-neutrals1000: 17 17 17; /* #111111 */
+  --color-skill-listening: 99 102 241; /* #6366F1 - sáng hơn trong dark mode */
+  --color-skill-speaking: 74 222 128; /* #4ade80 */
+  --color-skill-reading: 251 191 36; /* #fbbf24 */
+}
 
 @tailwind base;
 @tailwind components;

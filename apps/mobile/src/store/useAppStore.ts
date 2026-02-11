@@ -108,6 +108,19 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         isFirstLaunch: state.isFirstLaunch,
       }),
+      // Đồng bộ NativeWind colorScheme khi store hydrate từ MMKV
+      // Nếu không gọi colorScheme.set() ở đây, NativeWind sẽ không biết đang ở dark mode
+      // → CSS variables từ .dark selector không apply → giao diện bị đen, text không hiển thị
+      onRehydrateStorage: () => (state) => {
+        if (state?.theme) {
+          console.log('🎨 [Store] Đồng bộ colorScheme với NativeWind:', state.theme);
+          colorScheme.set(state.theme);
+        }
+      },
     },
   ),
 );
+
+// Đặt colorScheme mặc định ngay lập tức (trước khi hydration hoàn thành)
+// Đảm bảo render đầu tiên cũng dùng đúng dark mode CSS variables
+colorScheme.set('dark');
