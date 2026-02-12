@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, Dimensions, StyleSheet} from 'react-native';
+import {View, Dimensions, StyleSheet, Image} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,26 +14,28 @@ import LinearGradient from 'react-native-linear-gradient';
 import {AppText} from '@/components/ui';
 import FloatingOrbs from '@/components/auth/FloatingOrbs';
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
-// Các emoji bay vào từ ngoài rồi nhảy múa
+// Ảnh app icon (brain with headphones)
+const APP_ICON = require('../../assets/app_icon.png');
+
+// Các emoji bay vào nhẹ nhàng xung quanh logo
 const EMOJI_PARADE = [
   {emoji: '🎧', color: '#6366F1'},
-  {emoji: '🗣️', color: '#4ade80'},
   {emoji: '📖', color: '#fbbf24'},
-  {emoji: '🌟', color: '#22d3ee'},
   {emoji: '🚀', color: '#f472b6'},
   {emoji: '💡', color: '#a78bfa'},
+  {emoji: '🗣️', color: '#4ade80'},
 ];
 
-// Các ký tự app name để animation wave
+// Ký tự app name cho wave animation
 const APP_NAME_CHARS = 'StudyLanguage'.split('');
 
 /**
- * Mục đích: Emoji bay vào từ bên ngoài rồi nhảy múa liên tục
+ * Mục đích: Emoji bay vào nhẹ nhàng rồi lơ lửng xung quanh logo
  * Tham số đầu vào: emoji, delay, finalX, finalY, color
  * Tham số đầu ra: JSX.Element - 1 emoji animated
- * Khi nào sử dụng: SplashScreen - hiệu ứng parade emoji bay vào vị trí
+ * Khi nào sử dụng: SplashScreen - hiệu ứng emoji bay vào vị trí rồi lơ lửng
  */
 function ParadeEmoji({
   emoji,
@@ -50,61 +52,54 @@ function ParadeEmoji({
 }) {
   // Bay vào từ ngoài màn hình
   const translateX = useSharedValue(SCREEN_WIDTH + 50);
-  const translateY = useSharedValue(-100);
+  const translateY = useSharedValue(-80);
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const rotate = useSharedValue(0);
-  // Dành cho dancing sau khi đã vào vị trí
-  const danceBounce = useSharedValue(0);
+  // Lơ lửng nhẹ nhàng sau khi vào vị trí
+  const floatY = useSharedValue(0);
 
   useEffect(() => {
-    // Giai đoạn 1: Bay vào vị trí (slow-motion spring)
-    opacity.value = withDelay(delay, withTiming(1, {duration: 300}));
+    // Giai đoạn 1: Bay vào vị trí (chậm rãi, nhẹ nhàng)
+    opacity.value = withDelay(delay, withTiming(1, {duration: 600}));
     translateX.value = withDelay(
       delay,
-      withSpring(finalX, {damping: 8, stiffness: 40, mass: 1.5}), // slow-motion spring
+      withSpring(finalX, {damping: 18, stiffness: 25, mass: 1.2}),
     );
     translateY.value = withDelay(
       delay,
-      withSpring(finalY, {damping: 8, stiffness: 40, mass: 1.5}),
+      withSpring(finalY, {damping: 18, stiffness: 25, mass: 1.2}),
     );
     scale.value = withDelay(
       delay,
-      withSpring(1, {damping: 5, stiffness: 80}),
+      withSpring(1, {damping: 12, stiffness: 60}),
     );
 
-    // Giai đoạn 2: Xoay 360° khi bay vào
+    // Giai đoạn 2: Xoay nhẹ khi bay vào
     rotate.value = withDelay(
       delay,
-      withTiming(720, {duration: 1200, easing: Easing.out(Easing.cubic)}),
+      withTiming(360, {duration: 2500, easing: Easing.out(Easing.cubic)}),
     );
 
-    // Giai đoạn 3: Dancing bounce liên tục (delay thêm để chờ bay vào xong)
-    danceBounce.value = withDelay(
-      delay + 1500,
+    // Giai đoạn 3: Lơ lửng nhẹ nhàng liên tục
+    floatY.value = withDelay(
+      delay + 2500,
       withRepeat(
         withSequence(
-          // Nhảy lên
-          withTiming(-18, {duration: 300, easing: Easing.out(Easing.quad)}),
-          // Rơi xuống bounce
-          withTiming(0, {duration: 300, easing: Easing.in(Easing.bounce)}),
-          // Nhảy nhỏ
-          withTiming(-10, {duration: 200, easing: Easing.out(Easing.quad)}),
-          withTiming(0, {duration: 200, easing: Easing.in(Easing.bounce)}),
-          // Nghỉ
-          withTiming(0, {duration: 800}),
+          withTiming(-8, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
+          withTiming(8, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
         ),
         -1,
-        false,
+        true,
       ),
     );
-  }, [delay, finalX, finalY, translateX, translateY, scale, opacity, rotate, danceBounce]);
+  }, [delay, finalX, finalY, translateX, translateY, scale, opacity, rotate, floatY]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [
       {translateX: translateX.value},
-      {translateY: translateY.value + danceBounce.value},
+      {translateY: translateY.value + floatY.value},
       {scale: scale.value},
       {rotate: `${rotate.value}deg`},
     ],
@@ -116,19 +111,19 @@ function ParadeEmoji({
         {position: 'absolute'},
         animStyle,
       ]}>
-      {/* Vòng sáng sau emoji */}
+      {/* Vòng sáng mờ sau emoji */}
       <View
         style={{
           width: 48,
           height: 48,
           borderRadius: 24,
-          backgroundColor: color + '15',
+          backgroundColor: color + '12',
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: color,
           shadowOffset: {width: 0, height: 0},
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
         }}>
         <AppText className="text-2xl">{emoji}</AppText>
       </View>
@@ -137,39 +132,40 @@ function ParadeEmoji({
 }
 
 /**
- * Mục đích: 1 ký tự của app name với wave animation
+ * Mục đích: 1 ký tự của app name với wave animation mượt mà
  * Tham số đầu vào: char, index (để tính delay)
  * Tham số đầu ra: JSX.Element - 1 char animated
- * Khi nào sử dụng: SplashScreen - hiệu ứng wave text
+ * Khi nào sử dụng: SplashScreen - hiệu ứng wave text chậm rãi
  */
 function WaveChar({char, index}: {char: string; index: number}) {
-  const translateY = useSharedValue(50);
+  const translateY = useSharedValue(40);
   const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.3);
+  const scale = useSharedValue(0.5);
   const waveBounce = useSharedValue(0);
 
   useEffect(() => {
-    const charDelay = 1800 + index * 80; // Mỗi ký tự cách nhau 80ms
+    const charDelay = 2200 + index * 100;
 
-    // Nhảy vào từ dưới lên
-    opacity.value = withDelay(charDelay, withTiming(1, {duration: 200}));
+    // Nhẹ nhàng hiện lên từ dưới
+    opacity.value = withDelay(charDelay, withTiming(1, {duration: 400}));
     translateY.value = withDelay(
       charDelay,
-      withSpring(0, {damping: 6, stiffness: 150}),
+      withSpring(0, {damping: 14, stiffness: 70}),
     );
     scale.value = withDelay(
       charDelay,
-      withSpring(1, {damping: 8, stiffness: 120}),
+      withSpring(1, {damping: 12, stiffness: 80}),
     );
 
-    // Wave bounce liên tục sau khi đã hiện
+    // Wave nhẹ nhàng liên tục sau khi đã hiện
     waveBounce.value = withDelay(
-      3000 + index * 120, // delay lệch nhau tạo hiệu ứng sóng
+      4000 + index * 150,
       withRepeat(
         withSequence(
-          withTiming(-6, {duration: 300, easing: Easing.out(Easing.sin)}),
-          withTiming(0, {duration: 300, easing: Easing.in(Easing.sin)}),
-          withTiming(0, {duration: 1500}), // Nghỉ dài
+          withTiming(-4, {duration: 600, easing: Easing.inOut(Easing.sin)}),
+          withTiming(4, {duration: 600, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0, {duration: 400, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0, {duration: 2000}), // Nghỉ dài
         ),
         -1,
         false,
@@ -197,117 +193,197 @@ function WaveChar({char, index}: {char: string; index: number}) {
 }
 
 /**
- * Mục đích: Logo chính với hiệu ứng flip 3D + pulse + bounce
+ * Mục đích: Logo chính với app icon thật, vòng sáng 3 lớp đẹp mắt
  * Tham số đầu vào: không có
- * Tham số đầu ra: JSX.Element - logo animated
- * Khi nào sử dụng: SplashScreen - logo trung tâm
+ * Tham số đầu ra: JSX.Element - logo animated premium
+ * Khi nào sử dụng: SplashScreen - logo trung tâm với glow rings đẹp
  */
 function AnimatedLogo() {
-  const scale = useSharedValue(0);
+  const scale = useSharedValue(0.3);
   const opacity = useSharedValue(0);
-  const rotateY = useSharedValue(0);
-  const glowScale = useSharedValue(0.5);
-  const glowOpacity = useSharedValue(0);
-  // Logo bounce nhẹ liên tục
-  const bounce = useSharedValue(0);
+  // 3 vòng sáng đồng tâm - pulse lệch pha
+  const ring1Scale = useSharedValue(0.6);
+  const ring1Opacity = useSharedValue(0);
+  const ring2Scale = useSharedValue(0.6);
+  const ring2Opacity = useSharedValue(0);
+  const ring3Scale = useSharedValue(0.6);
+  const ring3Opacity = useSharedValue(0);
+  // Breathing nhẹ nhàng
+  const breathe = useSharedValue(0);
 
   useEffect(() => {
-    // Logo zoom in + bounce
-    opacity.value = withDelay(600, withTiming(1, {duration: 400}));
+    // Logo fade in + scale mượt (không bouncy)
+    opacity.value = withDelay(
+      600,
+      withTiming(1, {duration: 800, easing: Easing.out(Easing.cubic)}),
+    );
     scale.value = withDelay(
       600,
-      withSpring(1, {damping: 4, stiffness: 80, mass: 1.2}), // bouncy spring
+      withSpring(1, {damping: 18, stiffness: 40, mass: 1}),
     );
 
-    // Flip 3D khi xuất hiện
-    rotateY.value = withDelay(
-      600,
-      withTiming(360, {duration: 1000, easing: Easing.out(Easing.cubic)}),
-    );
-
-    // Glow ring pulse
-    glowOpacity.value = withDelay(
-      1000,
+    // Vòng sáng 1 (trong cùng) - amber ấm
+    ring1Opacity.value = withDelay(
+      1200,
       withRepeat(
         withSequence(
-          withTiming(0.7, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
-          withTiming(0.1, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.5, {duration: 2500, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.1, {duration: 2500, easing: Easing.inOut(Easing.sin)}),
         ),
         -1,
         true,
       ),
     );
-    glowScale.value = withDelay(
-      1000,
+    ring1Scale.value = withDelay(
+      1200,
       withRepeat(
         withSequence(
-          withTiming(1.8, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
-          withTiming(1.0, {duration: 1200, easing: Easing.inOut(Easing.sin)}),
+          withTiming(1.3, {duration: 2500, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.9, {duration: 2500, easing: Easing.inOut(Easing.sin)}),
         ),
         -1,
         true,
       ),
     );
 
-    // Bounce nhẹ liên tục (breathing effect)
-    bounce.value = withDelay(
+    // Vòng sáng 2 (giữa) - xanh lá primary
+    ring2Opacity.value = withDelay(
+      1600,
+      withRepeat(
+        withSequence(
+          withTiming(0.45, {duration: 3000, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.08, {duration: 3000, easing: Easing.inOut(Easing.sin)}),
+        ),
+        -1,
+        true,
+      ),
+    );
+    ring2Scale.value = withDelay(
+      1600,
+      withRepeat(
+        withSequence(
+          withTiming(1.5, {duration: 3000, easing: Easing.inOut(Easing.sin)}),
+          withTiming(1.0, {duration: 3000, easing: Easing.inOut(Easing.sin)}),
+        ),
+        -1,
+        true,
+      ),
+    );
+
+    // Vòng sáng 3 (ngoài cùng) - cyan mát
+    ring3Opacity.value = withDelay(
       2000,
       withRepeat(
         withSequence(
-          withTiming(-8, {duration: 800, easing: Easing.inOut(Easing.sin)}),
-          withTiming(8, {duration: 800, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.35, {duration: 3500, easing: Easing.inOut(Easing.sin)}),
+          withTiming(0.05, {duration: 3500, easing: Easing.inOut(Easing.sin)}),
         ),
         -1,
         true,
       ),
     );
-  }, [scale, opacity, rotateY, glowScale, glowOpacity, bounce]);
+    ring3Scale.value = withDelay(
+      2000,
+      withRepeat(
+        withSequence(
+          withTiming(1.8, {duration: 3500, easing: Easing.inOut(Easing.sin)}),
+          withTiming(1.1, {duration: 3500, easing: Easing.inOut(Easing.sin)}),
+        ),
+        -1,
+        true,
+      ),
+    );
+
+    // Breathing nhẹ nhàng lên xuống
+    breathe.value = withDelay(
+      2500,
+      withRepeat(
+        withSequence(
+          withTiming(-5, {duration: 1800, easing: Easing.inOut(Easing.sin)}),
+          withTiming(5, {duration: 1800, easing: Easing.inOut(Easing.sin)}),
+        ),
+        -1,
+        true,
+      ),
+    );
+  }, [
+    scale, opacity,
+    ring1Scale, ring1Opacity,
+    ring2Scale, ring2Opacity,
+    ring3Scale, ring3Opacity,
+    breathe,
+  ]);
 
   const logoStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [
       {scale: scale.value},
-      {rotateY: `${rotateY.value}deg`},
-      {translateY: bounce.value},
+      {translateY: breathe.value},
     ],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{scale: glowScale.value}],
+  const ring1Style = useAnimatedStyle(() => ({
+    opacity: ring1Opacity.value,
+    transform: [{scale: ring1Scale.value}],
+  }));
+
+  const ring2Style = useAnimatedStyle(() => ({
+    opacity: ring2Opacity.value,
+    transform: [{scale: ring2Scale.value}],
+  }));
+
+  const ring3Style = useAnimatedStyle(() => ({
+    opacity: ring3Opacity.value,
+    transform: [{scale: ring3Scale.value}],
   }));
 
   return (
     <View style={styles.logoArea}>
-      {/* Glow ring 1 - xanh */}
-      <Animated.View style={[styles.glowRing, glowStyle]} />
-      {/* Glow ring 2 - tím (offset timing) */}
+      {/* Vòng sáng 3 - ngoài cùng - cyan */}
       <Animated.View
         style={[
           styles.glowRing,
-          {borderColor: '#6366F1', shadowColor: '#6366F1'},
-          glowStyle,
+          styles.ring3,
+          ring3Style,
+        ]}
+      />
+      {/* Vòng sáng 2 - giữa - xanh lá */}
+      <Animated.View
+        style={[
+          styles.glowRing,
+          styles.ring2,
+          ring2Style,
+        ]}
+      />
+      {/* Vòng sáng 1 - trong cùng - amber */}
+      <Animated.View
+        style={[
+          styles.glowRing,
+          styles.ring1,
+          ring1Style,
         ]}
       />
 
-      {/* Logo chính */}
-      <Animated.View style={[styles.logoBox, logoStyle]}>
-        <LinearGradient
-          colors={['#4ade80', '#22c55e', '#16a34a']}
-          style={styles.logoGradient}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}>
-          <AppText className="text-5xl">🎧</AppText>
-        </LinearGradient>
+      {/* Logo chính - app icon thật */}
+      <Animated.View style={[styles.logoIconWrapper, logoStyle]}>
+        <View style={styles.logoIconContainer}>
+          <Image
+            source={APP_ICON}
+            style={styles.logoIcon}
+            resizeMode="cover"
+          />
+        </View>
+        {/* Viền glow bên ngoài icon */}
+        <View style={styles.logoIconGlow} />
       </Animated.View>
     </View>
   );
 }
 
 /**
- * Mục đích: 3 dots loading nhảy tuần tự stagger
+ * Mục đích: 3 dots loading với animation mượt mà
  * Tham số đầu vào: không có
- * Tham số đầu ra: JSX.Element - 3 dots bounce
+ * Tham số đầu ra: JSX.Element - 3 dots pulse nhẹ nhàng
  * Khi nào sử dụng: SplashScreen - loading indicator
  */
 function LoadingDots() {
@@ -319,28 +395,28 @@ function LoadingDots() {
 
   useEffect(() => {
     dots.forEach((dot, i) => {
-      const delay = 2500 + i * 200;
-      // Bounce lên xuống
+      const delay = 3000 + i * 300;
+      // Lơ lửng nhẹ nhàng
       dot.sv.value = withDelay(
         delay,
         withRepeat(
           withSequence(
-            withTiming(-14, {duration: 250, easing: Easing.out(Easing.quad)}),
-            withTiming(0, {duration: 250, easing: Easing.in(Easing.bounce)}),
-            withTiming(0, {duration: 500}),
+            withTiming(-10, {duration: 500, easing: Easing.inOut(Easing.sin)}),
+            withTiming(0, {duration: 500, easing: Easing.inOut(Easing.sin)}),
+            withTiming(0, {duration: 800}),
           ),
           -1,
           false,
         ),
       );
-      // Scale pulse
+      // Scale pulse nhẹ
       dot.scaleSv.value = withDelay(
         delay,
         withRepeat(
           withSequence(
-            withTiming(1.5, {duration: 250}),
-            withTiming(1, {duration: 250}),
-            withTiming(1, {duration: 500}),
+            withTiming(1.3, {duration: 500, easing: Easing.inOut(Easing.sin)}),
+            withTiming(1, {duration: 500, easing: Easing.inOut(Easing.sin)}),
+            withTiming(1, {duration: 800}),
           ),
           -1,
           false,
@@ -366,7 +442,12 @@ function LoadingDots() {
           key={i}
           style={[
             styles.dot,
-            {backgroundColor: dot.color, shadowColor: dot.color, shadowOpacity: 0.6, shadowRadius: 6},
+            {
+              backgroundColor: dot.color,
+              shadowColor: dot.color,
+              shadowOpacity: 0.5,
+              shadowRadius: 8,
+            },
             dotStyles[i],
           ]}
         />
@@ -376,33 +457,36 @@ function LoadingDots() {
 }
 
 /**
- * Mục đích: Subtitle với hiệu ứng typewriter (chữ hiện dần)
+ * Mục đích: Subtitle tiếng Anh với hiệu ứng typewriter mượt mà
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: SplashScreen - subtitle phía dưới app name
+ * Khi nào sử dụng: SplashScreen - subtitle "Learn Smarter ✨"
  */
 function AnimatedSubtitle() {
-  const words = ['Học', 'ngôn ngữ', 'thông minh', '✨'];
+  const words = ['Learn', 'Smarter', '✨'];
   const wordAnimations = words.map(() => ({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     opacity: useSharedValue(0),
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    translateY: useSharedValue(15),
+    translateY: useSharedValue(20),
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    scale: useSharedValue(0.5),
+    scale: useSharedValue(0.7),
   }));
 
   useEffect(() => {
     wordAnimations.forEach((anim, i) => {
-      const delay = 2800 + i * 300;
-      anim.opacity.value = withDelay(delay, withTiming(1, {duration: 300}));
+      const delay = 3500 + i * 400;
+      anim.opacity.value = withDelay(
+        delay,
+        withTiming(1, {duration: 500, easing: Easing.out(Easing.cubic)}),
+      );
       anim.translateY.value = withDelay(
         delay,
-        withSpring(0, {damping: 8, stiffness: 120}),
+        withSpring(0, {damping: 14, stiffness: 60}),
       );
       anim.scale.value = withDelay(
         delay,
-        withSpring(1, {damping: 5, stiffness: 100}),
+        withSpring(1, {damping: 10, stiffness: 70}),
       );
     });
   }, []);
@@ -419,7 +503,7 @@ function AnimatedSubtitle() {
   );
 
   return (
-    <View style={{flexDirection: 'row', gap: 6, marginTop: 12}}>
+    <View style={{flexDirection: 'row', gap: 8, marginTop: 14}}>
       {words.map((word, i) => (
         <Animated.View key={i} style={wordStyles[i]}>
           <AppText className="text-neutrals300 text-lg">{word}</AppText>
@@ -430,7 +514,7 @@ function AnimatedSubtitle() {
 }
 
 /**
- * Mục đích: Màn hình chờ khi khởi động app — nhiều hiệu ứng sống động, nhảy múa, in/out
+ * Mục đích: Màn hình splash premium khi khởi động app
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Hiển thị khi app khởi động, trước khi kiểm tra auth state
@@ -439,19 +523,21 @@ function AnimatedSubtitle() {
 export default function SplashScreen() {
   const bgOpacity = useSharedValue(0);
 
-  // Vị trí cuối cùng cho 6 emoji parade (xung quanh logo)
+  // Vị trí cuối cùng cho 5 emoji xung quanh logo (hình tròn đều)
   const emojiPositions = [
-    {x: -80, y: -60},
-    {x: 70, y: -70},
-    {x: -90, y: 30},
-    {x: 80, y: 40},
-    {x: -50, y: 90},
-    {x: 60, y: 95},
+    {x: -85, y: -55},   // trên trái
+    {x: 75, y: -65},    // trên phải
+    {x: -95, y: 35},    // giữa trái
+    {x: 85, y: 45},     // giữa phải
+    {x: 0, y: 100},     // dưới giữa
   ];
 
   useEffect(() => {
     // Background fade in mượt
-    bgOpacity.value = withTiming(1, {duration: 800, easing: Easing.out(Easing.cubic)});
+    bgOpacity.value = withTiming(1, {
+      duration: 1200,
+      easing: Easing.out(Easing.cubic),
+    });
   }, [bgOpacity]);
 
   const bgStyle = useAnimatedStyle(() => ({
@@ -460,7 +546,7 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background */}
+      {/* Gradient nền tối */}
       <Animated.View style={[StyleSheet.absoluteFill, bgStyle]}>
         <LinearGradient
           colors={['#0a0a0a', '#0d1f12', '#0f0a1a', '#071210', '#0a0a0a']}
@@ -469,37 +555,37 @@ export default function SplashScreen() {
         />
       </Animated.View>
 
-      {/* Floating Orbs nền */}
-      <FloatingOrbs count={12} />
+      {/* Floating orbs nền */}
+      <FloatingOrbs count={10} />
 
       {/* Nội dung chính */}
       <View style={styles.content}>
-        {/* Logo + Emoji Parade */}
+        {/* Logo + Emoji */}
         <View style={styles.logoContainer}>
-          {/* Logo chính với flip + glow */}
+          {/* Logo chính với glow rings 3 lớp */}
           <AnimatedLogo />
 
-          {/* Emoji parade bay vào từ ngoài */}
+          {/* Emoji bay vào nhẹ nhàng */}
           {EMOJI_PARADE.map((item, index) => (
             <ParadeEmoji
               key={index}
               emoji={item.emoji}
               color={item.color}
-              delay={800 + index * 250}
+              delay={1200 + index * 350}
               finalX={emojiPositions[index].x}
               finalY={emojiPositions[index].y}
             />
           ))}
         </View>
 
-        {/* App Name - wave animation từng ký tự */}
+        {/* App Name - wave animation mượt */}
         <View style={styles.appNameRow}>
           {APP_NAME_CHARS.map((char, index) => (
             <WaveChar key={index} char={char} index={index} />
           ))}
         </View>
 
-        {/* Subtitle - typewriter effect */}
+        {/* Subtitle tiếng Anh */}
         <AnimatedSubtitle />
 
         {/* Loading dots */}
@@ -522,45 +608,80 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoContainer: {
-    width: 260,
-    height: 260,
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   logoArea: {
-    width: 110,
-    height: 110,
+    width: 150,
+    height: 150,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 3 vòng sáng đồng tâm
   glowRing: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    borderWidth: 2,
-    borderColor: '#4ade80',
-    shadowColor: '#4ade80',
+    borderWidth: 1.5,
     shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 0.8,
+  },
+  ring1: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderColor: '#fbbf2440',
+    shadowColor: '#fbbf24',
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+  },
+  ring2: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderColor: '#4ade8035',
+    shadowColor: '#4ade80',
+    shadowOpacity: 0.5,
+    shadowRadius: 25,
+  },
+  ring3: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderColor: '#22d3ee25',
+    shadowColor: '#22d3ee',
+    shadowOpacity: 0.3,
     shadowRadius: 30,
   },
-  logoBox: {
-    width: 96,
-    height: 96,
-    borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: '#4ade80',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.6,
-    shadowRadius: 25,
-    elevation: 10,
-  },
-  logoGradient: {
-    flex: 1,
+  // Logo icon wrapper - KHÔNG có overflow hidden
+  logoIconWrapper: {
+    width: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoIconContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
+  },
+  logoIcon: {
+    width: 110,
+    height: 110,
+  },
+  logoIconGlow: {
+    position: 'absolute',
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    borderWidth: 2,
+    borderColor: '#4ade8040',
+    shadowColor: '#4ade80',
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
   },
   appNameRow: {
     flexDirection: 'row',
@@ -571,7 +692,7 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     alignItems: 'center',
   },
   dot: {
