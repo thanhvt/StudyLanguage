@@ -238,6 +238,36 @@ describe('useListeningStore', () => {
     });
   });
 
+  describe('Audio State', () => {
+    it('setAudioUrl lưu URL audio', () => {
+      useListeningStore.getState().setAudioUrl('https://audio.example.com/test.mp3');
+      expect(useListeningStore.getState().audioUrl).toBe('https://audio.example.com/test.mp3');
+    });
+
+    it('setAudioUrl(null) xóa audio URL', () => {
+      useListeningStore.getState().setAudioUrl('https://audio.example.com/test.mp3');
+      useListeningStore.getState().setAudioUrl(null);
+      expect(useListeningStore.getState().audioUrl).toBeNull();
+    });
+
+    it('setGeneratingAudio cập nhật trạng thái đang sinh audio', () => {
+      useListeningStore.getState().setGeneratingAudio(true);
+      expect(useListeningStore.getState().isGeneratingAudio).toBe(true);
+
+      useListeningStore.getState().setGeneratingAudio(false);
+      expect(useListeningStore.getState().isGeneratingAudio).toBe(false);
+    });
+
+    it('setTimestamps lưu timestamps cho transcript sync', () => {
+      const mockTimestamps = [
+        {lineIndex: 0, startTime: 0, endTime: 3.5, speaker: 'Person A'},
+        {lineIndex: 1, startTime: 3.5, endTime: 7.2, speaker: 'Person B'},
+      ];
+      useListeningStore.getState().setTimestamps(mockTimestamps);
+      expect(useListeningStore.getState().timestamps).toEqual(mockTimestamps);
+    });
+  });
+
   describe('Reset', () => {
     it('reset() trả về trạng thái mặc định', () => {
       // Setup: đã có data
@@ -260,6 +290,9 @@ describe('useListeningStore', () => {
         selectedTopic: {id: 'it-1', name: 'Test', description: ''},
         selectedCategory: 'daily',
         favoriteScenarioIds: ['it-1', 'daily-5'],
+        audioUrl: 'https://audio.example.com/test.mp3',
+        isGeneratingAudio: true,
+        timestamps: [{lineIndex: 0, startTime: 0, endTime: 3, speaker: 'A'}],
       });
 
       // Reset
@@ -278,6 +311,10 @@ describe('useListeningStore', () => {
       expect(state.selectedTopic).toBeNull();
       expect(state.selectedCategory).toBe('it');
       expect(state.favoriteScenarioIds).toEqual([]);
+      // Audio state cũng reset
+      expect(state.audioUrl).toBeNull();
+      expect(state.isGeneratingAudio).toBe(false);
+      expect(state.timestamps).toBeNull();
     });
   });
 
@@ -311,6 +348,10 @@ describe('useListeningStore', () => {
       expect(state.selectedTopic).toBeNull();
       expect(state.selectedCategory).toBe('it');
       expect(state.favoriteScenarioIds).toEqual([]);
+      // Audio state defaults
+      expect(state.audioUrl).toBeNull();
+      expect(state.isGeneratingAudio).toBe(false);
+      expect(state.timestamps).toBeNull();
     });
   });
 });

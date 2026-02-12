@@ -46,6 +46,26 @@ export interface ConversationResult {
   vocabulary?: string[];
 }
 
+/** Timestamp cho từng câu hội thoại — sync audio với transcript */
+export interface ConversationTimestamp {
+  /** Index câu hội thoại (0-based) */
+  lineIndex: number;
+  /** Thời điểm bắt đầu (giây) */
+  startTime: number;
+  /** Thời điểm kết thúc (giây) */
+  endTime: number;
+  /** Speaker name */
+  speaker: string;
+}
+
+/** Kết quả sinh audio TTS từ backend */
+export interface AudioGenerationResult {
+  /** URL audio file (có thể là URL tạm hoặc CDN) */
+  audioUrl: string;
+  /** Timestamps cho từng câu — dùng để sync transcript */
+  timestamps: ConversationTimestamp[];
+}
+
 // =======================
 // Backend Response Types (raw, chưa map)
 // =======================
@@ -147,6 +167,7 @@ function clampDuration(minutes: number): number {
  * Khi nào sử dụng: ConfigScreen gọi generate, PlayerScreen hiển thị kết quả
  *   - generateConversation: User nhấn "Tạo bài nghe" ở ConfigScreen
  *   - generateScenario: User chọn kịch bản có sẵn
+ *   - generateConversationAudio: PlayerScreen gọi sau khi có conversation → sinh audio TTS
  */
 export const listeningApi = {
   /**
@@ -205,5 +226,39 @@ export const listeningApi = {
 
     console.log('✅ [Listening] Nhận response scenario, đang map dữ liệu...');
     return mapBackendResponse(response.data);
+  },
+
+  /**
+   * Mục đích: Sinh audio TTS cho hội thoại đã generate
+   * Tham số đầu vào: conversation (ConversationExchange[]) — danh sách câu hội thoại
+   * Tham số đầu ra: Promise<AudioGenerationResult> — audioUrl + timestamps
+   * Khi nào sử dụng: PlayerScreen gọi sau khi nhận được conversation từ store
+   *   - Gọi POST /ai/generate-conversation-audio
+   *   - Nhận về URL audio + timestamps cho từng câu
+   *   - Timestamps dùng để sync highlight transcript theo thời gian phát
+   */
+  generateConversationAudio: async (
+    conversation: ConversationExchange[],
+  ): Promise<AudioGenerationResult> => {
+    const payload = {
+      conversation: conversation.map(line => ({
+        speaker: line.speaker,
+        text: line.text,
+      })),
+    };
+
+    console.log(
+      '🔊 [Listening] Gửi request sinh audio TTS, số câu:',
+      conversation.length,
+    );
+
+    const response = await apiClient.post(
+      '/ai/generate-conversation-audio',
+      payload,
+      {timeout: 180000}, // 3 phút — sinh audio chậm hơn generate text
+    );
+
+    console.log('✅ [Listening] Nhận audio URL:', response.data.audioUrl);
+    return response.data as AudioGenerationResult;
   },
 };

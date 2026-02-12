@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import type {
   ListeningConfig,
   ConversationResult,
+  ConversationTimestamp,
 } from '@/services/api/listening';
 import type {TopicScenario} from '@/data/topic-data';
 
@@ -14,7 +15,7 @@ interface ListeningState {
   config: ListeningConfig;
   /** Kết quả conversation từ API */
   conversation: ConversationResult | null;
-  /** Đang generate */
+  /** Đang generate conversation */
   isGenerating: boolean;
   /** Trạng thái phát audio */
   isPlaying: boolean;
@@ -30,6 +31,12 @@ interface ListeningState {
   selectedSubCategory: string;
   /** Danh sách scenario ID đã favorite (lưu local) */
   favoriteScenarioIds: string[];
+  /** URL audio TTS đã sinh */
+  audioUrl: string | null;
+  /** Đang sinh audio TTS */
+  isGeneratingAudio: boolean;
+  /** Timestamps cho từng câu — sync audio với transcript */
+  timestamps: ConversationTimestamp[] | null;
 }
 
 interface ListeningActions {
@@ -59,6 +66,12 @@ interface ListeningActions {
   setSelectedSubCategory: (subCategoryId: string) => void;
   /** Toggle favorite cho 1 scenario */
   toggleFavorite: (scenarioId: string) => void;
+  /** Set audio URL sau khi TTS sinh xong */
+  setAudioUrl: (url: string | null) => void;
+  /** Set trạng thái đang sinh audio */
+  setGeneratingAudio: (value: boolean) => void;
+  /** Set timestamps cho transcript sync */
+  setTimestamps: (ts: ConversationTimestamp[] | null) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -81,6 +94,9 @@ const initialState: ListeningState = {
   selectedCategory: 'it',
   selectedSubCategory: '',
   favoriteScenarioIds: [],
+  audioUrl: null,
+  isGeneratingAudio: false,
+  timestamps: null,
 };
 
 /**
@@ -88,7 +104,7 @@ const initialState: ListeningState = {
  * Khi nào sử dụng:
  *   - ConfigScreen: đọc/ghi config, gọi generate
  *   - TopicPicker: đọc/ghi selectedTopic, selectedCategory, favorites
- *   - PlayerScreen: đọc conversation, điều khiển playback
+ *   - PlayerScreen: đọc conversation, điều khiển playback, audio state
  *   - QuickActions: reset khi bắt đầu bài mới
  */
 export const useListeningStore = create<ListeningState & ListeningActions>(
@@ -132,6 +148,11 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
           : [...state.favoriteScenarioIds, scenarioId],
       })),
 
+    setAudioUrl: url => set({audioUrl: url}),
+    setGeneratingAudio: value => set({isGeneratingAudio: value}),
+    setTimestamps: ts => set({timestamps: ts}),
+
     reset: () => set(initialState),
   }),
 );
+

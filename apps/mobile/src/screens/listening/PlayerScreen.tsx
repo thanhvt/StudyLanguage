@@ -1,10 +1,20 @@
-import React, {useEffect} from 'react';
-import {ScrollView, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useRef, useCallback} from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
-import TrackPlayer, {usePlaybackState, State} from 'react-native-track-player';
-import {setupPlayer} from '@/services/audio/trackPlayer';
+import {listeningApi} from '@/services/api/listening';
+import TrackPlayer, {
+  usePlaybackState,
+  useProgress,
+  State,
+} from 'react-native-track-player';
+import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -18,9 +28,9 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Sau khi ConfigScreen generate conversation thành công
  *   - Hiển thị transcript hội thoại
- *   - Điều khiển play/pause (TODO: tích hợp Track Player)
- *   - Highlight exchange đang phát
- *   - Đổi tốc độ phát
+ *   - Gọi API sinh audio TTS → load vào TrackPlayer → auto-play
+ *   - Highlight exchange đang phát (dựa trên timestamps)
+ *   - Điều khiển play/pause, skip, đổi tốc độ
  */
 export default function ListeningPlayerScreen({
   navigation,
@@ -28,8 +38,6 @@ export default function ListeningPlayerScreen({
   navigation: any;
 }) {
   const conversation = useListeningStore(state => state.conversation);
-  const isPlaying = useListeningStore(state => state.isPlaying);
-  const togglePlaying = useListeningStore(state => state.togglePlaying);
   const currentExchangeIndex = useListeningStore(
     state => state.currentExchangeIndex,
   );
@@ -40,17 +48,128 @@ export default function ListeningPlayerScreen({
   const setPlaybackSpeed = useListeningStore(state => state.setPlaybackSpeed);
   const config = useListeningStore(state => state.config);
   const reset = useListeningStore(state => state.reset);
-  const playbackState = usePlaybackState();
-  const isTrackPlaying = playbackState.state === State.Playing;
 
-  const {showError, showInfo} = useToast();
+  // Audio state từ store
+  const audioUrl = useListeningStore(state => state.audioUrl);
+  const isGeneratingAudio = useListeningStore(
+    state => state.isGeneratingAudio,
+  );
+  const timestamps = useListeningStore(state => state.timestamps);
+  const setAudioUrl = useListeningStore(state => state.setAudioUrl);
+  const setGeneratingAudio = useListeningStore(
+    state => state.setGeneratingAudio,
+  );
+  const setTimestamps = useListeningStore(state => state.setTimestamps);
+
+  // TrackPlayer state
+  const playbackState = usePlaybackState();
+  const progress = useProgress(500); // Cập nhật mỗi 500ms
+  const isTrackPlaying = playbackState.state === State.Playing;
+  const isTrackReady =
+    playbackState.state === State.Ready ||
+    playbackState.state === State.Playing ||
+    playbackState.state === State.Paused;
+
+  const {showError, showInfo, showSuccess} = useToast();
   const {showConfirm} = useDialog();
   const haptic = useHaptic();
+
+  // Ref để tránh duplicate audio generation
+  const audioGenRequestedRef = useRef(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Khởi tạo Track Player khi vào màn hình
   useEffect(() => {
     setupPlayer();
   }, []);
+
+  /**
+   * Mục đích: Gọi API sinh audio TTS khi có conversation nhưng chưa có audioUrl
+   * Tham số đầu vào: không (dùng conversation từ store)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: useEffect khi mount, nếu chưa có audioUrl
+   *   - Gọi listeningApi.generateConversationAudio()
+   *   - Set audioUrl + timestamps vào store
+   *   - Load track vào TrackPlayer → auto-play
+   */
+  useEffect(() => {
+    if (
+      !conversation?.conversation?.length ||
+      audioUrl ||
+      audioGenRequestedRef.current
+    ) {
+      return;
+    }
+
+    audioGenRequestedRef.current = true;
+
+    const generateAudio = async () => {
+      setGeneratingAudio(true);
+      console.log('🔊 [PlayerScreen] Bắt đầu sinh audio TTS...');
+
+      try {
+        const result = await listeningApi.generateConversationAudio(
+          conversation.conversation,
+        );
+
+        setAudioUrl(result.audioUrl);
+        setTimestamps(result.timestamps);
+
+        console.log('✅ [PlayerScreen] Audio đã sẵn sàng, đang load vào player...');
+
+        // Load track vào TrackPlayer
+        await addTrack(
+          result.audioUrl,
+          conversation.title || config.topic || 'Bài nghe',
+        );
+
+        // Auto-play
+        await TrackPlayer.play();
+        showSuccess('Audio sẵn sàng', 'Đang tự động phát bài nghe 🎧');
+        haptic.success();
+      } catch (error: any) {
+        console.error('❌ [PlayerScreen] Lỗi sinh audio:', error);
+        showError(
+          'Không thể tạo audio',
+          'Bạn vẫn có thể đọc transcript. Thử lại bằng nút Play.',
+        );
+      } finally {
+        setGeneratingAudio(false);
+      }
+    };
+
+    generateAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation]);
+
+  /**
+   * Mục đích: Sync transcript highlight theo thời gian phát audio
+   * Tham số đầu vào: progress.position (giây hiện tại), timestamps
+   * Tham số đầu ra: void — cập nhật currentExchangeIndex
+   * Khi nào sử dụng: Mỗi 500ms khi đang phát audio (useProgress hook)
+   */
+  useEffect(() => {
+    if (!timestamps?.length || !isTrackPlaying) {
+      return;
+    }
+
+    const currentTime = progress.position;
+
+    // Tìm exchange đang phát dựa trên timestamps
+    const activeIndex = timestamps.findIndex(
+      ts => currentTime >= ts.startTime && currentTime < ts.endTime,
+    );
+
+    if (activeIndex !== -1 && activeIndex !== currentExchangeIndex) {
+      setCurrentExchangeIndex(activeIndex);
+    }
+  }, [
+    progress.position,
+    timestamps,
+    isTrackPlaying,
+    currentExchangeIndex,
+    setCurrentExchangeIndex,
+  ]);
 
   if (!conversation) {
     return (
@@ -69,11 +188,28 @@ export default function ListeningPlayerScreen({
    * Tham số đầu vào: index (number) - vị trí exchange
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn vào 1 câu trong transcript để nhảy tới
+   *   - Nếu có timestamps → seek audio tới vị trí tương ứng
+   *   - Nếu chưa có audio → chỉ highlight exchange
    */
-  const handleExchangePress = (index: number) => {
+  const handleExchangePress = async (index: number) => {
     setCurrentExchangeIndex(index);
-    // TODO: Seek audio tới vị trí tương ứng khi có Track Player
-    console.log('📍 [Player] Nhảy đến exchange:', index);
+    haptic.light();
+
+    // Seek audio tới timestamp của exchange nếu có
+    if (timestamps?.[index] && isTrackReady) {
+      try {
+        await TrackPlayer.seekTo(timestamps[index].startTime);
+        console.log(
+          '📍 [Player] Seek đến exchange:',
+          index,
+          'tại',
+          timestamps[index].startTime,
+          'giây',
+        );
+      } catch (error) {
+        console.log('📍 [Player] Nhảy đến exchange:', index);
+      }
+    }
   };
 
   /**
@@ -86,8 +222,15 @@ export default function ListeningPlayerScreen({
     showConfirm(
       'Tạo bài mới?',
       'Bài nghe hiện tại sẽ bị xóa. Bạn có chắc muốn tiếp tục?',
-      () => {
+      async () => {
         haptic.medium();
+        // Dừng và reset TrackPlayer
+        try {
+          await TrackPlayer.reset();
+        } catch {
+          // Bỏ qua nếu player chưa setup
+        }
+        audioGenRequestedRef.current = false;
         reset();
         navigation.goBack();
       },
@@ -117,6 +260,126 @@ export default function ListeningPlayerScreen({
     }
   };
 
+  /**
+   * Mục đích: Xử lý Play/Pause — toggle TrackPlayer thực sự
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn nút Play/Pause
+   *   - Nếu có audio → play/pause TrackPlayer
+   *   - Nếu chưa có audio và đã gen xong → retry load track
+   *   - Nếu đang gen → không làm gì (disabled)
+   */
+  const handlePlayPause = useCallback(async () => {
+    haptic.light();
+
+    try {
+      if (isTrackPlaying) {
+        // Đang phát → pause
+        await TrackPlayer.pause();
+        console.log('⏸️ [Player] Pause');
+      } else if (isTrackReady) {
+        // Track sẵn sàng → play
+        await TrackPlayer.play();
+        console.log('▶️ [Player] Play');
+      } else if (audioUrl) {
+        // Có URL nhưng track chưa load → retry load
+        console.log('🔄 [Player] Retry load track...');
+        await addTrack(
+          audioUrl,
+          conversation?.title || config.topic || 'Bài nghe',
+        );
+        await TrackPlayer.play();
+      } else {
+        // Chưa có audio → thông báo
+        showInfo('Đang chuẩn bị', 'Audio chưa sẵn sàng, vui lòng đợi...');
+      }
+    } catch (error) {
+      console.error('❌ [Player] Lỗi play/pause:', error);
+      showError('Lỗi phát audio', 'Vui lòng thử lại');
+    }
+  }, [
+    isTrackPlaying,
+    isTrackReady,
+    audioUrl,
+    conversation,
+    config.topic,
+    haptic,
+    showInfo,
+    showError,
+  ]);
+
+  /**
+   * Mục đích: Skip tới exchange trước đó hoặc lùi 10s
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn nút skip back
+   */
+  const handleSkipBack = useCallback(async () => {
+    if (timestamps?.length && currentExchangeIndex > 0) {
+      // Có timestamps → nhảy exchange trước
+      const prevIndex = currentExchangeIndex - 1;
+      setCurrentExchangeIndex(prevIndex);
+      if (isTrackReady && timestamps[prevIndex]) {
+        await TrackPlayer.seekTo(timestamps[prevIndex].startTime);
+      }
+    } else if (isTrackReady) {
+      // Không có timestamps → lùi 10 giây
+      const newPos = Math.max(0, progress.position - 10);
+      await TrackPlayer.seekTo(newPos);
+    } else if (currentExchangeIndex > 0) {
+      setCurrentExchangeIndex(currentExchangeIndex - 1);
+    }
+  }, [timestamps, currentExchangeIndex, isTrackReady, progress.position, setCurrentExchangeIndex]);
+
+  /**
+   * Mục đích: Skip tới exchange tiếp theo hoặc tới 10s
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn nút skip forward
+   */
+  const handleSkipForward = useCallback(async () => {
+    if (timestamps?.length && currentExchangeIndex < exchanges.length - 1) {
+      // Có timestamps → nhảy exchange tiếp
+      const nextIndex = currentExchangeIndex + 1;
+      setCurrentExchangeIndex(nextIndex);
+      if (isTrackReady && timestamps[nextIndex]) {
+        await TrackPlayer.seekTo(timestamps[nextIndex].startTime);
+      }
+    } else if (isTrackReady) {
+      // Không có timestamps → tới 10 giây
+      const newPos = Math.min(progress.duration, progress.position + 10);
+      await TrackPlayer.seekTo(newPos);
+    } else if (currentExchangeIndex < exchanges.length - 1) {
+      setCurrentExchangeIndex(currentExchangeIndex + 1);
+    }
+  }, [
+    timestamps,
+    currentExchangeIndex,
+    exchanges.length,
+    isTrackReady,
+    progress.duration,
+    progress.position,
+    setCurrentExchangeIndex,
+  ]);
+
+  /**
+   * Mục đích: Format thời gian từ giây sang m:ss
+   * Tham số đầu vào: seconds (number)
+   * Tham số đầu ra: string (vd: "2:05")
+   * Khi nào sử dụng: Hiển thị current time / duration ở thanh progress
+   */
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Tính progress percentage cho progress bar
+  const progressPercent =
+    progress.duration > 0
+      ? (progress.position / progress.duration) * 100
+      : 0;
+
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
@@ -132,11 +395,22 @@ export default function ListeningPlayerScreen({
         <View className="w-10" />
       </View>
 
+      {/* Audio generation status banner */}
+      {isGeneratingAudio && (
+        <View className="mx-6 mb-3 bg-primary/10 rounded-xl px-4 py-3 flex-row items-center">
+          <ActivityIndicator size="small" color="#10b981" />
+          <AppText className="text-primary text-sm ml-3 flex-1">
+            Đang tạo audio... Bạn có thể đọc transcript trước
+          </AppText>
+        </View>
+      )}
+
       {/* Transcript */}
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1 px-6"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{paddingBottom: 120}}>
+        contentContainerStyle={{paddingBottom: 160}}>
         {/* Summary */}
         {conversation.summary && (
           <View className="bg-neutrals900 rounded-2xl p-4 mb-4">
@@ -226,7 +500,29 @@ export default function ListeningPlayerScreen({
       </ScrollView>
 
       {/* Playback controls */}
-      <View className="absolute bottom-0 left-0 right-0 bg-background border-t border-neutrals900 px-6 pb-safe-offset-4 pt-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-background border-t border-neutrals900 px-6 pb-safe-offset-4 pt-3">
+        {/* Progress bar (chỉ hiện khi có audio) */}
+        {(audioUrl || isTrackReady) && (
+          <View className="mb-3">
+            {/* Thanh progress */}
+            <View className="h-1 bg-neutrals800 rounded-full overflow-hidden">
+              <View
+                className="h-full bg-primary rounded-full"
+                style={{width: `${progressPercent}%`}}
+              />
+            </View>
+            {/* Thời gian */}
+            <View className="flex-row justify-between mt-1">
+              <AppText className="text-neutrals500 text-xs">
+                {formatTime(progress.position)}
+              </AppText>
+              <AppText className="text-neutrals500 text-xs">
+                {formatTime(progress.duration)}
+              </AppText>
+            </View>
+          </View>
+        )}
+
         <View className="flex-row items-center justify-between">
           {/* Tốc độ */}
           <TouchableOpacity
@@ -239,13 +535,8 @@ export default function ListeningPlayerScreen({
 
           {/* Điều khiển phát */}
           <View className="flex-row items-center gap-6">
-            {/* Lùi 10s */}
-            <TouchableOpacity
-              onPress={() => {
-                if (currentExchangeIndex > 0) {
-                  setCurrentExchangeIndex(currentExchangeIndex - 1);
-                }
-              }}>
+            {/* Lùi */}
+            <TouchableOpacity onPress={handleSkipBack}>
               <Icon
                 name="SkipBack"
                 className="w-6 h-6 text-neutrals300"
@@ -255,32 +546,20 @@ export default function ListeningPlayerScreen({
             {/* Play/Pause */}
             <TouchableOpacity
               className="w-14 h-14 bg-primary rounded-full items-center justify-center"
-              onPress={async () => {
-                togglePlaying();
-                try {
-                  if (isTrackPlaying) {
-                    await TrackPlayer.pause();
-                  } else {
-                    await TrackPlayer.play();
-                  }
-                } catch (error) {
-                  showError('Lỗi phát audio', 'Chưa có audio track để phát. Vui lòng thử lại');
-                  console.log('🎵 [Player] Chưa có audio track để phát');
-                }
-              }}>
-              <Icon
-                name={isTrackPlaying ? 'Pause' : 'Play'}
-                className="w-7 h-7 text-white"
-              />
+              onPress={handlePlayPause}
+              disabled={isGeneratingAudio}>
+              {isGeneratingAudio ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Icon
+                  name={isTrackPlaying ? 'Pause' : 'Play'}
+                  className="w-7 h-7 text-white"
+                />
+              )}
             </TouchableOpacity>
 
-            {/* Tới 10s */}
-            <TouchableOpacity
-              onPress={() => {
-                if (currentExchangeIndex < exchanges.length - 1) {
-                  setCurrentExchangeIndex(currentExchangeIndex + 1);
-                }
-              }}>
+            {/* Tới */}
+            <TouchableOpacity onPress={handleSkipForward}>
               <Icon
                 name="SkipForward"
                 className="w-6 h-6 text-neutrals300"
