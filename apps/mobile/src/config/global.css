@@ -1,6 +1,14 @@
 /* ===========================
+   NativeWind v4 — Tailwind directives PHẢI đặt trước CSS variables
+   để đảm bảo @tailwind base không overwrite custom CSS variables
+   =========================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================
    Theme-dependent color definitions
-   NativeWind v4 sử dụng CSS variables để define colors theo theme
    colorScheme.set('dark') sẽ kích hoạt .dark selector
    =========================== */
 
@@ -61,10 +69,6 @@
   --color-skill-speaking: 74 222 128; /* #4ade80 */
   --color-skill-reading: 251 191 36; /* #fbbf24 */
 }
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 .screen-title {
   @apply text-foreground text-4xl font-sans-bold;

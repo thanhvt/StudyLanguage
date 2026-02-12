@@ -12,9 +12,12 @@ const monorepoRoot = path.resolve(projectRoot, "../..");
  * - nodeModulesPaths: Cho phép Metro tìm packages ở cả local và root node_modules
  * - unstable_enableSymlinks: Bật hỗ trợ symlinks (pnpm dùng symlinks)
  *
+ * QUAN TRỌNG: withNativeWind() PHẢI wrap cuối cùng để đảm bảo
+ * custom transformer và CSS injection không bị override bởi mergeConfig
+ *
  * @type {import("@react-native/metro-config").MetroConfig}
  */
-const config = {
+const monorepoConfig = {
   watchFolders: [monorepoRoot],
   resolver: {
     // Bật hỗ trợ symlinks cho pnpm
@@ -30,9 +33,13 @@ const config = {
   },
 };
 
-module.exports = mergeConfig(
-  withNativeWind(getDefaultConfig(__dirname), {
-    input: "./src/config/global.css",
-  }),
-  config,
-);
+// Bước 1: Merge cấu hình monorepo với default config
+const baseConfig = mergeConfig(getDefaultConfig(__dirname), monorepoConfig);
+
+// Bước 2: Wrap với NativeWind SAU CÙNG — đảm bảo transformerPath không bị override
+// forceWriteFileSystem: true → bypass virtual modules (không tương thích Metro v0.82)
+module.exports = withNativeWind(baseConfig, {
+  input: "./src/config/global.css",
+  forceWriteFileSystem: true,
+});
+
