@@ -1,9 +1,18 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView, TouchableOpacity, View} from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {AppButton, AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
 import {listeningApi, type ScenarioType} from '@/services/api/listening';
+import {useToast} from '@/components/ui/ToastProvider';
+import {useDialog} from '@/components/ui/DialogProvider';
+import {useColors} from '@/hooks/useColors';
 
 // Kịch bản nhanh
 const SCENARIOS: {type: ScenarioType; emoji: string; label: string}[] = [
@@ -47,21 +56,32 @@ export default function ListeningConfigScreen({
   const setGenerating = useListeningStore(state => state.setGenerating);
 
   const [topicInput, setTopicInput] = useState('');
+  const [loadingScenario, setLoadingScenario] = useState<ScenarioType | null>(
+    null,
+  );
+
+  const {showError, showWarning, showSuccess} = useToast();
+  const {showLoading, hideLoading} = useDialog();
+  const colors = useColors();
 
   /**
    * Mục đích: Tạo bài nghe từ chủ đề tự do
-   * Tham số đầu vào: không có (dùng config từ store)
+   * Tham số đầu vào: không có (dùng config từ store + topicInput từ state)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn "Tạo bài nghe" sau khi nhập topic
    */
   const handleGenerate = async () => {
     if (!topicInput.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập chủ đề');
+      showWarning(
+        'Chưa nhập chủ đề',
+        'Vui lòng nhập chủ đề hội thoại để tạo bài nghe',
+      );
       return;
     }
 
     try {
       setGenerating(true);
+      showLoading('Đang tạo bài nghe...', 'AI đang tạo hội thoại cho bạn 🎧');
       setConfig({topic: topicInput.trim()});
 
       const result = await listeningApi.generateConversation({
@@ -69,13 +89,16 @@ export default function ListeningConfigScreen({
         topic: topicInput.trim(),
       });
 
+      hideLoading();
       setConversation(result);
+      showSuccess('Tạo bài nghe thành công!', 'Bắt đầu nghe nào 🎧');
       navigation.navigate('Player');
     } catch (error: any) {
+      hideLoading();
       console.error('❌ [Listening] Lỗi tạo bài nghe:', error);
-      Alert.alert(
-        'Lỗi',
-        error?.message || 'Không thể tạo bài nghe. Vui lòng thử lại.',
+      showError(
+        'Không thể tạo bài nghe',
+        error?.message || 'Vui lòng kiểm tra kết nối mạng và thử lại',
       );
     } finally {
       setGenerating(false);
@@ -91,17 +114,28 @@ export default function ListeningConfigScreen({
   const handleScenario = async (scenarioType: ScenarioType) => {
     try {
       setGenerating(true);
+      setLoadingScenario(scenarioType);
+      showLoading(
+        'Đang tạo kịch bản...',
+        'AI đang chuẩn bị hội thoại cho bạn 🎭',
+      );
+
       const result = await listeningApi.generateScenario(scenarioType);
+
+      hideLoading();
       setConversation(result);
+      showSuccess('Tạo kịch bản thành công!', 'Bắt đầu nghe nào 🎧');
       navigation.navigate('Player');
     } catch (error: any) {
+      hideLoading();
       console.error('❌ [Listening] Lỗi tạo scenario:', error);
-      Alert.alert(
-        'Lỗi',
-        error?.message || 'Không thể tạo bài nghe.',
+      showError(
+        'Không thể tạo kịch bản',
+        error?.message || 'Vui lòng kiểm tra kết nối mạng và thử lại',
       );
     } finally {
       setGenerating(false);
+      setLoadingScenario(null);
     }
   };
 
@@ -123,18 +157,35 @@ export default function ListeningConfigScreen({
       {/* Kịch bản nhanh */}
       <View className="px-6 mt-6">
         <AppText className="text-foreground font-sans-semibold text-base mb-3">
-          Kịch bản nhanh
+          ⚡ Kịch bản nhanh
         </AppText>
         <View className="flex-row flex-wrap gap-2">
           {SCENARIOS.map(scenario => (
             <TouchableOpacity
               key={scenario.type}
-              className="bg-neutrals900 rounded-2xl px-4 py-3 flex-row items-center"
+              className={`rounded-2xl px-4 py-3 flex-row items-center border ${
+                loadingScenario === scenario.type
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-neutrals900 border-transparent'
+              }`}
               activeOpacity={0.7}
               disabled={isGenerating}
               onPress={() => handleScenario(scenario.type)}>
-              <AppText className="mr-2">{scenario.emoji}</AppText>
-              <AppText className="text-foreground text-sm">
+              {loadingScenario === scenario.type ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.primary}
+                  style={{marginRight: 8}}
+                />
+              ) : (
+                <AppText className="mr-2">{scenario.emoji}</AppText>
+              )}
+              <AppText
+                className={`text-sm ${
+                  loadingScenario === scenario.type
+                    ? 'text-primary font-sans-semibold'
+                    : 'text-foreground'
+                }`}>
                 {scenario.label}
               </AppText>
             </TouchableOpacity>
@@ -145,43 +196,31 @@ export default function ListeningConfigScreen({
       {/* Hoặc nhập chủ đề */}
       <View className="px-6 mt-6">
         <AppText className="text-foreground font-sans-semibold text-base mb-3">
-          Hoặc nhập chủ đề
+          📝 Hoặc nhập chủ đề
         </AppText>
         <View className="bg-neutrals900 rounded-2xl px-4 py-3">
-          <AppText className="text-neutrals500 text-sm mb-1">
+          <AppText className="text-neutrals500 text-sm mb-2">
             Ví dụ: ordering coffee, travel tips, job interview...
           </AppText>
-          {/* TextInput placeholder - sử dụng AppInput khi có */}
-          <View className="border border-neutrals800 rounded-xl mt-2">
-            <TouchableOpacity
-              className="px-4 py-3"
-              onPress={() => {
-                // TODO: Dùng AppInput component
-                Alert.prompt(
-                  'Nhập chủ đề',
-                  'Nhập chủ đề hội thoại bằng tiếng Anh',
-                  (text: string) => setTopicInput(text),
-                  'plain-text',
-                  topicInput,
-                );
-              }}>
-              <AppText
-                className={
-                  topicInput
-                    ? 'text-foreground text-base'
-                    : 'text-neutrals500 text-base'
-                }>
-                {topicInput || 'Nhập chủ đề...'}
-              </AppText>
-            </TouchableOpacity>
-          </View>
+          <TextInput
+            className="border border-neutrals800 rounded-xl px-4 py-3 text-base"
+            style={{color: colors.foreground}}
+            placeholder="Nhập chủ đề bằng tiếng Anh..."
+            placeholderTextColor={colors.neutrals500}
+            value={topicInput}
+            onChangeText={setTopicInput}
+            returnKeyType="done"
+            editable={!isGenerating}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
         </View>
       </View>
 
       {/* Thời lượng */}
       <View className="px-6 mt-6">
         <AppText className="text-foreground font-sans-semibold text-base mb-3">
-          Thời lượng
+          ⏱️ Thời lượng
         </AppText>
         <View className="flex-row gap-3">
           {DURATIONS.map(d => (
@@ -209,7 +248,7 @@ export default function ListeningConfigScreen({
       {/* Level */}
       <View className="px-6 mt-6">
         <AppText className="text-foreground font-sans-semibold text-base mb-3">
-          Trình độ
+          🎯 Trình độ
         </AppText>
         <View className="flex-row gap-3">
           {LEVELS.map(l => (
@@ -261,10 +300,9 @@ export default function ListeningConfigScreen({
           variant="primary"
           className="w-full rounded-2xl py-4"
           onPress={handleGenerate}
-          disabled={isGenerating || !topicInput.trim()}>
-          <AppText className="text-white font-sans-bold text-lg">
-            {isGenerating ? 'Đang tạo bài nghe...' : '🎧 Tạo bài nghe'}
-          </AppText>
+          disabled={isGenerating}
+          loading={isGenerating}>
+          🎧 Tạo bài nghe
         </AppButton>
       </View>
     </ScrollView>
