@@ -1,15 +1,27 @@
 import { icons } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
 import { memo, useMemo } from 'react'
+import { Pressable, StyleProp, ViewStyle } from 'react-native'
 
-type IconName = keyof typeof icons
-type IconProps = { name: IconName; className?: string }
+export type IconName = keyof typeof icons
+type IconProps = {
+  name: IconName
+  className?: string
+  style?: any
+  onPress?: () => void
+}
 
-const Icon: React.FC<IconProps> = memo(({ name, className }) => {
+/**
+ * Mục đích: Icon component wrapper cho lucide-react-native + NativeWind
+ * Tham số đầu vào: name (tên icon), className, style (optional), onPress (optional)
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Mọi nơi cần hiển thị icon trong app
+ */
+const Icon: React.FC<IconProps> = memo(({ name, className, style, onPress }) => {
   const CustomIcon = useMemo(() => {
-    const Icon = icons[name]
+    const LucideIcon = icons[name]
 
-    return cssInterop(Icon, {
+    return cssInterop(LucideIcon, {
       className: {
         target: 'style',
         nativeStyleToProp: {
@@ -21,7 +33,19 @@ const Icon: React.FC<IconProps> = memo(({ name, className }) => {
     })
   }, [name])
 
-  return <CustomIcon className={className} />
+  const iconElement = <CustomIcon className={className} style={style} />
+
+  // Nếu có onPress, bọc trong Pressable
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} hitSlop={8}>
+        {iconElement}
+      </Pressable>
+    )
+  }
+
+  return iconElement
 })
 
 export default Icon
+

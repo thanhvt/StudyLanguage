@@ -7,7 +7,7 @@ import {apiClient} from './client';
 /** Cấu hình để generate conversation */
 export interface ListeningConfig {
   topic: string;
-  /** Thời lượng (phút) — 1-20, hỗ trợ custom */
+  /** Thời lượng (phút) — backend chấp nhận 5-15 */
   durationMinutes: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   numExchanges?: number;
@@ -34,14 +34,108 @@ export interface ConversationExchange {
   speaker: string;
   text: string;
   vietnamese?: string;
+  /** Cụm từ quan trọng trong câu */
+  keyPhrases?: string[];
 }
 
-/** Kết quả trả về từ API generate */
+/** Kết quả trả về sau khi đã map từ backend */
 export interface ConversationResult {
   conversation: ConversationExchange[];
   title?: string;
   summary?: string;
   vocabulary?: string[];
+}
+
+// =======================
+// Backend Response Types (raw, chưa map)
+// =======================
+
+/**
+ * Mục đích: Type mô tả đúng response từ backend (Groq API)
+ * Khi nào sử dụng: Internal — dùng trong mapBackendResponse để transform
+ * Lưu ý: Backend trả "script" + "translation", mobile dùng "conversation" + "vietnamese"
+ */
+interface BackendExchange {
+  speaker: string;
+  text: string;
+  /** Backend dùng "translation" thay vì "vietnamese" */
+  translation?: string;
+  keyPhrases?: string[];
+}
+
+interface BackendVocabulary {
+  word: string;
+  meaning: string;
+  example: string;
+}
+
+interface BackendResponse {
+  /** Backend trả "script" thay vì "conversation" */
+  script?: BackendExchange[];
+  /** Fallback: một số endpoint có thể trả "conversation" trực tiếp */
+  conversation?: BackendExchange[];
+  title?: string;
+  summary?: string;
+  /** Backend trả vocabulary là object[], mobile dùng string[] */
+  vocabulary?: BackendVocabulary[] | string[];
+}
+
+// =======================
+// Mapper
+// =======================
+
+/**
+ * Mục đích: Chuyển đổi response backend sang format mobile
+ * Tham số đầu vào: raw (BackendResponse) — response gốc từ API
+ * Tham số đầu ra: ConversationResult — format mobile dùng
+ * Khi nào sử dụng: Sau mỗi API call, trước khi return cho store/screen
+ *   - script[] → conversation[]
+ *   - translation → vietnamese
+ *   - vocabulary objects → strings
+ */
+function mapBackendResponse(raw: BackendResponse): ConversationResult {
+  // Ưu tiên "script" (format backend chính), fallback "conversation"
+  const exchanges = raw.script ?? raw.conversation ?? [];
+
+  const conversation: ConversationExchange[] = exchanges.map(item => ({
+    speaker: item.speaker,
+    text: item.text,
+    // Map "translation" (backend) → "vietnamese" (mobile)
+    vietnamese: item.translation,
+    keyPhrases: item.keyPhrases,
+  }));
+
+  // Vocabulary: backend trả object {word, meaning, example} → mobile chỉ cần string
+  let vocabulary: string[] = [];
+  if (Array.isArray(raw.vocabulary) && raw.vocabulary.length > 0) {
+    const first = raw.vocabulary[0];
+    if (typeof first === 'string') {
+      // Đã là string[] rồi
+      vocabulary = raw.vocabulary as string[];
+    } else {
+      // Object[] → chuyển thành "word — meaning"
+      vocabulary = (raw.vocabulary as BackendVocabulary[]).map(
+        v => `${v.word} — ${v.meaning}`,
+      );
+    }
+  }
+
+  return {
+    conversation,
+    title: raw.title,
+    summary: raw.summary,
+    vocabulary,
+  };
+}
+
+/**
+ * Mục đích: Giới hạn durationMinutes về khoảng backend chấp nhận (5-15)
+ * Tham số đầu vào: minutes (number) — giá trị user chọn
+ * Tham số đầu ra: number — giá trị đã clamp
+ * Khi nào sử dụng: Trước khi gửi request lên backend
+ */
+function clampDuration(minutes: number): number {
+  return Math.max(5, Math.min(15, minutes));
 }
 
 // =======================
@@ -64,11 +158,27 @@ export const listeningApi = {
   generateConversation: async (
     config: ListeningConfig,
   ): Promise<ConversationResult> => {
+    // Clamp duration để tránh 400 từ backend DTO validation (min=5, max=15)
+    const payload = {
+      topic: config.topic,
+      durationMinutes: clampDuration(config.durationMinutes),
+      level: config.level,
+      numExchanges: config.numExchanges,
+      includeVietnamese: config.includeVietnamese,
+      // Backend DTO đã hỗ trợ 2 fields này
+      numSpeakers: config.numSpeakers,
+      keywords: config.keywords,
+    };
+
+    console.log('🎧 [Listening] Gửi request generate:', payload);
+
     const response = await apiClient.post(
       '/conversation-generator/generate',
-      config,
+      payload,
     );
-    return response.data;
+
+    console.log('✅ [Listening] Nhận response, đang map dữ liệu...');
+    return mapBackendResponse(response.data);
   },
 
   /**
@@ -85,10 +195,15 @@ export const listeningApi = {
     if (customContext) {
       params.customContext = customContext;
     }
+
+    console.log('🎧 [Listening] Gửi request scenario:', params);
+
     const response = await apiClient.get(
       '/conversation-generator/scenario',
       {params},
     );
-    return response.data;
+
+    console.log('✅ [Listening] Nhận response scenario, đang map dữ liệu...');
+    return mapBackendResponse(response.data);
   },
 };

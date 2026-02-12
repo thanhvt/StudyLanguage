@@ -1,12 +1,12 @@
 import React from 'react';
 import {ScrollView, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {RootStackScreenProps} from '@/navigation/types';
+import {AppStackScreenProps} from '@/navigation/types';
 import {MenuList} from "@/components/ui";
 import Icon from "@/components/ui/Icon.tsx";
 import {useTranslation} from "react-i18next";
 
-type Props = RootStackScreenProps<'ComponentsDemo'>;
+type Props = AppStackScreenProps<'ComponentsDemo'>;
 
 const ComponentsDemo: React.FC<Props> = () => {
   const navigation = useNavigation();

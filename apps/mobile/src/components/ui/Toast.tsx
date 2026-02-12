@@ -79,6 +79,38 @@ const Toast: React.FC<ToastProps> = ({
     }
   };
 
+  /**
+   * Mục đích: Trả về màu nền và border tinted theo loại toast
+   * Tham số đầu vào: không (dùng `type` từ props)
+   * Tham số đầu ra: { backgroundColor: string, borderColor: string }
+   * Khi nào sử dụng: Render toast container để phân biệt loại bằng visual cue
+   */
+  const getTintedColors = () => {
+    switch (type) {
+      case 'success':
+        return {
+          backgroundColor: `${colors.success}15`,
+          borderColor: `${colors.success}40`,
+        };
+      case 'error':
+        return {
+          backgroundColor: `${colors.error}15`,
+          borderColor: `${colors.error}40`,
+        };
+      case 'warning':
+        return {
+          backgroundColor: `${colors.warning}15`,
+          borderColor: `${colors.warning}40`,
+        };
+      case 'info':
+      default:
+        return {
+          backgroundColor: colors.neutrals1000,
+          borderColor: colors.neutrals800,
+        };
+    }
+  };
+
   const animatedStyle = useAnimatedStyle(() => {
     const style: any = {
       transform: [{translateY: translateY.value}],
@@ -159,9 +191,8 @@ const Toast: React.FC<ToastProps> = ({
       <ToastContainer
         className="flex-row items-start p-4 rounded-xl shadow-lg"
         style={{
-          backgroundColor: colors.neutrals1000,
+          ...getTintedColors(),
           borderWidth: 1,
-          borderColor: colors.neutrals800,
         }}
         onPress={onPress}
         {...(onPress && {activeOpacity: 0.8})}

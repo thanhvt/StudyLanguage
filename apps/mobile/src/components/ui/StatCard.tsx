@@ -2,6 +2,7 @@ import React from 'react';
 import {View} from 'react-native';
 import {cn} from '@/utils';
 import {AppText, Icon} from '@/components/ui';
+import type {IconName} from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 
 /**
@@ -19,7 +20,7 @@ import {useColors} from '@/hooks/useColors';
  */
 
 interface StatCardProps {
-  icon?: string;
+  icon?: IconName;
   emoji?: string;
   value: string | number;
   label: string;
@@ -58,7 +59,7 @@ export default function StatCard({
     }
   };
 
-  const getTrendIcon = () => {
+  const getTrendIcon = (): IconName | null => {
     if (!trend) return null;
     switch (trend.direction) {
       case 'up':
@@ -110,7 +111,7 @@ export default function StatCard({
       </View>
 
       {/* Giá trị */}
-      <AppText variant="title" weight="bold" className="text-foreground mb-0.5" raw>
+      <AppText variant="heading1" weight="bold" className="text-foreground mb-0.5" raw>
         {String(value)}
       </AppText>
 

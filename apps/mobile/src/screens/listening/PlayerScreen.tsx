@@ -5,6 +5,9 @@ import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
 import TrackPlayer, {usePlaybackState, State} from 'react-native-track-player';
 import {setupPlayer} from '@/services/audio/trackPlayer';
+import {useToast} from '@/components/ui/ToastProvider';
+import {useDialog} from '@/components/ui/DialogProvider';
+import {useHaptic} from '@/hooks/useHaptic';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -39,6 +42,10 @@ export default function ListeningPlayerScreen({
   const reset = useListeningStore(state => state.reset);
   const playbackState = usePlaybackState();
   const isTrackPlaying = playbackState.state === State.Playing;
+
+  const {showError, showInfo} = useToast();
+  const {showConfirm} = useDialog();
+  const haptic = useHaptic();
 
   // Khởi tạo Track Player khi vào màn hình
   useEffect(() => {
@@ -76,8 +83,15 @@ export default function ListeningPlayerScreen({
    * Khi nào sử dụng: User nhấn nút "Bài mới"
    */
   const handleNewConversation = () => {
-    reset();
-    navigation.goBack();
+    showConfirm(
+      'Tạo bài mới?',
+      'Bài nghe hiện tại sẽ bị xóa. Bạn có chắc muốn tiếp tục?',
+      () => {
+        haptic.medium();
+        reset();
+        navigation.goBack();
+      },
+    );
   };
 
   /**
@@ -94,8 +108,11 @@ export default function ListeningPlayerScreen({
     // Áp dụng tốc độ cho Track Player
     try {
       await TrackPlayer.setRate(newSpeed);
+      haptic.light();
+      showInfo('Tốc độ phát', `Đã chuyển sang ${newSpeed}x`);
       console.log('🎵 [Player] Đổi tốc độ:', newSpeed);
     } catch (error) {
+      showError('Lỗi đổi tốc độ', 'Không thể thay đổi tốc độ phát');
       console.error('Lỗi đổi tốc độ:', error);
     }
   };
@@ -247,6 +264,7 @@ export default function ListeningPlayerScreen({
                     await TrackPlayer.play();
                   }
                 } catch (error) {
+                  showError('Lỗi phát audio', 'Chưa có audio track để phát. Vui lòng thử lại');
                   console.log('🎵 [Player] Chưa có audio track để phát');
                 }
               }}>

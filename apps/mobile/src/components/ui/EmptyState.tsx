@@ -44,14 +44,14 @@ export default function EmptyState({
       {icon ? (
         <View className="mb-lg">{icon}</View>
       ) : (
-        <AppText variant="title" className="text-6xl mb-lg" raw>
+        <AppText variant="display3" className="text-6xl mb-lg" raw>
           {emoji}
         </AppText>
       )}
 
       {/* Tiêu đề */}
       <AppText
-        variant="heading"
+        variant="heading2"
         weight="semibold"
         className="text-foreground text-center mb-sm"
         raw

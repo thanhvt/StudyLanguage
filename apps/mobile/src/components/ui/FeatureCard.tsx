@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {cn} from '@/utils';
 import {AppText, Icon} from '@/components/ui';
+import type {IconName} from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 
 /**
@@ -25,7 +26,7 @@ import {useColors} from '@/hooks/useColors';
  */
 
 interface FeatureCardProps {
-  icon: string;
+  icon: IconName;
   title: string;
   subtitle?: string;
   onPress: () => void;

@@ -53,6 +53,27 @@ export class GenerateConversationDto {
   @IsOptional()
   @IsBoolean()
   includeVietnamese?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Số người nói trong hội thoại (2 = Dialog, 3 = Group, 4 = Team)',
+    minimum: 2,
+    maximum: 4,
+    default: 2,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(2)
+  @Max(4)
+  numSpeakers?: number;
+
+  @ApiPropertyOptional({
+    description: 'Từ khóa gợi ý để đưa vào hội thoại (tối đa 200 ký tự)',
+    example: 'negotiation, deadline, teamwork',
+    maxLength: 200,
+  })
+  @IsOptional()
+  @IsString()
+  keywords?: string;
 }
 
 /**

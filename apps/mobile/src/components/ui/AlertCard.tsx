@@ -3,6 +3,7 @@ import {View} from 'react-native';
 import {cn} from '@/utils';
 import {AppText, Icon} from '@/components/ui';
 import {useColors} from '@/hooks/useColors';
+import type {IconName} from '@/components/ui/Icon';
 
 /**
  * Mục đích: Card thông báo inline (tip, warning, success, info)
@@ -34,7 +35,7 @@ interface AlertCardProps {
  * Tham số đầu ra: object {icon, color, bgColor}
  * Khi nào sử dụng: Nội bộ AlertCard
  */
-function getAlertConfig(type: string, colors: any) {
+function getAlertConfig(type: string, colors: any): {icon: IconName; color: string; bgColor: string} {
   switch (type) {
     case 'success':
       return {

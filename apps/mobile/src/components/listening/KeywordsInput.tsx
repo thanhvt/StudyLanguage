@@ -18,7 +18,7 @@ const MAX_LENGTH = 200;
  *   - onChange: callback khi nhập
  *   - disabled: có disable không
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ConfigScreen → section "Từ khóa (tuỳ chọn)"
+ * Khi nào sử dụng: ConfigScreen → CollapsibleSection → "Từ khóa (tuỳ chọn)"
  */
 export default function KeywordsInput({
   value,
@@ -40,16 +40,18 @@ export default function KeywordsInput({
         maxLength={MAX_LENGTH}
         editable={!disabled}
         numberOfLines={2}
+        accessibilityLabel="Nhập từ khóa gợi ý cho bài nghe"
+        accessibilityHint="Tuỳ chọn. Gợi ý nội dung xoay quanh các từ khóa bạn nhập"
       />
       <View className="flex-row justify-between items-center mt-1">
-        <AppText className="text-neutrals500 text-xs">
+        <AppText className="text-neutrals400 text-xs">
           Gợi ý nội dung xoay quanh các từ khóa này
         </AppText>
         <AppText
           className={`text-xs ${
             value.length > MAX_LENGTH * 0.9
               ? 'text-destructive'
-              : 'text-neutrals500'
+              : 'text-neutrals400'
           }`}>
           {value.length}/{MAX_LENGTH}
         </AppText>

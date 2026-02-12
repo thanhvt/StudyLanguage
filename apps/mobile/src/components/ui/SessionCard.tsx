@@ -146,7 +146,7 @@ export default function SessionCard({
       {score !== undefined && (
         <View className="items-center ml-md">
           <AppText
-            variant="heading"
+            variant="heading2"
             weight="bold"
             style={{color: score >= 80 ? colors.success : score >= 50 ? colors.warning : colors.error}}
             raw

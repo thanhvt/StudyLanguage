@@ -1,9 +1,10 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useColors } from '@/hooks/useColors';
 import { useInsets } from '@/hooks/useInsets';
 import AppButton from './AppButton';
+import { AppText } from '@/components/ui';
 import { cn } from '@/utils';
 
 export type DialogType = 'message' | 'confirm' | 'loading';
@@ -161,12 +162,12 @@ const Dialog = forwardRef<DialogRef>((_, ref) => {
     if (type === 'confirm') {
       return [
         {
-          text: 'Cancel',
+          text: 'Huỷ',
           variant: 'outline',
           onPress: () => {},
         },
         {
-          text: 'Confirm',
+          text: 'Xác nhận',
           variant: 'primary',
           onPress: () => {},
         },
@@ -230,14 +231,14 @@ const Dialog = forwardRef<DialogRef>((_, ref) => {
                   <View className="items-center py-6">
                     <ActivityIndicator size="large" color={colors.primary} />
                     {dialog.options.title && (
-                      <Text className="text-foreground font-sans-semibold text-lg mt-4 text-center">
+                      <AppText className="text-foreground font-sans-semibold text-lg mt-4 text-center">
                         {dialog.options.title}
-                      </Text>
+                      </AppText>
                     )}
                     {dialog.options.message && (
-                      <Text className="text-neutrals300 font-sans-regular text-sm mt-2 text-center">
+                      <AppText className="text-neutrals300 font-sans-regular text-sm mt-2 text-center">
                         {dialog.options.message}
-                      </Text>
+                      </AppText>
                     )}
                   </View>
                 )}
@@ -245,18 +246,18 @@ const Dialog = forwardRef<DialogRef>((_, ref) => {
                 {/* Message/Confirm State */}
                 {dialog.options.type !== 'loading' && (
                   <>
-                    {/* Title */}
+                    {/* Tiêu đề */}
                     {dialog.options.title && (
-                      <Text className="text-foreground font-sans-bold text-xl mb-3 text-center">
+                      <AppText className="text-foreground font-sans-bold text-xl mb-3 text-center">
                         {dialog.options.title}
-                      </Text>
+                      </AppText>
                     )}
 
-                    {/* Message */}
+                    {/* Nội dung */}
                     {dialog.options.message && (
-                      <Text className="text-neutrals300 font-sans-regular text-base mb-6 text-center">
+                      <AppText className="text-neutrals300 font-sans-regular text-base mb-6 text-center">
                         {dialog.options.message}
-                      </Text>
+                      </AppText>
                     )}
 
                     {/* Buttons */}

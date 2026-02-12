@@ -20,6 +20,7 @@ import {useAuthStore} from '@/store/useAuthStore';
 import {authService} from '@/services/supabase/auth';
 import Icon from '@/components/ui/Icon';
 import FloatingOrbs from '@/components/auth/FloatingOrbs';
+import {SKILL_COLORS, SKILL_LABELS} from '@/config/skillColors';
 import {
   GoogleSignin,
   statusCodes,
@@ -30,9 +31,9 @@ const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 // Dữ liệu 3 skill badges
 const SKILL_BADGES = [
-  {emoji: '🎧', label: 'Luyện Nghe', color: '#6366F1', delay: 600},
-  {emoji: '🗣️', label: 'Luyện Nói', color: '#4ade80', delay: 800},
-  {emoji: '📖', label: 'Luyện Đọc', color: '#fbbf24', delay: 1000},
+  {emoji: '🎧', label: SKILL_LABELS.listening, color: SKILL_COLORS.listening.dark, delay: 600},
+  {emoji: '🗣️', label: SKILL_LABELS.speaking, color: SKILL_COLORS.speaking.dark, delay: 800},
+  {emoji: '📖', label: SKILL_LABELS.reading, color: SKILL_COLORS.reading.dark, delay: 1000},
 ];
 
 /**
@@ -379,7 +380,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#000000', // Login luôn dùng OLED black
   },
   content: {
     flex: 1,
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 24,
     // Glow shadow
-    shadowColor: '#4ade80',
+    shadowColor: SKILL_COLORS.speaking.dark,
     shadowOffset: {width: 0, height: 4},
     shadowRadius: 25,
     elevation: 10,
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 18,
     // Glow shadow xung quanh nút
-    shadowColor: '#4ade80',
+    shadowColor: SKILL_COLORS.speaking.dark,
     shadowOffset: {width: 0, height: 0},
     shadowRadius: 20,
     elevation: 10,

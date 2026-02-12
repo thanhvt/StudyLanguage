@@ -13,6 +13,8 @@ import Animated, {
 import LinearGradient from 'react-native-linear-gradient';
 import {AppText} from '@/components/ui';
 import FloatingOrbs from '@/components/auth/FloatingOrbs';
+import {SKILL_COLORS} from '@/config/skillColors';
+import {useColors} from '@/hooks/useColors';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -21,11 +23,11 @@ const APP_ICON = require('../../assets/app_icon.png');
 
 // Các emoji bay vào nhẹ nhàng xung quanh logo
 const EMOJI_PARADE = [
-  {emoji: '🎧', color: '#6366F1'},
-  {emoji: '📖', color: '#fbbf24'},
+  {emoji: '🎧', color: SKILL_COLORS.listening.dark},
+  {emoji: '📖', color: SKILL_COLORS.reading.dark},
   {emoji: '🚀', color: '#f472b6'},
   {emoji: '💡', color: '#a78bfa'},
-  {emoji: '🗣️', color: '#4ade80'},
+  {emoji: '🗣️', color: SKILL_COLORS.speaking.dark},
 ];
 
 // Ký tự app name cho wave animation
@@ -388,9 +390,9 @@ function AnimatedLogo() {
  */
 function LoadingDots() {
   const dots = [
-    {color: '#4ade80', sv: useSharedValue(0), scaleSv: useSharedValue(1)},
-    {color: '#6366F1', sv: useSharedValue(0), scaleSv: useSharedValue(1)},
-    {color: '#fbbf24', sv: useSharedValue(0), scaleSv: useSharedValue(1)},
+    {color: SKILL_COLORS.speaking.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
+    {color: SKILL_COLORS.listening.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
+    {color: SKILL_COLORS.reading.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
   ];
 
   useEffect(() => {
@@ -600,7 +602,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#000000', // Splash luôn dùng OLED black, không theo theme
   },
   content: {
     flex: 1,
@@ -630,8 +632,8 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    borderColor: '#fbbf2440',
-    shadowColor: '#fbbf24',
+    borderColor: SKILL_COLORS.reading.dark + '40',
+    shadowColor: SKILL_COLORS.reading.dark,
     shadowOpacity: 0.4,
     shadowRadius: 20,
   },
@@ -639,8 +641,8 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: 85,
-    borderColor: '#4ade8035',
-    shadowColor: '#4ade80',
+    borderColor: SKILL_COLORS.speaking.dark + '35',
+    shadowColor: SKILL_COLORS.speaking.dark,
     shadowOpacity: 0.5,
     shadowRadius: 25,
   },
@@ -665,7 +667,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a1a', // Splash-specific dark surface
   },
   logoIcon: {
     width: 110,
@@ -677,8 +679,8 @@ const styles = StyleSheet.create({
     height: 116,
     borderRadius: 58,
     borderWidth: 2,
-    borderColor: '#4ade8040',
-    shadowColor: '#4ade80',
+    borderColor: SKILL_COLORS.speaking.dark + '40',
+    shadowColor: SKILL_COLORS.speaking.dark,
     shadowOffset: {width: 0, height: 0},
     shadowOpacity: 0.5,
     shadowRadius: 15,

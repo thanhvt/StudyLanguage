@@ -81,3 +81,29 @@
 .section-title {
   @apply text-foreground text-lg font-bold font-sans-regular;
 }
+
+/* ===========================
+   Utility classes cho screen layout patterns
+   Theo Style_Convention.md §2.1
+   =========================== */
+
+.screen-container {
+  @apply flex-1 bg-background px-md;
+}
+
+.card-base {
+  @apply bg-surface-raised rounded-card p-md;
+}
+
+.section-gap {
+  @apply mb-lg;
+}
+
+.screen-header-title {
+  @apply text-foreground text-2xl font-sans-bold;
+}
+
+.screen-padding {
+  @apply px-md;
+}
+

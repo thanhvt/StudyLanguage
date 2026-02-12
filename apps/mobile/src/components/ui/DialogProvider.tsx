@@ -73,12 +73,12 @@ export const DialogProvider: React.FC<DialogProviderProps> = ({ children }) => {
       buttonLayout,
       buttons: [
         {
-          text: 'Cancel',
+          text: 'Huỷ',
           variant: 'outline',
           onPress: onCancel,
         },
         {
-          text: 'Confirm',
+          text: 'Xác nhận',
           variant: 'primary',
           onPress: onConfirm,
         },

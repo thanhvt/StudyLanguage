@@ -1,9 +1,15 @@
 import React from 'react';
 import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
+import {useHaptic} from '@/hooks/useHaptic';
 
 interface AdvancedOptionsSheetProps {
   visible: boolean;
@@ -21,11 +27,11 @@ interface AdvancedOptionsSheetProps {
   disabled?: boolean;
 }
 
-/** Tuỳ chọn level */
+/** Tuỳ chọn level với màu riêng biệt */
 const LEVELS = [
-  {value: 'beginner' as const, label: 'Cơ bản', emoji: '🌱'},
-  {value: 'intermediate' as const, label: 'Trung cấp', emoji: '🌿'},
-  {value: 'advanced' as const, label: 'Nâng cao', emoji: '🌳'},
+  {value: 'beginner' as const, label: 'Cơ bản', emoji: '🌱', accentLight: '#22c55e', accentDark: '#4ade80'},
+  {value: 'intermediate' as const, label: 'Trung cấp', emoji: '🌿', accentLight: '#2D9CDB', accentDark: '#007BFF'},
+  {value: 'advanced' as const, label: 'Nâng cao', emoji: '🌳', accentLight: '#D97706', accentDark: '#fbbf24'},
 ];
 
 /**
@@ -47,6 +53,7 @@ export default function AdvancedOptionsSheet({
   disabled = false,
 }: AdvancedOptionsSheetProps) {
   const colors = useColors();
+  const haptic = useHaptic();
 
   return (
     <Modal
@@ -75,7 +82,11 @@ export default function AdvancedOptionsSheet({
           <AppText className="text-foreground font-sans-bold text-lg">
             ⚙️ Tuỳ chọn nâng cao
           </AppText>
-          <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={onClose}
+            activeOpacity={0.7}
+            accessibilityLabel="Đóng tuỳ chọn nâng cao"
+            accessibilityRole="button">
             <Icon name="X" className="w-6 h-6 text-neutrals400" />
           </TouchableOpacity>
         </View>
@@ -87,28 +98,26 @@ export default function AdvancedOptionsSheet({
               🎯 Trình độ
             </AppText>
             <View className="flex-row gap-3">
-              {LEVELS.map(l => (
-                <TouchableOpacity
-                  key={l.value}
-                  className={`flex-1 py-3 rounded-2xl items-center border ${
-                    level === l.value
-                      ? 'bg-primary/10 border-primary'
-                      : 'bg-neutrals900 border-neutrals800'
-                  }`}
-                  onPress={() => onLevelChange(l.value)}
-                  disabled={disabled}
-                  activeOpacity={0.7}>
-                  <AppText className="text-lg mb-1">{l.emoji}</AppText>
-                  <AppText
-                    className={`text-sm ${
-                      level === l.value
-                        ? 'text-primary font-sans-bold'
-                        : 'text-foreground'
-                    }`}>
-                    {l.label}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
+              {LEVELS.map(l => {
+                // Màu accent riêng cho từng level
+                const isDark = colors.background === '#000000';
+                const accent = isDark ? l.accentDark : l.accentLight;
+                return (
+                  <LevelChip
+                    key={l.value}
+                    emoji={l.emoji}
+                    label={l.label}
+                    accentColor={accent}
+                    selected={level === l.value}
+                    onPress={() => {
+                      haptic.light();
+                      onLevelChange(l.value);
+                    }}
+                    disabled={disabled}
+                    accessibilityLabel={`Trình độ ${l.label}${level === l.value ? ', đang chọn' : ''}`}
+                  />
+                );
+              })}
             </View>
           </View>
 
@@ -121,7 +130,9 @@ export default function AdvancedOptionsSheet({
               className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
               onPress={() => onRandomVoiceChange(!randomVoice)}
               disabled={disabled}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              accessibilityLabel={`Giọng ngẫu nhiên, ${randomVoice ? 'bật' : 'tắt'}`}
+              accessibilityRole="switch">
               <View>
                 <AppText className="text-foreground">Giọng ngẫu nhiên</AppText>
                 <AppText className="text-neutrals400 text-xs mt-0.5">
@@ -145,7 +156,9 @@ export default function AdvancedOptionsSheet({
               className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
               onPress={() => onMultiTalkerChange(!multiTalker)}
               disabled={disabled}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              accessibilityLabel={`Đa giọng nói cùng lúc, ${multiTalker ? 'bật' : 'tắt'}`}
+              accessibilityRole="switch">
               <View className="flex-1 mr-3">
                 <AppText className="text-foreground">
                   Đa giọng nói cùng lúc
@@ -164,5 +177,76 @@ export default function AdvancedOptionsSheet({
         </ScrollView>
       </View>
     </Modal>
+  );
+}
+
+// ========================
+// LevelChip — chip trình độ có animation
+// ========================
+
+interface LevelChipProps {
+  emoji: string;
+  label: string;
+  accentColor: string;
+  selected: boolean;
+  onPress: () => void;
+  disabled: boolean;
+  accessibilityLabel: string;
+}
+
+/**
+ * Mục đích: Chip hiển thị level với spring animation khi nhấn
+ * Tham số đầu vào: emoji, label, selected, onPress, disabled, accessibilityLabel
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: AdvancedOptionsSheet → mỗi option level (Cơ bản/Trung cấp/Nâng cao)
+ */
+function LevelChip({
+  emoji,
+  label,
+  accentColor,
+  selected,
+  onPress,
+  disabled,
+  accessibilityLabel,
+}: LevelChipProps) {
+  const scale = useSharedValue(1);
+  const colors = useColors();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{scale: scale.value}],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.92, {damping: 15, stiffness: 300});
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, {damping: 12, stiffness: 200});
+  };
+
+  return (
+    <Animated.View style={animatedStyle} className="flex-1">
+      <Pressable
+        className="py-3 rounded-2xl items-center border"
+        style={{
+          backgroundColor: selected ? `${accentColor}15` : undefined,
+          borderColor: selected ? accentColor : colors.neutrals800,
+        }}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button">
+        <AppText className="text-lg mb-1">{emoji}</AppText>
+        <AppText
+          className={`text-sm ${
+            selected ? 'font-sans-bold' : 'text-foreground'
+          }`}
+          style={selected ? {color: accentColor} : undefined}>
+          {label}
+        </AppText>
+      </Pressable>
+    </Animated.View>
   );
 }

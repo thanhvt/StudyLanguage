@@ -1,30 +1,78 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
+  Animated,
   FlatList,
+  Platform,
+  SectionList,
   TextInput,
   TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
+
+// Bật LayoutAnimation cho Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
+import {useHaptic} from '@/hooks/useHaptic';
 import {
   TOPIC_CATEGORIES,
   searchScenarios,
+  getRandomScenario,
   type TopicCategory,
   type TopicScenario,
   type TopicSubCategory,
 } from '@/data/topic-data';
 import {useListeningStore} from '@/store/useListeningStore';
 
-interface TopicPickerProps {
-  disabled?: boolean;
-  /** Callback khi user chọn "Custom" tab → hiện CustomScenarioInput */
-  onCustomPress?: () => void;
+// ========================
+// Custom hook: useDebounce — tránh search mỗi keystroke
+// ========================
+
+/**
+ * Mục đích: Debounce giá trị input để tránh gọi searchScenarios quá nhiều
+ * Tham số đầu vào: value (T), delay (ms)
+ * Tham số đầu ra: debouncedValue (T)
+ * Khi nào sử dụng: Search bar → debounce 300ms trước khi filter
+ */
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 // ========================
-// Memoized ScenarioItem
+// Props
+// ========================
+
+interface TopicPickerProps {
+  disabled?: boolean;
+  /** Callback khi user chọn 1 scenario (dùng để auto-close modal nếu cần) */
+  onScenarioSelected?: () => void;
+  /** Hiện category badge trên search results (thường true khi trong modal) */
+  showCategoryBadge?: boolean;
+}
+
+// ========================
+// Category Tab Types
+// ========================
+
+interface CategoryTab {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+// ========================
+// Memoized ScenarioItem — với scale animation và haptic star
 // ========================
 
 interface ScenarioItemProps {
@@ -33,10 +81,15 @@ interface ScenarioItemProps {
   isFavorite: boolean;
   onSelect: (scenario: TopicScenario) => void;
   onToggleFavorite: (scenarioId: string) => void;
+  /** Hiện category badge (trong search results) */
+  categoryBadge?: {icon: string; name: string} | null;
 }
 
 /**
- * Mục đích: Render 1 scenario item trong danh sách (memoized cho performance)
+ * Mục đích: Render 1 scenario item trong danh sách, có scale animation + haptic
+ * Tham số đầu vào: scenario, isSelected, isFavorite, onSelect, onToggleFavorite, categoryBadge
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: TopicPicker → danh sách scenarios (subcategory accordion, search results, favorites)
  */
 const ScenarioItem = React.memo(function ScenarioItem({
   scenario,
@@ -44,39 +97,102 @@ const ScenarioItem = React.memo(function ScenarioItem({
   isFavorite,
   onSelect,
   onToggleFavorite,
+  categoryBadge,
 }: ScenarioItemProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const haptic = useHaptic();
+
+  /**
+   * Mục đích: Animation press in (scale 0.97)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi user nhấn xuống scenario item
+   */
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  /**
+   * Mục đích: Animation press out (scale trở về 1)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi user thả tay khỏi scenario item
+   */
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  /**
+   * Mục đích: Xử lý toggle favorite với haptic feedback
+   * Tham số đầu vào: không (dùng scenario.id từ closure)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User tap star icon
+   */
+  const handleToggleFav = useCallback(() => {
+    haptic.light();
+    onToggleFavorite(scenario.id);
+  }, [haptic, onToggleFavorite, scenario.id]);
+
   return (
-    <TouchableOpacity
-      className={`flex-row items-center justify-between px-4 py-3 rounded-xl mb-1.5 ${
-        isSelected ? 'bg-primary/10 border border-primary' : 'bg-neutrals900'
-      }`}
-      onPress={() => onSelect(scenario)}
-      activeOpacity={0.7}>
-      <View className="flex-1 mr-3">
-        <AppText
-          className={`text-sm font-sans-medium ${
-            isSelected ? 'text-primary' : 'text-foreground'
-          }`}>
-          {scenario.name}
-        </AppText>
-        <AppText className="text-xs text-neutrals400 mt-0.5" numberOfLines={1}>
-          {scenario.description}
-        </AppText>
-      </View>
+    <Animated.View style={{transform: [{scale: scaleAnim}]}}>
       <TouchableOpacity
-        onPress={() => onToggleFavorite(scenario.id)}
-        hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-        activeOpacity={0.6}>
-        <AppText className={isFavorite ? 'text-warning' : 'text-neutrals600'}>
-          {isFavorite ? '⭐' : '☆'}
-        </AppText>
+        className={`flex-row items-center justify-between px-4 py-3.5 rounded-2xl mb-2 ${
+          isSelected ? 'bg-primary/10 border border-primary' : 'bg-neutrals900'
+        }`}
+        onPress={() => onSelect(scenario)}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.8}
+        accessibilityLabel={`Kịch bản: ${scenario.name}${isSelected ? ', đang chọn' : ''}`}
+        accessibilityRole="button">
+        <View className="flex-1 mr-3">
+          <AppText
+            className={`text-sm font-sans-medium ${
+              isSelected ? 'text-primary' : 'text-foreground'
+            }`}>
+            {scenario.name}
+          </AppText>
+          <AppText className="text-xs text-neutrals400 mt-0.5" numberOfLines={1}>
+            {scenario.description}
+          </AppText>
+          {/* Category badge — chỉ hiện trong search results */}
+          {categoryBadge && (
+            <View className="flex-row mt-1.5">
+              <View className="bg-neutrals800 rounded-full px-2 py-0.5">
+                <AppText className="text-neutrals300 text-[10px]">
+                  {categoryBadge.icon} {categoryBadge.name}
+                </AppText>
+              </View>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity
+          onPress={handleToggleFav}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+          activeOpacity={0.6}
+          accessibilityLabel={`${isFavorite ? 'Bỏ' : 'Đánh dấu'} yêu thích ${scenario.name}`}
+          accessibilityRole="button">
+          <AppText className={isFavorite ? 'text-warning' : 'text-neutrals600'}>
+            {isFavorite ? '⭐' : '☆'}
+          </AppText>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Animated.View>
   );
 });
 
 // ========================
-// SubCategory Accordion
+// SubCategory Accordion — với animated chevron
 // ========================
 
 interface SubCategoryAccordionProps {
@@ -89,6 +205,12 @@ interface SubCategoryAccordionProps {
   onToggleFavorite: (scenarioId: string) => void;
 }
 
+/**
+ * Mục đích: Render subcategory header + expandable scenario list với animated chevron
+ * Tham số đầu vào: subCategory, isExpanded, onToggle, selectedTopicId, favoriteIds, callbacks
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: TopicPicker → mỗi subcategory trong category view
+ */
 const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   subCategory,
   isExpanded,
@@ -98,25 +220,45 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   onSelectScenario,
   onToggleFavorite,
 }: SubCategoryAccordionProps) {
+  const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+
+  // Animate chevron khi expand/collapse
+  useEffect(() => {
+    Animated.spring(rotateAnim, {
+      toValue: isExpanded ? 1 : 0,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 2,
+    }).start();
+  }, [isExpanded, rotateAnim]);
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   return (
     <View className="mb-2">
       <TouchableOpacity
-        className="flex-row items-center justify-between px-4 py-2.5 bg-neutrals900/50 rounded-xl"
+        className="flex-row items-center justify-between px-4 py-3 bg-neutrals900/50 rounded-xl"
         onPress={onToggle}
-        activeOpacity={0.7}>
-        <View className="flex-row items-center">
+        activeOpacity={0.7}
+        accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}`}
+        accessibilityRole="button">
+        <View className="flex-row items-center flex-1">
           <AppText className="text-foreground font-sans-medium text-sm">
             {subCategory.name}
           </AppText>
-          <View className="bg-neutrals700 rounded-full px-2 py-0.5 ml-2">
-            <AppText className="text-neutrals300 text-xs">
+          <View className="bg-neutrals700 rounded-full px-2.5 py-1 ml-2">
+            <AppText className="text-neutrals300 text-xs font-sans-medium">
               {subCategory.scenarios.length}
             </AppText>
           </View>
         </View>
-        <AppText className="text-neutrals500 text-xs">
-          {isExpanded ? '▲' : '▼'}
-        </AppText>
+        {/* Animated chevron thay vì text ▲/▼ */}
+        <Animated.View style={{transform: [{rotate: rotateInterpolate}]}}>
+          <Icon name="ChevronDown" className="w-4 h-4 text-neutrals400" />
+        </Animated.View>
       </TouchableOpacity>
 
       {isExpanded && (
@@ -138,27 +280,112 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
 });
 
 // ========================
+// Favorites Tab — với empty state
+// ========================
+
+interface FavoritesTabProps {
+  favoriteIds: string[];
+  selectedTopicId: string | null;
+  onSelectScenario: (scenario: TopicScenario) => void;
+  onToggleFavorite: (scenarioId: string) => void;
+}
+
+/**
+ * Mục đích: Render tab "Yêu thích" với danh sách favorites hoặc empty state
+ * Tham số đầu vào: favoriteIds, selectedTopicId, onSelectScenario, onToggleFavorite
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: TopicPicker → khi selectedCategory === 'favorites'
+ */
+const FavoritesTab = React.memo(function FavoritesTab({
+  favoriteIds,
+  selectedTopicId,
+  onSelectScenario,
+  onToggleFavorite,
+}: FavoritesTabProps) {
+  // Tìm tất cả scenarios có trong favoriteIds
+  const favoriteScenarios = useMemo(() => {
+    const results: {scenario: TopicScenario; categoryIcon: string; categoryName: string}[] = [];
+    for (const category of TOPIC_CATEGORIES) {
+      for (const sub of category.subCategories) {
+        for (const scenario of sub.scenarios) {
+          if (favoriteIds.includes(scenario.id)) {
+            results.push({
+              scenario,
+              categoryIcon: category.icon,
+              categoryName: category.name,
+            });
+          }
+        }
+      }
+    }
+    return results;
+  }, [favoriteIds]);
+
+  if (favoriteScenarios.length === 0) {
+    // Empty state
+    return (
+      <View className="items-center py-12 px-6">
+        <AppText className="text-4xl mb-4">⭐</AppText>
+        <AppText className="text-foreground font-sans-semibold text-base mb-2">
+          Chưa có kịch bản yêu thích
+        </AppText>
+        <AppText className="text-neutrals400 text-sm text-center leading-5">
+          Nhấn ⭐ trên bất kỳ kịch bản nào{'\n'}để lưu vào danh sách yêu thích
+        </AppText>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      <AppText className="text-neutrals400 text-xs mb-2">
+        {favoriteScenarios.length} kịch bản yêu thích
+      </AppText>
+      {favoriteScenarios.map(({scenario, categoryIcon, categoryName}) => (
+        <ScenarioItem
+          key={scenario.id}
+          scenario={scenario}
+          isSelected={selectedTopicId === scenario.id}
+          isFavorite={true}
+          onSelect={onSelectScenario}
+          onToggleFavorite={onToggleFavorite}
+          categoryBadge={{icon: categoryIcon, name: categoryName}}
+        />
+      ))}
+    </View>
+  );
+});
+
+// ========================
 // Main TopicPicker Component
 // ========================
 
 /**
- * Mục đích: Component chọn kịch bản/topic cho bài nghe
+ * Mục đích: Component chọn kịch bản/topic cho bài nghe — redesigned v2
  * Tham số đầu vào:
  *   - disabled: có disable không (khi đang generate)
- *   - onCustomPress: callback khi user nhấn tab "Custom"
+ *   - onScenarioSelected: callback khi user chọn scenario
+ *   - showCategoryBadge: hiện badge category trên search results
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ConfigScreen → section đầu tiên, hiển thị 140+ scenarios
+ * Khi nào sử dụng: TopicPickerModal → nội dung chính
+ *   - Tab "⭐ Yêu thích" cho returning users
+ *   - Search bar với debounce 300ms
  *   - Horizontal category tabs
- *   - Search bar filter realtime
- *   - SubCategory accordion mở/đóng
- *   - Favorite/Star toggle
+ *   - SubCategory accordion mở/đóng với animated chevron
+ *   - Favorite/Star toggle với haptic
+ *   - Scale animation trên mỗi item
  */
 export default function TopicPicker({
   disabled = false,
-  onCustomPress,
+  onScenarioSelected,
+  showCategoryBadge = true,
 }: TopicPickerProps) {
   const colors = useColors();
+  const haptic = useHaptic();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Debounce search — 300ms để tránh lag
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Store
   const selectedTopic = useListeningStore(state => state.selectedTopic);
@@ -182,13 +409,13 @@ export default function TopicPicker({
     [selectedCategory],
   );
 
-  // Search results
+  // Search results — dùng debouncedSearch thay vì searchQuery trực tiếp
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) {
+    if (!debouncedSearch.trim()) {
       return null;
     }
-    return searchScenarios(searchQuery.trim());
-  }, [searchQuery]);
+    return searchScenarios(debouncedSearch.trim());
+  }, [debouncedSearch]);
 
   /**
    * Mục đích: Xử lý khi user chọn 1 scenario
@@ -198,14 +425,17 @@ export default function TopicPicker({
    */
   const handleSelectScenario = useCallback(
     (scenario: TopicScenario) => {
+      haptic.light();
       if (selectedTopic?.id === scenario.id) {
         // Bỏ chọn nếu đã chọn
         setSelectedTopic(null);
       } else {
         setSelectedTopic(scenario, selectedCategory, selectedSubCategory);
+        // Không auto-close modal nữa — user nhấn Confirm ở footer
       }
     },
     [
+      haptic,
       selectedTopic,
       setSelectedTopic,
       selectedCategory,
@@ -213,6 +443,12 @@ export default function TopicPicker({
     ],
   );
 
+  /**
+   * Mục đích: Toggle favorite cho 1 scenario (đã có haptic trong ScenarioItem)
+   * Tham số đầu vào: scenarioId (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: ScenarioItem → star icon tap
+   */
   const handleToggleFavorite = useCallback(
     (scenarioId: string) => {
       toggleFavorite(scenarioId);
@@ -220,54 +456,90 @@ export default function TopicPicker({
     [toggleFavorite],
   );
 
+  /**
+   * Mục đích: Toggle subcategory accordion
+   * Tham số đầu vào: subCategoryId (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: SubCategoryAccordion header tap
+   */
   const handleToggleSubCategory = useCallback(
     (subCategoryId: string) => {
+      haptic.selection();
       setSelectedSubCategory(subCategoryId);
     },
-    [setSelectedSubCategory],
+    [haptic, setSelectedSubCategory],
+  );
+
+  /**
+   * Mục đích: Chọn random scenario — CTA "Gợi ý ngẫu nhiên"
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: TopicPickerModal → footer button khi chưa chọn scenario
+   */
+  const handleRandomScenario = useCallback(() => {
+    haptic.medium();
+    const random = getRandomScenario();
+    if (random) {
+      setSelectedTopic(random.scenario, random.category.id, random.subCategory.id);
+      setSelectedCategory(random.category.id);
+      setSelectedSubCategory(random.subCategory.id);
+    }
+  }, [haptic, setSelectedTopic, setSelectedCategory, setSelectedSubCategory]);
+
+  // Tab data: Yêu thích + categories + Custom
+  const categoryTabs: CategoryTab[] = useMemo(
+    () => [
+      {id: 'favorites', name: 'Yêu thích', icon: '⭐'},
+      ...TOPIC_CATEGORIES.map(c => ({id: c.id, name: c.name, icon: c.icon})),
+      {id: 'custom', name: 'Tuỳ chỉnh', icon: '✨'},
+    ],
+    [],
   );
 
   // ========================
   // Render Category Tabs
   // ========================
   const renderCategoryTab = useCallback(
-    ({item}: {item: TopicCategory | {id: 'custom'; name: string; icon: string}}) => {
+    ({item}: {item: CategoryTab}) => {
       const isActive = item.id === selectedCategory;
+      // Hiện badge count cho favorites
+      const badgeCount = item.id === 'favorites' ? favoriteIds.length : null;
+
       return (
         <TouchableOpacity
-          className={`px-4 py-2 rounded-full mr-2 border ${
+          className={`px-4 py-2.5 rounded-full mr-2 border ${
             isActive
               ? 'bg-primary/15 border-primary'
               : 'bg-neutrals900 border-transparent'
           }`}
           onPress={() => {
-            if (item.id === 'custom') {
-              onCustomPress?.();
-            } else {
-              setSelectedCategory(item.id);
-            }
+            haptic.light();
+            setSelectedCategory(item.id);
           }}
           disabled={disabled}
-          activeOpacity={0.7}>
-          <AppText
-            className={`text-sm font-sans-medium ${
-              isActive ? 'text-primary' : 'text-foreground'
-            }`}>
-            {item.icon} {item.name}
-          </AppText>
+          activeOpacity={0.7}
+          accessibilityLabel={`Danh mục: ${item.name}${badgeCount ? `, ${badgeCount} yêu thích` : ''}${isActive ? ', đang chọn' : ''}`}
+          accessibilityRole="button">
+          <View className="flex-row items-center">
+            <AppText
+              className={`text-sm font-sans-medium ${
+                isActive ? 'text-primary' : 'text-foreground'
+              }`}>
+              {item.icon} {item.name}
+            </AppText>
+            {/* Badge count cho tab Yêu thích */}
+            {badgeCount !== null && badgeCount > 0 && (
+              <View className="bg-primary/20 rounded-full px-1.5 py-0.5 ml-1.5">
+                <AppText className="text-primary text-[10px] font-sans-bold">
+                  {badgeCount}
+                </AppText>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       );
     },
-    [selectedCategory, disabled, onCustomPress, setSelectedCategory],
-  );
-
-  // Tab data (categories + Custom)
-  const categoryTabs = useMemo(
-    () => [
-      ...TOPIC_CATEGORIES,
-      {id: 'custom' as const, name: 'Tuỳ chỉnh', icon: '✨', subCategories: [], description: ''},
-    ],
-    [],
+    [selectedCategory, disabled, haptic, setSelectedCategory, favoriteIds.length],
   );
 
   const keyExtractor = useCallback(
@@ -276,10 +548,10 @@ export default function TopicPicker({
   );
 
   return (
-    <View>
-      {/* Search Bar */}
+    <View className="flex-1">
+      {/* Search Bar với debounce */}
       <View className="flex-row items-center bg-neutrals900 rounded-2xl px-4 py-2.5 mb-3">
-        <Icon name="Search" className="w-4 h-4 text-neutrals500 mr-2" />
+        <Icon name="Search" className="w-4 h-4 text-neutrals400 mr-2" />
         <TextInput
           className="flex-1 text-base py-1"
           style={{color: colors.foreground}}
@@ -290,37 +562,45 @@ export default function TopicPicker({
           editable={!disabled}
           autoCapitalize="none"
           autoCorrect={false}
+          accessibilityLabel="Tìm kiếm kịch bản"
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity
             onPress={() => setSearchQuery('')}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            accessibilityLabel="Xóa tìm kiếm"
+            accessibilityRole="button">
             <Icon name="X" className="w-4 h-4 text-neutrals500" />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Category Tabs - Horizontal Scroll */}
+      {/* Category Tabs — Horizontal Scroll (có tab Yêu thích đầu tiên) */}
       <FlatList
-        data={categoryTabs as any}
+        data={categoryTabs}
         renderItem={renderCategoryTab}
         keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
         className="mb-3"
+        contentContainerStyle={{paddingRight: 16}}
       />
 
-      {/* Nội dung: Search results hoặc SubCategories */}
+      {/* Nội dung: Search results hoặc Tab content */}
       {searchResults ? (
-        // Kết quả tìm kiếm
+        // Kết quả tìm kiếm — với category badge
         <View>
-          <AppText className="text-neutrals400 text-xs mb-2">
-            {searchResults.length} kết quả cho "{searchQuery}"
+          <AppText className="text-neutrals300 text-xs mb-2">
+            {searchResults.length} kết quả cho "{debouncedSearch}"
           </AppText>
           {searchResults.length === 0 ? (
-            <View className="items-center py-6">
-              <AppText className="text-neutrals500 text-sm">
+            <View className="items-center py-8">
+              <AppText className="text-2xl mb-2">🔍</AppText>
+              <AppText className="text-neutrals400 text-sm">
                 Không tìm thấy kịch bản nào
+              </AppText>
+              <AppText className="text-neutrals500 text-xs mt-1">
+                Thử từ khóa khác hoặc chọn từ danh mục
               </AppText>
             </View>
           ) : (
@@ -332,11 +612,27 @@ export default function TopicPicker({
                 isFavorite={favoriteIds.includes(result.scenario.id)}
                 onSelect={handleSelectScenario}
                 onToggleFavorite={handleToggleFavorite}
+                categoryBadge={
+                  showCategoryBadge
+                    ? {icon: result.category.icon, name: result.category.name}
+                    : null
+                }
               />
             ))
           )}
         </View>
-      ) : activeCategory && selectedCategory !== 'custom' ? (
+      ) : selectedCategory === 'favorites' ? (
+        // Tab "⭐ Yêu thích"
+        <FavoritesTab
+          favoriteIds={favoriteIds}
+          selectedTopicId={selectedTopic?.id ?? null}
+          onSelectScenario={handleSelectScenario}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      ) : selectedCategory === 'custom' ? (
+        // Tab "Tuỳ chỉnh" — placeholder, sẽ được render bởi parent (Modal)
+        null
+      ) : activeCategory ? (
         // Danh sách SubCategories + Scenarios
         <View>
           {activeCategory.subCategories.map(sub => (
@@ -354,15 +650,20 @@ export default function TopicPicker({
         </View>
       ) : null}
 
-      {/* Hiển thị topic đang chọn */}
+      {/* Hiển thị topic đang chọn — sticky bottom indicator */}
       {selectedTopic && (
         <View className="mt-3 bg-primary/10 rounded-2xl px-4 py-3 flex-row items-center">
           <AppText className="text-primary text-sm flex-1">
             ✅ Đã chọn: <AppText className="font-sans-bold">{selectedTopic.name}</AppText>
           </AppText>
           <TouchableOpacity
-            onPress={() => setSelectedTopic(null)}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            onPress={() => {
+              haptic.light();
+              setSelectedTopic(null);
+            }}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            accessibilityLabel="Bỏ chọn kịch bản"
+            accessibilityRole="button">
             <Icon name="X" className="w-4 h-4 text-primary" />
           </TouchableOpacity>
         </View>
@@ -370,3 +671,6 @@ export default function TopicPicker({
     </View>
   );
 }
+
+// Export thêm handleRandomScenario để modal dùng
+export {getRandomScenario};

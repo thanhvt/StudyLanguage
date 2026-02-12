@@ -26,6 +26,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {AppButton, AppText} from '@/components/ui';
 import {useAppStore} from '@/store/useAppStore';
 import FloatingOrbs from '@/components/auth/FloatingOrbs';
+import {SKILL_COLORS} from '@/config/skillColors';
 
 const {width, height} = Dimensions.get('window');
 
@@ -36,7 +37,7 @@ const SLIDES = [
     emoji: '🎧',
     title: 'Luyện Nghe',
     subtitle: 'Nghe hội thoại AI tạo theo\nchủ đề bạn chọn',
-    color: '#6366F1',
+    color: SKILL_COLORS.listening.dark,
     decorEmojis: ['🎵', '🎶', '🔊', '👂'],
     gradientColors: ['#0a0a0a', '#0f0a1e', '#0a0a0a'],
   },
@@ -45,7 +46,7 @@ const SLIDES = [
     emoji: '🗣️',
     title: 'Luyện Nói',
     subtitle: 'Hội thoại với AI và\nnhận phản hồi phát âm',
-    color: '#4ade80',
+    color: SKILL_COLORS.speaking.dark,
     decorEmojis: ['💬', '🎤', '💡', '🌟'],
     gradientColors: ['#0a0a0a', '#0d1f12', '#0a0a0a'],
   },
@@ -54,7 +55,7 @@ const SLIDES = [
     emoji: '📖',
     title: 'Luyện Đọc',
     subtitle: 'Đọc bài viết phù hợp trình độ\nvới từ vựng nổi bật',
-    color: '#fbbf24',
+    color: SKILL_COLORS.reading.dark,
     decorEmojis: ['📚', '✏️', '🔍', '⭐'],
     gradientColors: ['#0a0a0a', '#1a1408', '#0a0a0a'],
   },
@@ -526,7 +527,7 @@ export default function OnboardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0a0a0a', // Onboarding luôn dùng dark surface
   },
   skipContainer: {
     position: 'absolute',
@@ -604,7 +605,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 18,
     overflow: 'hidden',
-    shadowColor: '#4ade80',
+    shadowColor: SKILL_COLORS.speaking.dark,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.4,
     shadowRadius: 15,

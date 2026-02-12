@@ -4,6 +4,7 @@ import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
+import {useDialog} from '@/components/ui/DialogProvider';
 
 /** Custom scenario item */
 interface CustomScenarioItem {
@@ -37,6 +38,7 @@ export default function CustomScenarioInput({
 }: CustomScenarioInputProps) {
   const colors = useColors();
   const {showSuccess, showWarning} = useToast();
+  const {showConfirm} = useDialog();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -53,7 +55,7 @@ export default function CustomScenarioInput({
    */
   const handleQuickUse = () => {
     if (!name.trim()) {
-      showWarning('Chưa nhập tên', 'Vui lòng nhập tên kịch bản');
+      showWarning('Chưa nhập tên', 'Nhập tên kịch bản để sử dụng ngay');
       return;
     }
     onQuickUse(name.trim(), description.trim());
@@ -69,7 +71,7 @@ export default function CustomScenarioInput({
    */
   const handleSave = () => {
     if (!name.trim()) {
-      showWarning('Chưa nhập tên', 'Vui lòng nhập tên kịch bản');
+      showWarning('Chưa nhập tên', 'Nhập tên kịch bản để lưu vào bộ sưu tập');
       return;
     }
     const newScenario: CustomScenarioItem = {
@@ -80,7 +82,7 @@ export default function CustomScenarioInput({
       createdAt: Date.now(),
     };
     setSavedScenarios(prev => [newScenario, ...prev]);
-    showSuccess('Đã lưu kịch bản', name.trim());
+    showSuccess('Đã lưu kịch bản', `"${name.trim()}" đã được thêm vào bộ sưu tập`);
     setName('');
     setDescription('');
   };
@@ -92,7 +94,14 @@ export default function CustomScenarioInput({
    * Khi nào sử dụng: User nhấn biểu tượng 🗑️ trên scenario đã lưu
    */
   const handleDelete = (id: string) => {
-    setSavedScenarios(prev => prev.filter(s => s.id !== id));
+    const scenario = savedScenarios.find(s => s.id === id);
+    showConfirm(
+      'Xoá kịch bản?',
+      `Bạn có chắc muốn xoá "${scenario?.name || 'kịch bản này'}"?`,
+      () => {
+        setSavedScenarios(prev => prev.filter(s => s.id !== id));
+      },
+    );
   };
 
   /**
@@ -124,6 +133,7 @@ export default function CustomScenarioInput({
           onChangeText={setName}
           editable={!disabled}
           maxLength={100}
+          accessibilityLabel="Nhập tên kịch bản tuỳ chỉnh"
         />
 
         <TextInput
@@ -137,6 +147,7 @@ export default function CustomScenarioInput({
           multiline
           numberOfLines={2}
           maxLength={300}
+          accessibilityLabel="Mô tả chi tiết kịch bản tuỳ chỉnh"
         />
 
         <View className="flex-row gap-2">
@@ -144,14 +155,16 @@ export default function CustomScenarioInput({
             variant="primary"
             className="flex-1 rounded-xl"
             onPress={handleQuickUse}
-            disabled={disabled || !name.trim()}>
+            disabled={disabled || !name.trim()}
+            accessibilityLabel="Sử dụng kịch bản ngay mà không lưu">
             ⚡ Sử dụng ngay
           </AppButton>
           <AppButton
-            variant="secondary"
+            variant="outline"
             className="flex-1 rounded-xl"
             onPress={handleSave}
-            disabled={disabled || !name.trim()}>
+            disabled={disabled || !name.trim()}
+            accessibilityLabel="Lưu kịch bản vào bộ sưu tập">
             💾 Lưu lại
           </AppButton>
         </View>
