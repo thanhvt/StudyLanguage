@@ -1,0 +1,168 @@
+import React from 'react';
+import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import {AppText} from '@/components/ui';
+import {Switch} from '@/components/ui';
+import Icon from '@/components/ui/Icon';
+import {useColors} from '@/hooks/useColors';
+
+interface AdvancedOptionsSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  /** Difficulty */
+  level: 'beginner' | 'intermediate' | 'advanced';
+  onLevelChange: (level: 'beginner' | 'intermediate' | 'advanced') => void;
+  /** Giọng đọc random hay chọn */
+  randomVoice: boolean;
+  onRandomVoiceChange: (value: boolean) => void;
+  /** Multi-talker (Azure) */
+  multiTalker: boolean;
+  onMultiTalkerChange: (value: boolean) => void;
+  /** Disabled khi đang generate */
+  disabled?: boolean;
+}
+
+/** Tuỳ chọn level */
+const LEVELS = [
+  {value: 'beginner' as const, label: 'Cơ bản', emoji: '🌱'},
+  {value: 'intermediate' as const, label: 'Trung cấp', emoji: '🌿'},
+  {value: 'advanced' as const, label: 'Nâng cao', emoji: '🌳'},
+];
+
+/**
+ * Mục đích: Bottom sheet chứa tuỳ chọn nâng cao cho bài nghe
+ * Tham số đầu vào: AdvancedOptionsSheetProps
+ * Tham số đầu ra: JSX.Element (Modal bottom-sheet)
+ * Khi nào sử dụng: ConfigScreen → "Tuỳ chọn nâng cao" button → mở sheet này
+ *   - Chứa: Difficulty, Voice selection, Multi-talker toggle
+ */
+export default function AdvancedOptionsSheet({
+  visible,
+  onClose,
+  level,
+  onLevelChange,
+  randomVoice,
+  onRandomVoiceChange,
+  multiTalker,
+  onMultiTalkerChange,
+  disabled = false,
+}: AdvancedOptionsSheetProps) {
+  const colors = useColors();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}>
+      <Pressable
+        className="flex-1 bg-black/50"
+        onPress={onClose}
+      />
+      <View
+        className="bg-background rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: -4},
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          elevation: 20,
+        }}>
+        {/* Thanh kéo */}
+        <View className="w-10 h-1 bg-neutrals600 rounded-full self-center mb-4" />
+
+        {/* Header */}
+        <View className="flex-row items-center justify-between mb-5">
+          <AppText className="text-foreground font-sans-bold text-lg">
+            ⚙️ Tuỳ chọn nâng cao
+          </AppText>
+          <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+            <Icon name="X" className="w-6 h-6 text-neutrals400" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView>
+          {/* Trình độ */}
+          <View className="mb-6">
+            <AppText className="text-foreground font-sans-semibold text-base mb-3">
+              🎯 Trình độ
+            </AppText>
+            <View className="flex-row gap-3">
+              {LEVELS.map(l => (
+                <TouchableOpacity
+                  key={l.value}
+                  className={`flex-1 py-3 rounded-2xl items-center border ${
+                    level === l.value
+                      ? 'bg-primary/10 border-primary'
+                      : 'bg-neutrals900 border-neutrals800'
+                  }`}
+                  onPress={() => onLevelChange(l.value)}
+                  disabled={disabled}
+                  activeOpacity={0.7}>
+                  <AppText className="text-lg mb-1">{l.emoji}</AppText>
+                  <AppText
+                    className={`text-sm ${
+                      level === l.value
+                        ? 'text-primary font-sans-bold'
+                        : 'text-foreground'
+                    }`}>
+                    {l.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Giọng đọc */}
+          <View className="mb-6">
+            <AppText className="text-foreground font-sans-semibold text-base mb-3">
+              🔊 Giọng đọc
+            </AppText>
+            <TouchableOpacity
+              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
+              onPress={() => onRandomVoiceChange(!randomVoice)}
+              disabled={disabled}
+              activeOpacity={0.7}>
+              <View>
+                <AppText className="text-foreground">Giọng ngẫu nhiên</AppText>
+                <AppText className="text-neutrals400 text-xs mt-0.5">
+                  AI tự chọn giọng phù hợp cho từng speaker
+                </AppText>
+              </View>
+              <Switch
+                value={randomVoice}
+                onValueChange={onRandomVoiceChange}
+                disabled={disabled}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Multi-talker */}
+          <View className="mb-4">
+            <AppText className="text-foreground font-sans-semibold text-base mb-3">
+              👥 Multi-talker (Azure)
+            </AppText>
+            <TouchableOpacity
+              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
+              onPress={() => onMultiTalkerChange(!multiTalker)}
+              disabled={disabled}
+              activeOpacity={0.7}>
+              <View className="flex-1 mr-3">
+                <AppText className="text-foreground">
+                  Đa giọng nói cùng lúc
+                </AppText>
+                <AppText className="text-neutrals400 text-xs mt-0.5">
+                  Giọng tự nhiên hơn với Azure Neural Voice
+                </AppText>
+              </View>
+              <Switch
+                value={multiTalker}
+                onValueChange={onMultiTalkerChange}
+                disabled={disabled}
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}

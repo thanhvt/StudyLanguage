@@ -7,10 +7,15 @@ import {apiClient} from './client';
 /** Cấu hình để generate conversation */
 export interface ListeningConfig {
   topic: string;
-  durationMinutes: 5 | 10 | 15;
+  /** Thời lượng (phút) — 1-20, hỗ trợ custom */
+  durationMinutes: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   numExchanges?: number;
   includeVietnamese?: boolean;
+  /** Số người nói: 2 (Dialog), 3 (Group), 4 (Team) */
+  numSpeakers?: number;
+  /** Từ khóa gợi ý nội dung (tối đa 200 ký tự) */
+  keywords?: string;
 }
 
 /** Kịch bản có sẵn */

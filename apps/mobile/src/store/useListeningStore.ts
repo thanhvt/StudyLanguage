@@ -3,6 +3,7 @@ import type {
   ListeningConfig,
   ConversationResult,
 } from '@/services/api/listening';
+import type {TopicScenario} from '@/data/topic-data';
 
 // =======================
 // Listening Store State
@@ -21,6 +22,14 @@ interface ListeningState {
   currentExchangeIndex: number;
   /** Tốc độ phát */
   playbackSpeed: number;
+  /** Topic đang chọn từ TopicPicker */
+  selectedTopic: TopicScenario | null;
+  /** Category ID đang chọn */
+  selectedCategory: string;
+  /** SubCategory ID đang mở */
+  selectedSubCategory: string;
+  /** Danh sách scenario ID đã favorite (lưu local) */
+  favoriteScenarioIds: string[];
 }
 
 interface ListeningActions {
@@ -38,6 +47,18 @@ interface ListeningActions {
   setCurrentExchangeIndex: (index: number) => void;
   /** Đổi tốc độ phát */
   setPlaybackSpeed: (speed: number) => void;
+  /** Chọn topic từ TopicPicker */
+  setSelectedTopic: (
+    topic: TopicScenario | null,
+    categoryId?: string,
+    subCategoryId?: string,
+  ) => void;
+  /** Chọn category tab */
+  setSelectedCategory: (categoryId: string) => void;
+  /** Mở/đóng subcategory */
+  setSelectedSubCategory: (subCategoryId: string) => void;
+  /** Toggle favorite cho 1 scenario */
+  toggleFavorite: (scenarioId: string) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -48,18 +69,25 @@ const initialState: ListeningState = {
     durationMinutes: 5,
     level: 'intermediate',
     includeVietnamese: true,
+    numSpeakers: 2,
+    keywords: '',
   },
   conversation: null,
   isGenerating: false,
   isPlaying: false,
   currentExchangeIndex: 0,
   playbackSpeed: 1,
+  selectedTopic: null,
+  selectedCategory: 'it',
+  selectedSubCategory: '',
+  favoriteScenarioIds: [],
 };
 
 /**
  * Mục đích: Zustand store cho Listening module
  * Khi nào sử dụng:
  *   - ConfigScreen: đọc/ghi config, gọi generate
+ *   - TopicPicker: đọc/ghi selectedTopic, selectedCategory, favorites
  *   - PlayerScreen: đọc conversation, điều khiển playback
  *   - QuickActions: reset khi bắt đầu bài mới
  */
@@ -78,6 +106,32 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
     setPlaying: value => set({isPlaying: value}),
     setCurrentExchangeIndex: index => set({currentExchangeIndex: index}),
     setPlaybackSpeed: speed => set({playbackSpeed: speed}),
+
+    setSelectedTopic: (topic, categoryId, subCategoryId) =>
+      set(state => ({
+        selectedTopic: topic,
+        selectedCategory: categoryId ?? state.selectedCategory,
+        selectedSubCategory: subCategoryId ?? state.selectedSubCategory,
+        config: {
+          ...state.config,
+          topic: topic?.name ?? '',
+        },
+      })),
+
+    setSelectedCategory: categoryId => set({selectedCategory: categoryId}),
+    setSelectedSubCategory: subCategoryId =>
+      set(state => ({
+        selectedSubCategory:
+          state.selectedSubCategory === subCategoryId ? '' : subCategoryId,
+      })),
+
+    toggleFavorite: scenarioId =>
+      set(state => ({
+        favoriteScenarioIds: state.favoriteScenarioIds.includes(scenarioId)
+          ? state.favoriteScenarioIds.filter(id => id !== scenarioId)
+          : [...state.favoriteScenarioIds, scenarioId],
+      })),
+
     reset: () => set(initialState),
   }),
 );

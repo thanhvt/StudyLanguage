@@ -8,23 +8,12 @@
  *   - MOB-LIS-MVP-HP-007: Play/Pause toggle
  *   - MOB-LIS-MVP-HP-009: Previous/Next sentence
  *   - MOB-LIS-MVP-HP-010: Speed control
+ *   - MOB-LIS-MVP-HP-025: Chọn speakers (2/3/4)
+ *   - MOB-LIS-MVP-HP-026: Nhập keywords
+ *   - MOB-LIS-MVP-HP-021: Chọn topic từ TopicPicker
+ *   - MOB-LIS-MVP-HP-023: Favorite/Star scenario
  */
 import {useListeningStore} from '@/store/useListeningStore';
-
-// Giá trị mặc định ban đầu
-const defaultState = {
-  config: {
-    topic: '',
-    durationMinutes: 5,
-    level: 'intermediate',
-    includeVietnamese: true,
-  },
-  conversation: null,
-  isGenerating: false,
-  isPlaying: false,
-  currentExchangeIndex: 0,
-  playbackSpeed: 1,
-};
 
 describe('useListeningStore', () => {
   beforeEach(() => {
@@ -47,11 +36,35 @@ describe('useListeningStore', () => {
       expect(useListeningStore.getState().config.durationMinutes).toBe(10);
     });
 
+    // MOB-LIS-MVP-HP-024: Custom duration
+    it('setConfig cập nhật custom duration (7 phút)', () => {
+      useListeningStore.getState().setConfig({durationMinutes: 7});
+
+      expect(useListeningStore.getState().config.durationMinutes).toBe(7);
+    });
+
     // Chọn level
     it('setConfig cập nhật level', () => {
       useListeningStore.getState().setConfig({level: 'advanced'});
 
       expect(useListeningStore.getState().config.level).toBe('advanced');
+    });
+
+    // MOB-LIS-MVP-HP-025: Chọn speakers
+    it('setConfig cập nhật numSpeakers', () => {
+      useListeningStore.getState().setConfig({numSpeakers: 3});
+      expect(useListeningStore.getState().config.numSpeakers).toBe(3);
+
+      useListeningStore.getState().setConfig({numSpeakers: 4});
+      expect(useListeningStore.getState().config.numSpeakers).toBe(4);
+    });
+
+    // MOB-LIS-MVP-HP-026: Nhập keywords
+    it('setConfig cập nhật keywords', () => {
+      useListeningStore.getState().setConfig({keywords: 'coffee, meeting'});
+      expect(useListeningStore.getState().config.keywords).toBe(
+        'coffee, meeting',
+      );
     });
 
     // Merge config (không overwrite các field khác)
@@ -63,6 +76,80 @@ describe('useListeningStore', () => {
       expect(config.topic).toBe('Travel');
       expect(config.durationMinutes).toBe(15);
       expect(config.level).toBe('intermediate'); // Giữ default
+      expect(config.numSpeakers).toBe(2); // Giữ default
+    });
+  });
+
+  describe('Topic Selection', () => {
+    const mockTopic = {
+      id: 'it-1',
+      name: 'Daily Stand-up Update',
+      description: 'Quick report on yesterday, today, and blockers',
+    };
+
+    // MOB-LIS-MVP-HP-021: Chọn topic từ TopicPicker
+    it('setSelectedTopic lưu topic và cập nhật config.topic', () => {
+      useListeningStore.getState().setSelectedTopic(mockTopic, 'it', 'agile');
+
+      const state = useListeningStore.getState();
+      expect(state.selectedTopic).toEqual(mockTopic);
+      expect(state.selectedCategory).toBe('it');
+      expect(state.selectedSubCategory).toBe('agile');
+      expect(state.config.topic).toBe('Daily Stand-up Update');
+    });
+
+    it('setSelectedTopic(null) xóa topic', () => {
+      useListeningStore.getState().setSelectedTopic(mockTopic, 'it', 'agile');
+      useListeningStore.getState().setSelectedTopic(null);
+
+      expect(useListeningStore.getState().selectedTopic).toBeNull();
+      expect(useListeningStore.getState().config.topic).toBe('');
+    });
+
+    it('setSelectedCategory đổi category', () => {
+      useListeningStore.getState().setSelectedCategory('daily');
+      expect(useListeningStore.getState().selectedCategory).toBe('daily');
+    });
+
+    it('setSelectedSubCategory toggle mở/đóng', () => {
+      useListeningStore.getState().setSelectedSubCategory('agile');
+      expect(useListeningStore.getState().selectedSubCategory).toBe('agile');
+
+      // Toggle lại → đóng
+      useListeningStore.getState().setSelectedSubCategory('agile');
+      expect(useListeningStore.getState().selectedSubCategory).toBe('');
+    });
+  });
+
+  describe('Favorites', () => {
+    // MOB-LIS-MVP-HP-023: Favorite/Star scenario
+    it('toggleFavorite thêm scenario vào favorites', () => {
+      useListeningStore.getState().toggleFavorite('it-1');
+
+      expect(
+        useListeningStore.getState().favoriteScenarioIds,
+      ).toContain('it-1');
+    });
+
+    it('toggleFavorite xóa scenario khỏi favorites', () => {
+      useListeningStore.getState().toggleFavorite('it-1');
+      useListeningStore.getState().toggleFavorite('it-1');
+
+      expect(
+        useListeningStore.getState().favoriteScenarioIds,
+      ).not.toContain('it-1');
+    });
+
+    it('toggleFavorite nhiều scenarios', () => {
+      useListeningStore.getState().toggleFavorite('it-1');
+      useListeningStore.getState().toggleFavorite('daily-5');
+      useListeningStore.getState().toggleFavorite('personal-10');
+
+      const ids = useListeningStore.getState().favoriteScenarioIds;
+      expect(ids).toHaveLength(3);
+      expect(ids).toContain('it-1');
+      expect(ids).toContain('daily-5');
+      expect(ids).toContain('personal-10');
     });
   });
 
@@ -155,12 +242,24 @@ describe('useListeningStore', () => {
     it('reset() trả về trạng thái mặc định', () => {
       // Setup: đã có data
       useListeningStore.setState({
-        config: {topic: 'Test', durationMinutes: 15, level: 'advanced', includeVietnamese: false},
-        conversation: {conversation: [{speaker: 'A', text: 'test'}]} as any,
+        config: {
+          topic: 'Test',
+          durationMinutes: 15,
+          level: 'advanced',
+          includeVietnamese: false,
+          numSpeakers: 4,
+          keywords: 'test keywords',
+        },
+        conversation: {
+          conversation: [{speaker: 'A', text: 'test'}],
+        } as any,
         isPlaying: true,
         currentExchangeIndex: 5,
         playbackSpeed: 1.5,
         isGenerating: true,
+        selectedTopic: {id: 'it-1', name: 'Test', description: ''},
+        selectedCategory: 'daily',
+        favoriteScenarioIds: ['it-1', 'daily-5'],
       });
 
       // Reset
@@ -170,10 +269,15 @@ describe('useListeningStore', () => {
       expect(state.config.topic).toBe('');
       expect(state.config.durationMinutes).toBe(5);
       expect(state.config.level).toBe('intermediate');
+      expect(state.config.numSpeakers).toBe(2);
+      expect(state.config.keywords).toBe('');
       expect(state.conversation).toBeNull();
       expect(state.isPlaying).toBe(false);
       expect(state.currentExchangeIndex).toBe(0);
       expect(state.playbackSpeed).toBe(1);
+      expect(state.selectedTopic).toBeNull();
+      expect(state.selectedCategory).toBe('it');
+      expect(state.favoriteScenarioIds).toEqual([]);
     });
   });
 
@@ -197,11 +301,17 @@ describe('useListeningStore', () => {
       expect(state.config.durationMinutes).toBe(5);
       expect(state.config.level).toBe('intermediate');
       expect(state.config.includeVietnamese).toBe(true);
+      expect(state.config.numSpeakers).toBe(2);
+      expect(state.config.keywords).toBe('');
       expect(state.conversation).toBeNull();
       expect(state.isGenerating).toBe(false);
       expect(state.isPlaying).toBe(false);
       expect(state.currentExchangeIndex).toBe(0);
       expect(state.playbackSpeed).toBe(1);
+      expect(state.selectedTopic).toBeNull();
+      expect(state.selectedCategory).toBe('it');
+      expect(state.favoriteScenarioIds).toEqual([]);
     });
   });
 });
+

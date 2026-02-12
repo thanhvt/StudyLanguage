@@ -6,7 +6,7 @@ import MainStack from './MainTabNavigator';
 import SplashScreen from '@/screens/SplashScreen';
 
 // Thời gian tối thiểu hiển thị splash (ms) — đủ để animation chạy hết
-const SPLASH_MIN_DURATION = 2500;
+const SPLASH_MIN_DURATION = 25000;
 
 /**
  * Mục đích: Navigator gốc quyết định hiển thị Auth hay Main dựa trên trạng thái đăng nhập
