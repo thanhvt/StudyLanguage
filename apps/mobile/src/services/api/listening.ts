@@ -262,3 +262,95 @@ export const listeningApi = {
     return response.data as AudioGenerationResult;
   },
 };
+
+// =======================
+// Bookmark Types
+// =======================
+
+/** Dữ liệu bookmark trả về từ server */
+export interface SentenceBookmark {
+  id: string;
+  historyEntryId?: string;
+  sentenceIndex: number;
+  speaker: string;
+  sentenceText: string;
+  sentenceTranslation?: string;
+  topic?: string;
+  createdAt: string;
+}
+
+// =======================
+// Bookmark API Service
+// =======================
+
+/**
+ * Mục đích: Service gọi API backend cho tính năng Bookmark câu
+ * Khi nào sử dụng: PlayerScreen long press câu → tạo/xóa bookmark
+ *   - create: User long press câu chưa bookmark → POST /bookmarks
+ *   - getBySession: Load bookmarks khi resume session → GET /bookmarks/session/:id
+ *   - delete: User long press câu đã bookmark → DELETE /bookmarks/:id
+ *   - deleteByIndex: Toggle off khi chưa biết bookmark ID
+ */
+export const bookmarkApi = {
+  /**
+   * Mục đích: Tạo bookmark mới cho 1 câu trong transcript
+   * Tham số đầu vào: data chứa sentenceIndex, speaker, sentenceText, etc.
+   * Tham số đầu ra: Promise<{success, bookmark, alreadyExists}>
+   * Khi nào sử dụng: User long press câu chưa được bookmark
+   */
+  create: async (data: {
+    historyEntryId?: string;
+    sentenceIndex: number;
+    speaker: string;
+    sentenceText: string;
+    sentenceTranslation?: string;
+    topic?: string;
+  }): Promise<{success: boolean; bookmark: SentenceBookmark; alreadyExists: boolean}> => {
+    console.log('⭐ [Bookmark] Tạo bookmark cho câu index:', data.sentenceIndex);
+    const response = await apiClient.post('/bookmarks', data);
+    return response.data;
+  },
+
+  /**
+   * Mục đích: Lấy danh sách bookmarks theo session cụ thể
+   * Tham số đầu vào: historyEntryId (string) — ID session trong learning_history
+   * Tham số đầu ra: Promise<{success, bookmarks, count}>
+   * Khi nào sử dụng: PlayerScreen mở lại session đã có → load bookmark state
+   */
+  getBySession: async (
+    historyEntryId: string,
+  ): Promise<{success: boolean; bookmarks: SentenceBookmark[]; count: number}> => {
+    console.log('⭐ [Bookmark] Lấy bookmarks cho session:', historyEntryId);
+    const response = await apiClient.get(`/bookmarks/session/${historyEntryId}`);
+    return response.data;
+  },
+
+  /**
+   * Mục đích: Xóa bookmark theo ID
+   * Tham số đầu vào: bookmarkId (string)
+   * Tham số đầu ra: Promise<{success, message}>
+   * Khi nào sử dụng: User long press lại câu đã bookmark để bỏ (khi có bookmark ID)
+   */
+  delete: async (
+    bookmarkId: string,
+  ): Promise<{success: boolean; message: string}> => {
+    console.log('⭐ [Bookmark] Xóa bookmark:', bookmarkId);
+    const response = await apiClient.delete(`/bookmarks/${bookmarkId}`);
+    return response.data;
+  },
+
+  /**
+   * Mục đích: Xóa bookmark theo sentence index (khi chưa biết bookmark ID)
+   * Tham số đầu vào: historyEntryId (nullable), sentenceIndex
+   * Tham số đầu ra: Promise<{success, message}>
+   * Khi nào sử dụng: Toggle bookmark off trên PlayerScreen
+   */
+  deleteByIndex: async (data: {
+    historyEntryId?: string;
+    sentenceIndex: number;
+  }): Promise<{success: boolean; message: string}> => {
+    console.log('⭐ [Bookmark] Xóa bookmark theo index:', data.sentenceIndex);
+    const response = await apiClient.post('/bookmarks/remove-by-index', data);
+    return response.data;
+  },
+};

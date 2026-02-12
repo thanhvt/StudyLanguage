@@ -9,6 +9,7 @@ import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
 import {listeningApi} from '@/services/api/listening';
+import {bookmarkApi} from '@/services/api/listening';
 import TrackPlayer, {
   usePlaybackState,
   useProgress,
@@ -60,6 +61,12 @@ export default function ListeningPlayerScreen({
     state => state.setGeneratingAudio,
   );
   const setTimestamps = useListeningStore(state => state.setTimestamps);
+
+  // Bookmark state
+  const bookmarkedIndexes = useListeningStore(
+    state => state.bookmarkedIndexes,
+  );
+  const toggleBookmark = useListeningStore(state => state.toggleBookmark);
 
   // TrackPlayer state
   const playbackState = usePlaybackState();
@@ -209,6 +216,54 @@ export default function ListeningPlayerScreen({
       } catch (error) {
         console.log('📍 [Player] Nhảy đến exchange:', index);
       }
+    }
+  };
+
+  /**
+   * Mục đích: Xử lý long press câu → toggle bookmark (thêm/bỏ ⭐)
+   * Tham số đầu vào: index (number) - vị trí exchange trong transcript
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User long press 1 câu trong transcript
+   *   - Nếu chưa bookmark → tạo bookmark + hiện ⭐ + toast
+   *   - Nếu đã bookmark → xóa bookmark + ẩn ⭐ + toast
+   */
+  const handleBookmarkToggle = async (index: number) => {
+    const exchange = exchanges[index];
+    if (!exchange) {
+      return;
+    }
+
+    const isCurrentlyBookmarked = bookmarkedIndexes.includes(index);
+    haptic.medium();
+
+    // Toggle local state ngay lập tức (optimistic update)
+    toggleBookmark(index);
+
+    try {
+      if (isCurrentlyBookmarked) {
+        // Bỏ bookmark → gọi API xóa theo index
+        await bookmarkApi.deleteByIndex({
+          sentenceIndex: index,
+        });
+        showInfo('Đã bỏ bookmark', exchange.text.substring(0, 40) + '...');
+        console.log('⭐ [Player] Bỏ bookmark câu index:', index);
+      } else {
+        // Thêm bookmark → gọi API tạo
+        await bookmarkApi.create({
+          sentenceIndex: index,
+          speaker: exchange.speaker,
+          sentenceText: exchange.text,
+          sentenceTranslation: exchange.vietnamese,
+          topic: config.topic || conversation?.title,
+        });
+        showSuccess('Đã lưu bookmark ⭐', exchange.text.substring(0, 40) + '...');
+        console.log('⭐ [Player] Bookmark câu index:', index);
+      }
+    } catch (error) {
+      // Rollback nếu API lỗi
+      toggleBookmark(index);
+      showError('Lỗi', 'Không thể lưu bookmark, thử lại sau');
+      console.error('❌ [Player] Lỗi toggle bookmark:', error);
     }
   };
 
@@ -425,16 +480,21 @@ export default function ListeningPlayerScreen({
           {exchanges.map((exchange, index) => {
             const isActive = index === currentExchangeIndex;
             const isEvenSpeaker = index % 2 === 0;
+            const isBookmarked = bookmarkedIndexes.includes(index);
 
             return (
               <TouchableOpacity
                 key={index}
                 onPress={() => handleExchangePress(index)}
+                onLongPress={() => handleBookmarkToggle(index)}
+                delayLongPress={400}
                 activeOpacity={0.7}
                 className={`rounded-2xl p-4 border ${
                   isActive
                     ? 'bg-primary/10 border-primary/30'
-                    : 'bg-neutrals950 border-transparent'
+                    : isBookmarked
+                      ? 'bg-yellow-500/5 border-yellow-500/20'
+                      : 'bg-neutrals950 border-transparent'
                 }`}>
                 {/* Speaker label */}
                 <View className="flex-row items-center mb-2">
@@ -458,6 +518,11 @@ export default function ListeningPlayerScreen({
                         name="Volume2"
                         className="w-4 h-4 text-primary"
                       />
+                    </View>
+                  )}
+                  {isBookmarked && (
+                    <View className={isActive ? 'ml-1' : 'ml-auto'}>
+                      <AppText className="text-xs">⭐</AppText>
                     </View>
                   )}
                 </View>

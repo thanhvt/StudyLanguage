@@ -37,6 +37,8 @@ interface ListeningState {
   isGeneratingAudio: boolean;
   /** Timestamps cho từng câu — sync audio với transcript */
   timestamps: ConversationTimestamp[] | null;
+  /** Danh sách các exchange index đã bookmark trong session hiện tại */
+  bookmarkedIndexes: number[];
 }
 
 interface ListeningActions {
@@ -72,6 +74,10 @@ interface ListeningActions {
   setGeneratingAudio: (value: boolean) => void;
   /** Set timestamps cho transcript sync */
   setTimestamps: (ts: ConversationTimestamp[] | null) => void;
+  /** Toggle bookmark cho 1 exchange (thêm/bỏ khỏi danh sách) */
+  toggleBookmark: (index: number) => void;
+  /** Set danh sách bookmark indexes (khi load từ server) */
+  setBookmarkedIndexes: (indexes: number[]) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -97,6 +103,7 @@ const initialState: ListeningState = {
   audioUrl: null,
   isGeneratingAudio: false,
   timestamps: null,
+  bookmarkedIndexes: [],
 };
 
 /**
@@ -151,6 +158,14 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
     setAudioUrl: url => set({audioUrl: url}),
     setGeneratingAudio: value => set({isGeneratingAudio: value}),
     setTimestamps: ts => set({timestamps: ts}),
+
+    toggleBookmark: index =>
+      set(state => ({
+        bookmarkedIndexes: state.bookmarkedIndexes.includes(index)
+          ? state.bookmarkedIndexes.filter(i => i !== index)
+          : [...state.bookmarkedIndexes, index],
+      })),
+    setBookmarkedIndexes: indexes => set({bookmarkedIndexes: indexes}),
 
     reset: () => set(initialState),
   }),

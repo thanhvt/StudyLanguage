@@ -23,6 +23,7 @@ import { ReadingModule } from './reading/reading.module';
 import { SpeakingModule } from './speaking/speaking.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SyncModule } from './sync/sync.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { SyncModule } from './sync/sync.module';
     SpeakingModule, // Module speaking: tongue twisters, stats, voice clone
     NotificationsModule, // Module push notifications
     SyncModule, // Module offline sync
+    BookmarksModule, // Module bookmark câu trong bài nghe
   ],
   controllers: [AppController],
   providers: [
