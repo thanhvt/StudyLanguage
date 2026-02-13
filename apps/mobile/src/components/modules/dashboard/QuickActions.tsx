@@ -54,10 +54,11 @@ export default function QuickActions() {
         navigation.navigate('Listening');
         break;
       case 'speaking':
+        // TODO: Navigate to Speaking khi implement Speaking module (Sprint 2)
         console.log('📍 [QuickActions] Speaking chưa triển khai');
         break;
       case 'reading':
-        console.log('📍 [QuickActions] Reading chưa triển khai');
+        navigation.navigate('Reading');
         break;
     }
   };

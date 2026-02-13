@@ -10,6 +10,7 @@ import AboutScreen from '@/screens/AboutScreen';
 import CustomTabBar from '@/navigation/components/CustomTabBar';
 import CustomScreenHeader from '@/navigation/components/ScreenHeader';
 import ListeningStack from '@/navigation/stacks/ListeningStack';
+import ReadingStack from '@/navigation/stacks/ReadingStack';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -78,6 +79,11 @@ export default function MainStack() {
       <Stack.Screen
         name="Listening"
         component={ListeningStack}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Reading"
+        component={ReadingStack}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

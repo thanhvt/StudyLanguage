@@ -26,6 +26,8 @@ export type AppStackParamList = {
   Settings: undefined;
   About: undefined;
   Listening: undefined;
+  Reading: undefined;
+  // TODO: Thêm Speaking route khi implement Speaking module
   // Demo screens (giữ cho development)
   ComponentsDemo: undefined;
 };
