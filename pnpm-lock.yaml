@@ -204,6 +204,9 @@ importers:
       react-native:
         specifier: ^0.80.1
         version: 0.80.3(@babel/core@7.28.5)(@react-native-community/cli@19.0.0)(@types/react@19.1.17)(react@19.1.0)
+      react-native-audio-recorder-player:
+        specifier: 3.6.12
+        version: 3.6.12(react-native@0.80.3)(react@19.1.0)
       react-native-config:
         specifier: ^1.6.1
         version: 1.6.1(react-native@0.80.3)(react@19.1.0)
@@ -10963,6 +10966,12 @@ packages:
     hasBin: true
     dev: true
 
+  /hyochan-welcome@1.0.1:
+    resolution: {integrity: sha512-WRZNH5grESkOXP/r7xc7TMhO9cUqxaJIuZcQDAjzHWs6viGP+sWtVbiBigxc9YVRrw3hnkESQWwzqg+oOga65A==}
+    hasBin: true
+    requiresBuild: true
+    dev: false
+
   /i18next@25.8.0(typescript@5.0.4):
     resolution: {integrity: sha512-urrg4HMFFMQZ2bbKRK7IZ8/CTE7D8H4JRlAwqA2ZwDRFfdd0K/4cdbNNLgfn9mo+I/h9wJu61qJzH7jCFAhUZQ==}
     peerDependencies:
@@ -14065,6 +14074,18 @@ packages:
 
   /react-is@19.2.4:
     resolution: {integrity: sha512-W+EWGn2v0ApPKgKKCy/7s7WHXkboGcsrXE+2joLyVxkbyVQfO3MUEaUQDHoSmb8TFFrSKYa9mw64WZHNHSDzYA==}
+
+  /react-native-audio-recorder-player@3.6.12(react-native@0.80.3)(react@19.1.0):
+    resolution: {integrity: sha512-/pnZxPA2jvQ9K7oDtrjcAjc/hn124swi451Q/i1Z6yesDVqupE38moNm12HgY1IVupdUCjeiZVqPoShcE0N8mw==}
+    deprecated: This package has been deprecated. Please use react-native-nitro-sound instead.
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      hyochan-welcome: 1.0.1
+      react: 19.1.0
+      react-native: 0.80.3(@babel/core@7.28.5)(@react-native-community/cli@19.0.0)(@types/react@19.1.17)(react@19.1.0)
+    dev: false
 
   /react-native-config@1.6.1(react-native@0.80.3)(react@19.1.0):
     resolution: {integrity: sha512-HvKtxr6/Tq3iMdFx5REYZsjCtPi0RxQOMCs15+DqrUPTNFtWHuEuh+zw7fJp+dmuO79YMfdtlsPWIGTHtaXwjg==}

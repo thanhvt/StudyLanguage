@@ -90,5 +90,27 @@ module.exports = withNativeWind(baseConfig, {
 | 4.1.23 | 0.1.22 | 19.x | 0.80+ | ❌ FAIL |
 | 4.2.1 | 0.2.1 | 18-19.x | 0.73-0.80+ | ✅ |
 
+## Phòng tránh
+
+Mỗi khi chạy `pnpm install`, thêm/xóa package, hoặc pull code mới — chạy lệnh check nhanh:
+
+```bash
+# Từ apps/mobile/
+ls node_modules/react-native-css-interop 2>/dev/null && echo "⚠️ GHOST DEPENDENCY! Chạy: rm -rf node_modules/react-native-css-interop" || echo "✅ OK — không có ghost dependency"
+```
+
+Hoặc thêm vào `postinstall` script trong `apps/mobile/package.json`:
+
+```json
+{
+  "scripts": {
+    "postinstall": "rm -rf node_modules/react-native-css-interop 2>/dev/null; echo '✅ NativeWind ghost dep cleaned'"
+  }
+}
+```
+
+> **Lưu ý:** Ghost dependency xuất hiện do pnpm hoisting — nó copy `react-native-css-interop` vào `apps/mobile/node_modules/` thay vì chỉ dùng symlink từ root. Bản local này có thể gây conflict cache với bản chính trong `.pnpm/`.
+
 ## Ngày phát hiện
-2026-02-12 — Project StudyLanguage (RN 0.80.3, React 19.1.0, NativeWind 4.2.1)
+- 2026-02-12 — Lần 1: Ghost dep v0.1.22 + React 19 → silent fail
+- 2026-02-13 — Lần 2: Ghost dep v0.2.1 (đúng version nhưng local copy gây cache conflict)

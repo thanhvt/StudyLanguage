@@ -54,8 +54,7 @@ export default function QuickActions() {
         navigation.navigate('Listening');
         break;
       case 'speaking':
-        // TODO: Navigate to Speaking khi implement Speaking module (Sprint 2)
-        console.log('📍 [QuickActions] Speaking chưa triển khai');
+        navigation.navigate('Speaking');
         break;
       case 'reading':
         navigation.navigate('Reading');
