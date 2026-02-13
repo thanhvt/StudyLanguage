@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -67,6 +68,24 @@ export default function ListeningConfigScreen({
   const colors = useColors();
   const haptic = useHaptic();
   const insets = useInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Theo dõi trạng thái keyboard để ẩn sticky footer khi mở
+  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Tổng scenarios
   const totalScenarios = getTotalScenarios();
@@ -166,8 +185,9 @@ export default function ListeningConfigScreen({
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
           contentContainerStyle={{paddingBottom: footerHeight + 20}}
           keyboardShouldPersistTaps="handled"
@@ -274,7 +294,7 @@ export default function ListeningConfigScreen({
               {/* Free text input */}
               <TextInput
                 className="bg-neutrals900 rounded-xl px-4 py-3 text-base border border-neutrals800"
-                style={{color: colors.foreground}}
+                style={{color: '#1a1a1a'}}
                 placeholder="vd: ordering coffee, travel tips..."
                 placeholderTextColor={colors.neutrals500}
                 value={topicInput}
@@ -335,6 +355,12 @@ export default function ListeningConfigScreen({
                     value={config.keywords ?? ''}
                     onChange={text => setConfig({keywords: text})}
                     disabled={isGenerating}
+                    onFocus={() => {
+                      // Cuộn xuống để input không bị keyboard che
+                      setTimeout(() => {
+                        scrollViewRef.current?.scrollToEnd({animated: true});
+                      }, 300);
+                    }}
                   />
                 </View>
 
@@ -368,26 +394,11 @@ export default function ListeningConfigScreen({
 
                 {/* Custom Scenario */}
                 {showCustomScenario ? (
-                  <View>
-                    <TouchableOpacity
-                      className="flex-row items-center mb-3"
-                      onPress={() => setShowCustomScenario(false)}
-                      activeOpacity={0.7}
-                      accessibilityLabel="Quay lại, ẩn tạo kịch bản tuỳ chỉnh"
-                      accessibilityRole="button">
-                      <Icon
-                        name="ArrowLeft"
-                        className="w-4 h-4 text-primary mr-2"
-                      />
-                      <AppText className="text-primary text-sm">
-                        Ẩn tuỳ chỉnh
-                      </AppText>
-                    </TouchableOpacity>
-                    <CustomScenarioInput
-                      onQuickUse={handleCustomQuickUse}
-                      disabled={isGenerating}
-                    />
-                  </View>
+                  <CustomScenarioInput
+                    onQuickUse={handleCustomQuickUse}
+                    onClose={() => setShowCustomScenario(false)}
+                    disabled={isGenerating}
+                  />
                 ) : (
                   <TouchableOpacity
                     className="flex-row items-center justify-center bg-neutrals900 rounded-2xl px-4 py-3"
@@ -453,8 +464,8 @@ export default function ListeningConfigScreen({
       </KeyboardAvoidingView>
 
       {/* ======================== */}
-      {/* Sticky Footer — CTA Button với glow shadow */}
-      {/* ======================== */}
+      {/* Sticky Footer — ẩn khi keyboard mở để không tạo vùng trắng */}
+      {!keyboardVisible && (
       <View
         className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
         style={{paddingBottom: Math.max(insets.bottom, 16)}}>
@@ -493,6 +504,7 @@ export default function ListeningConfigScreen({
           </AppText>
         )}
       </View>
+      )}
 
       {/* ======================== */}
       {/* TopicPicker Modal */}

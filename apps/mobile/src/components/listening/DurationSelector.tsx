@@ -260,9 +260,10 @@ function DurationPickerSheet({
 
       {/* Sheet content */}
       <View
-        className="bg-background rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
+        className="rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
         style={{
           maxHeight: '50%',
+          backgroundColor: '#ffffff',
           shadowColor: '#000',
           shadowOffset: {width: 0, height: -4},
           shadowOpacity: 0.15,
@@ -367,8 +368,14 @@ const PickerItem = React.memo(function PickerItem({
   return (
     <Animated.View style={animatedStyle}>
       <Pressable
-        className="flex-row items-center justify-between rounded-2xl px-4 mx-1 mb-1"
         style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          marginHorizontal: 4,
+          marginBottom: 4,
           height: PICKER_ITEM_HEIGHT,
           backgroundColor: isSelected
             ? `${colors.primary}15`
@@ -381,22 +388,27 @@ const PickerItem = React.memo(function PickerItem({
         onPressOut={handlePressOut}
         accessibilityLabel={`${value} phút${isSelected ? ', đang chọn' : ''}`}
         accessibilityRole="button">
-        <View className="flex-row items-center">
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <AppText
-            className={`text-base ${
-              isSelected ? 'font-sans-bold' : 'font-sans-medium'
-            }`}
             style={{
-              color: isSelected ? colors.primary : colors.foreground,
+              fontSize: 16,
+              fontWeight: isSelected ? '700' : '500',
+              // Dùng inline style trực tiếp — NativeWind className dễ bị conflict
+              color: isSelected ? colors.primary : '#1a1a1a',
             }}>
             {value} phút
           </AppText>
           {/* Badge cho preset nổi bật */}
           {isPreset && (
             <View
-              className="ml-2 rounded-md px-1.5 py-0.5"
-              style={{backgroundColor: colors.neutrals900}}>
-              <AppText className="text-neutrals400 text-[10px]">
+              style={{
+                marginLeft: 8,
+                borderRadius: 6,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                backgroundColor: '#e5e5e5',
+              }}>
+              <AppText style={{color: '#525252', fontSize: 10}}>
                 phổ biến
               </AppText>
             </View>
@@ -407,8 +419,7 @@ const PickerItem = React.memo(function PickerItem({
         {isSelected && (
           <Icon
             name="Check"
-            className="w-5 h-5"
-            style={{color: colors.primary}}
+            style={{width: 20, height: 20, color: colors.primary}}
           />
         )}
       </Pressable>

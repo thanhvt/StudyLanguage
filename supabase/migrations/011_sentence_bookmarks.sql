@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS sentence_bookmarks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
-  -- Liên kết tới session nếu có (nullable khi chưa save vào history)
-  history_entry_id UUID REFERENCES learning_history(id) ON DELETE SET NULL,
+  -- Liên kết tới session nếu có (nullable, FK sẽ được thêm khi tạo bảng learning_history)
+  history_entry_id UUID,
   
   -- Nội dung câu đã bookmark
   sentence_index INTEGER NOT NULL,           -- Vị trí câu trong transcript

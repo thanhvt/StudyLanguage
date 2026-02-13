@@ -7,6 +7,7 @@ interface KeywordsInputProps {
   value: string;
   onChange: (text: string) => void;
   disabled?: boolean;
+  onFocus?: () => void;
 }
 
 const MAX_LENGTH = 200;
@@ -24,6 +25,7 @@ export default function KeywordsInput({
   value,
   onChange,
   disabled = false,
+  onFocus,
 }: KeywordsInputProps) {
   const colors = useColors();
 
@@ -31,7 +33,7 @@ export default function KeywordsInput({
     <View className="bg-neutrals900 rounded-2xl px-4 py-3">
       <TextInput
         className="text-base min-h-[52px]"
-        style={{color: colors.foreground, textAlignVertical: 'top'}}
+        style={{color: '#1a1a1a', textAlignVertical: 'top'}}
         placeholder="vd: coffee, reservation, check-in..."
         placeholderTextColor={colors.neutrals500}
         value={value}
@@ -42,6 +44,7 @@ export default function KeywordsInput({
         numberOfLines={2}
         accessibilityLabel="Nhập từ khóa gợi ý cho bài nghe"
         accessibilityHint="Tuỳ chọn. Gợi ý nội dung xoay quanh các từ khóa bạn nhập"
+        onFocus={onFocus}
       />
       <View className="flex-row justify-between items-center mt-1">
         <AppText className="text-neutrals400 text-xs">

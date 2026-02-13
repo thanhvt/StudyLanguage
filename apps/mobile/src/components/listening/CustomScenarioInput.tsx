@@ -18,6 +18,8 @@ interface CustomScenarioItem {
 interface CustomScenarioInputProps {
   /** Callback khi user muốn dùng ngay 1 scenario */
   onQuickUse: (name: string, description: string) => void;
+  /** Callback khi user nhấn nút đóng panel */
+  onClose?: () => void;
   disabled?: boolean;
 }
 
@@ -25,6 +27,7 @@ interface CustomScenarioInputProps {
  * Mục đích: Component tạo và quản lý kịch bản tuỳ chỉnh
  * Tham số đầu vào:
  *   - onQuickUse: callback khi user nhấn "Sử dụng ngay"
+ *   - onClose: callback đóng panel (nút X)
  *   - disabled: có disable không
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: TopicPicker → tab "Custom" → hiện component này
@@ -34,6 +37,7 @@ interface CustomScenarioInputProps {
  */
 export default function CustomScenarioInput({
   onQuickUse,
+  onClose,
   disabled = false,
 }: CustomScenarioInputProps) {
   const colors = useColors();
@@ -120,13 +124,26 @@ export default function CustomScenarioInput({
     <View>
       {/* Form tạo mới */}
       <View className="bg-neutrals900 rounded-2xl p-4 mb-4">
-        <AppText className="text-foreground font-sans-semibold text-sm mb-3">
-          ✨ Tạo kịch bản mới
-        </AppText>
+        {/* Header có nút đóng */}
+        <View className="flex-row items-center justify-between mb-3">
+          <AppText className="text-foreground font-sans-semibold text-sm">
+            ✨ Tạo kịch bản mới
+          </AppText>
+          {onClose && (
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              accessibilityLabel="Đóng panel tạo kịch bản"
+              accessibilityRole="button"
+              className="p-1.5 rounded-full bg-neutrals800">
+              <Icon name="X" className="w-4 h-4 text-neutrals400" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         <TextInput
           className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: colors.foreground}}
+          style={{color: '#1a1a1a'}}
           placeholder="Tên kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={name}
@@ -138,7 +155,7 @@ export default function CustomScenarioInput({
 
         <TextInput
           className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: colors.foreground, textAlignVertical: 'top'}}
+          style={{color: '#1a1a1a', textAlignVertical: 'top'}}
           placeholder="Mô tả chi tiết kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={description}
