@@ -264,8 +264,8 @@ describe('listeningApi', () => {
       ],
     };
 
-    // MOB-LIS-ENH-HP-009: Gửi ttsProvider trong request body
-    it('gửi ttsProvider trong request body khi truyền', async () => {
+    // MOB-LIS-ENH-HP-009: Gửi provider trong request body (backend DTO field = "provider")
+    it('gửi provider trong request body khi truyền ttsProvider', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation, {
@@ -274,12 +274,13 @@ describe('listeningApi', () => {
       });
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      expect(callPayload.ttsProvider).toBe('azure');
+      // Mobile option: ttsProvider → payload field: provider (match backend DTO)
+      expect(callPayload.provider).toBe('azure');
       expect(callPayload.voice).toBe('jenny');
     });
 
     // MOB-LIS-ENH-HP-010: Gửi voice trong request body
-    it('gửi OpenAI voice trong request body', async () => {
+    it('gửi OpenAI provider + voice trong request body', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation, {
@@ -288,17 +289,17 @@ describe('listeningApi', () => {
       });
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      expect(callPayload.ttsProvider).toBe('openai');
+      expect(callPayload.provider).toBe('openai');
       expect(callPayload.voice).toBe('alloy');
     });
 
-    it('không gửi ttsProvider/voice khi không truyền ttsOptions', async () => {
+    it('không gửi provider/voice khi không truyền ttsOptions', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation);
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      expect(callPayload.ttsProvider).toBeUndefined();
+      expect(callPayload.provider).toBeUndefined();
       expect(callPayload.voice).toBeUndefined();
     });
 

@@ -102,7 +102,7 @@ describe('listeningApi - generateConversationAudio', () => {
   });
 
   // MOB-LIS-ENH-HP-009: TTS Provider option
-  it('gửi ttsProvider khi được truyền', async () => {
+  it('gửi provider khi được truyền (backend DTO field = "provider")', async () => {
     mockApiClient.post.mockResolvedValueOnce({data: mockAudioResponse});
 
     await listeningApi.generateConversationAudio(mockConversation, {
@@ -111,17 +111,18 @@ describe('listeningApi - generateConversationAudio', () => {
     });
 
     const payload = mockApiClient.post.mock.calls[0][1];
-    expect(payload.ttsProvider).toBe('azure');
+    // Mobile option: ttsProvider → payload field: provider (match backend DTO)
+    expect(payload.provider).toBe('azure');
     expect(payload.voice).toBe('jenny');
   });
 
-  it('không gửi ttsProvider/voice khi không truyền', async () => {
+  it('không gửi provider/voice khi không truyền', async () => {
     mockApiClient.post.mockResolvedValueOnce({data: mockAudioResponse});
 
     await listeningApi.generateConversationAudio(mockConversation);
 
     const payload = mockApiClient.post.mock.calls[0][1];
-    expect(payload.ttsProvider).toBeUndefined();
+    expect(payload.provider).toBeUndefined();
     expect(payload.voice).toBeUndefined();
   });
 

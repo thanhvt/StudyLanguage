@@ -129,7 +129,7 @@ export default function ListeningPlayerScreen({
       try {
         const result = await listeningApi.generateConversationAudio(
           conversation.conversation,
-          // TODO: Backend cần cập nhật để chấp nhận ttsProvider/voice
+          // API tự map: ttsProvider → provider (match backend DTO)
           {ttsProvider, voice: selectedVoice},
         );
 
@@ -321,7 +321,6 @@ export default function ListeningPlayerScreen({
     try {
       await TrackPlayer.setRate(newSpeed);
       haptic.light();
-      showInfo('Tốc độ phát', `Đã chuyển sang ${newSpeed}x`);
       console.log('🎵 [Player] Đổi tốc độ:', newSpeed);
     } catch (error) {
       showError('Lỗi đổi tốc độ', 'Không thể thay đổi tốc độ phát');

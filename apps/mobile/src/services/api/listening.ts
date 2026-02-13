@@ -253,9 +253,9 @@ export const listeningApi = {
         speaker: line.speaker,
         text: line.text,
       })),
-      // TODO: Backend cần cập nhật DTO để chấp nhận ttsProvider và voice
-      // Hiện tại gửi kèm — backend sẽ ignore nếu chưa handle
-      ...(ttsOptions?.ttsProvider && {ttsProvider: ttsOptions.ttsProvider}),
+      // Backend DTO field: "provider" (không phải "ttsProvider")
+      // forbidNonWhitelisted: true → gửi sai tên field = 400 Bad Request
+      ...(ttsOptions?.ttsProvider && {provider: ttsOptions.ttsProvider}),
       ...(ttsOptions?.voice && {voice: ttsOptions.voice}),
     };
 
