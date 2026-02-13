@@ -37,8 +37,14 @@ interface ListeningState {
   isGeneratingAudio: boolean;
   /** Timestamps cho từng câu — sync audio với transcript */
   timestamps: ConversationTimestamp[] | null;
+  /** TTS provider đang chọn (openai hoặc azure) */
+  ttsProvider: 'openai' | 'azure';
+  /** Voice đang chọn cho TTS (null = random/auto) */
+  selectedVoice: string | null;
   /** Danh sách các exchange index đã bookmark trong session hiện tại */
   bookmarkedIndexes: number[];
+  /** Danh sách từ đã lưu từ Dictionary Popup */
+  savedWords: string[];
 }
 
 interface ListeningActions {
@@ -74,10 +80,18 @@ interface ListeningActions {
   setGeneratingAudio: (value: boolean) => void;
   /** Set timestamps cho transcript sync */
   setTimestamps: (ts: ConversationTimestamp[] | null) => void;
+  /** Set TTS provider (openai/azure) */
+  setTtsProvider: (provider: 'openai' | 'azure') => void;
+  /** Set voice cho TTS */
+  setSelectedVoice: (voice: string | null) => void;
   /** Toggle bookmark cho 1 exchange (thêm/bỏ khỏi danh sách) */
   toggleBookmark: (index: number) => void;
   /** Set danh sách bookmark indexes (khi load từ server) */
   setBookmarkedIndexes: (indexes: number[]) => void;
+  /** Thêm từ vào danh sách đã lưu (không trùng lặp) */
+  addSavedWord: (word: string) => void;
+  /** Xóa từ khỏi danh sách đã lưu */
+  removeSavedWord: (word: string) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -103,7 +117,10 @@ const initialState: ListeningState = {
   audioUrl: null,
   isGeneratingAudio: false,
   timestamps: null,
+  ttsProvider: 'openai',
+  selectedVoice: null,
   bookmarkedIndexes: [],
+  savedWords: [],
 };
 
 /**
@@ -158,6 +175,8 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
     setAudioUrl: url => set({audioUrl: url}),
     setGeneratingAudio: value => set({isGeneratingAudio: value}),
     setTimestamps: ts => set({timestamps: ts}),
+    setTtsProvider: provider => set({ttsProvider: provider}),
+    setSelectedVoice: voice => set({selectedVoice: voice}),
 
     toggleBookmark: index =>
       set(state => ({
@@ -166,6 +185,18 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
           : [...state.bookmarkedIndexes, index],
       })),
     setBookmarkedIndexes: indexes => set({bookmarkedIndexes: indexes}),
+
+    addSavedWord: word =>
+      set(state => ({
+        savedWords: state.savedWords.includes(word.toLowerCase())
+          ? state.savedWords
+          : [...state.savedWords, word.toLowerCase()],
+      })),
+
+    removeSavedWord: word =>
+      set(state => ({
+        savedWords: state.savedWords.filter(w => w !== word.toLowerCase()),
+      })),
 
     reset: () => set(initialState),
   }),

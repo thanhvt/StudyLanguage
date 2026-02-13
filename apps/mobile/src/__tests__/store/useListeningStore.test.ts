@@ -354,5 +354,185 @@ describe('useListeningStore', () => {
       expect(state.timestamps).toBeNull();
     });
   });
-});
 
+  describe('Saved Words (Dictionary Popup)', () => {
+    // MOB-LIS-MVP-HP-015: Lưu từ từ Dictionary Popup
+    it('addSavedWord thêm từ vào danh sách', () => {
+      useListeningStore.getState().addSavedWord('Hello');
+
+      expect(useListeningStore.getState().savedWords).toContain('hello');
+    });
+
+    it('addSavedWord không trùng lặp (case-insensitive)', () => {
+      useListeningStore.getState().addSavedWord('hello');
+      useListeningStore.getState().addSavedWord('Hello');
+      useListeningStore.getState().addSavedWord('HELLO');
+
+      expect(useListeningStore.getState().savedWords).toHaveLength(1);
+    });
+
+    it('addSavedWord thêm nhiều từ khác nhau', () => {
+      useListeningStore.getState().addSavedWord('hello');
+      useListeningStore.getState().addSavedWord('world');
+      useListeningStore.getState().addSavedWord('test');
+
+      const words = useListeningStore.getState().savedWords;
+      expect(words).toHaveLength(3);
+      expect(words).toContain('hello');
+      expect(words).toContain('world');
+      expect(words).toContain('test');
+    });
+
+    it('removeSavedWord xóa đúng từ', () => {
+      useListeningStore.getState().addSavedWord('hello');
+      useListeningStore.getState().addSavedWord('world');
+      useListeningStore.getState().removeSavedWord('hello');
+
+      const words = useListeningStore.getState().savedWords;
+      expect(words).not.toContain('hello');
+      expect(words).toContain('world');
+    });
+
+    it('reset() xóa savedWords', () => {
+      useListeningStore.getState().addSavedWord('hello');
+      useListeningStore.getState().addSavedWord('world');
+      useListeningStore.getState().reset();
+
+      expect(useListeningStore.getState().savedWords).toEqual([]);
+    });
+  });
+
+  // ========================
+  // TTS Provider Settings
+  // MOB-LIS-ENH-HP-009 → 012
+  // ========================
+  describe('TTS Provider Settings', () => {
+    // MOB-LIS-ENH-HP-009: Chọn TTS provider
+    it('setTtsProvider cập nhật provider sang azure', () => {
+      useListeningStore.getState().setTtsProvider('azure');
+
+      expect(useListeningStore.getState().ttsProvider).toBe('azure');
+    });
+
+    it('setTtsProvider cập nhật provider sang openai', () => {
+      useListeningStore.getState().setTtsProvider('azure');
+      useListeningStore.getState().setTtsProvider('openai');
+
+      expect(useListeningStore.getState().ttsProvider).toBe('openai');
+    });
+
+    // MOB-LIS-ENH-HP-010: Chọn voice cho speaker
+    it('setSelectedVoice cập nhật voice', () => {
+      useListeningStore.getState().setSelectedVoice('alloy');
+
+      expect(useListeningStore.getState().selectedVoice).toBe('alloy');
+    });
+
+    it('setSelectedVoice về null khi chọn random', () => {
+      useListeningStore.getState().setSelectedVoice('nova');
+      useListeningStore.getState().setSelectedVoice(null);
+
+      expect(useListeningStore.getState().selectedVoice).toBeNull();
+    });
+
+    it('ttsProvider mặc định là openai', () => {
+      expect(useListeningStore.getState().ttsProvider).toBe('openai');
+    });
+
+    it('selectedVoice mặc định là null', () => {
+      expect(useListeningStore.getState().selectedVoice).toBeNull();
+    });
+
+    it('reset() xóa TTS settings về default', () => {
+      useListeningStore.getState().setTtsProvider('azure');
+      useListeningStore.getState().setSelectedVoice('jenny');
+      useListeningStore.getState().reset();
+
+      expect(useListeningStore.getState().ttsProvider).toBe('openai');
+      expect(useListeningStore.getState().selectedVoice).toBeNull();
+    });
+  });
+
+  // ========================
+  // Sentence Bookmarks
+  // MOB-LIS-ENH-HP-008: Long press sentence = Bookmark
+  // ========================
+  describe('Bookmarks', () => {
+    // MOB-LIS-ENH-HP-008: Toggle bookmark thêm vào danh sách
+    it('toggleBookmark thêm index vào bookmarkedIndexes', () => {
+      useListeningStore.getState().toggleBookmark(3);
+
+      expect(useListeningStore.getState().bookmarkedIndexes).toContain(3);
+    });
+
+    // MOB-LIS-ENH-HP-008: Toggle bookmark lần 2 → xóa khỏi danh sách
+    it('toggleBookmark lần 2 xóa index khỏi bookmarkedIndexes', () => {
+      useListeningStore.getState().toggleBookmark(3);
+      useListeningStore.getState().toggleBookmark(3);
+
+      expect(useListeningStore.getState().bookmarkedIndexes).not.toContain(3);
+      expect(useListeningStore.getState().bookmarkedIndexes).toHaveLength(0);
+    });
+
+    it('toggleBookmark nhiều câu khác nhau', () => {
+      useListeningStore.getState().toggleBookmark(0);
+      useListeningStore.getState().toggleBookmark(3);
+      useListeningStore.getState().toggleBookmark(7);
+
+      const indexes = useListeningStore.getState().bookmarkedIndexes;
+      expect(indexes).toHaveLength(3);
+      expect(indexes).toContain(0);
+      expect(indexes).toContain(3);
+      expect(indexes).toContain(7);
+    });
+
+    it('toggleBookmark chỉ xóa đúng index, giữ lại các index khác', () => {
+      useListeningStore.getState().toggleBookmark(1);
+      useListeningStore.getState().toggleBookmark(5);
+      useListeningStore.getState().toggleBookmark(9);
+
+      // Bỏ bookmark index 5
+      useListeningStore.getState().toggleBookmark(5);
+
+      const indexes = useListeningStore.getState().bookmarkedIndexes;
+      expect(indexes).toHaveLength(2);
+      expect(indexes).toContain(1);
+      expect(indexes).not.toContain(5);
+      expect(indexes).toContain(9);
+    });
+
+    it('setBookmarkedIndexes set danh sách từ server', () => {
+      useListeningStore.getState().setBookmarkedIndexes([2, 4, 6, 8]);
+
+      const indexes = useListeningStore.getState().bookmarkedIndexes;
+      expect(indexes).toEqual([2, 4, 6, 8]);
+    });
+
+    it('setBookmarkedIndexes ghi đè danh sách cũ', () => {
+      useListeningStore.getState().toggleBookmark(0);
+      useListeningStore.getState().toggleBookmark(1);
+
+      // Load từ server → ghi đè
+      useListeningStore.getState().setBookmarkedIndexes([10, 20]);
+
+      const indexes = useListeningStore.getState().bookmarkedIndexes;
+      expect(indexes).toEqual([10, 20]);
+      expect(indexes).not.toContain(0);
+      expect(indexes).not.toContain(1);
+    });
+
+    it('bookmarkedIndexes mặc định là mảng rỗng', () => {
+      expect(useListeningStore.getState().bookmarkedIndexes).toEqual([]);
+    });
+
+    it('reset() xóa bookmarkedIndexes', () => {
+      useListeningStore.getState().toggleBookmark(1);
+      useListeningStore.getState().toggleBookmark(3);
+      useListeningStore.getState().toggleBookmark(5);
+
+      useListeningStore.getState().reset();
+
+      expect(useListeningStore.getState().bookmarkedIndexes).toEqual([]);
+    });
+  });
+});

@@ -49,6 +49,10 @@ export default function ListeningConfigScreen({
   const setSelectedTopic = useListeningStore(state => state.setSelectedTopic);
   const isGenerating = useListeningStore(state => state.isGenerating);
   const setGenerating = useListeningStore(state => state.setGenerating);
+  const ttsProvider = useListeningStore(state => state.ttsProvider);
+  const setTtsProvider = useListeningStore(state => state.setTtsProvider);
+  const selectedVoice = useListeningStore(state => state.selectedVoice);
+  const setSelectedVoice = useListeningStore(state => state.setSelectedVoice);
 
   // Local state
   const [topicInput, setTopicInput] = useState('');
@@ -507,6 +511,10 @@ export default function ListeningConfigScreen({
         onClose={() => setShowAdvanced(false)}
         level={config.level}
         onLevelChange={l => setConfig({level: l})}
+        ttsProvider={ttsProvider}
+        onTtsProviderChange={setTtsProvider}
+        selectedVoice={selectedVoice}
+        onVoiceChange={setSelectedVoice}
         randomVoice={randomVoice}
         onRandomVoiceChange={setRandomVoice}
         multiTalker={multiTalker}

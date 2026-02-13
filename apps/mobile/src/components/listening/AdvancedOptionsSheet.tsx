@@ -17,6 +17,12 @@ interface AdvancedOptionsSheetProps {
   /** Difficulty */
   level: 'beginner' | 'intermediate' | 'advanced';
   onLevelChange: (level: 'beginner' | 'intermediate' | 'advanced') => void;
+  /** TTS Provider */
+  ttsProvider: 'openai' | 'azure';
+  onTtsProviderChange: (provider: 'openai' | 'azure') => void;
+  /** Voice đang chọn */
+  selectedVoice: string | null;
+  onVoiceChange: (voice: string | null) => void;
   /** Giọng đọc random hay chọn */
   randomVoice: boolean;
   onRandomVoiceChange: (value: boolean) => void;
@@ -34,6 +40,32 @@ const LEVELS = [
   {value: 'advanced' as const, label: 'Nâng cao', emoji: '🌳', accentLight: '#D97706', accentDark: '#fbbf24'},
 ];
 
+/** Danh sách giọng OpenAI TTS */
+const OPENAI_VOICES = [
+  {id: 'alloy', label: 'Alloy', emoji: '🎙️', desc: 'Trung tính, rõ ràng'},
+  {id: 'echo', label: 'Echo', emoji: '🔊', desc: 'Nam, trầm ấm'},
+  {id: 'fable', label: 'Fable', emoji: '📖', desc: 'Kể chuyện, nhẹ nhàng'},
+  {id: 'onyx', label: 'Onyx', emoji: '💎', desc: 'Nam, mạnh mẽ'},
+  {id: 'nova', label: 'Nova', emoji: '⭐', desc: 'Nữ, tự nhiên'},
+  {id: 'shimmer', label: 'Shimmer', emoji: '✨', desc: 'Nữ, dịu dàng'},
+];
+
+/** Danh sách giọng Azure Neural Voice */
+const AZURE_VOICES = [
+  {id: 'jenny', label: 'Jenny', emoji: '👩', desc: 'Nữ US, đa năng'},
+  {id: 'guy', label: 'Guy', emoji: '👨', desc: 'Nam US, chuyên nghiệp'},
+  {id: 'aria', label: 'Aria', emoji: '💃', desc: 'Nữ US, biểu cảm'},
+  {id: 'davis', label: 'Davis', emoji: '🕺', desc: 'Nam US, ấm áp'},
+  {id: 'jane', label: 'Jane', emoji: '👩‍💼', desc: 'Nữ UK, trang trọng'},
+  {id: 'jason', label: 'Jason', emoji: '👨‍💼', desc: 'Nam UK, rõ ràng'},
+];
+
+/** Provider options */
+const PROVIDERS = [
+  {value: 'openai' as const, label: 'OpenAI', emoji: '🤖', accentLight: '#10b981', accentDark: '#34d399'},
+  {value: 'azure' as const, label: 'Azure', emoji: '☁️', accentLight: '#0078d4', accentDark: '#4fc3f7'},
+];
+
 /**
  * Mục đích: Bottom sheet chứa tuỳ chọn nâng cao cho bài nghe
  * Tham số đầu vào: AdvancedOptionsSheetProps
@@ -46,6 +78,10 @@ export default function AdvancedOptionsSheet({
   onClose,
   level,
   onLevelChange,
+  ttsProvider,
+  onTtsProviderChange,
+  selectedVoice,
+  onVoiceChange,
   randomVoice,
   onRandomVoiceChange,
   multiTalker,
@@ -54,6 +90,9 @@ export default function AdvancedOptionsSheet({
 }: AdvancedOptionsSheetProps) {
   const colors = useColors();
   const haptic = useHaptic();
+
+  // Lấy danh sách voices theo provider đang chọn
+  const voices = ttsProvider === 'openai' ? OPENAI_VOICES : AZURE_VOICES;
 
   return (
     <Modal
@@ -124,17 +163,44 @@ export default function AdvancedOptionsSheet({
           {/* Giọng đọc */}
           <View className="mb-6">
             <AppText className="text-foreground font-sans-semibold text-base mb-3">
+              🤖 TTS Provider
+            </AppText>
+            <View className="flex-row gap-3 mb-4">
+              {PROVIDERS.map(p => {
+                const isDark = colors.background === '#000000';
+                const accent = isDark ? p.accentDark : p.accentLight;
+                return (
+                  <LevelChip
+                    key={p.value}
+                    emoji={p.emoji}
+                    label={p.label}
+                    accentColor={accent}
+                    selected={ttsProvider === p.value}
+                    onPress={() => {
+                      haptic.light();
+                      onTtsProviderChange(p.value);
+                      // Reset voice khi đổi provider (voice list thay đổi)
+                      onVoiceChange(null);
+                    }}
+                    disabled={disabled}
+                    accessibilityLabel={`Provider ${p.label}${ttsProvider === p.value ? ', đang chọn' : ''}`}
+                  />
+                );
+              })}
+            </View>
+
+            <AppText className="text-foreground font-sans-semibold text-base mb-3">
               🔊 Giọng đọc
             </AppText>
             <TouchableOpacity
-              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
+              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3 mb-3"
               onPress={() => onRandomVoiceChange(!randomVoice)}
               disabled={disabled}
               activeOpacity={0.7}
               accessibilityLabel={`Giọng ngẫu nhiên, ${randomVoice ? 'bật' : 'tắt'}`}
               accessibilityRole="switch">
               <View>
-                <AppText className="text-foreground">Giọng ngẫu nhiên</AppText>
+                <AppText className="text-foreground">🎲 Giọng ngẫu nhiên</AppText>
                 <AppText className="text-neutrals400 text-xs mt-0.5">
                   AI tự chọn giọng phù hợp cho từng speaker
                 </AppText>
@@ -145,6 +211,51 @@ export default function AdvancedOptionsSheet({
                 disabled={disabled}
               />
             </TouchableOpacity>
+
+            {/* Danh sách voice — chỉ hiện khi random voice TẮT */}
+            {!randomVoice && (
+              <View className="gap-2">
+                {voices.map(voice => {
+                  const isSelected = selectedVoice === voice.id;
+                  return (
+                    <TouchableOpacity
+                      key={voice.id}
+                      className={`flex-row items-center rounded-2xl px-4 py-3 border ${
+                        isSelected
+                          ? 'bg-primary/10 border-primary/30'
+                          : 'bg-neutrals900 border-transparent'
+                      }`}
+                      onPress={() => {
+                        haptic.light();
+                        onVoiceChange(voice.id);
+                      }}
+                      disabled={disabled}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Giọng ${voice.label}${isSelected ? ', đang chọn' : ''}`}
+                      accessibilityRole="button">
+                      <AppText className="text-lg mr-3">{voice.emoji}</AppText>
+                      <View className="flex-1">
+                        <AppText
+                          className={`text-foreground font-sans-semibold ${
+                            isSelected ? 'text-primary' : ''
+                          }`}>
+                          {voice.label}
+                        </AppText>
+                        <AppText className="text-neutrals400 text-xs">
+                          {voice.desc}
+                        </AppText>
+                      </View>
+                      {isSelected && (
+                        <Icon name="Check" className="w-5 h-5 text-primary" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+                <AppText className="text-neutrals500 text-xs mt-1 px-1">
+                  ℹ️ Hệ thống tự gán giọng xen kẽ nam/nữ cho mỗi speaker
+                </AppText>
+              </View>
+            )}
           </View>
 
           {/* Multi-talker */}

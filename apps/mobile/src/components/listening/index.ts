@@ -11,3 +11,5 @@ export {default as SpeakersSelector} from './SpeakersSelector';
 export {default as KeywordsInput} from './KeywordsInput';
 export {default as AdvancedOptionsSheet} from './AdvancedOptionsSheet';
 export {default as CollapsibleSection} from './CollapsibleSection';
+export {default as TappableTranscript} from './TappableTranscript';
+export {default as DictionaryPopup} from './DictionaryPopup';

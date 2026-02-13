@@ -1,11 +1,16 @@
-import React from 'react';
-import {TextInput, View} from 'react-native';
+import React, {useCallback, useRef} from 'react';
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import {Pressable} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
@@ -13,6 +18,19 @@ import {useHaptic} from '@/hooks/useHaptic';
 
 /** Tuỳ chọn thời lượng cố định */
 const PRESET_DURATIONS = [5, 10, 15] as const;
+
+/** Phạm vi custom duration */
+const MIN_DURATION = 5;
+const MAX_DURATION = 60;
+
+/** Chiều cao mỗi item trong picker list */
+const PICKER_ITEM_HEIGHT = 48;
+
+/** Tạo mảng giá trị duration 5-60 */
+const DURATION_VALUES = Array.from(
+  {length: MAX_DURATION - MIN_DURATION + 1},
+  (_, i) => MIN_DURATION + i,
+);
 
 interface DurationSelectorProps {
   value: number;
@@ -22,6 +40,7 @@ interface DurationSelectorProps {
 
 /**
  * Mục đích: Component chọn thời lượng bài nghe — compact inline layout
+ *   + preset pills (5/10/15) và nút custom mở bottom sheet picker
  * Tham số đầu vào:
  *   - value: số phút hiện tại
  *   - onChange: callback khi đổi duration
@@ -36,10 +55,7 @@ export default function DurationSelector({
 }: DurationSelectorProps) {
   const colors = useColors();
   const isCustom = !PRESET_DURATIONS.includes(value as any);
-  const [showCustomInput, setShowCustomInput] = React.useState(isCustom);
-  const [customText, setCustomText] = React.useState(
-    isCustom ? String(value) : '',
-  );
+  const [showPicker, setShowPicker] = React.useState(false);
   const haptic = useHaptic();
 
   /**
@@ -50,46 +66,53 @@ export default function DurationSelector({
    */
   const handlePreset = (minutes: number) => {
     haptic.light();
-    setShowCustomInput(false);
-    setCustomText('');
     onChange(minutes);
   };
 
   /**
-   * Mục đích: Mở input custom duration
+   * Mục đích: Mở picker bottom sheet để chọn duration tuỳ chỉnh
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn nút custom (icon bút chì)
    */
   const handleCustomToggle = () => {
     haptic.light();
-    setShowCustomInput(true);
-    onChange(value);
+    setShowPicker(true);
   };
 
   /**
-   * Mục đích: Xử lý khi user nhập custom duration
-   * Tham số đầu vào: text (string)
+   * Mục đích: Xử lý khi user chọn giá trị từ picker
+   * Tham số đầu vào: minutes (number)
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhập số phút vào TextInput
+   * Khi nào sử dụng: User nhấn vào 1 item trong picker list
    */
-  const handleCustomChange = (text: string) => {
-    // Chỉ cho phép nhập số
-    const cleaned = text.replace(/[^0-9]/g, '');
-    setCustomText(cleaned);
-    const num = parseInt(cleaned, 10);
-    if (num >= 5 && num <= 60) {
-      onChange(num);
-    }
+  const handlePickerSelect = (minutes: number) => {
+    haptic.medium();
+    onChange(minutes);
+    setShowPicker(false);
   };
 
   return (
     <View>
       {/* Row chính: label trái, pills + custom button phải */}
       <View className="flex-row items-center justify-between">
-        <AppText className="text-foreground font-sans-medium text-sm">
-          Thời lượng
-        </AppText>
+        <View className="flex-row items-center">
+          <AppText className="text-foreground font-sans-medium text-sm">
+            Thời lượng
+          </AppText>
+          {/* Badge hiển thị giá trị custom bên cạnh label */}
+          {isCustom && (
+            <View
+              className="ml-2 rounded-lg px-2 py-0.5"
+              style={{backgroundColor: `${colors.primary}18`}}>
+              <AppText
+                className="text-xs font-sans-bold"
+                style={{color: colors.primary}}>
+                {value} phút
+              </AppText>
+            </View>
+          )}
+        </View>
 
         <View className="flex-row items-center gap-1.5">
           {/* Segmented pills */}
@@ -100,46 +123,298 @@ export default function DurationSelector({
               <CompactPill
                 key={d}
                 label={`${d}`}
-                selected={value === d && !showCustomInput}
+                selected={value === d}
                 onPress={() => handlePreset(d)}
                 disabled={disabled}
                 isFirst={index === 0}
                 isLast={index === PRESET_DURATIONS.length - 1}
-                accessibilityLabel={`${d} phút${value === d && !showCustomInput ? ', đang chọn' : ''}`}
+                accessibilityLabel={`${d} phút${value === d ? ', đang chọn' : ''}`}
               />
             ))}
           </View>
 
-          {/* Nút custom — icon nhỏ gọn */}
+          {/* Nút custom — icon nhỏ gọn, mở picker sheet */}
           <CustomIconButton
-            active={showCustomInput}
+            active={isCustom}
             onPress={handleCustomToggle}
             disabled={disabled}
           />
         </View>
       </View>
 
-      {/* Input custom duration — hiện bên dưới khi active */}
-      {showCustomInput && (
-        <View className="mt-2.5 flex-row items-center gap-2">
-          <TextInput
-            className="flex-1 border border-neutrals700 rounded-xl px-3 py-2 text-sm"
-            style={{color: colors.foreground}}
-            placeholder="5-60"
-            placeholderTextColor={colors.neutrals500}
-            value={customText}
-            onChangeText={handleCustomChange}
-            keyboardType="number-pad"
-            maxLength={2}
-            editable={!disabled}
-            accessibilityLabel="Nhập số phút tuỳ chỉnh, từ 5 đến 60"
-          />
-          <AppText className="text-neutrals400 text-xs">phút</AppText>
-        </View>
-      )}
+      {/* Bottom sheet picker cho custom duration */}
+      <DurationPickerSheet
+        visible={showPicker}
+        currentValue={value}
+        onSelect={handlePickerSelect}
+        onClose={() => setShowPicker(false)}
+      />
     </View>
   );
 }
+
+// ========================
+// DurationPickerSheet — bottom sheet cuộn chọn thời lượng
+// ========================
+
+interface DurationPickerSheetProps {
+  visible: boolean;
+  currentValue: number;
+  onSelect: (minutes: number) => void;
+  onClose: () => void;
+}
+
+/**
+ * Mục đích: Bottom sheet dạng Modal chứa danh sách cuộn 5-60 phút
+ *   cho phép user cuộn và chọn giá trị duration tuỳ chỉnh
+ * Tham số đầu vào:
+ *   - visible: hiện/ẩn modal
+ *   - currentValue: giá trị đang chọn (để highlight)
+ *   - onSelect: callback khi user chọn giá trị
+ *   - onClose: callback khi đóng modal
+ * Tham số đầu ra: JSX.Element (Modal)
+ * Khi nào sử dụng: DurationSelector → nhấn nút custom → mở sheet này
+ */
+function DurationPickerSheet({
+  visible,
+  currentValue,
+  onSelect,
+  onClose,
+}: DurationPickerSheetProps) {
+  const colors = useColors();
+  const haptic = useHaptic();
+  const flatListRef = useRef<FlatList>(null);
+
+  /**
+   * Mục đích: Scroll tới giá trị đang được chọn khi modal mở
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Modal onShow — tự động cuộn tới item đang active
+   */
+  const handleModalShow = useCallback(() => {
+    const index = currentValue - MIN_DURATION;
+    if (index >= 0 && index < DURATION_VALUES.length) {
+      // Delay nhỏ để FlatList render xong rồi mới scroll
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({
+          index,
+          animated: false,
+          viewPosition: 0.4, // Đặt item gần giữa màn hình
+        });
+      }, 100);
+    }
+  }, [currentValue]);
+
+  /**
+   * Mục đích: Render 1 item duration trong danh sách cuộn
+   * Tham số đầu vào: item (number), index (number)
+   * Tham số đầu ra: JSX.Element
+   * Khi nào sử dụng: FlatList renderItem cho mỗi giá trị 5-60
+   */
+  const renderItem = useCallback(
+    ({item}: {item: number}) => {
+      const isSelected = item === currentValue;
+      return (
+        <PickerItem
+          value={item}
+          isSelected={isSelected}
+          onPress={() => onSelect(item)}
+        />
+      );
+    },
+    [currentValue, onSelect],
+  );
+
+  /**
+   * Mục đích: Tạo key duy nhất cho mỗi item trong FlatList
+   * Tham số đầu vào: item (number)
+   * Tham số đầu ra: string
+   * Khi nào sử dụng: FlatList keyExtractor
+   */
+  const keyExtractor = useCallback((item: number) => `dur-${item}`, []);
+
+  /**
+   * Mục đích: Tính layout cố định cho mỗi item (tối ưu scroll performance)
+   * Tham số đầu vào: data, index
+   * Tham số đầu ra: {length, offset, index}
+   * Khi nào sử dụng: FlatList getItemLayout — tránh async layout measurement
+   */
+  const getItemLayout = useCallback(
+    (_data: any, index: number) => ({
+      length: PICKER_ITEM_HEIGHT,
+      offset: PICKER_ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      onShow={handleModalShow}>
+      {/* Backdrop overlay — nhấn để đóng */}
+      <Pressable className="flex-1 bg-black/50" onPress={onClose} />
+
+      {/* Sheet content */}
+      <View
+        className="bg-background rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
+        style={{
+          maxHeight: '50%',
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: -4},
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          elevation: 20,
+        }}>
+        {/* Thanh kéo (pill handle) */}
+        <View className="w-10 h-1 bg-neutrals600 rounded-full self-center mb-3" />
+
+        {/* Header */}
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center">
+            <AppText className="mr-2">⏱️</AppText>
+            <View>
+              <AppText className="text-foreground font-sans-bold text-lg">
+                Chọn thời lượng
+              </AppText>
+              <AppText className="text-neutrals400 text-xs mt-0.5">
+                Cuộn để chọn từ {MIN_DURATION} đến {MAX_DURATION} phút
+              </AppText>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={onClose}
+            activeOpacity={0.7}
+            accessibilityLabel="Đóng chọn thời lượng"
+            accessibilityRole="button"
+            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+            <Icon name="X" className="w-6 h-6 text-neutrals400" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Danh sách cuộn chọn thời lượng */}
+        <FlatList
+          ref={flatListRef}
+          data={DURATION_VALUES}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 16}}
+          onScrollToIndexFailed={info => {
+            // Xử lý khi scroll tới index thất bại (item chưa render)
+            console.warn('⚠️ [DurationPicker] Cuộn tới index thất bại:', info);
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: info.index,
+                animated: true,
+                viewPosition: 0.4,
+              });
+            }, 200);
+          }}
+        />
+      </View>
+    </Modal>
+  );
+}
+
+// ========================
+// PickerItem — item đơn trong danh sách cuộn
+// ========================
+
+interface PickerItemProps {
+  value: number;
+  isSelected: boolean;
+  onPress: () => void;
+}
+
+/**
+ * Mục đích: Render 1 dòng trong picker list — hiển thị số phút + trạng thái chọn
+ *   Có spring animation khi nhấn, highlight khi đang được chọn
+ * Tham số đầu vào:
+ *   - value: giá trị phút (5-60)
+ *   - isSelected: đang được chọn hay không
+ *   - onPress: callback khi nhấn
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: DurationPickerSheet → FlatList → renderItem
+ */
+const PickerItem = React.memo(function PickerItem({
+  value,
+  isSelected,
+  onPress,
+}: PickerItemProps) {
+  const scale = useSharedValue(1);
+  const colors = useColors();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{scale: scale.value}],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.96, {damping: 15, stiffness: 300});
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, {damping: 12, stiffness: 200});
+  };
+
+  // Kiểm tra xem có phải là preset hay không
+  const isPreset = PRESET_DURATIONS.includes(value as any);
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        className="flex-row items-center justify-between rounded-2xl px-4 mx-1 mb-1"
+        style={{
+          height: PICKER_ITEM_HEIGHT,
+          backgroundColor: isSelected
+            ? `${colors.primary}15`
+            : 'transparent',
+          borderWidth: isSelected ? 1 : 0,
+          borderColor: isSelected ? `${colors.primary}40` : 'transparent',
+        }}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        accessibilityLabel={`${value} phút${isSelected ? ', đang chọn' : ''}`}
+        accessibilityRole="button">
+        <View className="flex-row items-center">
+          <AppText
+            className={`text-base ${
+              isSelected ? 'font-sans-bold' : 'font-sans-medium'
+            }`}
+            style={{
+              color: isSelected ? colors.primary : colors.foreground,
+            }}>
+            {value} phút
+          </AppText>
+          {/* Badge cho preset nổi bật */}
+          {isPreset && (
+            <View
+              className="ml-2 rounded-md px-1.5 py-0.5"
+              style={{backgroundColor: colors.neutrals900}}>
+              <AppText className="text-neutrals400 text-[10px]">
+                phổ biến
+              </AppText>
+            </View>
+          )}
+        </View>
+
+        {/* Check icon cho item đang chọn */}
+        {isSelected && (
+          <Icon
+            name="Check"
+            className="w-5 h-5"
+            style={{color: colors.primary}}
+          />
+        )}
+      </Pressable>
+    </Animated.View>
+  );
+});
 
 // ========================
 // CompactPill — pill nhỏ gọn trong segmented control
@@ -213,7 +488,7 @@ function CompactPill({
 }
 
 // ========================
-// CustomIconButton — nút icon bút chì mở custom input
+// CustomIconButton — nút icon bút chì mở picker sheet
 // ========================
 
 interface CustomIconButtonProps {
@@ -223,8 +498,8 @@ interface CustomIconButtonProps {
 }
 
 /**
- * Mục đích: Nút icon nhỏ gọn để mở custom duration input
- * Tham số đầu vào: active (đang mở custom), onPress, disabled
+ * Mục đích: Nút icon nhỏ gọn để mở picker chọn duration tuỳ chỉnh
+ * Tham số đầu vào: active (đang ở custom mode), onPress, disabled
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: DurationSelector → sau segmented pills
  */

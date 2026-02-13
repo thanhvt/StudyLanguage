@@ -1,5 +1,5 @@
 /**
- * Unit test cho listeningApi service
+ * Unit test cho listeningApi + bookmarkApi service
  *
  * Mục đích: Test API integration layer + mapping layer cho Listening feature
  * Ref test cases:
@@ -10,15 +10,19 @@
  *   - MAP-002: Backend translation → mobile vietnamese
  *   - MAP-003: Backend vocabulary objects → mobile strings
  *   - MAP-004: Duration clamping (5-15)
+ *   - MOB-LIS-ENH-HP-008: Bookmark sentence API
+ *   - MOB-LIS-ENH-HP-009: TTS provider
+ *   - MOB-LIS-ENH-HP-010: TTS voice
  */
-import {listeningApi} from '@/services/api/listening';
+import {listeningApi, bookmarkApi} from '@/services/api/listening';
 import {apiClient} from '@/services/api/client';
 
-// Mock apiClient
+// Mock apiClient — bao gồm cả delete cho bookmark API
 jest.mock('@/services/api/client', () => ({
   apiClient: {
     post: jest.fn(),
     get: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -229,7 +233,6 @@ describe('listeningApi', () => {
       );
     });
 
-    // Không truyền customContext → params chỉ có type
     it('không có customContext nếu không truyền', async () => {
       const mockResponse = {data: {script: []}};
       (apiClient.get as jest.Mock).mockResolvedValueOnce(mockResponse);
@@ -242,5 +245,279 @@ describe('listeningApi', () => {
       );
     });
   });
+
+  // ========================
+  // generateConversationAudio — TTS params
+  // MOB-LIS-ENH-HP-009, 010
+  // ========================
+  describe('generateConversationAudio', () => {
+    const mockConversation = [
+      {speaker: 'A', text: 'Hello!'},
+      {speaker: 'B', text: 'Hi there!'},
+    ];
+
+    const mockAudioResult = {
+      audioUrl: 'https://example.com/audio.mp3',
+      timestamps: [
+        {lineIndex: 0, startTime: 0, endTime: 2, speaker: 'A'},
+        {lineIndex: 1, startTime: 2, endTime: 4, speaker: 'B'},
+      ],
+    };
+
+    // MOB-LIS-ENH-HP-009: Gửi ttsProvider trong request body
+    it('gửi ttsProvider trong request body khi truyền', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
+
+      await listeningApi.generateConversationAudio(mockConversation, {
+        ttsProvider: 'azure',
+        voice: 'jenny',
+      });
+
+      const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(callPayload.ttsProvider).toBe('azure');
+      expect(callPayload.voice).toBe('jenny');
+    });
+
+    // MOB-LIS-ENH-HP-010: Gửi voice trong request body
+    it('gửi OpenAI voice trong request body', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
+
+      await listeningApi.generateConversationAudio(mockConversation, {
+        ttsProvider: 'openai',
+        voice: 'alloy',
+      });
+
+      const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(callPayload.ttsProvider).toBe('openai');
+      expect(callPayload.voice).toBe('alloy');
+    });
+
+    it('không gửi ttsProvider/voice khi không truyền ttsOptions', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
+
+      await listeningApi.generateConversationAudio(mockConversation);
+
+      const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(callPayload.ttsProvider).toBeUndefined();
+      expect(callPayload.voice).toBeUndefined();
+    });
+
+    it('trả về audioUrl và timestamps đúng', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
+
+      const result = await listeningApi.generateConversationAudio(mockConversation);
+
+      expect(result.audioUrl).toBe('https://example.com/audio.mp3');
+      expect(result.timestamps).toHaveLength(2);
+      expect(result.timestamps[0].speaker).toBe('A');
+    });
+
+    it('gửi conversation đúng format (chỉ speaker + text)', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
+
+      await listeningApi.generateConversationAudio([
+        {speaker: 'A', text: 'Hello!', vietnamese: 'Xin chào!', keyPhrases: ['hello']},
+      ]);
+
+      const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(callPayload.conversation[0]).toEqual({speaker: 'A', text: 'Hello!'});
+      expect(callPayload.conversation[0].vietnamese).toBeUndefined();
+    });
+  });
 });
 
+// ========================
+// bookmarkApi — Sentence Bookmarks
+// MOB-LIS-ENH-HP-008: Long press sentence = Bookmark
+// ========================
+describe('bookmarkApi', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('create', () => {
+    const mockBookmarkData = {
+      sentenceIndex: 3,
+      speaker: 'Person A',
+      sentenceText: 'Hello, how are you today?',
+      sentenceTranslation: 'Xin chào, hôm nay bạn khỏe không?',
+      topic: 'Daily Conversation',
+    };
+
+    const mockCreateResponse = {
+      data: {
+        success: true,
+        bookmark: {
+          id: 'bm-uuid-1',
+          sentenceIndex: 3,
+          speaker: 'Person A',
+          sentenceText: 'Hello, how are you today?',
+          sentenceTranslation: 'Xin chào, hôm nay bạn khỏe không?',
+          topic: 'Daily Conversation',
+          createdAt: '2026-02-12T14:00:00Z',
+        },
+        alreadyExists: false,
+      },
+    };
+
+    // MOB-LIS-ENH-HP-008: Tạo bookmark thành công
+    it('gọi POST /bookmarks với đúng payload', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce(mockCreateResponse);
+
+      const result = await bookmarkApi.create(mockBookmarkData);
+
+      expect(apiClient.post).toHaveBeenCalledWith('/bookmarks', mockBookmarkData);
+      expect(result.success).toBe(true);
+      expect(result.bookmark.id).toBe('bm-uuid-1');
+      expect(result.bookmark.sentenceIndex).toBe(3);
+      expect(result.alreadyExists).toBe(false);
+    });
+
+    it('gửi historyEntryId khi có', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce(mockCreateResponse);
+
+      await bookmarkApi.create({
+        ...mockBookmarkData,
+        historyEntryId: 'history-uuid-1',
+      });
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/bookmarks',
+        expect.objectContaining({historyEntryId: 'history-uuid-1'}),
+      );
+    });
+
+    it('xử lý duplicate → alreadyExists = true', async () => {
+      const duplicateResponse = {
+        data: {
+          success: true,
+          bookmark: mockCreateResponse.data.bookmark,
+          alreadyExists: true,
+        },
+      };
+      (apiClient.post as jest.Mock).mockResolvedValueOnce(duplicateResponse);
+
+      const result = await bookmarkApi.create(mockBookmarkData);
+
+      expect(result.alreadyExists).toBe(true);
+    });
+
+    it('throw error khi API lỗi', async () => {
+      (apiClient.post as jest.Mock).mockRejectedValueOnce(
+        new Error('Network Error'),
+      );
+
+      await expect(bookmarkApi.create(mockBookmarkData)).rejects.toThrow(
+        'Network Error',
+      );
+    });
+  });
+
+  describe('getBySession', () => {
+    const mockSessionResponse = {
+      data: {
+        success: true,
+        bookmarks: [
+          {
+            id: 'bm-1',
+            sentenceIndex: 2,
+            speaker: 'A',
+            sentenceText: 'Test sentence 1',
+            createdAt: '2026-02-12T14:00:00Z',
+          },
+          {
+            id: 'bm-2',
+            sentenceIndex: 5,
+            speaker: 'B',
+            sentenceText: 'Test sentence 2',
+            createdAt: '2026-02-12T14:01:00Z',
+          },
+        ],
+        count: 2,
+      },
+    };
+
+    it('gọi GET /bookmarks/session/:id đúng endpoint', async () => {
+      (apiClient.get as jest.Mock).mockResolvedValueOnce(mockSessionResponse);
+
+      const result = await bookmarkApi.getBySession('history-uuid-123');
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/bookmarks/session/history-uuid-123',
+      );
+      expect(result.success).toBe(true);
+      expect(result.bookmarks).toHaveLength(2);
+      expect(result.count).toBe(2);
+    });
+
+    it('trả về mảng rỗng khi session chưa có bookmark', async () => {
+      const emptyResponse = {
+        data: {success: true, bookmarks: [], count: 0},
+      };
+      (apiClient.get as jest.Mock).mockResolvedValueOnce(emptyResponse);
+
+      const result = await bookmarkApi.getBySession('no-bookmarks-session');
+
+      expect(result.bookmarks).toEqual([]);
+      expect(result.count).toBe(0);
+    });
+  });
+
+  describe('delete', () => {
+    it('gọi DELETE /bookmarks/:id đúng endpoint', async () => {
+      const mockDeleteResponse = {
+        data: {success: true, message: 'Đã xóa bookmark'},
+      };
+      (apiClient.delete as jest.Mock).mockResolvedValueOnce(mockDeleteResponse);
+
+      const result = await bookmarkApi.delete('bm-uuid-1');
+
+      expect(apiClient.delete).toHaveBeenCalledWith('/bookmarks/bm-uuid-1');
+      expect(result.success).toBe(true);
+    });
+
+    it('throw error khi bookmark không tồn tại', async () => {
+      (apiClient.delete as jest.Mock).mockRejectedValueOnce(
+        new Error('Not Found'),
+      );
+
+      await expect(bookmarkApi.delete('non-existent')).rejects.toThrow(
+        'Not Found',
+      );
+    });
+  });
+
+  describe('deleteByIndex', () => {
+    it('gọi POST /bookmarks/remove-by-index đúng payload', async () => {
+      const mockResponse = {
+        data: {success: true, message: 'Đã xóa bookmark'},
+      };
+      (apiClient.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const result = await bookmarkApi.deleteByIndex({
+        historyEntryId: 'history-uuid-1',
+        sentenceIndex: 3,
+      });
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/bookmarks/remove-by-index',
+        {historyEntryId: 'history-uuid-1', sentenceIndex: 3},
+      );
+      expect(result.success).toBe(true);
+    });
+
+    it('gọi không cần historyEntryId', async () => {
+      const mockResponse = {
+        data: {success: true, message: 'Đã xóa bookmark'},
+      };
+      (apiClient.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      await bookmarkApi.deleteByIndex({sentenceIndex: 7});
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/bookmarks/remove-by-index',
+        {sentenceIndex: 7},
+      );
+    });
+  });
+});

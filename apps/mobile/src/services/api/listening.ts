@@ -230,7 +230,9 @@ export const listeningApi = {
 
   /**
    * Mục đích: Sinh audio TTS cho hội thoại đã generate
-   * Tham số đầu vào: conversation (ConversationExchange[]) — danh sách câu hội thoại
+   * Tham số đầu vào:
+   *   - conversation (ConversationExchange[]) — danh sách câu hội thoại
+   *   - ttsOptions (optional) — cấu hình TTS provider và voice
    * Tham số đầu ra: Promise<AudioGenerationResult> — audioUrl + timestamps
    * Khi nào sử dụng: PlayerScreen gọi sau khi nhận được conversation từ store
    *   - Gọi POST /ai/generate-conversation-audio
@@ -239,17 +241,29 @@ export const listeningApi = {
    */
   generateConversationAudio: async (
     conversation: ConversationExchange[],
+    ttsOptions?: {
+      /** TTS provider: openai (default) hoặc azure */
+      ttsProvider?: 'openai' | 'azure';
+      /** Voice ID (e.g. 'alloy', 'jenny'). null = để backend tự chọn */
+      voice?: string | null;
+    },
   ): Promise<AudioGenerationResult> => {
-    const payload = {
+    const payload: Record<string, unknown> = {
       conversation: conversation.map(line => ({
         speaker: line.speaker,
         text: line.text,
       })),
+      // TODO: Backend cần cập nhật DTO để chấp nhận ttsProvider và voice
+      // Hiện tại gửi kèm — backend sẽ ignore nếu chưa handle
+      ...(ttsOptions?.ttsProvider && {ttsProvider: ttsOptions.ttsProvider}),
+      ...(ttsOptions?.voice && {voice: ttsOptions.voice}),
     };
 
     console.log(
       '🔊 [Listening] Gửi request sinh audio TTS, số câu:',
       conversation.length,
+      '| Provider:', ttsOptions?.ttsProvider ?? 'default',
+      '| Voice:', ttsOptions?.voice ?? 'auto',
     );
 
     const response = await apiClient.post(

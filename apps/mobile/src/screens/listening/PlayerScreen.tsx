@@ -1,10 +1,12 @@
-import React, {useEffect, useRef, useCallback} from 'react';
+import React, {useEffect, useRef, useCallback, useState} from 'react';
 import {
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {GestureDetector} from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
@@ -19,6 +21,8 @@ import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
+import {usePlayerGestures} from '@/hooks/usePlayerGestures';
+import {TappableTranscript, DictionaryPopup} from '@/components/listening';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -62,11 +66,19 @@ export default function ListeningPlayerScreen({
   );
   const setTimestamps = useListeningStore(state => state.setTimestamps);
 
+  // TTS settings
+  const ttsProvider = useListeningStore(state => state.ttsProvider);
+  const selectedVoice = useListeningStore(state => state.selectedVoice);
+
   // Bookmark state
   const bookmarkedIndexes = useListeningStore(
     state => state.bookmarkedIndexes,
   );
   const toggleBookmark = useListeningStore(state => state.toggleBookmark);
+
+  // Dictionary Popup state
+  const addSavedWord = useListeningStore(state => state.addSavedWord);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   // TrackPlayer state
   const playbackState = usePlaybackState();
@@ -117,6 +129,8 @@ export default function ListeningPlayerScreen({
       try {
         const result = await listeningApi.generateConversationAudio(
           conversation.conversation,
+          // TODO: Backend cần cập nhật để chấp nhận ttsProvider/voice
+          {ttsProvider, voice: selectedVoice},
         );
 
         setAudioUrl(result.audioUrl);
@@ -418,6 +432,31 @@ export default function ListeningPlayerScreen({
   ]);
 
   /**
+   * Mục đích: Xử lý swipe down minimize — placeholder
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User swipe down trên player (MOB-LIS-ENH-HP-006)
+   *   - TODO: Chuyển sang Mini Player mode khi implement xong
+   */
+  const handleSwipeDownMinimize = useCallback(() => {
+    // TODO: Implement mini player mode — chuyển sang compact/minimized view
+    showInfo('🔽 Minimize', 'Tính năng mini player sẽ sớm ra mắt!');
+    console.log('🔽 [Player] Swipe down — placeholder minimize');
+  }, [showInfo]);
+
+  // ========================
+  // Gesture Handler — swipe left/right/down + double tap
+  // MOB-LIS-ENH-HP-004 → 007
+  // ========================
+  const {gesture: playerGesture, animatedStyle: gestureAnimatedStyle} =
+    usePlayerGestures({
+      onSwipeLeft: handleSkipBack,
+      onSwipeRight: handleSkipForward,
+      onSwipeDown: handleSwipeDownMinimize,
+      onDoubleTap: handlePlayPause,
+    });
+
+  /**
    * Mục đích: Format thời gian từ giây sang m:ss
    * Tham số đầu vào: seconds (number)
    * Tham số đầu ra: string (vd: "2:05")
@@ -460,7 +499,9 @@ export default function ListeningPlayerScreen({
         </View>
       )}
 
-      {/* Transcript */}
+      {/* Transcript — wrapped với GestureDetector cho swipe + double tap */}
+      <GestureDetector gesture={playerGesture}>
+        <Animated.View style={[{flex: 1}, gestureAnimatedStyle]}>
       <ScrollView
         ref={scrollViewRef}
         className="flex-1 px-6"
@@ -527,10 +568,12 @@ export default function ListeningPlayerScreen({
                   )}
                 </View>
 
-                {/* Nội dung tiếng Anh */}
-                <AppText className="text-foreground text-base leading-6">
-                  {exchange.text}
-                </AppText>
+                {/* Nội dung tiếng Anh — từng từ tap được để tra nghĩa */}
+                <TappableTranscript
+                  text={exchange.text}
+                  onWordPress={setSelectedWord}
+                  isActive={isActive}
+                />
 
                 {/* Bản dịch tiếng Việt */}
                 {exchange.vietnamese && (
@@ -563,6 +606,8 @@ export default function ListeningPlayerScreen({
           </View>
         )}
       </ScrollView>
+        </Animated.View>
+      </GestureDetector>
 
       {/* Playback controls */}
       <View className="absolute bottom-0 left-0 right-0 bg-background border-t border-neutrals900 px-6 pb-safe-offset-4 pt-3">
@@ -640,6 +685,18 @@ export default function ListeningPlayerScreen({
           </TouchableOpacity>
         </View>
       </View>
+      {/* Dictionary Popup — tra từ khi tap vào từ trong transcript */}
+      <DictionaryPopup
+        word={selectedWord}
+        onClose={() => setSelectedWord(null)}
+        onSaveWord={word => {
+          addSavedWord(word);
+          showSuccess('Đã lưu từ "' + word + '"');
+        }}
+        onPlayPronunciation={audioUrl => {
+          console.log('🔊 [PlayerScreen] Phát âm từ, URL:', audioUrl);
+        }}
+      />
     </View>
   );
 }
