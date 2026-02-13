@@ -8,7 +8,8 @@
     "start": "node scripts/generate-colors-css.js --watch & react-native start",
     "test": "jest --verbose",
     "test:coverage": "jest --coverage --verbose",
-    "generate-translation": "node scripts/translator/index.js"
+    "generate-translation": "node scripts/translator/index.js",
+    "postinstall": "rm -rf node_modules/react-native-css-interop 2>/dev/null; echo '✅ NativeWind ghost dep cleaned'"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.6",

@@ -114,3 +114,4 @@ Hoặc thêm vào `postinstall` script trong `apps/mobile/package.json`:
 ## Ngày phát hiện
 - 2026-02-12 — Lần 1: Ghost dep v0.1.22 + React 19 → silent fail
 - 2026-02-13 — Lần 2: Ghost dep v0.2.1 (đúng version nhưng local copy gây cache conflict)
+- 2026-02-14 — Lần 3: Ghost dep v0.2.1 tái xuất. **Đã thêm `postinstall` script vào package.json để tự động dọn.**
