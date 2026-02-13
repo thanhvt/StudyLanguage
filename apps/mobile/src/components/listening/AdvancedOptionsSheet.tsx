@@ -1,9 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
+  interpolate,
+  Easing,
 } from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {Switch} from '@/components/ui';
@@ -11,24 +14,30 @@ import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 
+// ============================================
+// TYPES & CONSTANTS
+// ============================================
+
 interface AdvancedOptionsSheetProps {
   visible: boolean;
   onClose: () => void;
-  /** Difficulty */
+  /** Trình độ */
   level: 'beginner' | 'intermediate' | 'advanced';
   onLevelChange: (level: 'beginner' | 'intermediate' | 'advanced') => void;
-  /** TTS Provider */
-  ttsProvider: 'openai' | 'azure';
-  onTtsProviderChange: (provider: 'openai' | 'azure') => void;
-  /** Voice đang chọn */
-  selectedVoice: string | null;
-  onVoiceChange: (voice: string | null) => void;
-  /** Giọng đọc random hay chọn */
+  /** Số người nói (2-4), ảnh hưởng UI giọng đọc */
+  numSpeakers: number;
+  /** Giọng đọc random hay chọn thủ công */
   randomVoice: boolean;
   onRandomVoiceChange: (value: boolean) => void;
-  /** Multi-talker (Azure) */
+  /** Map voice đã chọn cho từng speaker (speakerLabel → voiceId) */
+  voicePerSpeaker: Record<string, string>;
+  onVoicePerSpeakerChange: (map: Record<string, string>) => void;
+  /** Multi-talker (Azure DragonHD) — chỉ cho 2 speakers */
   multiTalker: boolean;
   onMultiTalkerChange: (value: boolean) => void;
+  /** Index cặp giọng multi-talker (0 = Ava-Andrew, 1 = Ava-Steffan) */
+  multiTalkerPairIndex: number;
+  onMultiTalkerPairIndexChange: (index: number) => void;
   /** Disabled khi đang generate */
   disabled?: boolean;
 }
@@ -40,59 +49,82 @@ const LEVELS = [
   {value: 'advanced' as const, label: 'Nâng cao', emoji: '🌳', accentLight: '#D97706', accentDark: '#fbbf24'},
 ];
 
-/** Danh sách giọng OpenAI TTS */
-const OPENAI_VOICES = [
-  {id: 'alloy', label: 'Alloy', emoji: '🎙️', desc: 'Trung tính, rõ ràng'},
-  {id: 'echo', label: 'Echo', emoji: '🔊', desc: 'Nam, trầm ấm'},
-  {id: 'fable', label: 'Fable', emoji: '📖', desc: 'Kể chuyện, nhẹ nhàng'},
-  {id: 'onyx', label: 'Onyx', emoji: '💎', desc: 'Nam, mạnh mẽ'},
-  {id: 'nova', label: 'Nova', emoji: '⭐', desc: 'Nữ, tự nhiên'},
-  {id: 'shimmer', label: 'Shimmer', emoji: '✨', desc: 'Nữ, dịu dàng'},
-];
-
-/** Danh sách giọng Azure Neural Voice */
+/** Danh sách giọng Azure Neural Voice — sync với backend azure-tts.service.ts */
 const AZURE_VOICES = [
-  {id: 'jenny', label: 'Jenny', emoji: '👩', desc: 'Nữ US, đa năng'},
-  {id: 'guy', label: 'Guy', emoji: '👨', desc: 'Nam US, chuyên nghiệp'},
-  {id: 'aria', label: 'Aria', emoji: '💃', desc: 'Nữ US, biểu cảm'},
-  {id: 'davis', label: 'Davis', emoji: '🕺', desc: 'Nam US, ấm áp'},
-  {id: 'jane', label: 'Jane', emoji: '👩‍💼', desc: 'Nữ UK, trang trọng'},
-  {id: 'jason', label: 'Jason', emoji: '👨‍💼', desc: 'Nam UK, rõ ràng'},
+  // Nữ
+  {id: 'en-US-AriaNeural', label: 'Aria', emoji: '💃', desc: 'Nữ US, biểu cảm', gender: 'female' as const},
+  {id: 'en-US-JennyNeural', label: 'Jenny', emoji: '👩', desc: 'Nữ US, đa năng', gender: 'female' as const},
+  {id: 'en-US-SaraNeural', label: 'Sara', emoji: '👧', desc: 'Nữ US, trẻ trung', gender: 'female' as const},
+  {id: 'en-US-JaneNeural', label: 'Jane', emoji: '👩‍💼', desc: 'Nữ UK, trang trọng', gender: 'female' as const},
+  {id: 'en-US-NancyNeural', label: 'Nancy', emoji: '👩‍🦰', desc: 'Nữ US, thân thiện', gender: 'female' as const},
+  // Nam
+  {id: 'en-US-GuyNeural', label: 'Guy', emoji: '👨', desc: 'Nam US, chuyên nghiệp', gender: 'male' as const},
+  {id: 'en-US-DavisNeural', label: 'Davis', emoji: '🕺', desc: 'Nam US, ấm áp', gender: 'male' as const},
+  {id: 'en-US-TonyNeural', label: 'Tony', emoji: '👨‍🦱', desc: 'Nam US, năng động', gender: 'male' as const},
+  {id: 'en-US-JasonNeural', label: 'Jason', emoji: '👨‍💼', desc: 'Nam UK, rõ ràng', gender: 'male' as const},
 ];
 
-/** Provider options */
-const PROVIDERS = [
-  {value: 'openai' as const, label: 'OpenAI', emoji: '🤖', accentLight: '#10b981', accentDark: '#34d399'},
-  {value: 'azure' as const, label: 'Azure', emoji: '☁️', accentLight: '#0078d4', accentDark: '#4fc3f7'},
+/** Cặp giọng Multi-talker DragonHD */
+const MULTI_TALKER_PAIRS = [
+  {index: 0, label: 'Ava — Andrew', emoji: '👩‍❤️‍👨'},
+  {index: 1, label: 'Ava — Steffan', emoji: '👫'},
 ];
+
+/** Tạo label cho speaker dựa trên index */
+const getSpeakerLabel = (index: number): string => {
+  const labels = ['Speaker A', 'Speaker B', 'Speaker C', 'Speaker D'];
+  return labels[index] || `Speaker ${index + 1}`;
+};
+
+/** Tạo emoji cho speaker dựa trên index */
+const getSpeakerEmoji = (index: number): string => {
+  const emojis = ['👤', '👥', '🧑', '🧑‍🤝‍🧑'];
+  return emojis[index] || '👤';
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 /**
- * Mục đích: Bottom sheet chứa tuỳ chọn nâng cao cho bài nghe
+ * Mục đích: Bottom sheet chứa tuỳ chọn nâng cao cho bài nghe (Azure TTS only)
  * Tham số đầu vào: AdvancedOptionsSheetProps
  * Tham số đầu ra: JSX.Element (Modal bottom-sheet)
  * Khi nào sử dụng: ConfigScreen → "Tuỳ chọn nâng cao" button → mở sheet này
- *   - Chứa: Difficulty, Voice selection, Multi-talker toggle
+ *   - Chứa: Difficulty, Voice selection per-speaker, Multi-talker toggle (2 speakers only)
  */
 export default function AdvancedOptionsSheet({
   visible,
   onClose,
   level,
   onLevelChange,
-  ttsProvider,
-  onTtsProviderChange,
-  selectedVoice,
-  onVoiceChange,
+  numSpeakers,
   randomVoice,
   onRandomVoiceChange,
+  voicePerSpeaker,
+  onVoicePerSpeakerChange,
   multiTalker,
   onMultiTalkerChange,
+  multiTalkerPairIndex,
+  onMultiTalkerPairIndexChange,
   disabled = false,
 }: AdvancedOptionsSheetProps) {
   const colors = useColors();
   const haptic = useHaptic();
 
-  // Lấy danh sách voices theo provider đang chọn
-  const voices = ttsProvider === 'openai' ? OPENAI_VOICES : AZURE_VOICES;
+  // Cập nhật voice cho 1 speaker cụ thể
+  const handleVoiceSelect = (speakerLabel: string, voiceId: string) => {
+    haptic.light();
+    onVoicePerSpeakerChange({
+      ...voicePerSpeaker,
+      [speakerLabel]: voiceId,
+    });
+  };
+
+  // Kiểm tra numSpeakers = 4 → bắt buộc random voice
+  const forceRandom = numSpeakers >= 4;
+  // Multi-talker chỉ khả dụng khi 2 speakers
+  const canMultiTalker = numSpeakers === 2;
 
   return (
     <Modal
@@ -112,6 +144,8 @@ export default function AdvancedOptionsSheet({
           shadowOpacity: 0.15,
           shadowRadius: 16,
           elevation: 20,
+          // Giới hạn chiều cao sheet tối đa 85% màn hình
+          maxHeight: '85%',
         }}>
         {/* Thanh kéo */}
         <View className="w-10 h-1 bg-neutrals600 rounded-full self-center mb-4" />
@@ -130,15 +164,16 @@ export default function AdvancedOptionsSheet({
           </TouchableOpacity>
         </View>
 
-        <ScrollView>
-          {/* Trình độ */}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* ======================== */}
+          {/* Section 1: Trình độ */}
+          {/* ======================== */}
           <View className="mb-6">
             <AppText className="text-foreground font-sans-semibold text-base mb-3">
               🎯 Trình độ
             </AppText>
             <View className="flex-row gap-3">
               {LEVELS.map(l => {
-                // Màu accent riêng cho từng level
                 const isDark = colors.background === '#000000';
                 const accent = isDark ? l.accentDark : l.accentLight;
                 return (
@@ -160,140 +195,343 @@ export default function AdvancedOptionsSheet({
             </View>
           </View>
 
-          {/* Giọng đọc */}
+          {/* ======================== */}
+          {/* Section 2: Giọng đọc */}
+          {/* ======================== */}
           <View className="mb-6">
-            <AppText className="text-foreground font-sans-semibold text-base mb-3">
-              🤖 TTS Provider
-            </AppText>
-            <View className="flex-row gap-3 mb-4">
-              {PROVIDERS.map(p => {
-                const isDark = colors.background === '#000000';
-                const accent = isDark ? p.accentDark : p.accentLight;
-                return (
-                  <LevelChip
-                    key={p.value}
-                    emoji={p.emoji}
-                    label={p.label}
-                    accentColor={accent}
-                    selected={ttsProvider === p.value}
-                    onPress={() => {
-                      haptic.light();
-                      onTtsProviderChange(p.value);
-                      // Reset voice khi đổi provider (voice list thay đổi)
-                      onVoiceChange(null);
-                    }}
-                    disabled={disabled}
-                    accessibilityLabel={`Provider ${p.label}${ttsProvider === p.value ? ', đang chọn' : ''}`}
-                  />
-                );
-              })}
-            </View>
-
             <AppText className="text-foreground font-sans-semibold text-base mb-3">
               🔊 Giọng đọc
             </AppText>
+
+            {/* Toggle giọng ngẫu nhiên */}
             <TouchableOpacity
               className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3 mb-3"
-              onPress={() => onRandomVoiceChange(!randomVoice)}
-              disabled={disabled}
+              onPress={() => {
+                if (!forceRandom) {
+                  haptic.light();
+                  onRandomVoiceChange(!randomVoice);
+                }
+              }}
+              disabled={disabled || forceRandom}
               activeOpacity={0.7}
-              accessibilityLabel={`Giọng ngẫu nhiên, ${randomVoice ? 'bật' : 'tắt'}`}
+              accessibilityLabel={`Giọng ngẫu nhiên, ${randomVoice || forceRandom ? 'bật' : 'tắt'}${forceRandom ? ', bắt buộc với 4 người nói' : ''}`}
               accessibilityRole="switch">
-              <View>
+              <View className="flex-1 mr-3">
                 <AppText className="text-foreground">🎲 Giọng ngẫu nhiên</AppText>
                 <AppText className="text-neutrals400 text-xs mt-0.5">
-                  AI tự chọn giọng phù hợp cho từng speaker
+                  {forceRandom
+                    ? 'Bắt buộc khi 4 người nói — AI tự phân giọng tối ưu'
+                    : 'AI tự chọn giọng phù hợp cho từng speaker'}
                 </AppText>
               </View>
               <Switch
-                value={randomVoice}
-                onValueChange={onRandomVoiceChange}
-                disabled={disabled}
+                value={randomVoice || forceRandom}
+                onValueChange={v => {
+                  if (!forceRandom) {
+                    onRandomVoiceChange(v);
+                  }
+                }}
+                disabled={disabled || forceRandom}
               />
             </TouchableOpacity>
 
-            {/* Danh sách voice — chỉ hiện khi random voice TẮT */}
-            {!randomVoice && (
-              <View className="gap-2">
-                {voices.map(voice => {
-                  const isSelected = selectedVoice === voice.id;
+            {/* Danh sách chọn giọng per-speaker — chỉ hiện khi random voice TẮT */}
+            {!randomVoice && !forceRandom && (
+              <View className="gap-3">
+                {Array.from({length: numSpeakers}, (_, i) => {
+                  const speakerLabel = getSpeakerLabel(i);
+                  const selectedVoiceId = voicePerSpeaker[speakerLabel] || '';
                   return (
-                    <TouchableOpacity
-                      key={voice.id}
-                      className={`flex-row items-center rounded-2xl px-4 py-3 border ${
-                        isSelected
-                          ? 'bg-primary/10 border-primary/30'
-                          : 'bg-neutrals900 border-transparent'
-                      }`}
-                      onPress={() => {
-                        haptic.light();
-                        onVoiceChange(voice.id);
-                      }}
+                    <SpeakerVoicePicker
+                      key={speakerLabel}
+                      speakerLabel={speakerLabel}
+                      speakerEmoji={getSpeakerEmoji(i)}
+                      speakerIndex={i}
+                      selectedVoiceId={selectedVoiceId}
+                      onVoiceSelect={voiceId => handleVoiceSelect(speakerLabel, voiceId)}
                       disabled={disabled}
-                      activeOpacity={0.7}
-                      accessibilityLabel={`Giọng ${voice.label}${isSelected ? ', đang chọn' : ''}`}
-                      accessibilityRole="button">
-                      <AppText className="text-lg mr-3">{voice.emoji}</AppText>
-                      <View className="flex-1">
-                        <AppText
-                          className={`text-foreground font-sans-semibold ${
-                            isSelected ? 'text-primary' : ''
-                          }`}>
-                          {voice.label}
-                        </AppText>
-                        <AppText className="text-neutrals400 text-xs">
-                          {voice.desc}
-                        </AppText>
-                      </View>
-                      {isSelected && (
-                        <Icon name="Check" className="w-5 h-5 text-primary" />
-                      )}
-                    </TouchableOpacity>
+                    />
                   );
                 })}
+
                 <AppText className="text-neutrals500 text-xs mt-1 px-1">
-                  ℹ️ Hệ thống tự gán giọng xen kẽ nam/nữ cho mỗi speaker
+                  ℹ️ 9 giọng Azure Neural Voice (5 nữ + 4 nam)
                 </AppText>
               </View>
             )}
           </View>
 
-          {/* Multi-talker */}
-          <View className="mb-4">
-            <AppText className="text-foreground font-sans-semibold text-base mb-3">
-              👥 Multi-talker (Azure)
-            </AppText>
-            <TouchableOpacity
-              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
-              onPress={() => onMultiTalkerChange(!multiTalker)}
-              disabled={disabled}
-              activeOpacity={0.7}
-              accessibilityLabel={`Đa giọng nói cùng lúc, ${multiTalker ? 'bật' : 'tắt'}`}
-              accessibilityRole="switch">
-              <View className="flex-1 mr-3">
-                <AppText className="text-foreground">
-                  Đa giọng nói cùng lúc
-                </AppText>
-                <AppText className="text-neutrals400 text-xs mt-0.5">
-                  Giọng tự nhiên hơn với Azure Neural Voice
-                </AppText>
-              </View>
-              <Switch
-                value={multiTalker}
-                onValueChange={onMultiTalkerChange}
+          {/* ======================== */}
+          {/* Section 3: Multi-talker — chỉ hiện khi 2 speakers */}
+          {/* ======================== */}
+          {canMultiTalker && (
+            <View className="mb-4">
+              <AppText className="text-foreground font-sans-semibold text-base mb-3">
+                🎭 Multi-talker (Azure)
+              </AppText>
+              <TouchableOpacity
+                className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
+                onPress={() => {
+                  haptic.light();
+                  onMultiTalkerChange(!multiTalker);
+                }}
                 disabled={disabled}
-              />
-            </TouchableOpacity>
-          </View>
+                activeOpacity={0.7}
+                accessibilityLabel={`Đa giọng nói cùng lúc, ${multiTalker ? 'bật' : 'tắt'}`}
+                accessibilityRole="switch">
+                <View className="flex-1 mr-3">
+                  <AppText className="text-foreground">
+                    Đa giọng nói cùng lúc
+                  </AppText>
+                  <AppText className="text-neutrals400 text-xs mt-0.5">
+                    Gen 1 lần, giọng tự nhiên hơn với DragonHD
+                  </AppText>
+                </View>
+                <Switch
+                  value={multiTalker}
+                  onValueChange={onMultiTalkerChange}
+                  disabled={disabled}
+                />
+              </TouchableOpacity>
+
+              {/* Chọn cặp giọng multi-talker — chỉ hiện khi bật */}
+              {multiTalker && (
+                <View className="mt-3 gap-2">
+                  <AppText className="text-neutrals400 text-xs px-1 mb-1">
+                    Chọn cặp giọng:
+                  </AppText>
+                  {MULTI_TALKER_PAIRS.map(pair => {
+                    const isDark = colors.background === '#000000';
+                    const accent = isDark ? '#4fc3f7' : '#0078d4';
+                    const isSelected = multiTalkerPairIndex === pair.index;
+                    return (
+                      <TouchableOpacity
+                        key={pair.index}
+                        className={`flex-row items-center rounded-2xl px-4 py-3 border ${
+                          isSelected
+                            ? 'bg-primary/10 border-primary/30'
+                            : 'bg-neutrals900 border-transparent'
+                        }`}
+                        onPress={() => {
+                          haptic.light();
+                          onMultiTalkerPairIndexChange(pair.index);
+                        }}
+                        disabled={disabled}
+                        activeOpacity={0.7}
+                        accessibilityLabel={`Cặp giọng ${pair.label}${isSelected ? ', đang chọn' : ''}`}
+                        accessibilityRole="button">
+                        <AppText className="text-lg mr-3">{pair.emoji}</AppText>
+                        <AppText
+                          className={`flex-1 font-sans-medium ${
+                            isSelected ? 'text-primary' : 'text-foreground'
+                          }`}>
+                          {pair.label}
+                        </AppText>
+                        {isSelected && (
+                          <Icon name="Check" className="w-5 h-5 text-primary" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
         </ScrollView>
       </View>
     </Modal>
   );
 }
 
-// ========================
-// LevelChip — chip trình độ có animation
-// ========================
+// ============================================
+// SpeakerVoicePicker — Expandable picker cho 1 speaker
+// ============================================
+
+interface SpeakerVoicePickerProps {
+  speakerLabel: string;
+  speakerEmoji: string;
+  speakerIndex: number;
+  selectedVoiceId: string;
+  onVoiceSelect: (voiceId: string) => void;
+  disabled: boolean;
+}
+
+/**
+ * Mục đích: Card expandable cho phép chọn giọng cho 1 speaker cụ thể
+ * Tham số đầu vào: speakerLabel, speakerIndex, selectedVoiceId, onVoiceSelect
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: AdvancedOptionsSheet → khi random voice TẮT → hiện cho mỗi speaker
+ */
+function SpeakerVoicePicker({
+  speakerLabel,
+  speakerEmoji,
+  speakerIndex,
+  selectedVoiceId,
+  onVoiceSelect,
+  disabled,
+}: SpeakerVoicePickerProps) {
+  const [expanded, setExpanded] = useState(false);
+  const colors = useColors();
+  const haptic = useHaptic();
+
+  // Tìm voice đang chọn để hiển thị tên
+  const selectedVoice = AZURE_VOICES.find(v => v.id === selectedVoiceId);
+  const displayText = selectedVoice
+    ? `${selectedVoice.label} (${selectedVoice.gender === 'female' ? 'Nữ' : 'Nam'})`
+    : 'Chưa chọn';
+
+  // Animation cho expand/collapse
+  const expandAnim = useSharedValue(0);
+  const rotateStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${interpolate(expandAnim.value, [0, 1], [0, 180])}deg`}],
+  }));
+
+  const toggleExpand = () => {
+    haptic.light();
+    const next = !expanded;
+    setExpanded(next);
+    expandAnim.value = withTiming(next ? 1 : 0, {
+      duration: 250,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+  };
+
+  // Gợi ý giọng mặc định theo speaker index (xen kẽ nữ/nam)
+  const suggestedGender = speakerIndex % 2 === 0 ? 'female' : 'male';
+
+  return (
+    <View
+      className="rounded-2xl border overflow-hidden"
+      style={{
+        borderColor: expanded ? `${colors.primary}50` : colors.neutrals800,
+        backgroundColor: colors.neutrals900,
+      }}>
+      {/* Header — nhấn để mở/đóng danh sách voice */}
+      <TouchableOpacity
+        className="flex-row items-center justify-between px-4 py-3"
+        onPress={toggleExpand}
+        disabled={disabled}
+        activeOpacity={0.7}
+        accessibilityLabel={`${speakerLabel}, giọng: ${displayText}. Nhấn để ${expanded ? 'đóng' : 'mở'} danh sách`}
+        accessibilityRole="button">
+        <View className="flex-row items-center flex-1">
+          <AppText className="mr-2">{speakerEmoji}</AppText>
+          <AppText className="text-foreground font-sans-medium">
+            {speakerLabel}
+          </AppText>
+        </View>
+        <View className="flex-row items-center">
+          <AppText
+            className="text-neutrals300 text-sm mr-2"
+            numberOfLines={1}>
+            {displayText}
+          </AppText>
+          <Animated.View style={rotateStyle}>
+            <Icon name="ChevronDown" className="w-4 h-4 text-neutrals400" />
+          </Animated.View>
+        </View>
+      </TouchableOpacity>
+
+      {/* Danh sách voice — hiện khi expanded */}
+      {expanded && (
+        <View className="px-3 pb-3 pt-1">
+          {/* Gợi ý giới tính */}
+          <AppText className="text-neutrals500 text-xs mb-2 px-1">
+            💡 Gợi ý: giọng {suggestedGender === 'female' ? 'nữ' : 'nam'} cho {speakerLabel}
+          </AppText>
+
+          {/* Nhóm Nữ */}
+          <AppText className="text-neutrals400 text-xs font-sans-semibold mb-1 px-1">
+            Nữ
+          </AppText>
+          <View className="gap-1 mb-2">
+            {AZURE_VOICES.filter(v => v.gender === 'female').map(voice => (
+              <VoiceItem
+                key={voice.id}
+                voice={voice}
+                isSelected={selectedVoiceId === voice.id}
+                isSuggested={suggestedGender === 'female'}
+                onPress={() => onVoiceSelect(voice.id)}
+                disabled={disabled}
+              />
+            ))}
+          </View>
+
+          {/* Nhóm Nam */}
+          <AppText className="text-neutrals400 text-xs font-sans-semibold mb-1 px-1">
+            Nam
+          </AppText>
+          <View className="gap-1">
+            {AZURE_VOICES.filter(v => v.gender === 'male').map(voice => (
+              <VoiceItem
+                key={voice.id}
+                voice={voice}
+                isSelected={selectedVoiceId === voice.id}
+                isSuggested={suggestedGender === 'male'}
+                onPress={() => onVoiceSelect(voice.id)}
+                disabled={disabled}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ============================================
+// VoiceItem — Mỗi dòng giọng trong danh sách
+// ============================================
+
+interface VoiceItemProps {
+  voice: (typeof AZURE_VOICES)[number];
+  isSelected: boolean;
+  isSuggested: boolean;
+  onPress: () => void;
+  disabled: boolean;
+}
+
+/**
+ * Mục đích: Hiển thị 1 giọng trong danh sách chọn (compact)
+ * Tham số đầu vào: voice data, isSelected, onPress
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: SpeakerVoicePicker → expanded → mỗi voice option
+ */
+function VoiceItem({voice, isSelected, isSuggested, onPress, disabled}: VoiceItemProps) {
+  return (
+    <TouchableOpacity
+      className={`flex-row items-center rounded-xl px-3 py-2.5 ${
+        isSelected
+          ? 'bg-primary/10'
+          : ''
+      }`}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.7}
+      accessibilityLabel={`Giọng ${voice.label}, ${voice.desc}${isSelected ? ', đang chọn' : ''}`}
+      accessibilityRole="button">
+      <AppText className="mr-2">{voice.emoji}</AppText>
+      <View className="flex-1">
+        <AppText
+          className={`text-sm ${
+            isSelected ? 'text-primary font-sans-semibold' : 'text-foreground'
+          }`}>
+          {voice.label}
+        </AppText>
+        <AppText className="text-neutrals400" style={{fontSize: 11}}>
+          {voice.desc}
+        </AppText>
+      </View>
+      {isSelected && (
+        <Icon name="Check" className="w-4 h-4 text-primary" />
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ============================================
+// LevelChip — Chip trình độ có animation
+// ============================================
 
 interface LevelChipProps {
   emoji: string;

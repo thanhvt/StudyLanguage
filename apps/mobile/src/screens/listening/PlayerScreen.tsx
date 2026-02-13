@@ -66,9 +66,11 @@ export default function ListeningPlayerScreen({
   );
   const setTimestamps = useListeningStore(state => state.setTimestamps);
 
-  // TTS settings
-  const ttsProvider = useListeningStore(state => state.ttsProvider);
-  const selectedVoice = useListeningStore(state => state.selectedVoice);
+  // TTS settings (Azure-only)
+  const randomVoice = useListeningStore(state => state.randomVoice);
+  const voicePerSpeaker = useListeningStore(state => state.voicePerSpeaker);
+  const multiTalker = useListeningStore(state => state.multiTalker);
+  const multiTalkerPairIndex = useListeningStore(state => state.multiTalkerPairIndex);
 
   // Bookmark state
   const bookmarkedIndexes = useListeningStore(
@@ -129,8 +131,14 @@ export default function ListeningPlayerScreen({
       try {
         const result = await listeningApi.generateConversationAudio(
           conversation.conversation,
-          // API tự map: ttsProvider → provider (match backend DTO)
-          {ttsProvider, voice: selectedVoice},
+          // Azure-only: gửi provider cố định + tuỳ chọn voice mới
+          {
+            provider: 'azure',
+            randomVoice,
+            voicePerSpeaker: randomVoice ? undefined : voicePerSpeaker,
+            multiTalker,
+            multiTalkerPairIndex: multiTalker ? multiTalkerPairIndex : undefined,
+          },
         );
 
         setAudioUrl(result.audioUrl);

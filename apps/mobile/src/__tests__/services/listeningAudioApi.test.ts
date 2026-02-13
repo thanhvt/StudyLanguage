@@ -101,29 +101,29 @@ describe('listeningApi - generateConversationAudio', () => {
     expect(options.timeout).toBe(180000);
   });
 
-  // MOB-LIS-ENH-HP-009: TTS Provider option
-  it('gửi provider khi được truyền (backend DTO field = "provider")', async () => {
+  // MOB-LIS-ENH-HP-009: TTS Provider option (Azure-only)
+  it('gửi provider khi được truyền', async () => {
     mockApiClient.post.mockResolvedValueOnce({data: mockAudioResponse});
 
     await listeningApi.generateConversationAudio(mockConversation, {
-      ttsProvider: 'azure',
-      voice: 'jenny',
+      provider: 'azure',
+      randomVoice: false,
+      voicePerSpeaker: {'Speaker A': 'en-US-JennyNeural'},
     });
 
     const payload = mockApiClient.post.mock.calls[0][1];
-    // Mobile option: ttsProvider → payload field: provider (match backend DTO)
     expect(payload.provider).toBe('azure');
-    expect(payload.voice).toBe('jenny');
+    expect(payload.randomVoice).toBe(false);
+    expect(payload.voicePerSpeaker).toEqual({'Speaker A': 'en-US-JennyNeural'});
   });
 
-  it('không gửi provider/voice khi không truyền', async () => {
+  it('mặc định provider = azure khi không truyền', async () => {
     mockApiClient.post.mockResolvedValueOnce({data: mockAudioResponse});
 
     await listeningApi.generateConversationAudio(mockConversation);
 
     const payload = mockApiClient.post.mock.calls[0][1];
-    expect(payload.provider).toBeUndefined();
-    expect(payload.voice).toBeUndefined();
+    expect(payload.provider).toBe('azure');
   });
 
   it('throw error khi API lỗi', async () => {

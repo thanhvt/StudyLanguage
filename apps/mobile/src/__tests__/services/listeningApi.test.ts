@@ -264,43 +264,48 @@ describe('listeningApi', () => {
       ],
     };
 
-    // MOB-LIS-ENH-HP-009: Gửi provider trong request body (backend DTO field = "provider")
-    it('gửi provider trong request body khi truyền ttsProvider', async () => {
+    // MOB-LIS-ENH-HP-009: Gửi provider + voice options (Azure-only)
+    it('gửi provider và voice options trong request body', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation, {
-        ttsProvider: 'azure',
-        voice: 'jenny',
+        provider: 'azure',
+        randomVoice: false,
+        voicePerSpeaker: {'Speaker A': 'en-US-JennyNeural', 'Speaker B': 'en-US-GuyNeural'},
       });
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      // Mobile option: ttsProvider → payload field: provider (match backend DTO)
       expect(callPayload.provider).toBe('azure');
-      expect(callPayload.voice).toBe('jenny');
+      expect(callPayload.randomVoice).toBe(false);
+      expect(callPayload.voicePerSpeaker).toEqual({
+        'Speaker A': 'en-US-JennyNeural',
+        'Speaker B': 'en-US-GuyNeural',
+      });
     });
 
-    // MOB-LIS-ENH-HP-010: Gửi voice trong request body
-    it('gửi OpenAI provider + voice trong request body', async () => {
+    // MOB-LIS-ENH-HP-010: Multi-talker
+    it('gửi multiTalker options trong request body', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation, {
-        ttsProvider: 'openai',
-        voice: 'alloy',
+        provider: 'azure',
+        multiTalker: true,
+        multiTalkerPairIndex: 1,
       });
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      expect(callPayload.provider).toBe('openai');
-      expect(callPayload.voice).toBe('alloy');
+      expect(callPayload.provider).toBe('azure');
+      expect(callPayload.multiTalker).toBe(true);
+      expect(callPayload.multiTalkerPairIndex).toBe(1);
     });
 
-    it('không gửi provider/voice khi không truyền ttsOptions', async () => {
+    it('mặc định provider = azure khi không truyền ttsOptions', async () => {
       (apiClient.post as jest.Mock).mockResolvedValueOnce({data: mockAudioResult});
 
       await listeningApi.generateConversationAudio(mockConversation);
 
       const callPayload = (apiClient.post as jest.Mock).mock.calls[0][1];
-      expect(callPayload.provider).toBeUndefined();
-      expect(callPayload.voice).toBeUndefined();
+      expect(callPayload.provider).toBe('azure');
     });
 
     it('trả về audioUrl và timestamps đúng', async () => {

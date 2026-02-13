@@ -403,53 +403,91 @@ describe('useListeningStore', () => {
   });
 
   // ========================
-  // TTS Provider Settings
+  // TTS Voice Settings (Azure-only)
   // MOB-LIS-ENH-HP-009 → 012
   // ========================
-  describe('TTS Provider Settings', () => {
-    // MOB-LIS-ENH-HP-009: Chọn TTS provider
-    it('setTtsProvider cập nhật provider sang azure', () => {
-      useListeningStore.getState().setTtsProvider('azure');
+  describe('TTS Voice Settings (Azure-only)', () => {
+    // Random voice
+    it('setRandomVoice bật/tắt random voice', () => {
+      useListeningStore.getState().setRandomVoice(false);
+      expect(useListeningStore.getState().randomVoice).toBe(false);
 
-      expect(useListeningStore.getState().ttsProvider).toBe('azure');
+      useListeningStore.getState().setRandomVoice(true);
+      expect(useListeningStore.getState().randomVoice).toBe(true);
     });
 
-    it('setTtsProvider cập nhật provider sang openai', () => {
-      useListeningStore.getState().setTtsProvider('azure');
-      useListeningStore.getState().setTtsProvider('openai');
+    // Voice per speaker
+    it('setVoicePerSpeaker cập nhật map giọng cho từng speaker', () => {
+      useListeningStore.getState().setVoicePerSpeaker({
+        'Speaker A': 'en-US-JennyNeural',
+        'Speaker B': 'en-US-GuyNeural',
+      });
 
-      expect(useListeningStore.getState().ttsProvider).toBe('openai');
+      const map = useListeningStore.getState().voicePerSpeaker;
+      expect(map['Speaker A']).toBe('en-US-JennyNeural');
+      expect(map['Speaker B']).toBe('en-US-GuyNeural');
     });
 
-    // MOB-LIS-ENH-HP-010: Chọn voice cho speaker
-    it('setSelectedVoice cập nhật voice', () => {
-      useListeningStore.getState().setSelectedVoice('alloy');
+    it('setVoicePerSpeaker ghi đè map cũ', () => {
+      useListeningStore.getState().setVoicePerSpeaker({
+        'Speaker A': 'en-US-AriaNeural',
+      });
+      useListeningStore.getState().setVoicePerSpeaker({
+        'Speaker A': 'en-US-JennyNeural',
+        'Speaker B': 'en-US-DavisNeural',
+      });
 
-      expect(useListeningStore.getState().selectedVoice).toBe('alloy');
+      const map = useListeningStore.getState().voicePerSpeaker;
+      expect(map['Speaker A']).toBe('en-US-JennyNeural');
+      expect(map['Speaker B']).toBe('en-US-DavisNeural');
     });
 
-    it('setSelectedVoice về null khi chọn random', () => {
-      useListeningStore.getState().setSelectedVoice('nova');
-      useListeningStore.getState().setSelectedVoice(null);
+    // Multi-talker
+    it('setMultiTalker bật/tắt multi-talker mode', () => {
+      useListeningStore.getState().setMultiTalker(true);
+      expect(useListeningStore.getState().multiTalker).toBe(true);
 
-      expect(useListeningStore.getState().selectedVoice).toBeNull();
+      useListeningStore.getState().setMultiTalker(false);
+      expect(useListeningStore.getState().multiTalker).toBe(false);
     });
 
-    it('ttsProvider mặc định là openai', () => {
-      expect(useListeningStore.getState().ttsProvider).toBe('openai');
+    it('setMultiTalkerPairIndex cập nhật index cặp giọng', () => {
+      useListeningStore.getState().setMultiTalkerPairIndex(1);
+      expect(useListeningStore.getState().multiTalkerPairIndex).toBe(1);
+
+      useListeningStore.getState().setMultiTalkerPairIndex(0);
+      expect(useListeningStore.getState().multiTalkerPairIndex).toBe(0);
     });
 
-    it('selectedVoice mặc định là null', () => {
-      expect(useListeningStore.getState().selectedVoice).toBeNull();
+    // Defaults
+    it('randomVoice mặc định là true', () => {
+      expect(useListeningStore.getState().randomVoice).toBe(true);
     });
 
+    it('voicePerSpeaker mặc định là object rỗng', () => {
+      expect(useListeningStore.getState().voicePerSpeaker).toEqual({});
+    });
+
+    it('multiTalker mặc định là false', () => {
+      expect(useListeningStore.getState().multiTalker).toBe(false);
+    });
+
+    it('multiTalkerPairIndex mặc định là 0', () => {
+      expect(useListeningStore.getState().multiTalkerPairIndex).toBe(0);
+    });
+
+    // Reset
     it('reset() xóa TTS settings về default', () => {
-      useListeningStore.getState().setTtsProvider('azure');
-      useListeningStore.getState().setSelectedVoice('jenny');
+      useListeningStore.getState().setRandomVoice(false);
+      useListeningStore.getState().setVoicePerSpeaker({'Speaker A': 'en-US-JennyNeural'});
+      useListeningStore.getState().setMultiTalker(true);
+      useListeningStore.getState().setMultiTalkerPairIndex(1);
       useListeningStore.getState().reset();
 
-      expect(useListeningStore.getState().ttsProvider).toBe('openai');
-      expect(useListeningStore.getState().selectedVoice).toBeNull();
+      expect(useListeningStore.getState().randomVoice).toBe(true);
+      expect(useListeningStore.getState().voicePerSpeaker).toEqual({});
+      expect(useListeningStore.getState().multiTalker).toBe(false);
+      expect(useListeningStore.getState().multiTalkerPairIndex).toBe(0);
     });
   });
 

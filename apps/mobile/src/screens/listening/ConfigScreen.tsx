@@ -50,18 +50,20 @@ export default function ListeningConfigScreen({
   const setSelectedTopic = useListeningStore(state => state.setSelectedTopic);
   const isGenerating = useListeningStore(state => state.isGenerating);
   const setGenerating = useListeningStore(state => state.setGenerating);
-  const ttsProvider = useListeningStore(state => state.ttsProvider);
-  const setTtsProvider = useListeningStore(state => state.setTtsProvider);
-  const selectedVoice = useListeningStore(state => state.selectedVoice);
-  const setSelectedVoice = useListeningStore(state => state.setSelectedVoice);
+  const randomVoice = useListeningStore(state => state.randomVoice);
+  const setRandomVoice = useListeningStore(state => state.setRandomVoice);
+  const voicePerSpeaker = useListeningStore(state => state.voicePerSpeaker);
+  const setVoicePerSpeaker = useListeningStore(state => state.setVoicePerSpeaker);
+  const multiTalker = useListeningStore(state => state.multiTalker);
+  const setMultiTalker = useListeningStore(state => state.setMultiTalker);
+  const multiTalkerPairIndex = useListeningStore(state => state.multiTalkerPairIndex);
+  const setMultiTalkerPairIndex = useListeningStore(state => state.setMultiTalkerPairIndex);
 
   // Local state
   const [topicInput, setTopicInput] = useState('');
   const [showCustomScenario, setShowCustomScenario] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
-  const [randomVoice, setRandomVoice] = useState(true);
-  const [multiTalker, setMultiTalker] = useState(false);
 
   const {showError, showWarning} = useToast();
   const {showLoading, hideLoading} = useDialog();
@@ -523,14 +525,15 @@ export default function ListeningConfigScreen({
         onClose={() => setShowAdvanced(false)}
         level={config.level}
         onLevelChange={l => setConfig({level: l})}
-        ttsProvider={ttsProvider}
-        onTtsProviderChange={setTtsProvider}
-        selectedVoice={selectedVoice}
-        onVoiceChange={setSelectedVoice}
+        numSpeakers={config.numSpeakers ?? 2}
         randomVoice={randomVoice}
         onRandomVoiceChange={setRandomVoice}
+        voicePerSpeaker={voicePerSpeaker}
+        onVoicePerSpeakerChange={setVoicePerSpeaker}
         multiTalker={multiTalker}
         onMultiTalkerChange={setMultiTalker}
+        multiTalkerPairIndex={multiTalkerPairIndex}
+        onMultiTalkerPairIndexChange={setMultiTalkerPairIndex}
         disabled={isGenerating}
       />
     </View>

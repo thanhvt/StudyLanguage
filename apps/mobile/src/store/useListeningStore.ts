@@ -37,10 +37,14 @@ interface ListeningState {
   isGeneratingAudio: boolean;
   /** Timestamps cho từng câu — sync audio với transcript */
   timestamps: ConversationTimestamp[] | null;
-  /** TTS provider đang chọn (openai hoặc azure) */
-  ttsProvider: 'openai' | 'azure';
-  /** Voice đang chọn cho TTS (null = random/auto) */
-  selectedVoice: string | null;
+  /** Giọng đọc random hay chọn thủ công */
+  randomVoice: boolean;
+  /** Map voice đã chọn cho từng speaker (speakerLabel → voiceId) */
+  voicePerSpeaker: Record<string, string>;
+  /** Multi-talker mode (Azure DragonHD) */
+  multiTalker: boolean;
+  /** Index cặp giọng multi-talker (0 = Ava-Andrew, 1 = Ava-Steffan) */
+  multiTalkerPairIndex: number;
   /** Danh sách các exchange index đã bookmark trong session hiện tại */
   bookmarkedIndexes: number[];
   /** Danh sách từ đã lưu từ Dictionary Popup */
@@ -80,10 +84,14 @@ interface ListeningActions {
   setGeneratingAudio: (value: boolean) => void;
   /** Set timestamps cho transcript sync */
   setTimestamps: (ts: ConversationTimestamp[] | null) => void;
-  /** Set TTS provider (openai/azure) */
-  setTtsProvider: (provider: 'openai' | 'azure') => void;
-  /** Set voice cho TTS */
-  setSelectedVoice: (voice: string | null) => void;
+  /** Set random voice on/off */
+  setRandomVoice: (value: boolean) => void;
+  /** Set voice cho từng speaker */
+  setVoicePerSpeaker: (map: Record<string, string>) => void;
+  /** Set multi-talker mode */
+  setMultiTalker: (value: boolean) => void;
+  /** Set multi-talker pair index */
+  setMultiTalkerPairIndex: (index: number) => void;
   /** Toggle bookmark cho 1 exchange (thêm/bỏ khỏi danh sách) */
   toggleBookmark: (index: number) => void;
   /** Set danh sách bookmark indexes (khi load từ server) */
@@ -117,8 +125,10 @@ const initialState: ListeningState = {
   audioUrl: null,
   isGeneratingAudio: false,
   timestamps: null,
-  ttsProvider: 'openai',
-  selectedVoice: null,
+  randomVoice: true,
+  voicePerSpeaker: {},
+  multiTalker: false,
+  multiTalkerPairIndex: 0,
   bookmarkedIndexes: [],
   savedWords: [],
 };
@@ -175,8 +185,10 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
     setAudioUrl: url => set({audioUrl: url}),
     setGeneratingAudio: value => set({isGeneratingAudio: value}),
     setTimestamps: ts => set({timestamps: ts}),
-    setTtsProvider: provider => set({ttsProvider: provider}),
-    setSelectedVoice: voice => set({selectedVoice: voice}),
+    setRandomVoice: value => set({randomVoice: value}),
+    setVoicePerSpeaker: map => set({voicePerSpeaker: map}),
+    setMultiTalker: value => set({multiTalker: value}),
+    setMultiTalkerPairIndex: index => set({multiTalkerPairIndex: index}),
 
     toggleBookmark: index =>
       set(state => ({

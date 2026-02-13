@@ -242,10 +242,16 @@ export const listeningApi = {
   generateConversationAudio: async (
     conversation: ConversationExchange[],
     ttsOptions?: {
-      /** TTS provider: openai (default) hoặc azure */
-      ttsProvider?: 'openai' | 'azure';
-      /** Voice ID (e.g. 'alloy', 'jenny'). null = để backend tự chọn */
-      voice?: string | null;
+      /** TTS provider — luôn là 'azure' */
+      provider?: 'openai' | 'azure';
+      /** Giọng ngẫu nhiên (AI tự chọn) */
+      randomVoice?: boolean;
+      /** Map giọng cho từng speaker (speakerLabel → voiceId) */
+      voicePerSpeaker?: Record<string, string>;
+      /** Multi-talker mode (DragonHD) */
+      multiTalker?: boolean;
+      /** Index cặp giọng multi-talker */
+      multiTalkerPairIndex?: number;
     },
   ): Promise<AudioGenerationResult> => {
     const payload: Record<string, unknown> = {
@@ -253,17 +259,20 @@ export const listeningApi = {
         speaker: line.speaker,
         text: line.text,
       })),
-      // Backend DTO field: "provider" (không phải "ttsProvider")
-      // forbidNonWhitelisted: true → gửi sai tên field = 400 Bad Request
-      ...(ttsOptions?.ttsProvider && {provider: ttsOptions.ttsProvider}),
-      ...(ttsOptions?.voice && {voice: ttsOptions.voice}),
+      // Luôn gửi provider = azure
+      provider: ttsOptions?.provider ?? 'azure',
+      // Các tuỳ chọn TTS mới
+      ...(ttsOptions?.randomVoice !== undefined && {randomVoice: ttsOptions.randomVoice}),
+      ...(ttsOptions?.voicePerSpeaker && {voicePerSpeaker: ttsOptions.voicePerSpeaker}),
+      ...(ttsOptions?.multiTalker !== undefined && {multiTalker: ttsOptions.multiTalker}),
+      ...(ttsOptions?.multiTalkerPairIndex !== undefined && {multiTalkerPairIndex: ttsOptions.multiTalkerPairIndex}),
     };
 
     console.log(
       '🔊 [Listening] Gửi request sinh audio TTS, số câu:',
       conversation.length,
-      '| Provider:', ttsOptions?.ttsProvider ?? 'default',
-      '| Voice:', ttsOptions?.voice ?? 'auto',
+      '| Provider:', ttsOptions?.provider ?? 'azure',
+      '| Random:', ttsOptions?.randomVoice ?? true,
     );
 
     const response = await apiClient.post(
