@@ -169,6 +169,10 @@ class GenerateConversationAudioDto {
   @IsOptional()
   multiTalkerPairIndex?: number;
 
+  /** Map giọng cho từng speaker (speakerLabel → voiceId). Mobile gửi khi user chọn thủ công */
+  @IsOptional()
+  voicePerSpeaker?: Record<string, string>;
+
   @IsString()
   @IsOptional()
   pitch?: string;
@@ -364,6 +368,7 @@ export class AiController {
         randomEmotion: dto.randomEmotion,
         multiTalker: dto.multiTalker,
         multiTalkerPairIndex: dto.multiTalkerPairIndex,
+        voicePerSpeaker: dto.voicePerSpeaker,
         pitch: dto.pitch,
         rate: dto.rate,
         volume: dto.volume,

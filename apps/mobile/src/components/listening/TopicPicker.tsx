@@ -222,6 +222,11 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
 }: SubCategoryAccordionProps) {
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
+  // Kiểm tra subcategory này có chứa scenario đang chọn không
+  const hasSelectedScenario = selectedTopicId
+    ? subCategory.scenarios.some(s => s.id === selectedTopicId)
+    : false;
+
   // Animate chevron khi expand/collapse
   useEffect(() => {
     Animated.spring(rotateAnim, {
@@ -240,13 +245,23 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   return (
     <View className="mb-2">
       <TouchableOpacity
-        className="flex-row items-center justify-between px-4 py-3 bg-neutrals900/50 rounded-xl"
+        className={`flex-row items-center justify-between px-4 py-3 rounded-xl ${
+          hasSelectedScenario
+            ? 'bg-primary/10 border border-primary/30'
+            : 'bg-neutrals900/50'
+        }`}
         onPress={onToggle}
         activeOpacity={0.7}
-        accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}`}
+        accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}${hasSelectedScenario ? ', chứa kịch bản đang chọn' : ''}`}
         accessibilityRole="button">
         <View className="flex-row items-center flex-1">
-          <AppText className="text-foreground font-sans-medium text-sm">
+          {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
+          {hasSelectedScenario && (
+            <View className="w-2 h-2 rounded-full bg-primary mr-2" />
+          )}
+          <AppText className={`font-sans-medium text-sm ${
+            hasSelectedScenario ? 'text-primary' : 'text-foreground'
+          }`}>
             {subCategory.name}
           </AppText>
           <View className="bg-neutrals700 rounded-full px-2.5 py-1 ml-2">

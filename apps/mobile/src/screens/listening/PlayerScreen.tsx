@@ -22,7 +22,7 @@ import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePlayerGestures} from '@/hooks/usePlayerGestures';
-import {TappableTranscript, DictionaryPopup} from '@/components/listening';
+import {TappableTranscript, DictionaryPopup, WaveformVisualizer} from '@/components/listening';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -81,6 +81,10 @@ export default function ListeningPlayerScreen({
   // Dictionary Popup state
   const addSavedWord = useListeningStore(state => state.addSavedWord);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+
+  // Translation toggle
+  const showTranslation = useListeningStore(state => state.showTranslation);
+  const toggleTranslation = useListeningStore(state => state.toggleTranslation);
 
   // TrackPlayer state
   const playbackState = usePlaybackState();
@@ -582,8 +586,8 @@ export default function ListeningPlayerScreen({
                   isActive={isActive}
                 />
 
-                {/* Bản dịch tiếng Việt */}
-                {exchange.vietnamese && (
+                {/* Bản dịch tiếng Việt — chỉ hiển khi bật translation toggle */}
+                {showTranslation && exchange.vietnamese && (
                   <AppText className="text-neutrals500 text-sm mt-1 italic">
                     {exchange.vietnamese}
                   </AppText>
@@ -618,15 +622,18 @@ export default function ListeningPlayerScreen({
 
       {/* Playback controls */}
       <View className="absolute bottom-0 left-0 right-0 bg-background border-t border-neutrals900 px-6 pb-safe-offset-4 pt-3">
-        {/* Progress bar (chỉ hiện khi có audio) */}
+        {/* Progress bar + waveform (chỉ hiện khi có audio) */}
         {(audioUrl || isTrackReady) && (
           <View className="mb-3">
-            {/* Thanh progress */}
-            <View className="h-1 bg-neutrals800 rounded-full overflow-hidden">
-              <View
-                className="h-full bg-primary rounded-full"
-                style={{width: `${progressPercent}%`}}
-              />
+            {/* Waveform + thanh progress */}
+            <View className="flex-row items-center gap-2">
+              <WaveformVisualizer isPlaying={isTrackPlaying} height={20} />
+              <View className="flex-1 h-1 bg-neutrals800 rounded-full overflow-hidden">
+                <View
+                  className="h-full bg-primary rounded-full"
+                  style={{width: `${progressPercent}%`}}
+                />
+              </View>
             </View>
             {/* Thời gian */}
             <View className="flex-row justify-between mt-1">
@@ -647,6 +654,18 @@ export default function ListeningPlayerScreen({
             onPress={cycleSpeed}>
             <AppText className="text-foreground font-sans-bold text-sm">
               {playbackSpeed}x
+            </AppText>
+          </TouchableOpacity>
+
+          {/* Toggle bản dịch tiếng Việt */}
+          <TouchableOpacity
+            className={`rounded-full px-3 py-2 ${showTranslation ? 'bg-primary/20' : 'bg-neutrals900'}`}
+            onPress={() => {
+              toggleTranslation();
+              haptic.light();
+            }}>
+            <AppText className={`text-sm font-sans-bold ${showTranslation ? 'text-primary' : 'text-neutrals500'}`}>
+              🇻🇳
             </AppText>
           </TouchableOpacity>
 

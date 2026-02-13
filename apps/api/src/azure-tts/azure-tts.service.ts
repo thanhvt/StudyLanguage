@@ -31,6 +31,8 @@ export interface AzureTtsOptions {
   randomVoice?: boolean;
   /** Chọn cảm xúc ngẫu nhiên */
   randomEmotion?: boolean;
+  /** Map giọng cho từng speaker (speakerLabel → voiceId). Mobile gửi khi user chọn thủ công */
+  voicePerSpeaker?: Record<string, string>;
 }
 
 /**
@@ -660,7 +662,17 @@ export class AzureTtsService {
     const voiceMap: Record<string, string> = {};
     const uniqueSpeakers = [...new Set(conversation.map((c) => c.speaker))];
 
-    // Nếu có voice cụ thể, dùng cho tất cả
+    // Ưu tiên 1: Dùng voicePerSpeaker map nếu mobile gửi (per-speaker selection)
+    if (options.voicePerSpeaker && Object.keys(options.voicePerSpeaker).length > 0) {
+      for (const speaker of uniqueSpeakers) {
+        // Dùng voice đã chọn, fallback random nếu speaker không có trong map
+        voiceMap[speaker] = options.voicePerSpeaker[speaker] || this.getRandomVoice();
+      }
+      this.logger.log(`Gán voice theo voicePerSpeaker map: ${JSON.stringify(voiceMap)}`);
+      return voiceMap;
+    }
+
+    // Ưu tiên 2: Nếu có voice cụ thể, dùng cho tất cả
     if (options.voice && !options.randomVoice) {
       for (const speaker of uniqueSpeakers) {
         voiceMap[speaker] = options.voice;

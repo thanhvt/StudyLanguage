@@ -49,6 +49,8 @@ interface ListeningState {
   bookmarkedIndexes: number[];
   /** Danh sách từ đã lưu từ Dictionary Popup */
   savedWords: string[];
+  /** Hiển thị bản dịch tiếng Việt hay không */
+  showTranslation: boolean;
 }
 
 interface ListeningActions {
@@ -100,6 +102,8 @@ interface ListeningActions {
   addSavedWord: (word: string) => void;
   /** Xóa từ khỏi danh sách đã lưu */
   removeSavedWord: (word: string) => void;
+  /** Toggle hiển thị bản dịch tiếng Việt */
+  toggleTranslation: () => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -131,6 +135,7 @@ const initialState: ListeningState = {
   multiTalkerPairIndex: 0,
   bookmarkedIndexes: [],
   savedWords: [],
+  showTranslation: true,
 };
 
 /**
@@ -209,6 +214,9 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
       set(state => ({
         savedWords: state.savedWords.filter(w => w !== word.toLowerCase()),
       })),
+
+    toggleTranslation: () =>
+      set(state => ({showTranslation: !state.showTranslation})),
 
     reset: () => set(initialState),
   }),

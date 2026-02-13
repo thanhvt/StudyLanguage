@@ -277,6 +277,55 @@ describe('AzureTtsService', () => {
   });
 
   // ============================================
+  // ASSIGN VOICES TO SPEAKERS (voicePerSpeaker)
+  // ============================================
+
+  describe('assignVoicesToSpeakers — voicePerSpeaker', () => {
+    const conversation = [
+      { speaker: 'Alice', text: 'Hi' },
+      { speaker: 'Bob', text: 'Hello' },
+      { speaker: 'Alice', text: 'How are you?' },
+    ];
+
+    it('nên ưu tiên dùng voicePerSpeaker map khi có', () => {
+      const result = (service as any).assignVoicesToSpeakers(conversation, {
+        voicePerSpeaker: {
+          Alice: 'en-US-JennyNeural',
+          Bob: 'en-US-GuyNeural',
+        },
+      });
+
+      expect(result.Alice).toBe('en-US-JennyNeural');
+      expect(result.Bob).toBe('en-US-GuyNeural');
+    });
+
+    it('nên fallback random khi speaker thiếu trong voicePerSpeaker', () => {
+      const result = (service as any).assignVoicesToSpeakers(conversation, {
+        voicePerSpeaker: {
+          Alice: 'en-US-JennyNeural',
+          // Bob không có → fallback random
+        },
+      });
+
+      expect(result.Alice).toBe('en-US-JennyNeural');
+      // Bob nên có giọng bất kỳ hợp lệ
+      expect(result.Bob).toMatch(/en-US-\w+Neural/);
+    });
+
+    it('nên dùng auto-assign khi voicePerSpeaker rỗng', () => {
+      const result = (service as any).assignVoicesToSpeakers(conversation, {
+        voicePerSpeaker: {},
+      });
+
+      // Vẫn gán được voice (auto xen kẽ nam-nữ)
+      expect(result.Alice).toMatch(/en-US-\w+Neural/);
+      expect(result.Bob).toMatch(/en-US-\w+Neural/);
+      // Alice và Bob nên có giọng khác nhau
+      expect(result.Alice).not.toBe(result.Bob);
+    });
+  });
+
+  // ============================================
   // TTS METHODS (mock SDK)
   // ============================================
 

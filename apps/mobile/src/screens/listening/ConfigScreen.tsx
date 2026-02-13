@@ -132,6 +132,25 @@ export default function ListeningConfigScreen({
       return;
     }
 
+    // Kiểm tra kết nối mạng trước khi gọi API
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      await fetch('https://www.google.com/generate_204', {
+        method: 'HEAD',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch {
+      haptic.error();
+      showError(
+        'Không có kết nối mạng',
+        'Vui lòng kiểm tra Wi-Fi hoặc dữ liệu di động và thử lại khi có mạng 📶',
+      );
+      console.log('📶 [Listening] Không có mạng — chặn generate');
+      return;
+    }
+
     try {
       setGenerating(true);
       haptic.medium();

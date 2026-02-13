@@ -40,6 +40,8 @@ export interface TtsOptions {
   multiTalker?: boolean;
   /** Index cặp giọng multi-talker (0 hoặc 1) */
   multiTalkerPairIndex?: number;
+  /** Map giọng cho từng speaker (speakerLabel → voiceId) — mobile gửi khi user chọn thủ công */
+  voicePerSpeaker?: Record<string, string>;
 }
 
 /**
@@ -192,6 +194,7 @@ export class TtsProviderService {
           volume: options.volume,
           randomVoice: options.randomVoice,
           randomEmotion: options.randomEmotion,
+          voicePerSpeaker: options.voicePerSpeaker,
         };
         return await this.azureTtsService.generateConversationAudio(
           conversation,
