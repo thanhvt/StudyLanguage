@@ -2,6 +2,27 @@
 // Jest Setup - Mock các native modules
 // ================================
 
+// Mock @react-native-async-storage/async-storage
+const mockAsyncStorage = new Map<string, string>();
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage.get(key) ?? null)),
+    setItem: jest.fn((key: string, value: string) => {
+      mockAsyncStorage.set(key, value);
+      return Promise.resolve();
+    }),
+    removeItem: jest.fn((key: string) => {
+      mockAsyncStorage.delete(key);
+      return Promise.resolve();
+    }),
+    clear: jest.fn(() => {
+      mockAsyncStorage.clear();
+      return Promise.resolve();
+    }),
+  },
+}));
+
 // Mock utils and config
 jest.mock('@/utils/getDeviceLanguage', () => ({
   getDeviceLanguage: jest.fn().mockReturnValue('en'),

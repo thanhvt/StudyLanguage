@@ -22,10 +22,14 @@ import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePlayerGestures} from '@/hooks/usePlayerGestures';
-import {TappableTranscript, DictionaryPopup, WaveformVisualizer} from '@/components/listening';
+import {TappableTranscript, DictionaryPopup, WaveformVisualizer, PocketMode} from '@/components/listening';
+import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+// State: Pocket Mode
+// Đặt ở ngoài component vì chỉ cần boolean đơn giản
 
 /**
  * Mục đích: Màn hình phát bài nghe + hiển thị transcript
@@ -71,6 +75,10 @@ export default function ListeningPlayerScreen({
   const voicePerSpeaker = useListeningStore(state => state.voicePerSpeaker);
   const multiTalker = useListeningStore(state => state.multiTalker);
   const multiTalkerPairIndex = useListeningStore(state => state.multiTalkerPairIndex);
+  const ttsEmotion = useListeningStore(state => state.ttsEmotion);
+  const ttsPitch = useListeningStore(state => state.ttsPitch);
+  const ttsRate = useListeningStore(state => state.ttsRate);
+  const ttsVolume = useListeningStore(state => state.ttsVolume);
 
   // Bookmark state
   const bookmarkedIndexes = useListeningStore(
@@ -81,6 +89,7 @@ export default function ListeningPlayerScreen({
   // Dictionary Popup state
   const addSavedWord = useListeningStore(state => state.addSavedWord);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [pocketMode, setPocketMode] = useState(false);
 
   // Translation toggle
   const showTranslation = useListeningStore(state => state.showTranslation);
@@ -103,10 +112,48 @@ export default function ListeningPlayerScreen({
   const audioGenRequestedRef = useRef(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Audio Player Store (persistent) — đồng bộ speed và lưu session
+  const persistedSpeed = useAudioPlayerStore(state => state.playbackSpeed);
+  const setPersistedSpeed = useAudioPlayerStore(state => state.setPlaybackSpeed);
+  const saveSession = useAudioPlayerStore(state => state.saveSession);
+  const setGlobalPlaying = useAudioPlayerStore(state => state.setIsPlaying);
+  const setPlayerMode = useAudioPlayerStore(state => state.setPlayerMode);
+
   // Khởi tạo Track Player khi vào màn hình
   useEffect(() => {
     setupPlayer();
+    // Đồng bộ tốc độ từ persistent store → listening store
+    if (persistedSpeed !== playbackSpeed) {
+      setPlaybackSpeed(persistedSpeed);
+    }
+    // Set player mode = full khi vào PlayerScreen
+    setPlayerMode('full');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Đồng bộ trạng thái playing sang global store
+  useEffect(() => {
+    setGlobalPlaying(isTrackPlaying);
+  }, [isTrackPlaying, setGlobalPlaying]);
+
+  // Lưu session khi unmount (để restore sau)
+  useEffect(() => {
+    return () => {
+      if (audioUrl && timestamps) {
+        saveSession({
+          audioUrl,
+          title: conversation?.title || config.topic || 'Bài nghe',
+          lastPosition: progress.position,
+          duration: progress.duration,
+          timestamps,
+          savedAt: new Date().toISOString(),
+          topic: config.topic || '',
+        });
+        console.log('💾 [Player] Đã lưu session cho restore');
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl, timestamps]);
 
   /**
    * Mục đích: Gọi API sinh audio TTS khi có conversation nhưng chưa có audioUrl
@@ -142,6 +189,10 @@ export default function ListeningPlayerScreen({
             voicePerSpeaker: randomVoice ? undefined : voicePerSpeaker,
             multiTalker,
             multiTalkerPairIndex: multiTalker ? multiTalkerPairIndex : undefined,
+            emotion: ttsEmotion,
+            pitch: ttsPitch,
+            rate: ttsRate,
+            volume: ttsVolume,
           },
         );
 
@@ -311,6 +362,7 @@ export default function ListeningPlayerScreen({
         } catch {
           // Bỏ qua nếu player chưa setup
         }
+        setPlayerMode('hidden'); // Reset global player
         audioGenRequestedRef.current = false;
         reset();
         navigation.goBack();
@@ -329,7 +381,7 @@ export default function ListeningPlayerScreen({
     const nextIdx = (currentIdx + 1) % SPEEDS.length;
     const newSpeed = SPEEDS[nextIdx];
     setPlaybackSpeed(newSpeed);
-    // Áp dụng tốc độ cho Track Player
+    setPersistedSpeed(newSpeed); // Persist qua phiên tiếp theo
     try {
       await TrackPlayer.setRate(newSpeed);
       haptic.light();
@@ -490,14 +542,30 @@ export default function ListeningPlayerScreen({
       {/* Header */}
       <View className="px-6 pt-safe-offset-4 pb-3 flex-row items-center justify-between">
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            // Nếu đang phát audio → chuyển sang compact mode (audio vẫn phát)
+            if (isTrackPlaying && audioUrl) {
+              setPlayerMode('compact');
+              navigation.goBack();
+            } else {
+              setPlayerMode('hidden');
+              navigation.goBack();
+            }
+          }}
           className="p-2 -ml-2">
           <Icon name="ArrowLeft" className="w-6 h-6 text-foreground" />
         </TouchableOpacity>
         <AppText className="text-foreground font-sans-bold text-lg flex-1 text-center">
           {conversation.title || config.topic || 'Bài nghe'}
         </AppText>
-        <View className="w-10" />
+        {/* Nút Pocket Mode — bỏ túi nghe thụ động */}
+        <TouchableOpacity
+          onPress={() => setPocketMode(true)}
+          className="p-2 -mr-2"
+          accessibilityLabel="Bật Pocket Mode"
+          accessibilityRole="button">
+          <Icon name="Moon" className="w-5 h-5 text-neutrals400" />
+        </TouchableOpacity>
       </View>
 
       {/* Audio generation status banner */}
@@ -723,6 +791,12 @@ export default function ListeningPlayerScreen({
           console.log('🔊 [PlayerScreen] Phát âm từ, URL:', audioUrl);
         }}
       />
+      {/* Pocket Mode — full-screen overlay đen */}
+      {pocketMode && (
+        <View className="absolute inset-0" style={{zIndex: 999}}>
+          <PocketMode onExit={() => setPocketMode(false)} />
+        </View>
+      )}
     </View>
   );
 }

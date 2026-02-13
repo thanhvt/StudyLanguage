@@ -51,6 +51,14 @@ interface ListeningState {
   savedWords: string[];
   /** Hiển thị bản dịch tiếng Việt hay không */
   showTranslation: boolean;
+  /** Emotion cho Azure TTS (express-as style) */
+  ttsEmotion: string;
+  /** Pitch adjustment -20 to +20 (%) */
+  ttsPitch: number;
+  /** Rate adjustment -20 to +20 (%) */
+  ttsRate: number;
+  /** Volume 0-100 (%) */
+  ttsVolume: number;
 }
 
 interface ListeningActions {
@@ -104,6 +112,14 @@ interface ListeningActions {
   removeSavedWord: (word: string) => void;
   /** Toggle hiển thị bản dịch tiếng Việt */
   toggleTranslation: () => void;
+  /** Set TTS emotion style */
+  setTtsEmotion: (emotion: string) => void;
+  /** Set TTS pitch (-20 to +20) */
+  setTtsPitch: (pitch: number) => void;
+  /** Set TTS rate (-20 to +20) */
+  setTtsRate: (rate: number) => void;
+  /** Set TTS volume (0-100) */
+  setTtsVolume: (volume: number) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -136,6 +152,10 @@ const initialState: ListeningState = {
   bookmarkedIndexes: [],
   savedWords: [],
   showTranslation: true,
+  ttsEmotion: 'default',
+  ttsPitch: 0,
+  ttsRate: 0,
+  ttsVolume: 100,
 };
 
 /**
@@ -217,6 +237,11 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
 
     toggleTranslation: () =>
       set(state => ({showTranslation: !state.showTranslation})),
+
+    setTtsEmotion: emotion => set({ttsEmotion: emotion}),
+    setTtsPitch: pitch => set({ttsPitch: Math.max(-20, Math.min(20, pitch))}),
+    setTtsRate: rate => set({ttsRate: Math.max(-20, Math.min(20, rate))}),
+    setTtsVolume: volume => set({ttsVolume: Math.max(0, Math.min(100, volume))}),
 
     reset: () => set(initialState),
   }),

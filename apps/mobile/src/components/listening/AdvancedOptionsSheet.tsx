@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import Slider from '@react-native-community/slider';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +14,7 @@ import {Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useListeningStore} from '@/store/useListeningStore';
 
 // ============================================
 // TYPES & CONSTANTS
@@ -337,6 +339,12 @@ export default function AdvancedOptionsSheet({
               )}
             </View>
           )}
+
+          {/* =====================================================
+              SECTION 4: TTS Emotion & Prosody Fine-tuning
+              Các cài đặt Azure SSML: emotion, pitch, rate, volume
+              ===================================================== */}
+          <TtsProsodySection disabled={disabled} />
         </ScrollView>
       </View>
     </Modal>
@@ -599,3 +607,158 @@ function LevelChip({
     </Animated.View>
   );
 }
+
+// ==================================================
+// AZURE EMOTION STYLES
+// ==================================================
+const AZURE_EMOTIONS = [
+  {value: 'default', label: 'Mặc định', emoji: '🎤'},
+  {value: 'cheerful', label: 'Vui vẻ', emoji: '😊'},
+  {value: 'sad', label: 'Buồn', emoji: '😢'},
+  {value: 'angry', label: 'Tức giận', emoji: '😠'},
+  {value: 'friendly', label: 'Thân thiện', emoji: '🤗'},
+  {value: 'excited', label: 'Phấn khích', emoji: '🤩'},
+];
+
+/**
+ * Mục đích: Section điều chỉnh TTS emotion & prosody (Azure SSML)
+ * Tham số đầu vào: disabled (boolean)
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: AdvancedOptionsSheet → Section 4
+ *   - Emotion: chọn style cho <mstts:express-as>
+ *   - Pitch/Rate/Volume: điều chỉnh <prosody> element
+ */
+function TtsProsodySection({disabled}: {disabled?: boolean}) {
+  const colors = useColors();
+  const haptic = useHaptic();
+
+  const ttsEmotion = useListeningStore(s => s.ttsEmotion);
+  const ttsPitch = useListeningStore(s => s.ttsPitch);
+  const ttsRate = useListeningStore(s => s.ttsRate);
+  const ttsVolume = useListeningStore(s => s.ttsVolume);
+  const setTtsEmotion = useListeningStore(s => s.setTtsEmotion);
+  const setTtsPitch = useListeningStore(s => s.setTtsPitch);
+  const setTtsRate = useListeningStore(s => s.setTtsRate);
+  const setTtsVolume = useListeningStore(s => s.setTtsVolume);
+
+  return (
+    <View className="mt-6">
+      {/* Tiêu đề */}
+      <View className="flex-row items-center mb-4">
+        <AppText className="text-lg mr-2">🎭</AppText>
+        <AppText className="text-foreground font-sans-bold text-base">
+          Giọng nói & Biểu cảm
+        </AppText>
+      </View>
+
+      {/* Emotion picker */}
+      <AppText className="text-neutrals400 text-xs mb-2 px-1">
+        Phong cách đọc (Azure Neural):
+      </AppText>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{gap: 8, paddingRight: 16}}>
+        {AZURE_EMOTIONS.map(em => {
+          const isSelected = ttsEmotion === em.value;
+          return (
+            <TouchableOpacity
+              key={em.value}
+              className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-primary/15 border-primary/30' : 'bg-neutrals900 border-transparent'}`}
+              onPress={() => {
+                haptic.light();
+                setTtsEmotion(em.value);
+              }}
+              disabled={disabled}
+              activeOpacity={0.7}
+              accessibilityLabel={`Phong cách ${em.label}${isSelected ? ', đang chọn' : ''}`}
+              accessibilityRole="button">
+              <AppText className={`text-sm ${isSelected ? 'text-primary font-sans-medium' : 'text-foreground'}`}>
+                {em.emoji} {em.label}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Prosody sliders */}
+      <View className="mt-5 gap-4">
+        {/* Pitch */}
+        <View>
+          <View className="flex-row items-center justify-between mb-1">
+            <AppText className="text-neutrals400 text-xs">
+              Cao độ (Pitch)
+            </AppText>
+            <TouchableOpacity onPress={() => { haptic.light(); setTtsPitch(0); }}>
+              <AppText className="text-primary text-xs">
+                {ttsPitch > 0 ? `+${ttsPitch}%` : `${ttsPitch}%`}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+          <Slider
+            value={ttsPitch}
+            minimumValue={-20}
+            maximumValue={20}
+            step={5}
+            onValueChange={setTtsPitch}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.neutrals800}
+            thumbTintColor={colors.primary}
+            disabled={disabled}
+          />
+        </View>
+
+        {/* Rate */}
+        <View>
+          <View className="flex-row items-center justify-between mb-1">
+            <AppText className="text-neutrals400 text-xs">
+              Tốc độ (Rate)
+            </AppText>
+            <TouchableOpacity onPress={() => { haptic.light(); setTtsRate(0); }}>
+              <AppText className="text-primary text-xs">
+                {ttsRate > 0 ? `+${ttsRate}%` : `${ttsRate}%`}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+          <Slider
+            value={ttsRate}
+            minimumValue={-20}
+            maximumValue={20}
+            step={5}
+            onValueChange={setTtsRate}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.neutrals800}
+            thumbTintColor={colors.primary}
+            disabled={disabled}
+          />
+        </View>
+
+        {/* Volume */}
+        <View>
+          <View className="flex-row items-center justify-between mb-1">
+            <AppText className="text-neutrals400 text-xs">
+              Âm lượng (Volume)
+            </AppText>
+            <TouchableOpacity onPress={() => { haptic.light(); setTtsVolume(100); }}>
+              <AppText className="text-primary text-xs">
+                {ttsVolume}%
+              </AppText>
+            </TouchableOpacity>
+          </View>
+          <Slider
+            value={ttsVolume}
+            minimumValue={0}
+            maximumValue={100}
+            step={10}
+            onValueChange={setTtsVolume}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.neutrals800}
+            thumbTintColor={colors.primary}
+            disabled={disabled}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+

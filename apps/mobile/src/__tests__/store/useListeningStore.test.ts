@@ -678,4 +678,83 @@ describe('useListeningStore', () => {
       expect(words).toContain('tạm biệt');
     });
   });
+
+  // ========================
+  // TTS Emotion & Prosody (Sprint 2.7)
+  // ========================
+  describe('TTS Emotion & Prosody', () => {
+    // Defaults
+    it('ttsEmotion mặc định là "default"', () => {
+      expect(useListeningStore.getState().ttsEmotion).toBe('default');
+    });
+
+    it('ttsPitch mặc định là 0', () => {
+      expect(useListeningStore.getState().ttsPitch).toBe(0);
+    });
+
+    it('ttsRate mặc định là 0', () => {
+      expect(useListeningStore.getState().ttsRate).toBe(0);
+    });
+
+    it('ttsVolume mặc định là 100', () => {
+      expect(useListeningStore.getState().ttsVolume).toBe(100);
+    });
+
+    // Setters
+    it('setTtsEmotion cập nhật emotion style', () => {
+      useListeningStore.getState().setTtsEmotion('cheerful');
+      expect(useListeningStore.getState().ttsEmotion).toBe('cheerful');
+
+      useListeningStore.getState().setTtsEmotion('sad');
+      expect(useListeningStore.getState().ttsEmotion).toBe('sad');
+    });
+
+    it('setTtsPitch cập nhật pitch', () => {
+      useListeningStore.getState().setTtsPitch(10);
+      expect(useListeningStore.getState().ttsPitch).toBe(10);
+
+      useListeningStore.getState().setTtsPitch(-15);
+      expect(useListeningStore.getState().ttsPitch).toBe(-15);
+    });
+
+    it('setTtsRate cập nhật rate', () => {
+      useListeningStore.getState().setTtsRate(20);
+      expect(useListeningStore.getState().ttsRate).toBe(20);
+
+      useListeningStore.getState().setTtsRate(-10);
+      expect(useListeningStore.getState().ttsRate).toBe(-10);
+    });
+
+    it('setTtsVolume cập nhật volume', () => {
+      useListeningStore.getState().setTtsVolume(50);
+      expect(useListeningStore.getState().ttsVolume).toBe(50);
+
+      useListeningStore.getState().setTtsVolume(0);
+      expect(useListeningStore.getState().ttsVolume).toBe(0);
+    });
+
+    // Reset
+    it('reset() đưa TTS prosody về default', () => {
+      useListeningStore.getState().setTtsEmotion('angry');
+      useListeningStore.getState().setTtsPitch(15);
+      useListeningStore.getState().setTtsRate(-10);
+      useListeningStore.getState().setTtsVolume(30);
+
+      useListeningStore.getState().reset();
+
+      expect(useListeningStore.getState().ttsEmotion).toBe('default');
+      expect(useListeningStore.getState().ttsPitch).toBe(0);
+      expect(useListeningStore.getState().ttsRate).toBe(0);
+      expect(useListeningStore.getState().ttsVolume).toBe(100);
+    });
+
+    // All 6 Azure emotions
+    it('setTtsEmotion chấp nhận tất cả 6 Azure styles', () => {
+      const emotions = ['default', 'cheerful', 'sad', 'angry', 'fearful', 'friendly'];
+      for (const emo of emotions) {
+        useListeningStore.getState().setTtsEmotion(emo);
+        expect(useListeningStore.getState().ttsEmotion).toBe(emo);
+      }
+    });
+  });
 });

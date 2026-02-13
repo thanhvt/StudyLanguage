@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react';
+import {View} from 'react-native';
 import {useAuthStore} from '@/store/useAuthStore';
 import {authService} from '@/services/supabase/auth';
 import AuthStack from './AuthStack';
 import MainStack from './MainTabNavigator';
 import SplashScreen from '@/screens/SplashScreen';
+import {CompactPlayer, MinimizedPlayer} from '@/components/listening';
 
 // Thời gian tối thiểu hiển thị splash (ms) — đủ để animation chạy hết
 const SPLASH_MIN_DURATION = 3500;
@@ -20,6 +22,7 @@ const SPLASH_MIN_DURATION = 3500;
  *   3. Sau khi cả 2 điều kiện thỏa (auth checked + 2.5s) → chuyển scene
  *   4. Nếu có session → MainStack, không → AuthStack
  *   5. Lắng nghe onAuthStateChange để cập nhật realtime
+ *   6. CompactPlayer + MinimizedPlayer overlay trên MainStack khi có audio
  */
 export default function RootNavigator() {
   const isInitialized = useAuthStore(state => state.isInitialized);
@@ -81,6 +84,17 @@ export default function RootNavigator() {
     return <SplashScreen />;
   }
 
-  // Conditional render: Auth hoặc Main
-  return session ? <MainStack /> : <AuthStack />;
+  // Conditional render: Auth hoặc Main + Global Players overlay
+  if (!session) {
+    return <AuthStack />;
+  }
+
+  return (
+    <View style={{flex: 1}}>
+      <MainStack />
+      {/* Global Players — luôn render, tự ẩn khi playerMode !== compact/minimized */}
+      <CompactPlayer />
+      <MinimizedPlayer />
+    </View>
+  );
 }

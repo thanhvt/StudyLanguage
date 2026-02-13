@@ -1,19 +1,11 @@
-import React, {useState} from 'react';
-import {TextInput, TouchableOpacity, View} from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {TextInput, TouchableOpacity, View, ActivityIndicator} from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
-
-/** Custom scenario item */
-interface CustomScenarioItem {
-  id: string;
-  name: string;
-  description: string;
-  isFavorite: boolean;
-  createdAt: number;
-}
+import {customScenarioApi, CustomScenario} from '@/services/api/customScenarios';
 
 interface CustomScenarioInputProps {
   /** Callback khi user muốn dùng ngay 1 scenario */
@@ -24,16 +16,15 @@ interface CustomScenarioInputProps {
 }
 
 /**
- * Mục đích: Component tạo và quản lý kịch bản tuỳ chỉnh
+ * Mục đích: Component tạo và quản lý kịch bản tuỳ chỉnh (sync backend)
  * Tham số đầu vào:
  *   - onQuickUse: callback khi user nhấn "Sử dụng ngay"
  *   - onClose: callback đóng panel (nút X)
  *   - disabled: có disable không
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: TopicPicker → tab "Custom" → hiện component này
- *   - User tạo scenario mới (tên + mô tả)
- *   - "Sử dụng ngay" → dùng không lưu
- *   - "Lưu lại" → lưu vào local (tạm thời, chờ backend)
+ *   - Load danh sách từ backend khi mount
+ *   - CRUD sync realtime với server
  */
 export default function CustomScenarioInput({
   onQuickUse,
@@ -41,15 +32,36 @@ export default function CustomScenarioInput({
   disabled = false,
 }: CustomScenarioInputProps) {
   const colors = useColors();
-  const {showSuccess, showWarning} = useToast();
+  const {showSuccess, showWarning, showError} = useToast();
   const {showConfirm} = useDialog();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  // Stub: lưu local state (chưa có DB)
-  const [savedScenarios, setSavedScenarios] = useState<CustomScenarioItem[]>(
-    [],
-  );
+  const [savedScenarios, setSavedScenarios] = useState<CustomScenario[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  /**
+   * Mục đích: Load danh sách custom scenarios từ backend
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Component mount + sau mỗi thao tác CRUD
+   */
+  const loadScenarios = useCallback(async () => {
+    try {
+      const data = await customScenarioApi.list();
+      setSavedScenarios(data);
+    } catch (error) {
+      console.log('⚠️ [CustomScenario] Lỗi load danh sách:', error);
+      // Không show error toast — có thể user chưa đăng nhập
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadScenarios();
+  }, [loadScenarios]);
 
   /**
    * Mục đích: Dùng ngay scenario mà không lưu
@@ -68,31 +80,36 @@ export default function CustomScenarioInput({
   };
 
   /**
-   * Mục đích: Lưu scenario vào local (stub cho tương lai)
+   * Mục đích: Lưu scenario qua backend API
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn "💾 Lưu lại"
    */
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       showWarning('Chưa nhập tên', 'Nhập tên kịch bản để lưu vào bộ sưu tập');
       return;
     }
-    const newScenario: CustomScenarioItem = {
-      id: `custom-${Date.now()}`,
-      name: name.trim(),
-      description: description.trim(),
-      isFavorite: false,
-      createdAt: Date.now(),
-    };
-    setSavedScenarios(prev => [newScenario, ...prev]);
-    showSuccess('Đã lưu kịch bản', `"${name.trim()}" đã được thêm vào bộ sưu tập`);
-    setName('');
-    setDescription('');
+    try {
+      setIsSaving(true);
+      const created = await customScenarioApi.create({
+        name: name.trim(),
+        description: description.trim(),
+      });
+      setSavedScenarios(prev => [created, ...prev]);
+      showSuccess('Đã lưu kịch bản', `"${name.trim()}" đã được thêm vào bộ sưu tập`);
+      setName('');
+      setDescription('');
+    } catch (error) {
+      console.error('❌ [CustomScenario] Lỗi lưu:', error);
+      showError('Lỗi lưu kịch bản', 'Vui lòng thử lại sau');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   /**
-   * Mục đích: Xoá 1 saved scenario
+   * Mục đích: Xoá 1 saved scenario qua backend API
    * Tham số đầu vào: id (string)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn biểu tượng 🗑️ trên scenario đã lưu
@@ -102,22 +119,34 @@ export default function CustomScenarioInput({
     showConfirm(
       'Xoá kịch bản?',
       `Bạn có chắc muốn xoá "${scenario?.name || 'kịch bản này'}"?`,
-      () => {
-        setSavedScenarios(prev => prev.filter(s => s.id !== id));
+      async () => {
+        try {
+          await customScenarioApi.delete(id);
+          setSavedScenarios(prev => prev.filter(s => s.id !== id));
+          showSuccess('Đã xoá', 'Kịch bản đã được xoá');
+        } catch (error) {
+          console.error('❌ [CustomScenario] Lỗi xoá:', error);
+          showError('Lỗi xoá kịch bản', 'Vui lòng thử lại');
+        }
       },
     );
   };
 
   /**
-   * Mục đích: Toggle favorite cho 1 saved scenario
+   * Mục đích: Toggle favorite cho 1 saved scenario qua backend API
    * Tham số đầu vào: id (string)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn biểu tượng ⭐ trên scenario đã lưu
    */
-  const handleToggleFavorite = (id: string) => {
-    setSavedScenarios(prev =>
-      prev.map(s => (s.id === id ? {...s, isFavorite: !s.isFavorite} : s)),
-    );
+  const handleToggleFavorite = async (id: string) => {
+    try {
+      const updated = await customScenarioApi.toggleFavorite(id);
+      setSavedScenarios(prev =>
+        prev.map(s => (s.id === id ? updated : s)),
+      );
+    } catch (error) {
+      console.error('❌ [CustomScenario] Lỗi toggle favorite:', error);
+    }
   };
 
   return (
@@ -143,24 +172,24 @@ export default function CustomScenarioInput({
 
         <TextInput
           className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: '#1a1a1a'}}
+          style={{color: colors.foreground}}
           placeholder="Tên kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={name}
           onChangeText={setName}
-          editable={!disabled}
+          editable={!disabled && !isSaving}
           maxLength={100}
           accessibilityLabel="Nhập tên kịch bản tuỳ chỉnh"
         />
 
         <TextInput
           className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: '#1a1a1a', textAlignVertical: 'top'}}
+          style={{color: colors.foreground, textAlignVertical: 'top'}}
           placeholder="Mô tả chi tiết kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={description}
           onChangeText={setDescription}
-          editable={!disabled}
+          editable={!disabled && !isSaving}
           multiline
           numberOfLines={2}
           maxLength={300}
@@ -172,7 +201,7 @@ export default function CustomScenarioInput({
             variant="primary"
             className="flex-1 rounded-xl"
             onPress={handleQuickUse}
-            disabled={disabled || !name.trim()}
+            disabled={disabled || !name.trim() || isSaving}
             accessibilityLabel="Sử dụng kịch bản ngay mà không lưu">
             ⚡ Sử dụng ngay
           </AppButton>
@@ -180,7 +209,8 @@ export default function CustomScenarioInput({
             variant="outline"
             className="flex-1 rounded-xl"
             onPress={handleSave}
-            disabled={disabled || !name.trim()}
+            disabled={disabled || !name.trim() || isSaving}
+            loading={isSaving}
             accessibilityLabel="Lưu kịch bản vào bộ sưu tập">
             💾 Lưu lại
           </AppButton>
@@ -188,7 +218,14 @@ export default function CustomScenarioInput({
       </View>
 
       {/* Danh sách đã lưu */}
-      {savedScenarios.length > 0 && (
+      {isLoading ? (
+        <View className="items-center py-4">
+          <ActivityIndicator size="small" />
+          <AppText className="text-neutrals400 text-xs mt-2">
+            Đang tải kịch bản...
+          </AppText>
+        </View>
+      ) : savedScenarios.length > 0 ? (
         <View>
           <AppText className="text-neutrals400 text-xs mb-2">
             Đã lưu ({savedScenarios.length})
@@ -236,7 +273,7 @@ export default function CustomScenarioInput({
             </TouchableOpacity>
           ))}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }

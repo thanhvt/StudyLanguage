@@ -14,3 +14,6 @@ export {default as CollapsibleSection} from './CollapsibleSection';
 export {default as TappableTranscript} from './TappableTranscript';
 export {default as DictionaryPopup} from './DictionaryPopup';
 export {default as WaveformVisualizer} from './WaveformVisualizer';
+export {default as CompactPlayer} from './CompactPlayer';
+export {default as MinimizedPlayer} from './MinimizedPlayer';
+export {default as PocketMode} from './PocketMode';

@@ -252,6 +252,14 @@ export const listeningApi = {
       multiTalker?: boolean;
       /** Index cặp giọng multi-talker */
       multiTalkerPairIndex?: number;
+      /** Emotion style cho Azure express-as (cheerful, sad, angry...) */
+      emotion?: string;
+      /** Pitch adjustment -20 to +20 (%) */
+      pitch?: number;
+      /** Rate adjustment -20 to +20 (%) */
+      rate?: number;
+      /** Volume 0-100 (%) */
+      volume?: number;
     },
   ): Promise<AudioGenerationResult> => {
     const payload: Record<string, unknown> = {
@@ -261,11 +269,16 @@ export const listeningApi = {
       })),
       // Luôn gửi provider = azure
       provider: ttsOptions?.provider ?? 'azure',
-      // Các tuỳ chọn TTS mới
+      // Các tuỳ chọn TTS
       ...(ttsOptions?.randomVoice !== undefined && {randomVoice: ttsOptions.randomVoice}),
       ...(ttsOptions?.voicePerSpeaker && {voicePerSpeaker: ttsOptions.voicePerSpeaker}),
       ...(ttsOptions?.multiTalker !== undefined && {multiTalker: ttsOptions.multiTalker}),
       ...(ttsOptions?.multiTalkerPairIndex !== undefined && {multiTalkerPairIndex: ttsOptions.multiTalkerPairIndex}),
+      // Prosody & Emotion (Azure SSML)
+      ...(ttsOptions?.emotion && ttsOptions.emotion !== 'default' && {emotion: ttsOptions.emotion}),
+      ...(ttsOptions?.pitch !== undefined && ttsOptions.pitch !== 0 && {pitch: ttsOptions.pitch}),
+      ...(ttsOptions?.rate !== undefined && ttsOptions.rate !== 0 && {rate: ttsOptions.rate}),
+      ...(ttsOptions?.volume !== undefined && ttsOptions.volume !== 100 && {volume: ttsOptions.volume}),
     };
 
     console.log(

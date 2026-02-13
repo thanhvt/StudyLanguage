@@ -29,6 +29,8 @@ import {
   TopicPickerModal,
   CollapsibleSection,
 } from '@/components/listening';
+import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
+import TrackPlayer from 'react-native-track-player';
 
 /**
  * Mục đích: Màn hình cấu hình bài nghe — redesign v2 với UX tối ưu
@@ -66,7 +68,7 @@ export default function ListeningConfigScreen({
   const [showTopicModal, setShowTopicModal] = useState(false);
 
   const {showError, showWarning} = useToast();
-  const {showLoading, hideLoading} = useDialog();
+  const {showLoading, hideLoading, showConfirm} = useDialog();
   const colors = useColors();
   const haptic = useHaptic();
   const insets = useInsets();
@@ -132,6 +134,35 @@ export default function ListeningConfigScreen({
       return;
     }
 
+    // Kiểm tra có audio đang phát không — hỏi xác nhận trước khi tạo mới
+    const globalIsPlaying = useAudioPlayerStore.getState().isPlaying;
+    if (globalIsPlaying) {
+      showConfirm(
+        'Đang phát bài nghe',
+        'Bạn có muốn dừng bài hiện tại và tạo bài mới?',
+        async () => {
+          try {
+            await TrackPlayer.reset();
+          } catch {
+            // Ignore
+          }
+          useAudioPlayerStore.getState().setPlayerMode('hidden');
+          doGenerate(topic);
+        },
+      );
+      return;
+    }
+
+    doGenerate(topic);
+  };
+
+  /**
+   * Mục đích: Thực hiện generate conversation (sau các bước validation)
+   * Tham số đầu vào: topic (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: handleGenerate gọi sau khi pass validation + network check + confirmation
+   */
+  const doGenerate = async (topic: string) => {
     // Kiểm tra kết nối mạng trước khi gọi API
     try {
       const controller = new AbortController();
@@ -490,6 +521,54 @@ export default function ListeningConfigScreen({
       <View
         className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
         style={{paddingBottom: Math.max(insets.bottom, 16)}}>
+
+        {/* Banner tiếp tục nghe — hiện khi có session đã lưu */}
+        {useAudioPlayerStore.getState().lastSession && (
+          <TouchableOpacity
+            className="flex-row items-center bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 mb-3"
+            onPress={() => {
+              haptic.light();
+              useAudioPlayerStore.getState().setPlayerMode('full');
+              navigation.navigate('Player');
+            }}
+            activeOpacity={0.7}
+            accessibilityLabel="Tiếp tục nghe bài trước"
+            accessibilityRole="button">
+            <AppText className="text-lg mr-2">▶️</AppText>
+            <View className="flex-1">
+              <AppText className="text-primary font-sans-medium text-sm" numberOfLines={1}>
+                Tiếp tục nghe
+              </AppText>
+              <AppText className="text-neutrals400 text-xs" numberOfLines={1}>
+                {useAudioPlayerStore.getState().lastSession?.title}
+              </AppText>
+            </View>
+            <Icon name="ChevronRight" className="w-4 h-4 text-primary" />
+          </TouchableOpacity>
+        )}
+
+        {/* Radio Mode — nghe thụ động */}
+        <TouchableOpacity
+          className="flex-row items-center bg-accent/10 border border-accent/20 rounded-2xl px-4 py-3 mb-3"
+          onPress={() => {
+            haptic.light();
+            navigation.navigate('Radio');
+          }}
+          activeOpacity={0.7}
+          accessibilityLabel="Chuyển sang Radio Mode"
+          accessibilityRole="button">
+          <AppText className="text-lg mr-2">📻</AppText>
+          <View className="flex-1">
+            <AppText className="text-accent font-sans-medium text-sm">
+              Radio Mode
+            </AppText>
+            <AppText className="text-neutrals400 text-xs">
+              Nghe thụ động playlist random AI
+            </AppText>
+          </View>
+          <Icon name="ChevronRight" className="w-4 h-4 text-accent" />
+        </TouchableOpacity>
+
         <View
           style={
             hasValidTopic
