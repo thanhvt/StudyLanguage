@@ -324,6 +324,121 @@ describe('listeningApi', () => {
       expect(callPayload.conversation[0].vietnamese).toBeUndefined();
     });
   });
+
+  // ========================
+  // 🆕 Coverage Gaps — keywords, numSpeakers, edge cases
+  // ========================
+  describe('generateConversation — coverage gaps', () => {
+    const minimalConfig = {
+      topic: 'Test Topic',
+      durationMinutes: 10,
+      level: 'intermediate' as const,
+    };
+
+    beforeEach(() => {
+      (apiClient.post as jest.Mock).mockResolvedValue({data: {script: []}});
+    });
+
+    // Gửi keywords + numSpeakers trong payload (backend DTO mới hỗ trợ)
+    it('gửi keywords và numSpeakers trong payload', async () => {
+      await listeningApi.generateConversation({
+        ...minimalConfig,
+        keywords: 'coffee, deadline',
+        numSpeakers: 3,
+      });
+
+      const payload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(payload.keywords).toBe('coffee, deadline');
+      expect(payload.numSpeakers).toBe(3);
+    });
+
+    // Keywords undefined → không gửi giá trị rác
+    it('keywords undefined khi không truyền', async () => {
+      await listeningApi.generateConversation(minimalConfig);
+
+      const payload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(payload.keywords).toBeUndefined();
+    });
+
+    // Response thiếu vocabulary → trả mảng rỗng
+    it('trả vocabulary rỗng khi response không có vocabulary', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        data: {script: [{speaker: 'A', text: 'Hi'}]},
+      });
+
+      const result = await listeningApi.generateConversation(minimalConfig);
+
+      expect(result.vocabulary).toEqual([]);
+    });
+
+    // Response thiếu title → trả undefined
+    it('title undefined khi response không có title', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        data: {script: []},
+      });
+
+      const result = await listeningApi.generateConversation(minimalConfig);
+
+      expect(result.title).toBeUndefined();
+    });
+
+    // Config chỉ truyền topic (dùng default) → vẫn gửi đầy đủ
+    it('gửi level và includeVietnamese đúng khi truyền', async () => {
+      await listeningApi.generateConversation({
+        ...minimalConfig,
+        level: 'beginner',
+        includeVietnamese: true,
+      });
+
+      const payload = (apiClient.post as jest.Mock).mock.calls[0][1];
+      expect(payload.level).toBe('beginner');
+      expect(payload.includeVietnamese).toBe(true);
+    });
+
+    // Response có cả script + conversation → ưu tiên script
+    it('ưu tiên script khi response có cả script lẫn conversation', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          script: [{speaker: 'A', text: 'From script'}],
+          conversation: [{speaker: 'B', text: 'From conversation'}],
+        },
+      });
+
+      const result = await listeningApi.generateConversation(minimalConfig);
+
+      expect(result.conversation[0].text).toBe('From script');
+    });
+  });
+
+  describe('generateConversationAudio — coverage gaps', () => {
+    // Gọi đúng endpoint
+    it('gọi endpoint /ai/generate-conversation-audio', async () => {
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        data: {audioUrl: 'url', timestamps: []},
+      });
+
+      await listeningApi.generateConversationAudio([
+        {speaker: 'A', text: 'Hi'},
+      ]);
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/ai/generate-conversation-audio',
+        expect.any(Object),
+        expect.objectContaining({timeout: 180000}),
+      );
+    });
+
+    // API lỗi → throw
+    it('throw error khi TTS API lỗi', async () => {
+      (apiClient.post as jest.Mock).mockRejectedValueOnce(
+        new Error('TTS Service Unavailable'),
+      );
+
+      await expect(
+        listeningApi.generateConversationAudio([{speaker: 'A', text: 'Hi'}]),
+      ).rejects.toThrow('TTS Service Unavailable');
+    });
+  });
 });
 
 // ========================

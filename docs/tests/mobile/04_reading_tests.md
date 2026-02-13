@@ -1,90 +1,154 @@
-# 📖 Reading - Test Scenarios
+# 📖 Reading Module — Tài Liệu Test Toàn Diện
 
-> **Module:** Reading
-> **Phase:** MVP → Enhanced
-> **Ref:** `docs/mobile/features/04_Reading.md`
-
----
-
-## MVP Phase
-
-### 1. Configuration Screen
-
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-MVP-HP-001 | ✅ | Mở Reading screen | 1. Tap 📖 Luyện đọc từ Dashboard | Config screen: Topic, Level, Length hiển thị | 🔴 |
-| MOB-READ-MVP-HP-002 | ✅ | Chọn config & bắt đầu | 1. Chọn topic + level<br>2. Tap "Start Reading" | AI generate article → Article view hiển thị | 🔴 |
-| MOB-READ-MVP-ERR-001 | ❌ | API generate article lỗi | 1. Start → server timeout | Error + Retry, config giữ nguyên | 🔴 |
-
-### 2. Article View
-
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-MVP-HP-003 | ✅ | Hiển thị article | 1. Article load xong | Tiêu đề, nội dung, font rõ ràng, dễ đọc | 🔴 |
-| MOB-READ-MVP-HP-004 | ✅ | Scroll article | 1. Swipe up/down | Scroll mượt, không lag với bài dài | 🟡 |
-| MOB-READ-MVP-HP-005 | ✅ | Font size control | 1. Tap font size button<br>2. Chọn Large | Text tăng size, re-render mượt | 🟡 |
-
-### 3. Tap-to-Translate
-
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-MVP-HP-006 | ✅ | Tap từ → Dictionary popup | 1. Tap vào từ "unprecedented" | Popup: nghĩa VN, IPA, type (noun/verb), nút 🔊 | 🔴 |
-| MOB-READ-MVP-HP-007 | ✅ | Nghe phát âm từ | 1. Tap từ<br>2. Tap 🔊 trong popup | TTS phát âm từ đó | 🟡 |
-| MOB-READ-MVP-HP-008 | ✅ | Save từ | 1. Tap từ<br>2. Tap "Save" | Từ lưu vào Saved Words, toast confirm | 🟡 |
-| MOB-READ-MVP-HP-009 | ✅ | Dismiss popup | 1. Tap bên ngoài popup | Popup đóng smooth | 🟢 |
-| MOB-READ-MVP-EC-001 | ⚠️ | Tap từ khi popup đang mở | 1. Tap từ A → popup mở<br>2. Tap từ B | Popup switch sang từ B, không mở 2 popup | 🟡 |
-| MOB-READ-MVP-EC-002 | ⚠️ | Tap từ có ký tự đặc biệt | 1. Tap "don't" hoặc "it's" | Popup tra cả từ gốc: "don't" → do not | 🟡 |
-| MOB-READ-MVP-EC-003 | ⚠️ | Tap từ viết hoa | 1. Tap "United" (đầu câu) | Tra đúng nghĩa, không bị ảnh hưởng uppercase | 🟡 |
-
-### 4. Reading Practice (Quiz)
-
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-MVP-HP-010 | ✅ | Start quiz sau đọc bài | 1. Đọc xong article<br>2. Tap "Take Quiz" | Quiz screen: câu hỏi comprehension + answer choices | 🔴 |
-| MOB-READ-MVP-HP-011 | ✅ | Chọn đáp án & submit | 1. Chọn đáp án A<br>2. Tap "Submit" | Kết quả hiển thị: ✅ Correct / ❌ Wrong + giải thích | 🔴 |
-| MOB-READ-MVP-HP-012 | ✅ | Quiz score summary | 1. Hoàn thành tất cả câu hỏi | Summary: X/Y correct, overall %, review wrong answers | 🟡 |
-| MOB-READ-MVP-EC-004 | ⚠️ | Đổi đáp án trước khi submit | 1. Chọn A → chọn B → Submit | Hệ thống ghi nhận B là đáp án cuối | 🟡 |
+> **Module:** Reading (MVP)  
+> **Phase:** MVP → Enhanced  
+> **Ref:** `docs/mobile/features/04_Reading.md`  
+> **Last Updated:** 2026-02-13
 
 ---
 
-## Enhanced Phase
+## 📊 Tổng Quan Test Coverage
 
-### 5. Focus Mode
+| Loại Test | Số lượng | Trạng thái |
+|-----------|----------|------------|
+| **Unit Tests** (Jest) | 28 tests | ✅ 28/28 passed |
+| **Smoke Tests** (Manual) | 6 scenarios | 🔲 Chưa test |
+| **Functional Tests** (Manual) | 18 scenarios | 🔲 Chưa test |
+| **Monkey Tests** (Free-form) | 10 scenarios | 🔲 Chưa test |
+| **Edge Case Tests** (Manual) | 8 scenarios | 🔲 Chưa test |
 
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-ENH-HP-001 | ✅ | Bật Focus Mode | 1. Tap "Focus Mode" toggle | Background dimmed, chỉ highlight 1 đoạn đang đọc | 🟡 |
-| MOB-READ-ENH-HP-002 | ✅ | Navigate paragraphs | 1. Trong Focus Mode<br>2. Swipe lên/xuống | Di chuyển spotlight qua đoạn trước/sau | 🟡 |
-| MOB-READ-ENH-HP-003 | ✅ | Exit Focus Mode | 1. Tap toggle hoặc zoom out | Trở về view bình thường | 🟢 |
+---
 
-### 6. Reading Practice - AI Analysis
+## 1️⃣ UNIT TESTS (Automated)
 
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-ENH-HP-004 | ✅ | Read aloud practice | 1. Tap microphone trong reading mode<br>2. Đọc to đoạn văn | Audio ghi → AI analyze pronunciation, fluency | 🟡 |
-| MOB-READ-ENH-HP-005 | ✅ | AI feedback cho reading | 1. Hoàn thành read aloud | Score: pronunciation + fluency + highlighted errors | 🟡 |
-| MOB-READ-ENH-ERR-001 | ❌ | Mic permission denied khi read aloud | 1. Deny mic<br>2. Tap mic button | Hướng dẫn bật quyền, không crash | 🔴 |
+> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useReadingStore|readingApi" --verbose`
 
-### 7. Display Settings
+### Store Tests — `useReadingStore.test.ts` (16 tests ✅)
 
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-ENH-HP-006 | ✅ | Đổi font size | 1. Settings → Small/Medium/Large | Text resize real-time, preview hiển thị | 🟡 |
-| MOB-READ-ENH-HP-007 | ✅ | Theme trong Reading | 1. Chọn Dark/Light/Sepia | Background & text color thay đổi theo theme | 🟡 |
-| MOB-READ-ENH-HP-008 | ✅ | Line spacing | 1. Adjust line spacing slider | Text re-layout với spacing mới | 🟢 |
-| MOB-READ-ENH-EC-001 | ⚠️ | Settings persist khi quay lại | 1. Set font Large + Dark theme<br>2. Exit & re-enter Reading | Settings vẫn giữ nguyên | 🟡 |
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Config (setConfig, merge) | 3 | ✅ |
+| 2 | Article (setArticle, clear) | 3 | ✅ |
+| 3 | Loading States | 2 | ✅ |
+| 4 | Dictionary (setSelectedWord, clear) | 3 | ✅ |
+| 5 | Error handling | 2 | ✅ |
+| 6 | Defaults + Reset | 3 | ✅ |
 
-### 8. TTS Auto-read
+### API Tests — `readingApi.test.ts` (12 tests ✅)
 
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-ENH-HP-009 | ✅ | Bật auto-read article | 1. Tap 🔊 "Auto-read" | TTS đọc to bài viết, highlight theo câu đang đọc | 🟡 |
-| MOB-READ-ENH-HP-010 | ✅ | Pause/Resume auto-read | 1. Tap pause → resume | TTS dừng → tiếp tục từ chỗ dừng | 🟡 |
-| MOB-READ-ENH-EC-002 | ⚠️ | Auto-read với bài dài (3000+ từ) | 1. Bật auto-read cho bài rất dài | Không crash, memory ổn định, smooth scroll theo | 🟡 |
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | generateArticle (prompt, parsing, fallback) | 4 | ✅ |
+| 2 | lookupWord (payload, response mapping) | 3 | ✅ |
+| 3 | textToSpeech (payload) | 2 | ✅ |
+| 4 | getStats (data, fallback) | 3 | ✅ |
 
-### 9. Gestures
+---
 
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-READ-ENH-HP-011 | ✅ | Long press word → Highlight & Save | 1. Long press từ "climate" | Từ highlight vàng + popup option: Save / Highlight Only | 🟡 |
-| MOB-READ-ENH-HP-012 | ✅ | Pinch to zoom | 1. Pinch in/out trên article | Text zoom in/out mượt | 🟢 |
+## 2️⃣ SMOKE TESTS (Chạy đầu tiên — tối thiểu 3 phút)
+
+> **Mục đích:** Verify luồng đọc bài hoạt động end-to-end  
+> **Khi nào chạy:** Sau mỗi build, trước khi test chi tiết
+
+| ID | Scenario | Steps | Expected | ✅/❌ |
+|:---|:---------|:------|:---------|:------|
+| SMK-R01 | Navigate ConfigScreen | 1. Dashboard → "📖 Luyện Đọc" | ConfigScreen hiện: topic input, chips, level, length | 🔲 |
+| SMK-R02 | Chọn config | 1. Nhập topic / chip<br>2. Chọn level + length | Config cập nhật, nút Start enable | 🔲 |
+| SMK-R03 | Generate article | 1. Tap "Bắt đầu" | Loading → ArticleScreen với bài viết hoàn chỉnh | 🔲 |
+| SMK-R04 | Đọc + scroll | 1. Scroll bài viết lên/xuống | Smooth, không lag, text rõ | 🔲 |
+| SMK-R05 | Tap-to-translate | 1. Tap 1 từ bất kỳ | Dictionary popup hiện: nghĩa VN, IPA, phát âm | 🔲 |
+| SMK-R06 | Quay lại | 1. Tap ← | Về ConfigScreen, không crash | 🔲 |
+
+---
+
+## 3️⃣ FUNCTIONAL TESTS (Manual — chi tiết)
+
+### 3.1 ConfigScreen
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-RCFG-01 | ✅ | Mở ReadingConfigScreen | 1. Dashboard → Luyện đọc | Header, topic input, chips, level, length, nút Start | 🔴 | 🔲 |
+| FT-RCFG-02 | ✅ | Nhập topic tay | 1. Gõ "Climate change" | Text hiện, nút Start enable | 🔴 | 🔲 |
+| FT-RCFG-03 | ✅ | Chọn chip gợi ý | 1. Tap chip "🌍 Môi trường" | Chip highlight, input auto-fill | 🟡 | 🔲 |
+| FT-RCFG-04 | ✅ | Chọn level | 1. SegmentedControl → Nâng cao | Mô tả level đổi theo | 🟡 | 🔲 |
+| FT-RCFG-05 | ✅ | Chọn length | 1. Chọn "Dài" | Length updated | 🟡 | 🔲 |
+| FT-RCFG-06 | ❌ | Start không topic | 1. Xóa topic<br>2. Tap Start | Nút disabled hoặc validation error | 🔴 | 🔲 |
+| FT-RCFG-07 | ❌ | API generate lỗi | 1. Server down<br>2. Tap Start | Error message, không crash | 🔴 | 🔲 |
+
+### 3.2 ArticleScreen
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-RART-01 | ✅ | Hiển thị article | 1. Generate xong | Tiêu đề + nội dung hiện đẹp, font rõ | 🔴 | 🔲 |
+| FT-RART-02 | ✅ | Scroll mượt | 1. Scroll bài dài | Không lag, không stuttering | 🟡 | 🔲 |
+| FT-RART-03 | ✅ | Tap từ → popup | 1. Tap "unprecedented" | Popup: nghĩa VN, IPA, loại từ, nút 🔊 | 🔴 | 🔲 |
+| FT-RART-04 | ✅ | Phát âm từ | 1. Trong popup tap 🔊 | TTS đọc từ | 🟡 | 🔲 |
+| FT-RART-05 | ✅ | Save từ vào list | 1. Popup → Tap "Save" | Toast confirm, từ lưu vào Saved | 🟡 | 🔲 |
+| FT-RART-06 | ✅ | Dismiss popup | 1. Tap bên ngoài popup | Popup đóng mượt | 🟢 | 🔲 |
+| FT-RART-07 | ⚠️ | Tap từ khi popup đang mở | 1. Tap từ A → popup<br>2. Tap từ B | Popup switch sang từ B, không mở 2 popup | 🟡 | 🔲 |
+| FT-RART-08 | ⚠️ | Tap "don't" / "it's" | 1. Tap contraction word | Tra đúng nghĩa gốc | 🟡 | 🔲 |
+| FT-RART-09 | ✅ | Back button | 1. Tap ← | ConfigScreen, config giữ nguyên | 🟡 | 🔲 |
+
+### 3.3 Enhanced Phase (sau MVP)
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-RENH-01 | ✅ | Focus Mode toggle | 1. Bật Focus Mode | Background dim, highlight 1 đoạn | 🟡 | 🔲 |
+| FT-RENH-02 | ✅ | Auto-read article | 1. Tap 🔊 Auto-read | TTS đọc bài, highlight theo câu | 🟡 | 🔲 |
+
+---
+
+## 4️⃣ MONKEY TESTS (Free-form — Thao tác ngẫu nhiên)
+
+> **Mục đích:** Phát hiện crash, memory leak, UI glitch  
+> **Thời gian:** 10 phút, thao tác TỰ DO  
+
+| ID | Scenario | Thao tác | Quan sát | ✅/❌ |
+|:---|:---------|:---------|:---------|:------|
+| MNK-R01 | Spam tap Start | 1. Nhập topic<br>2. Tap Start 10 lần nhanh | Không duplicate navigate, loading hiện 1 lần | 🔲 |
+| MNK-R02 | Spam tap từ trong bài | 1. Tap 10 từ khác nhau rất nhanh (< 0.3s/từ) | Popup switch mượt, không crash, audio không chồng | 🔲 |
+| MNK-R03 | Scroll + tap từ đồng thời | 1. Scroll nhanh + tap từ giữa scroll | Popup hiện đúng từ, scroll dừng | 🔲 |
+| MNK-R04 | Back nhanh giữa generate | 1. Tap Start (loading)<br>2. Tap Back ngay | Loading cancel/ignore, quay Config, không treo | 🔲 |
+| MNK-R05 | Tắt mạng giữa generate | 1. Tap Start<br>2. Tắt WiFi ngay | Error hiện, không treo vô hạn | 🔲 |
+| MNK-R06 | Minimize app giữa đọc bài | 1. Đang đọc bài<br>2. Home button<br>3. Mở lại | Bài vẫn đúng, scroll position nhớ | 🔲 |
+| MNK-R07 | Xoay device | 1. Đang đọc<br>2. Xoay ngang → dọc | Layout re-render đúng, text wrap lại | 🔲 |
+| MNK-R08 | Nhập topic emoji/unicode | 1. Gõ "🏖️ 寿司 مرحبا"<br>2. Tap Start | Generate hoặc error graceful | 🔲 |
+| MNK-R09 | Mở/đóng popup 20 lần | 1. Tap từ → đóng → tap từ khác × 20 | Không memory leak, smooth | 🔲 |
+| MNK-R10 | Đổi chip liên tục + Start | 1. Tap 5 chip nhanh<br>2. Tap Start ngay | Dùng chip cuối cùng, generate đúng | 🔲 |
+
+---
+
+## 5️⃣ EDGE CASE TESTS
+
+| ID | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:---------|:------|:----------------|:---------|:------|
+| EC-R01 | Article rỗng (API bug) | 1. API trả article rỗng | Fallback "Không tạo được bài", nút retry | 🔴 | 🔲 |
+| EC-R02 | Dark mode | 1. Bật dark mode<br>2. Full flow | Text đọc được, contrast OK, popup style OK | 🟡 | 🔲 |
+| EC-R03 | iPhone SE (màn nhỏ) | 1. Chạy iPhone SE | Text không bị cắt, popup fit được | 🟡 | 🔲 |
+| EC-R04 | Bài viết rất dài (2000+ từ) | 1. Chọn length "Dài" | Scroll mượt, không lag, memory OK | 🟡 | 🔲 |
+| EC-R05 | Từ không có trong dictionary | 1. Tap tên riêng "Tesla" | Popup thông báo "Không tìm thấy" hoặc hiện gần đúng | 🟢 | 🔲 |
+| EC-R06 | Slow network (3G) | 1. Throttle 3G<br>2. Generate article | Loading hiện lâu hơn, không timeout quá sớm | 🟡 | 🔲 |
+| EC-R07 | Tap số / ký tự đặc biệt | 1. Tap "2024" hoặc "$100" | Popup xử lý đúng hoặc ignore, không crash | 🟢 | 🔲 |
+| EC-R08 | Bài có table/list markdown | 1. Article có bullet list | Render đúng, không hiện raw markdown | 🟡 | 🔲 |
+
+---
+
+## 6️⃣ CHECKLIST TRƯỚC KHI RELEASE
+
+| # | Hạng mục | Tiêu chí | Status |
+|---|----------|----------|--------|
+| 1 | Unit tests | 28/28 passed | ✅ |
+| 2 | Smoke tests (6 items) | Tất cả PASS | 🔲 |
+| 3 | Critical bugs (🔴) | 0 bugs | 🔲 |
+| 4 | Functional tests | Tất cả Happy Path ✅ PASS | 🔲 |
+| 5 | Monkey tests (5 phút) | Không crash | 🔲 |
+| 6 | Dark mode | Đọc được hết | 🔲 |
+
+---
+
+## 📝 Bug Log (Ghi khi test)
+
+| # | Ngày | Test ID | Mô tả bug | Severity | Device | Screenshot | Status |
+|---|------|---------|-----------|----------|--------|------------|--------|
+| 1 | | | | | | | |
+| 2 | | | | | | | |

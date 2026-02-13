@@ -72,11 +72,19 @@ Target: Weeks 3-6 (Basic functional app)
 - [ ] Correction Diff View (Green/Red highlights)
 
 ### 📜 History & Profile (Ref: `features/07_History.md`, `08_Profile_Settings.md`)
-- [ ] History Timeline List
-- [ ] Filter by Skill
-- [ ] Profile Screen (User info)
-- [ ] Logout Functionality
-- [ ] Theme Toggle (Light/Dark)
+- [x] History Timeline List (SectionList grouped by date)
+- [x] Filter by Skill (FilterPills component)
+- [x] Search by topic (debounced search)
+- [x] Stats Bar (streak, today, week)
+- [x] Swipe actions (pin/delete)
+- [x] Empty state per skill type
+- [x] Skeleton loading
+- [x] Pull-to-refresh + pagination
+- [x] History API service (8 endpoints)
+- [x] History Zustand store
+- [x] Profile Screen (User info)
+- [x] Logout Functionality
+- [x] Theme Toggle (Light/Dark)
 
 ---
 

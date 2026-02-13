@@ -535,4 +535,109 @@ describe('useListeningStore', () => {
       expect(useListeningStore.getState().bookmarkedIndexes).toEqual([]);
     });
   });
+
+  // ========================
+  // 🆕 Coverage Gaps — Boundary, Stress, Edge Cases
+  // ========================
+  describe('Boundary & Edge Cases', () => {
+    // setCurrentExchangeIndex với giá trị biên
+    it('setCurrentExchangeIndex chấp nhận 0 (đầu danh sách)', () => {
+      useListeningStore.getState().setCurrentExchangeIndex(5);
+      useListeningStore.getState().setCurrentExchangeIndex(0);
+
+      expect(useListeningStore.getState().currentExchangeIndex).toBe(0);
+    });
+
+    it('setCurrentExchangeIndex chấp nhận giá trị lớn (999)', () => {
+      useListeningStore.getState().setCurrentExchangeIndex(999);
+
+      expect(useListeningStore.getState().currentExchangeIndex).toBe(999);
+    });
+
+    // setPlaybackSpeed edge values
+    it('setPlaybackSpeed chấp nhận 0.25x (cực chậm)', () => {
+      useListeningStore.getState().setPlaybackSpeed(0.25);
+
+      expect(useListeningStore.getState().playbackSpeed).toBe(0.25);
+    });
+
+    it('setPlaybackSpeed chấp nhận 3.0x (cực nhanh)', () => {
+      useListeningStore.getState().setPlaybackSpeed(3);
+
+      expect(useListeningStore.getState().playbackSpeed).toBe(3);
+    });
+
+    // setConfig → conversation vẫn giữ nguyên
+    it('setConfig không xóa conversation hiện tại', () => {
+      useListeningStore.getState().setConversation({
+        conversation: [{speaker: 'A', text: 'test'}],
+      } as any);
+
+      useListeningStore.getState().setConfig({topic: 'New Topic'});
+
+      expect(useListeningStore.getState().conversation).not.toBeNull();
+      expect(useListeningStore.getState().config.topic).toBe('New Topic');
+    });
+
+    // setTimestamps(null) xóa timestamps
+    it('setTimestamps(null) xóa timestamps', () => {
+      useListeningStore.getState().setTimestamps([
+        {lineIndex: 0, startTime: 0, endTime: 3, speaker: 'A'},
+      ]);
+      useListeningStore.getState().setTimestamps(null);
+
+      expect(useListeningStore.getState().timestamps).toBeNull();
+    });
+  });
+
+  describe('Stress Tests', () => {
+    // toggleBookmark cùng index 100 lần → state cuối đúng
+    it('toggleBookmark 100 lần cùng index → state cuối đúng', () => {
+      for (let i = 0; i < 100; i++) {
+        useListeningStore.getState().toggleBookmark(5);
+      }
+      // 100 lần (chẵn) → không có trong danh sách
+      expect(useListeningStore.getState().bookmarkedIndexes).not.toContain(5);
+    });
+
+    // setGenerating liên tục true/false/true nhanh
+    it('setGenerating chuyển đổi nhanh nhiều lần', () => {
+      for (let i = 0; i < 50; i++) {
+        useListeningStore.getState().setGenerating(true);
+        useListeningStore.getState().setGenerating(false);
+      }
+      expect(useListeningStore.getState().isGenerating).toBe(false);
+    });
+  });
+
+  describe('Saved Words — Edge Cases', () => {
+    // addSavedWord chuỗi rỗng
+    it('addSavedWord chuỗi rỗng vẫn thêm được', () => {
+      useListeningStore.getState().addSavedWord('');
+
+      expect(useListeningStore.getState().savedWords).toContain('');
+    });
+
+    // addSavedWord ký tự đặc biệt
+    it('addSavedWord với ký tự đặc biệt', () => {
+      useListeningStore.getState().addSavedWord("it's");
+      useListeningStore.getState().addSavedWord('café');
+      useListeningStore.getState().addSavedWord('naïve');
+
+      const words = useListeningStore.getState().savedWords;
+      expect(words).toContain("it's");
+      expect(words).toContain('café');
+      expect(words).toContain('naïve');
+    });
+
+    // addSavedWord unicode tiếng Việt
+    it('addSavedWord unicode tiếng Việt', () => {
+      useListeningStore.getState().addSavedWord('xin chào');
+      useListeningStore.getState().addSavedWord('tạm biệt');
+
+      const words = useListeningStore.getState().savedWords;
+      expect(words).toContain('xin chào');
+      expect(words).toContain('tạm biệt');
+    });
+  });
 });
