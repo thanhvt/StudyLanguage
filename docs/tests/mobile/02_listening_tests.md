@@ -155,6 +155,98 @@
 
 ---
 
+## Smoke Tests
+
+> Kiểm tra nhanh sanity các feature chính — chạy TRƯỚC mỗi release (~5 phút)
+> Chi tiết từng bước xem: `SMOKE_MONKEY_MANUAL_GUIDE.md`
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-SMK-001 | 🟢 | Mở ConfigScreen | Dashboard → Tap "Luyện nghe" | Render đầy đủ sections | 🔴 |
+| MOB-LIS-SMK-002 | 🟢 | TopicPicker render | Scroll tới TopicPicker | 3 tabs hiện, scenarios load | 🔴 |
+| MOB-LIS-SMK-003 | 🟢 | Chọn scenario | Tap 1 scenario bất kỳ | Topic auto-fill, highlight | 🔴 |
+| MOB-LIS-SMK-004 | 🟢 | Search topic | Gõ "coffee" → filter | Chỉ hiện related scenarios | 🟡 |
+| MOB-LIS-SMK-005 | 🟢 | Đổi duration | Tap "10 phút" | Chip highlight | 🟡 |
+| MOB-LIS-SMK-006 | 🟢 | Custom duration | Tap Custom → nhập 7 | Duration = 7 | 🟡 |
+| MOB-LIS-SMK-007 | 🟢 | Chọn speakers | Tap "3 Speakers" | Chip highlight | 🟡 |
+| MOB-LIS-SMK-008 | 🟢 | Nhập keywords | Gõ "meeting, deadline" | Text hiện + counter | 🟡 |
+| MOB-LIS-SMK-009 | 🟢 | Vietnamese toggle | Bật/tắt switch | Toggle mượt | 🟡 |
+| MOB-LIS-SMK-010 | 🟢 | Start Listening | Config → Tap Start | Loading → Navigate | 🔴 |
+
+---
+
+## Monkey Tests
+
+> Test chaos — tap lung tung, nhập bậy bạ. Mục đích: tìm crash & edge case.
+> Chi tiết từng bước xem: `SMOKE_MONKEY_MANUAL_GUIDE.md`
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-MKY-001 | ⚠️ | Tap điên cuồng | Tap 20 lần/10s vào mọi nơi | Không crash, không freeze > 3s | 🔴 |
+| MOB-LIS-MKY-002 | ⚠️ | Xoay màn hình | Xoay dọc↔ngang 5 lần | Layout không vỡ, data giữ | 🔴 |
+| MOB-LIS-MKY-003 | ⚠️ | Switch app nhanh | Home → mở lại app 5 lần | Config không reset, không crash | 🔴 |
+| MOB-LIS-MKY-004 | ⚠️ | Nhập emoji | Gõ ☕🔥💀 vào topic input | Không crash, hiện bình thường | 🟡 |
+| MOB-LIS-MKY-005 | ⚠️ | Paste 500+ ký tự keywords | Paste text dài vào Keywords | Cắt ở 200 ký tự, không crash | 🟡 |
+| MOB-LIS-MKY-006 | ⚠️ | Keyboard + scroll | Mở keyboard → scroll nhanh | Không crash, keyboard không che input | 🟡 |
+| MOB-LIS-MKY-007 | ⚠️ | Back button liên tục | Tap back 10 lần nhanh | Chỉ về Dashboard, không crash | 🔴 |
+| MOB-LIS-MKY-008 | ⚠️ | Interrupt generate | Start → ngay lập tức tap Back | Request cancel, không crash | 🔴 |
+| MOB-LIS-MKY-009 | ⚠️ | Chọn/bỏ chọn liên tục | Tap 1 scenario 20 lần | State cuối cùng đúng | 🟡 |
+| MOB-LIS-MKY-010 | ⚠️ | XSS/SQL injection | Nhập `<script>` và `'; DROP TABLE` | Hiện text bình thường, không execute | 🔴 |
+
+---
+
+## Manual Tests
+
+> Test chi tiết trên device thật — UI/UX, animation, touch targets, accessibility.
+> Chi tiết từng bước xem: `SMOKE_MONKEY_MANUAL_GUIDE.md`
+
+### Config Screen UI
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-MNL-001 | ✅ | Full layout render | Scroll ConfigScreen top → bottom | Đủ sections: Topic, Duration, Speakers, Keywords, Vietnamese, Advanced, Start | 🔴 |
+| MOB-LIS-MNL-002 | ✅ | SafeArea / notch | Mở trên iPhone có notch | Content không bị che | 🟡 |
+| MOB-LIS-MNL-003 | ✅ | Scroll mượt | Scroll nhanh | ~60 FPS, không jank | 🟡 |
+| MOB-LIS-MNL-004 | ✅ | Dark mode | Bật dark mode → mở app | Màu sắc đúng, text readable | 🟡 |
+
+### TopicPicker
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-MNL-005 | ✅ | Category tabs | Tap IT → Daily → Personal | Tabs chuyển mượt, data load đúng | 🟡 |
+| MOB-LIS-MNL-006 | ✅ | Accordion expand | Tap subcategory header | Expand/collapse animation | 🟡 |
+| MOB-LIS-MNL-007 | ✅ | Select scenario | Tap scenario item | Highlight + config.topic cập nhật | 🔴 |
+| MOB-LIS-MNL-008 | ✅ | Favorite ⭐ | Tap star icon | Star fill, lưu favorites | 🟢 |
+| MOB-LIS-MNL-009 | ✅ | Search filter | Gõ "hotel" | Chỉ hiện match, categories khác ẩn | 🟡 |
+| MOB-LIS-MNL-010 | ✅ | Search clear | Tap X clear | All scenarios hiện lại | 🟢 |
+
+### Duration, Speakers, Keywords
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-MNL-011 | ✅ | Duration preset | Tap [5] [10] [15] lần lượt | Chỉ 1 selected, highlight đúng | 🟡 |
+| MOB-LIS-MNL-012 | ✅ | Custom duration | Custom → gõ 25 | Duration = 25 | 🟡 |
+| MOB-LIS-MNL-013 | ⚠️ | Duration boundary | Nhập 0 → min=1, nhập 99 → max=60 | Clamp đúng | 🟡 |
+| MOB-LIS-MNL-014 | ✅ | Speakers chips | Tap 👤×2/3/4 | Chip highlight + label | 🟡 |
+| MOB-LIS-MNL-015 | ✅ | Keywords multiline | Gõ nhiều dòng | Multiline OK, counter đếm | 🟡 |
+| MOB-LIS-MNL-016 | ⚠️ | Keywords max 200 | Gõ 200+ ký tự | Cắt ở 200, counter "200/200" | 🟡 |
+
+### Advanced Options & Full Flow
+
+| ID | Type | Scenario | Steps | Expected Result | Severity |
+|:---|:-----|:---------|:------|:----------------|:---------|
+| MOB-LIS-MNL-017 | ✅ | Open Advanced Options | Tap "Advanced Options" | Bottom sheet slide up mượt | 🟡 |
+| MOB-LIS-MNL-018 | ✅ | Difficulty select | Tap "Advanced" | Chip highlight, lưu setting | 🟡 |
+| MOB-LIS-MNL-019 | ✅ | Close sheet | Swipe down/tap backdrop | Sheet đóng, settings giữ | 🟡 |
+| MOB-LIS-MNL-020 | ✅ | Full E2E flow | Config đầy đủ → Start | Loading → Player screen | 🔴 |
+| MOB-LIS-MNL-021 | ❌ | Start không topic | Bỏ trống topic → Start | Validation error hiện | 🟡 |
+| MOB-LIS-MNL-022 | ❌ | Start offline | Tắt mạng → Start | Error toast/dialog | 🔴 |
+| MOB-LIS-MNL-023 | ✅ | Custom scenario Quick Use | Nhập tên + desc → Quick Use | Topic fill, ready | 🟡 |
+| MOB-LIS-MNL-024 | ✅ | Custom scenario Save | Nhập → Save | Lưu local, hiện trong list | 🟡 |
+
+
+---
+
 ## SMOKE TESTS (Chạy đầu tiên — 5 phút)
 
 > **Mục đích:** Verify luồng nghe hoạt động end-to-end trước khi test chi tiết

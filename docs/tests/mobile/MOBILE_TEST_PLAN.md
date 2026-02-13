@@ -23,7 +23,7 @@ Test scenarios cho toàn bộ features của Mobile App, được tổ chức th
 |---|---------|------|-------|----------|------------|--------------|
 | 00 | Dashboard | `00_dashboard_tests.md` | MVP | P0 | — | ✅ |
 | 01 | Authentication | `01_authentication_tests.md` | MVP | P0 | — | ✅ |
-| 02 | Listening | `02_listening_tests.md` | MVP → Advanced | P0 |
+| 02 | Listening | `02_listening_tests.md` | MVP → Advanced | P0 | ✅ 131/131 | ✅ (Smoke + Monkey + Manual) |
 | 02A | Listening → Scenario Picker | `02A_listening_scenario_picker_manual_tests.md` | Enhanced | P0 | ✅ | ✅ |
 | 03 | **Speaking** | `03_speaking_tests.md` | MVP → Advanced | P0 | ✅ 34/34 | ✅ (Smoke + Monkey + Manual) |
 | 04 | **Reading** | `04_reading_tests.md` | MVP → Enhanced | P1 | ✅ 28/28 | ✅ (Smoke + Monkey + Manual) |
@@ -31,6 +31,9 @@ Test scenarios cho toàn bộ features của Mobile App, được tổ chức th
 | 08 | Profile & Settings | `08_profile_settings_tests.md` | MVP → Enhanced | P1 | — | ✅ |
 | 09 | Special Modes | `09_special_modes_tests.md` | Advanced | P2 | — | ✅ |
 | 10 | Native Features | `10_native_features_tests.md` | Enhanced → Advanced | P1–P2 | — | ✅ |
+| 11 | 🔥 Listening Smoke | `11_listening_smoke_tests.md` | MVP | P0 | — | ✅ 17 steps |
+| 12 | 🐒 Listening Monkey | `12_listening_monkey_tests.md` | MVP → Enhanced | P1 | — | ✅ 15 scenarios |
+| 13 | 📋 Listening Manual | `13_listening_manual_tests.md` | MVP → Enhanced | P0 | — | ✅ 27 scripts |
 
 ---
 
@@ -51,8 +54,11 @@ NUMBER: 001, 002, ...
 SMK-XX      : Smoke Test — verify luồng chính, chạy nhanh 3-5 phút
 FT-XXX-XX   : Functional Test — test chi tiết từng feature
 MNK-XX      : Monkey Test — thao tác ngẫu nhiên, tìm crash
+MNL-XX      : Manual Test — test chi tiết trên device thật (UI/UX, animation, touch)
 EC-XX       : Edge Case — trường hợp biên, boundary
 ```
+
+> **Xem thêm:** [SMOKE_MONKEY_MANUAL_GUIDE.md](file:///Users/thanhvuqlud/ThanhData/CODE/StudyLanguage/docs/tests/mobile/SMOKE_MONKEY_MANUAL_GUIDE.md) — Guide chi tiết cho QA test trên device thật
 
 ### 3.3 Severity Levels
 | Level | Ý nghĩa |
