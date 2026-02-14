@@ -11,11 +11,11 @@ function renderListening() {
   // QA: Mọi section có visual feedback khi active
   // UX: Card layout với depth, collapsible optional, sticky CTA
   // ─────────────────────────────────────────────
-  const configScreen = phone('C1: Config Screen', 'Topic, Duration, Speakers — UX Pro', `
+  const configScreen = phone('C1: Config Screen', 'Topic, Duration, Speakers — Glass UI', `
     ${statusBar()}
     <div class="app-bar"><span class="back">←</span><span class="title">🎧 Luyện Nghe</span><span class="action">📻</span></div>
     <div class="scroll-content">
-      <!-- Hero Topic Picker — tap để mở TopicPickerModal -->
+      <!-- Hero Topic Picker — glass card -->
       <div style="margin:0 16px 12px;padding:20px;border-radius:var(--r-xl);background:linear-gradient(135deg,var(--accent-soft),var(--bg-card));border:1px solid var(--accent);position:relative;overflow:hidden">
         <div style="position:absolute;top:-20px;right:-10px;font-size:80px;opacity:0.08">🎧</div>
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -24,9 +24,9 @@ function renderListening() {
             <div style="font-size:18px;font-weight:700">☕ Coffee Shop Order</div>
             <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">Daily Life › Cafes & Restaurants</div>
           </div>
-          <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">✏️</div>
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--accent);display:flex;align-items:center;justify-content:center;color:#000;font-size:16px">✏️</div>
         </div>
-        <!-- Selected config summary pills -->
+        <!-- Config summary pills -->
         <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
           <span style="padding:4px 10px;border-radius:var(--r-full);background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary)">⏱️ 10 phút</span>
           <span style="padding:4px 10px;border-radius:var(--r-full);background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary)">👥 2 người</span>
@@ -34,41 +34,39 @@ function renderListening() {
         </div>
       </div>
 
-      <!-- Duration — visual card with active highlight -->
-      <div class="section-card" style="border:1px solid var(--border)">
+      <!-- Duration — glass surface card -->
+      <div style="margin:0 16px 12px;padding:16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div class="section-title" style="margin:0">⏱️ Thời lượng</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">⏱️ Thời lượng</div>
           <span style="font-size:12px;color:var(--accent);font-weight:600">10 phút</span>
         </div>
         <div class="chip-row">
-          <span class="chip">5'</span><span class="chip active" style="background:var(--accent);color:#fff;border-color:var(--accent)">10'</span>
+          <span class="chip">5'</span><span class="chip active" style="background:var(--accent);color:#000;border-color:var(--accent)">10'</span>
           <span class="chip">15'</span><span class="chip">20'</span>
           <span class="chip" style="border:1px dashed var(--border-strong)">⏱ Tuỳ</span>
         </div>
       </div>
 
-      <!-- Speakers — compact -->
-      <div class="section-card" style="border:1px solid var(--border)">
-        <div class="section-title">👥 Số người nói</div>
+      <!-- Speakers — glass surface card -->
+      <div style="margin:0 16px 12px;padding:16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">👥 Số người nói</div>
         <div class="chip-row">
           <span class="chip" style="min-width:44px;text-align:center">1</span>
-          <span class="chip active" style="min-width:44px;text-align:center;background:var(--accent);color:#fff;border-color:var(--accent)">2</span>
+          <span class="chip active" style="min-width:44px;text-align:center;background:var(--accent);color:#000;border-color:var(--accent)">2</span>
           <span class="chip" style="min-width:44px;text-align:center">3</span>
         </div>
       </div>
 
-      <!-- Collapsible Optional Section -->
+      <!-- Collapsible Optional Section — glass -->
       <div style="margin:0 16px 8px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border);overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer">
           <span style="font-size:14px;font-weight:600;color:var(--text-secondary)">🔧 Tuỳ chọn thêm</span>
           <span style="color:var(--text-muted);font-size:12px;transform:rotate(180deg)">▲</span>
         </div>
-        <!-- Keywords Input -->
         <div style="padding:0 16px 12px">
           <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">🔑 Từ khoá (tuỳ chọn)</div>
           <input class="input-field" placeholder="coffee, travel, work..." style="background:var(--bg-tertiary);border:1px solid var(--border);font-size:13px;padding:10px 12px">
         </div>
-        <!-- Custom Scenario trigger -->
         <div style="padding:0 16px 12px">
           <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--r-md);background:var(--bg-tertiary);border:1px dashed var(--border-strong);cursor:pointer">
             <span style="font-size:16px">✨</span>
@@ -78,7 +76,7 @@ function renderListening() {
         </div>
       </div>
 
-      <!-- Advanced Options trigger — accent styled -->
+      <!-- Advanced Options trigger — accent glass -->
       <div style="margin:0 16px 8px;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:var(--r-lg);background:var(--accent-soft);border:1px solid var(--accent);cursor:pointer">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:16px">⚙️</span>
@@ -88,7 +86,7 @@ function renderListening() {
       </div>
     </div>
 
-    <!-- Sticky CTA -->
+    <!-- Sticky CTA with glow -->
     <button class="cta-btn" style="box-shadow:0 -8px 24px var(--accent-glow)">🎧 Bắt đầu nghe</button>
     ${tabBar('listen')}
   `);
@@ -160,51 +158,96 @@ function renderListening() {
   `);
 
   // ─────────────────────────────────────────────
-  // C2: Advanced Options — UX UPGRADED
-  // BA: User cần biết rõ từng option làm gì, có tooltip/desc
-  // UX: Better visual hierarchy, per-speaker picker, multi-talker pairs
+  // C2: Advanced Options — SCREENSHOT-MATCHED
+  // BA: Matching real app AdvancedOptionsSheet.tsx exactly
+  // UX: Glass surfaces, Speaker A/B dropdowns, info text, close button
   // ─────────────────────────────────────────────
-  const advancedSheet = phone('C2: Advanced Options', 'Level, Voice, Multi-talker', `
+  const advancedSheet = phone('C2: Advanced Options', 'Glass — Level, Voice, Multi-talker', `
     ${statusBar()}
     <div class="app-bar"><span class="back">←</span><span class="title">Luyện Nghe</span><span class="action">⋮</span></div>
     <div style="flex:1;opacity:0.3;padding:16px">
       <div class="section-card" style="opacity:0.5"><div style="height:40px"></div></div>
     </div>
     <div class="bottom-sheet-overlay">
-      <div class="bottom-sheet" style="max-height:75%">
+      <div class="bottom-sheet" style="max-height:82%;overflow-y:auto">
         <div class="handle"></div>
-        <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:16px">⚙️ Tuỳ chọn nâng cao</div>
-        <!-- Level Chips with color -->
+        <!-- Header with ✕ close -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:700">⚙️ Tuỳ chọn nâng cao</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-tertiary);cursor:pointer">✕</div>
+        </div>
+
+        <!-- 🎯 Trình độ — Section with label -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-secondary)">🎯 Trình độ</div>
+          <div class="chip-row" style="gap:10px">
+            <span class="chip" style="flex:1;padding:10px 0;font-size:13px;text-align:center;border-color:#22c55e50;color:#22c55e">🌱 Cơ bản</span>
+            <span class="chip active" style="flex:1;padding:10px 0;font-size:13px;text-align:center;background:#22c55e18;border-color:#22c55e;color:#22c55e;font-weight:700">🌿 Trung cấp</span>
+            <span class="chip" style="flex:1;padding:10px 0;font-size:13px;text-align:center;border-color:#D9770650;color:#D97706">🌳 Nâng cao</span>
+          </div>
+        </div>
+
+        <!-- 🔊 Giọng đọc — Section -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-secondary)">🔊 Giọng đọc</div>
+          <!-- Random toggle — glass surface -->
+          <div style="padding:14px 16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border);margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:15px;font-weight:500">🎲 Giọng ngẫu nhiên</div>
+                <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">AI tự chọn giọng phù hợp cho từng speaker</div>
+              </div>
+              <div class="toggle-switch" style="flex-shrink:0"></div>
+            </div>
+          </div>
+          <!-- Speaker A dropdown — glass surface -->
+          <div style="padding:14px 16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border);margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">👤</span>
+                <span style="font-size:15px;font-weight:500">Speaker A</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;color:var(--text-tertiary)">Jenny (Nữ)</span>
+                <span style="color:var(--text-muted);font-size:10px">▼</span>
+              </div>
+            </div>
+          </div>
+          <!-- Speaker B dropdown — glass surface -->
+          <div style="padding:14px 16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">👤</span>
+                <span style="font-size:15px;font-weight:500">Speaker B</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;color:var(--text-tertiary)">Guy (Nam)</span>
+                <span style="color:var(--text-muted);font-size:10px">▼</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🐲 Multi-talker — Section -->
         <div style="margin-bottom:16px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:8px">📊 Trình độ</div>
-          <div class="chip-row">
-            <span class="chip" style="padding:6px 12px;font-size:12px;border-color:#22c55e50;color:#22c55e">🌱 Cơ bản</span>
-            <span class="chip active" style="padding:6px 12px;font-size:12px;background:#2D9CDB20;border-color:#2D9CDB;color:#2D9CDB">🌿 Trung cấp</span>
-            <span class="chip" style="padding:6px 12px;font-size:12px;border-color:#D9770650;color:#D97706">🌳 Nâng cao</span>
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-secondary)">🐲 Multi-talker</div>
+          <!-- Toggle — glass surface -->
+          <div style="padding:14px 16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border);margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div>
+                <div style="font-size:15px;font-weight:500">Đa giọng nói cùng lúc</div>
+                <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">Gen 1 lần, giọng tự nhiên hơn</div>
+              </div>
+              <div class="toggle-switch on" style="flex-shrink:0"></div>
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-top:6px">Cặp giọng: <strong>Ava - Andrew</strong></div>
           </div>
         </div>
-        <!-- Multi-talker -->
-        <div class="toggle-row"><div><div class="toggle-label">🗣️ Multi-talker HD</div><div class="toggle-sub">DragonHD — 2 giọng cùng lúc</div></div><div class="toggle-switch on"></div></div>
-        <!-- Multi-talker Pair Selection -->
-        <div style="margin:-4px 0 12px 0;display:flex;gap:8px">
-          <div style="flex:1;padding:8px 10px;border-radius:var(--r-md);background:var(--accent-soft);border:1px solid var(--accent);text-align:center;font-size:12px;font-weight:600;color:var(--accent)">👩‍❤️‍👨 Ava — Andrew</div>
-          <div style="flex:1;padding:8px 10px;border-radius:var(--r-md);background:var(--bg-tertiary);text-align:center;font-size:12px;color:var(--text-secondary)">👫 Ava — Steffan</div>
+
+        <!-- Info text -->
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:4px 0">
+          ℹ️ 9 giọng Azure Neural Voice (5 nữ + 4 nam)
         </div>
-        <!-- Random Voice -->
-        <div class="toggle-row"><div><div class="toggle-label">🔄 Random hoá giọng</div><div class="toggle-sub">Mỗi lần tạo giọng khác nhau</div></div><div class="toggle-switch"></div></div>
-        <!-- Per-speaker voice: Expanded for Speaker 1 -->
-        <div style="margin-top:8px;border-radius:var(--r-md);background:var(--bg-tertiary);overflow:hidden">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px">
-            <span style="font-size:13px;font-weight:600">🎤 Speaker 1</span>
-            <span style="font-size:12px;color:var(--accent)">💃 Aria ▼</span>
-          </div>
-          <div style="padding:0 8px 8px;display:flex;gap:4px;flex-wrap:wrap">
-            <span style="padding:4px 8px;border-radius:var(--r-sm);background:var(--accent-soft);border:1px solid var(--accent);font-size:11px;color:var(--accent)">💃 Aria</span>
-            <span style="padding:4px 8px;border-radius:var(--r-sm);background:var(--bg-card);font-size:11px;color:var(--text-secondary)">👨‍💼 Guy</span>
-            <span style="padding:4px 8px;border-radius:var(--r-sm);background:var(--bg-card);font-size:11px;color:var(--text-secondary)">👩 Jenny</span>
-          </div>
-        </div>
-        <div style="margin-top:12px"><button class="cta-btn" style="width:100%;margin:0">Áp dụng</button></div>
       </div>
     </div>
   `);
@@ -303,33 +346,115 @@ function renderListening() {
     </div>
   `);
 
-  // C7: Custom Scenarios (giữ nguyên)
-  const customScenarios = phone('C7: Custom Scenarios', 'List + Create actions', `
+  // ─────────────────────────────────────────────
+  // C7a: Custom Scenarios — CREATE FORM
+  // BA: Matching CustomScenarioInput.tsx — name/desc inputs + ⚡/💾 buttons
+  // QA: Validation states, loading spinner on save
+  // ─────────────────────────────────────────────
+  const customCreateForm = phone('C7a: Custom — Create', 'Form + Quick Use / Save', `
+    ${statusBar()}
+    <div class="app-bar"><span class="back">←</span><span class="title">Custom Scenarios</span><span class="action">✕</span></div>
+    <div class="scroll-content">
+      <!-- Create Form Card — glass surface -->
+      <div style="margin:0 16px 16px;padding:16px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:600">✨ Tạo kịch bản mới</div>
+        </div>
+        <!-- Name Input -->
+        <div style="margin-bottom:8px">
+          <input class="input-field" placeholder="Tên kịch bản..." value="Job Interview Practice" style="background:var(--bg-tertiary);border:1px solid var(--border);font-size:14px;padding:12px 14px;border-radius:var(--r-md)">
+        </div>
+        <!-- Description Input -->
+        <div style="margin-bottom:12px">
+          <div style="padding:12px 14px;border-radius:var(--r-md);background:var(--bg-tertiary);border:1px solid var(--border);min-height:60px">
+            <div style="font-size:14px;color:var(--text-primary)">Practice answering common interview questions for tech companies...</div>
+          </div>
+        </div>
+        <!-- Action Buttons -->
+        <div style="display:flex;gap:8px">
+          <button class="cta-btn" style="flex:1;margin:0;padding:12px;font-size:13px">⚡ Sử dụng ngay</button>
+          <button class="cta-btn secondary" style="flex:1;margin:0;padding:12px;font-size:13px">💾 Lưu lại</button>
+        </div>
+      </div>
+
+      <!-- Saved List Header -->
+      <div style="padding:0 16px 8px">
+        <div style="font-size:12px;color:var(--text-tertiary)">Đã lưu (3)</div>
+      </div>
+
+      <!-- Saved Scenarios Preview (compact) -->
+      <div style="padding:0 16px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);background:var(--bg-card);border:1px solid var(--border)">
+          <div style="flex:1"><div style="font-size:14px;font-weight:500">☕ Coffee Shop Order</div><div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">Gọi đồ uống, thanh toán</div></div>
+          <span style="font-size:14px;color:var(--warning)">⭐</span>
+          <span style="font-size:12px;color:var(--text-muted)">🗑️</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);background:var(--bg-card);border:1px solid var(--border)">
+          <div style="flex:1"><div style="font-size:14px;font-weight:500">✈️ Airport Check-in</div><div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">Boarding, luggage, customs</div></div>
+          <span style="font-size:14px;color:var(--text-muted)">☆</span>
+          <span style="font-size:12px;color:var(--text-muted)">🗑️</span>
+        </div>
+      </div>
+    </div>
+  `);
+
+  // ─────────────────────────────────────────────
+  // C7b: Custom Scenarios — SAVED LIST + CRUD
+  // BA: Full list with favorite/delete/quick-use, empty state hint
+  // QA: Swipe actions, confirm dialog on delete
+  // ─────────────────────────────────────────────
+  const customSavedList = phone('C7b: Custom — Saved', 'List + ⭐ Fav + 🗑️ Delete', `
     ${statusBar()}
     <div class="app-bar"><span class="back">←</span><span class="title">Custom Scenarios</span><span class="action">＋</span></div>
     <div class="scroll-content">
-      <div class="section-card">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div style="padding:6px 12px;border-radius:var(--r-full);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600">⭐ Favourites</div>
-          <div style="padding:6px 12px;border-radius:var(--r-full);background:var(--bg-tertiary);color:var(--text-secondary);font-size:12px">All</div>
+      <!-- Filter Tabs -->
+      <div style="display:flex;gap:8px;padding:8px 16px 12px">
+        <div style="padding:6px 14px;border-radius:var(--r-full);background:var(--accent);color:#000;font-size:12px;font-weight:600">📋 Tất cả</div>
+        <div style="padding:6px 14px;border-radius:var(--r-full);background:var(--bg-tertiary);color:var(--text-secondary);font-size:12px">⭐ Yêu thích</div>
+      </div>
+
+      <!-- Saved Scenarios List -->
+      <div style="padding:0 16px;display:flex;flex-direction:column;gap:6px">
+        <!-- Item 1: Favorite -->
+        <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600">☕ Coffee Shop Order</div>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:3px">Gọi đồ uống, thanh toán tips</div>
+          </div>
+          <span style="font-size:16px;color:var(--warning)">⭐</span>
+          <span style="font-size:14px;color:var(--error);opacity:0.6;cursor:pointer">🗑️</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r-md);background:var(--bg-tertiary);border:1px solid var(--border)">
-            <span style="font-size:24px">☕</span>
-            <div style="flex:1"><div style="font-size:14px;font-weight:600">Coffee Shop Order</div><div style="font-size:11px;color:var(--text-tertiary)">2 speakers • 5 min • Easy</div></div>
-            <span style="color:var(--accent)">▶️</span>
+        <!-- Item 2 -->
+        <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600">✈️ Airport Check-in</div>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:3px">Boarding, luggage, customs</div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r-md);background:var(--bg-tertiary);border:1px solid var(--border)">
-            <span style="font-size:24px">✈️</span>
-            <div style="flex:1"><div style="font-size:14px;font-weight:600">Airport Check-in</div><div style="font-size:11px;color:var(--text-tertiary)">2 speakers • 10 min • Medium</div></div>
-            <span style="color:var(--accent)">▶️</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r-md);background:var(--bg-tertiary);border:1px solid var(--border)">
-            <span style="font-size:24px">🏥</span>
-            <div style="flex:1"><div style="font-size:14px;font-weight:600">Doctor Visit</div><div style="font-size:11px;color:var(--text-tertiary)">2 speakers • 8 min • Hard</div></div>
-            <span style="color:var(--accent)">▶️</span>
-          </div>
+          <span style="font-size:16px;color:var(--text-muted)">☆</span>
+          <span style="font-size:14px;color:var(--error);opacity:0.6;cursor:pointer">🗑️</span>
         </div>
+        <!-- Item 3 -->
+        <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--bg-card);border:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600">🏥 Doctor Visit</div>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:3px">Describe symptoms, get diagnosis</div>
+          </div>
+          <span style="font-size:16px;color:var(--text-muted)">☆</span>
+          <span style="font-size:14px;color:var(--error);opacity:0.6;cursor:pointer">🗑️</span>
+        </div>
+        <!-- Item 4: Being deleted (swipe hint) -->
+        <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--error);background:rgba(239,68,68,0.12);border:1px solid var(--error);opacity:0.7">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600;color:var(--error)">🎓 Academic Presentation</div>
+            <div style="font-size:12px;color:var(--error);opacity:0.7;margin-top:3px">Xoá kịch bản này?</div>
+          </div>
+          <span style="font-size:12px;color:var(--error);font-weight:600">Xoá</span>
+        </div>
+      </div>
+
+      <!-- Tap-to-use hint -->
+      <div style="padding:16px 16px 0;font-size:11px;color:var(--text-muted);text-align:center">
+        Tap vào kịch bản để sử dụng ngay
       </div>
     </div>
     <button class="cta-btn">＋ Tạo scenario mới</button>
@@ -564,6 +689,6 @@ function renderListening() {
     </div>
   `);
 
-  return moduleSection('listening', '🎧', 'Listening', 13,
-    configScreen + topicPickerModal + advancedSheet + playerScreen + speedPopup + customScenarios + ttsSettings + radioScreen + compactPlayer + minimizedPlayer + pocketMode + dictionaryPopup);
+  return moduleSection('listening', '🎧', 'Listening', 14,
+    configScreen + topicPickerModal + advancedSheet + playerScreen + speedPopup + customCreateForm + customSavedList + ttsSettings + radioScreen + compactPlayer + minimizedPlayer + pocketMode + dictionaryPopup);
 }

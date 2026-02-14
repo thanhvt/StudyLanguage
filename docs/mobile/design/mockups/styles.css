@@ -92,6 +92,23 @@
   --status-bar-style: dark;
 }
 
+/* Obsidian Glass — Premium Dark (Style Guide) */
+[data-theme="obsidian-glass"] {
+  --bg-primary: #000000; --bg-secondary: #0a0a0a; --bg-tertiary: #111111;
+  --bg-card: #171717; --bg-card-hover: #1c1c1c; --bg-elevated: #1c1c1c;
+  --text-primary: #fafafa; --text-secondary: #949494; --text-tertiary: #6e6e6e; --text-muted: #4d4d4d;
+  --accent: #4ade80; --accent-hover: #22c55e; --accent-soft: rgba(74,222,128,0.10); --accent-glow: rgba(74,222,128,0.35);
+  --accent-secondary: #6366F1; --accent-secondary-soft: rgba(99,102,241,0.15);
+  --border: #262626; --border-strong: #414240;
+  --glass-bg: rgba(23,23,23,0.75); --glass-border: rgba(255,255,255,0.06);
+  --overlay: rgba(0,0,0,0.50); --success: #4ade80; --error: #f87171; --warning: #fbbf24; --info: #007BFF;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5); --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+  --gradient-hero: linear-gradient(135deg, rgba(74,222,128,0.12) 0%, rgba(99,102,241,0.08) 100%);
+  --tab-bg: #0a0a0a; --tab-active: #4ade80; --tab-inactive: #4d4d4d;
+  --status-bar-style: light;
+  --skill-listening: #6366F1; --skill-speaking: #4ade80; --skill-reading: #fbbf24;
+}
+
 /* ============================================
    LAYOUT & FRAME
    ============================================ */

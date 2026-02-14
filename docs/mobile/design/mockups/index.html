@@ -1,65 +1,68 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyLanguage - Mobile UI Mockup</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyLanguage - Mobile UI Mockup</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<div class="app-wrapper" data-theme="sunset-dark">
+  <div class="app-wrapper" data-theme="sunset-dark">
 
-<!-- Controls Bar -->
-<div class="controls-bar">
-  <h1>📱 StudyLanguage UI Mockup</h1>
-  <div class="theme-btns">
-    <button class="theme-btn active" onclick="setTheme('sunset-dark')">🌅 Sunset Dark</button>
-    <button class="theme-btn" onclick="setTheme('sunset-light')">☀️ Sunset Light</button>
-    <button class="theme-btn" onclick="setTheme('ocean-dark')">🌊 Ocean Dark</button>
-    <button class="theme-btn" onclick="setTheme('ocean-light')">💎 Ocean Light</button>
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <h1>📱 StudyLanguage UI Mockup</h1>
+      <div class="theme-btns">
+        <button class="theme-btn active" onclick="setTheme('sunset-dark')">🌅 Sunset Dark</button>
+        <button class="theme-btn" onclick="setTheme('sunset-light')">☀️ Sunset Light</button>
+        <button class="theme-btn" onclick="setTheme('ocean-dark')">🌊 Ocean Dark</button>
+        <button class="theme-btn" onclick="setTheme('ocean-light')">💎 Ocean Light</button>
+        <button class="theme-btn" onclick="setTheme('obsidian-glass')">🖤 Obsidian Glass</button>
+      </div>
+    </div>
+
+    <!-- Module Navigation -->
+    <div class="module-nav" id="moduleNav"></div>
+
+    <!-- Content -->
+    <div id="content"></div>
+
   </div>
-</div>
 
-<!-- Module Navigation -->
-<div class="module-nav" id="moduleNav"></div>
+  <script>
+    // Dữ liệu module
+    const MODULES = [
+      { id: 'auth', icon: '🔐', label: 'Auth & Onboarding' },
+      { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
+      { id: 'listening', icon: '🎧', label: 'Listening' },
+      { id: 'speaking', icon: '🗣️', label: 'Speaking' },
+      { id: 'reading', icon: '📖', label: 'Reading' },
+      { id: 'history', icon: '📜', label: 'History' },
+      { id: 'profile', icon: '👤', label: 'Profile & Settings' },
+      { id: 'special', icon: '🚗', label: 'Special Modes' },
+      { id: 'native', icon: '📱', label: 'Native Features' },
+      { id: 'common', icon: '🧩', label: 'Common UI' },
+    ];
 
-<!-- Content -->
-<div id="content"></div>
+    // Chuyển theme
+    function setTheme(theme) {
+      document.querySelector('.app-wrapper').setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
 
-</div>
+    // Cuộn đến module
+    function scrollToModule(id) {
+      document.getElementById('section-' + id)?.scrollIntoView({ behavior: 'smooth' });
+      document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-module="${id}"]`)?.classList.add('active');
+    }
 
-<script>
-// Dữ liệu module
-const MODULES = [
-  { id: 'auth', icon: '🔐', label: 'Auth & Onboarding' },
-  { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
-  { id: 'listening', icon: '🎧', label: 'Listening' },
-  { id: 'speaking', icon: '🗣️', label: 'Speaking' },
-  { id: 'reading', icon: '📖', label: 'Reading' },
-  { id: 'history', icon: '📜', label: 'History' },
-  { id: 'profile', icon: '👤', label: 'Profile & Settings' },
-  { id: 'special', icon: '🚗', label: 'Special Modes' },
-  { id: 'native', icon: '📱', label: 'Native Features' },
-  { id: 'common', icon: '🧩', label: 'Common UI' },
-];
-
-// Chuyển theme
-function setTheme(theme) {
-  document.querySelector('.app-wrapper').setAttribute('data-theme', theme);
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-// Cuộn đến module
-function scrollToModule(id) {
-  document.getElementById('section-' + id)?.scrollIntoView({ behavior: 'smooth' });
-  document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`[data-module="${id}"]`)?.classList.add('active');
-}
-
-// Tạo khung iPhone
-function phone(label, sublabel, screenHTML) {
-  return `<div class="phone-frame">
+    // Tạo khung iPhone
+    function phone(label, sublabel, screenHTML) {
+      return `<div class="phone-frame">
     <div class="phone-label">${label}</div>
     <div class="phone-device">
       <div class="phone-notch"></div>
@@ -70,60 +73,60 @@ function phone(label, sublabel, screenHTML) {
     </div>
     <div class="phone-sublabel">${sublabel}</div>
   </div>`;
-}
+    }
 
-// Thanh status bar
-function statusBar(time = '9:41') {
-  return `<div class="status-bar"><span class="time">${time}</span><span class="icons">📶 📡 🔋</span></div>`;
-}
+    // Thanh status bar
+    function statusBar(time = '9:41') {
+      return `<div class="status-bar"><span class="time">${time}</span><span class="icons">📶 📡 🔋</span></div>`;
+    }
 
-// Tab bar
-function tabBar(active = 'home') {
-  const tabs = [
-    { id: 'home', icon: '🏠', label: 'Trang chủ' },
-    { id: 'listen', icon: '🎧', label: 'Nghe' },
-    { id: 'speak', icon: '🗣️', label: 'Nói' },
-    { id: 'read', icon: '📖', label: 'Đọc' },
-    { id: 'more', icon: '☰', label: 'Thêm' },
-  ];
-  return `<div class="tab-bar">${tabs.map(t =>
-    `<div class="tab-item ${t.id === active ? 'active' : ''}">
+    // Tab bar
+    function tabBar(active = 'home') {
+      const tabs = [
+        { id: 'home', icon: '🏠', label: 'Trang chủ' },
+        { id: 'listen', icon: '🎧', label: 'Nghe' },
+        { id: 'speak', icon: '🗣️', label: 'Nói' },
+        { id: 'read', icon: '📖', label: 'Đọc' },
+        { id: 'more', icon: '☰', label: 'Thêm' },
+      ];
+      return `<div class="tab-bar">${tabs.map(t =>
+        `<div class="tab-item ${t.id === active ? 'active' : ''}">
       <span class="tab-icon">${t.icon}</span>
       <span>${t.label}</span>
       ${t.id === active ? '<span class="tab-dot"></span>' : ''}
     </div>`
-  ).join('')}</div>`;
-}
-
-// Render navigation
-document.getElementById('moduleNav').innerHTML = MODULES.map(m =>
-  `<button class="module-btn" data-module="${m.id}" onclick="scrollToModule('${m.id}')">${m.icon} ${m.label}</button>`
-).join('');
-
-// Tải các screens từ file riêng
-async function loadScreens() {
-  const scripts = ['screens-auth.js','screens-dashboard.js','screens-listening.js',
-    'screens-speaking.js','screens-reading.js','screens-history.js',
-    'screens-profile.js','screens-special.js','screens-native.js','screens-common.js'];
-  
-  let allHTML = '';
-  for (const file of scripts) {
-    try {
-      const module = await import('./' + file);
-      if (module.default) allHTML += module.default();
-    } catch(e) {
-      console.warn('Chưa có file:', file);
+      ).join('')}</div>`;
     }
-  }
-  
-  // Nếu không load được module, dùng inline
-  if (!allHTML) allHTML = renderAllScreens();
-  document.getElementById('content').innerHTML = allHTML;
-}
 
-// Hàm helper cho tạo module section
-function moduleSection(id, icon, title, count, screensHTML) {
-  return `<div class="module-section" id="section-${id}">
+    // Render navigation
+    document.getElementById('moduleNav').innerHTML = MODULES.map(m =>
+      `<button class="module-btn" data-module="${m.id}" onclick="scrollToModule('${m.id}')">${m.icon} ${m.label}</button>`
+    ).join('');
+
+    // Tải các screens từ file riêng
+    async function loadScreens() {
+      const scripts = ['screens-auth.js', 'screens-dashboard.js', 'screens-listening.js',
+        'screens-speaking.js', 'screens-reading.js', 'screens-history.js',
+        'screens-profile.js', 'screens-special.js', 'screens-native.js', 'screens-common.js'];
+
+      let allHTML = '';
+      for (const file of scripts) {
+        try {
+          const module = await import('./' + file);
+          if (module.default) allHTML += module.default();
+        } catch (e) {
+          console.warn('Chưa có file:', file);
+        }
+      }
+
+      // Nếu không load được module, dùng inline
+      if (!allHTML) allHTML = renderAllScreens();
+      document.getElementById('content').innerHTML = allHTML;
+    }
+
+    // Hàm helper cho tạo module section
+    function moduleSection(id, icon, title, count, screensHTML) {
+      return `<div class="module-section" id="section-${id}">
     <div class="screens-grid">
       <div class="module-header" style="width:100%">
         <h2>${icon} ${title}</h2>
@@ -132,41 +135,42 @@ function moduleSection(id, icon, title, count, screensHTML) {
       <div class="module-screens" style="width:100%">${screensHTML}</div>
     </div>
   </div>`;
-}
-</script>
+    }
+  </script>
 
-<!-- Inline screens - được tải tuần tự -->
-<script src="screens-auth.js"></script>
-<script src="screens-dashboard.js"></script>
-<script src="screens-listening.js"></script>
-<script src="screens-speaking.js"></script>
-<script src="screens-reading.js"></script>
-<script src="screens-history.js"></script>
-<script src="screens-profile.js"></script>
-<script src="screens-special.js"></script>
-<script src="screens-native.js"></script>
-<script src="screens-common.js"></script>
+  <!-- Inline screens - được tải tuần tự -->
+  <script src="screens-auth.js"></script>
+  <script src="screens-dashboard.js"></script>
+  <script src="screens-listening.js"></script>
+  <script src="screens-speaking.js"></script>
+  <script src="screens-reading.js"></script>
+  <script src="screens-history.js"></script>
+  <script src="screens-profile.js"></script>
+  <script src="screens-special.js"></script>
+  <script src="screens-native.js"></script>
+  <script src="screens-common.js"></script>
 
-<script>
-// Render tất cả sau khi load scripts
-function renderAll() {
-  const fns = [
-    typeof renderAuth === 'function' ? renderAuth : null,
-    typeof renderDashboard === 'function' ? renderDashboard : null,
-    typeof renderListening === 'function' ? renderListening : null,
-    typeof renderSpeaking === 'function' ? renderSpeaking : null,
-    typeof renderReading === 'function' ? renderReading : null,
-    typeof renderHistory === 'function' ? renderHistory : null,
-    typeof renderProfile === 'function' ? renderProfile : null,
-    typeof renderSpecial === 'function' ? renderSpecial : null,
-    typeof renderNative === 'function' ? renderNative : null,
-    typeof renderCommon === 'function' ? renderCommon : null,
-  ];
-  document.getElementById('content').innerHTML = fns.filter(Boolean).map(fn => fn()).join('');
-  // Kích hoạt module đầu tiên
-  document.querySelector('.module-btn')?.classList.add('active');
-}
-window.addEventListener('DOMContentLoaded', renderAll);
-</script>
+  <script>
+    // Render tất cả sau khi load scripts
+    function renderAll() {
+      const fns = [
+        typeof renderAuth === 'function' ? renderAuth : null,
+        typeof renderDashboard === 'function' ? renderDashboard : null,
+        typeof renderListening === 'function' ? renderListening : null,
+        typeof renderSpeaking === 'function' ? renderSpeaking : null,
+        typeof renderReading === 'function' ? renderReading : null,
+        typeof renderHistory === 'function' ? renderHistory : null,
+        typeof renderProfile === 'function' ? renderProfile : null,
+        typeof renderSpecial === 'function' ? renderSpecial : null,
+        typeof renderNative === 'function' ? renderNative : null,
+        typeof renderCommon === 'function' ? renderCommon : null,
+      ];
+      document.getElementById('content').innerHTML = fns.filter(Boolean).map(fn => fn()).join('');
+      // Kích hoạt module đầu tiên
+      document.querySelector('.module-btn')?.classList.add('active');
+    }
+    window.addEventListener('DOMContentLoaded', renderAll);
+  </script>
 </body>
+
 </html>
