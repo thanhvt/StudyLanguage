@@ -389,4 +389,27 @@ export const bookmarkApi = {
     const response = await apiClient.post('/bookmarks/remove-by-index', data);
     return response.data;
   },
+
+  /**
+   * Mục đích: Lấy tất cả bookmarks (không phân biệt session) — cho tab Từ vựng
+   * Tham số đầu vào: page (number), limit (number)
+   * Tham số đầu ra: Promise<{bookmarks: SentenceBookmark[]; total: number}>
+   * Khi nào sử dụng: VocabularyTab trong HistoryScreen load danh sách bookmark
+   */
+  getAll: async (
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{bookmarks: SentenceBookmark[]; total: number}> => {
+    console.log('⭐ [Bookmark] Lấy tất cả bookmarks, trang:', page);
+    try {
+      const response = await apiClient.get('/bookmarks', {
+        params: {page, limit},
+      });
+      return response.data;
+    } catch (err: any) {
+      // Fallback: nếu backend chưa có endpoint GET /bookmarks → trả rỗng
+      console.warn('⚠️ [Bookmark] API getAll chưa sẵn sàng, trả rỗng:', err?.message);
+      return {bookmarks: [], total: 0};
+    }
+  },
 };

@@ -19,6 +19,7 @@ import {HistoryCardSkeleton} from '@/components/history/HistoryCardSkeleton';
 import {groupEntriesByDate} from '@/utils/historyHelpers';
 import {useDebounce} from '@/hooks/useDebounce';
 import type {HistoryEntry} from '@/services/api/history';
+import {VocabularyTab} from '@/components/history/VocabularyTab';
 
 // Định nghĩa section type cho SectionList
 interface HistorySection {
@@ -76,6 +77,9 @@ export default function HistoryScreen() {
   const [searchText, setSearchText] = useState('');
   const debouncedSearch = useDebounce(searchText, 300);
   const searchInputRef = useRef<TextInput>(null);
+
+  // Tab state: lịch sử hoặc từ vựng
+  const [activeTab, setActiveTab] = useState<'history' | 'vocabulary'>('history');
 
   // ==========================================
   // Fetch data
@@ -355,6 +359,35 @@ export default function HistoryScreen() {
         </Pressable>
       </View>
 
+      {/* Tab switcher */}
+      <View className="flex-row mx-4 mb-3 bg-neutrals900 rounded-xl p-1">
+        <Pressable
+          className={`flex-1 rounded-lg py-2 items-center ${activeTab === 'history' ? 'bg-primary/20' : ''}`}
+          onPress={() => setActiveTab('history')}>
+          <AppText
+            className={`text-sm font-sans-semibold ${
+              activeTab === 'history' ? 'text-primary' : 'text-neutrals400'
+            }`}>
+            📜 Lịch sử
+          </AppText>
+        </Pressable>
+        <Pressable
+          className={`flex-1 rounded-lg py-2 items-center ${activeTab === 'vocabulary' ? 'bg-primary/20' : ''}`}
+          onPress={() => setActiveTab('vocabulary')}>
+          <AppText
+            className={`text-sm font-sans-semibold ${
+              activeTab === 'vocabulary' ? 'text-primary' : 'text-neutrals400'
+            }`}>
+            📚 Từ vựng
+          </AppText>
+        </Pressable>
+      </View>
+
+      {/* Tab content */}
+      {activeTab === 'vocabulary' ? (
+        <VocabularyTab />
+      ) : (
+        <>
       {/* Search Bar (animated) */}
       {showSearch && (
         <View className="mx-4 mb-3">
@@ -416,6 +449,8 @@ export default function HistoryScreen() {
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
         />
+      )}
+        </>
       )}
     </View>
   );

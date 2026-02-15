@@ -113,12 +113,10 @@ export default function TopicPickerModal({
         </View>
 
         {/* ======================== */}
-        {/* Header — Title + Close button */}
+        {/* Header — X trái, Title giữa, ✓ phải (khi đã chọn) */}
         {/* ======================== */}
         <View className="flex-row items-center justify-between px-6 py-3 border-b border-border">
-          <AppText className="text-foreground font-sans-bold text-lg">
-            📋 Chọn kịch bản
-          </AppText>
+          {/* Nút X đóng — bên trái */}
           <TouchableOpacity
             onPress={onClose}
             activeOpacity={0.7}
@@ -127,6 +125,25 @@ export default function TopicPickerModal({
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
             <Icon name="X" className="w-6 h-6 text-neutrals400" />
           </TouchableOpacity>
+
+          {/* Title — giữa */}
+          <AppText className="text-foreground font-sans-bold text-lg">
+            Chọn chủ đề
+          </AppText>
+
+          {/* Nút ✓ xác nhận — bên phải, chỉ hiện khi đã chọn topic */}
+          {selectedTopic ? (
+            <TouchableOpacity
+              onPress={handleConfirm}
+              activeOpacity={0.7}
+              accessibilityLabel="Xác nhận chọn kịch bản"
+              accessibilityRole="button"
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <Icon name="Check" className="w-6 h-6 text-primary" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{width: 24}} />
+          )}
         </View>
 
         {/* ======================== */}

@@ -96,7 +96,14 @@ export default function CustomScenarioInput({
         name: name.trim(),
         description: description.trim(),
       });
-      setSavedScenarios(prev => [created, ...prev]);
+      // Validate response trước khi spread để tránh TypeError
+      if (created && typeof created === 'object' && created.id) {
+        setSavedScenarios(prev => [created, ...(Array.isArray(prev) ? prev : [])]);
+      } else {
+        console.warn('⚠️ [CustomScenario] API trả về response không hợp lệ:', created);
+        // Fallback: reload lại danh sách từ server
+        await loadScenarios();
+      }
       showSuccess('Đã lưu kịch bản', `"${name.trim()}" đã được thêm vào bộ sưu tập`);
       setName('');
       setDescription('');
@@ -151,8 +158,66 @@ export default function CustomScenarioInput({
 
   return (
     <View>
-      {/* Form tạo mới */}
-      <View className="bg-neutrals900 rounded-2xl p-4 mb-4">
+      {/* Danh sách đã lưu — hiển thị trước */}
+      {isLoading ? (
+        <View className="items-center py-4">
+          <ActivityIndicator size="small" />
+          <AppText className="text-neutrals400 text-xs mt-2">
+            Đang tải kịch bản...
+          </AppText>
+        </View>
+      ) : savedScenarios.length > 0 ? (
+        <View className="mb-4">
+          <AppText className="text-neutrals400 text-xs mb-2">
+            Đã lưu ({savedScenarios.length})
+          </AppText>
+          {savedScenarios.map(scenario => (
+            <TouchableOpacity
+              key={scenario.id}
+              className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3 mb-1.5"
+              onPress={() =>
+                onQuickUse(scenario.name, scenario.description)
+              }
+              activeOpacity={0.7}>
+              <View className="flex-1 mr-3">
+                <AppText className="text-foreground text-sm font-sans-medium">
+                  {scenario.name}
+                </AppText>
+                {scenario.description ? (
+                  <AppText
+                    className="text-neutrals400 text-xs mt-0.5"
+                    numberOfLines={1}>
+                    {scenario.description}
+                  </AppText>
+                ) : null}
+              </View>
+
+              {/* Favorite */}
+              <TouchableOpacity
+                onPress={() => handleToggleFavorite(scenario.id)}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                className="mr-2">
+                <AppText
+                  className={
+                    scenario.isFavorite ? 'text-warning' : 'text-neutrals600'
+                  }>
+                  {scenario.isFavorite ? '⭐' : '☆'}
+                </AppText>
+              </TouchableOpacity>
+
+              {/* Delete */}
+              <TouchableOpacity
+                onPress={() => handleDelete(scenario.id)}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Icon name="Trash2" className="w-4 h-4 text-destructive" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Form tạo mới — hiển thị sau */}
+      <View className="bg-neutrals900 rounded-2xl p-4">
         {/* Header có nút đóng */}
         <View className="flex-row items-center justify-between mb-3">
           <AppText className="text-foreground font-sans-semibold text-sm">
@@ -216,64 +281,6 @@ export default function CustomScenarioInput({
           </AppButton>
         </View>
       </View>
-
-      {/* Danh sách đã lưu */}
-      {isLoading ? (
-        <View className="items-center py-4">
-          <ActivityIndicator size="small" />
-          <AppText className="text-neutrals400 text-xs mt-2">
-            Đang tải kịch bản...
-          </AppText>
-        </View>
-      ) : savedScenarios.length > 0 ? (
-        <View>
-          <AppText className="text-neutrals400 text-xs mb-2">
-            Đã lưu ({savedScenarios.length})
-          </AppText>
-          {savedScenarios.map(scenario => (
-            <TouchableOpacity
-              key={scenario.id}
-              className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3 mb-1.5"
-              onPress={() =>
-                onQuickUse(scenario.name, scenario.description)
-              }
-              activeOpacity={0.7}>
-              <View className="flex-1 mr-3">
-                <AppText className="text-foreground text-sm font-sans-medium">
-                  {scenario.name}
-                </AppText>
-                {scenario.description ? (
-                  <AppText
-                    className="text-neutrals400 text-xs mt-0.5"
-                    numberOfLines={1}>
-                    {scenario.description}
-                  </AppText>
-                ) : null}
-              </View>
-
-              {/* Favorite */}
-              <TouchableOpacity
-                onPress={() => handleToggleFavorite(scenario.id)}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                className="mr-2">
-                <AppText
-                  className={
-                    scenario.isFavorite ? 'text-warning' : 'text-neutrals600'
-                  }>
-                  {scenario.isFavorite ? '⭐' : '☆'}
-                </AppText>
-              </TouchableOpacity>
-
-              {/* Delete */}
-              <TouchableOpacity
-                onPress={() => handleDelete(scenario.id)}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <Icon name="Trash2" className="w-4 h-4 text-destructive" />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : null}
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {ConversationTimestamp} from '@/services/api/listening';
+import type {ConversationTimestamp, ConversationResult} from '@/services/api/listening';
 
 // =======================
 // Kiểu dữ liệu cho player mode
@@ -26,6 +26,8 @@ export interface AudioSession {
   savedAt: string;
   /** Topic/Scenario đã chọn */
   topic: string;
+  /** Dữ liệu conversation để restore khi tiếp tục nghe */
+  conversationData?: ConversationResult;
 }
 
 // =======================

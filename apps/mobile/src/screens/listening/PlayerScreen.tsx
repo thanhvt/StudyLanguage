@@ -22,11 +22,15 @@ import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePlayerGestures} from '@/hooks/usePlayerGestures';
-import {TappableTranscript, DictionaryPopup, WaveformVisualizer, PocketMode} from '@/components/listening';
+import {TappableTranscript, DictionaryPopup, WaveformVisualizer, PocketMode, TourTooltip, usePlayerTour} from '@/components/listening';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
+import {useVocabularyStore} from '@/store/useVocabularyStore';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+// Số bước tour
+const TOUR_TOTAL = 5;
 
 // State: Pocket Mode
 // Đặt ở ngoài component vì chỉ cần boolean đơn giản
@@ -148,8 +152,10 @@ export default function ListeningPlayerScreen({
           timestamps,
           savedAt: new Date().toISOString(),
           topic: config.topic || '',
+          // Lưu kèm conversation data để restore khi "Tiếp tục nghe"
+          conversationData: conversation || undefined,
         });
-        console.log('💾 [Player] Đã lưu session cho restore');
+        console.log('💾 [Player] Đã lưu session + conversation data cho restore');
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,7 +215,6 @@ export default function ListeningPlayerScreen({
 
         // Auto-play
         await TrackPlayer.play();
-        showSuccess('Audio sẵn sàng', 'Đang tự động phát bài nghe 🎧');
         haptic.success();
       } catch (error: any) {
         console.error('❌ [PlayerScreen] Lỗi sinh audio:', error);
@@ -257,10 +262,22 @@ export default function ListeningPlayerScreen({
 
   if (!conversation) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
-        <AppText className="text-neutrals400">
-          Không có dữ liệu hội thoại
+      <View className="flex-1 bg-background items-center justify-center px-8">
+        <Icon name="Headphones" className="w-16 h-16 text-neutrals300 mb-4" />
+        <AppText className="text-foreground font-sans-bold text-xl mb-2 text-center">
+          Chưa có bài nghe
         </AppText>
+        <AppText className="text-neutrals400 text-center text-sm mb-6 leading-5">
+          Quay lại màn hình cấu hình để chọn chủ đề và tạo bài nghe mới
+        </AppText>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className="bg-primary px-6 py-3 rounded-xl"
+          activeOpacity={0.7}>
+          <AppText className="text-white font-sans-semibold text-sm">
+            ← Quay lại chọn chủ đề
+          </AppText>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -452,7 +469,13 @@ export default function ListeningPlayerScreen({
       const prevIndex = currentExchangeIndex - 1;
       setCurrentExchangeIndex(prevIndex);
       if (isTrackReady && timestamps[prevIndex]) {
+        // Pause → seek → resume để tránh nghe audio câu cũ bị lọt
+        const wasPlaying = isTrackPlaying;
+        if (wasPlaying) { await TrackPlayer.pause(); }
         await TrackPlayer.seekTo(timestamps[prevIndex].startTime);
+        if (wasPlaying) {
+          setTimeout(() => TrackPlayer.play(), 50);
+        }
       }
     } else if (isTrackReady) {
       // Không có timestamps → lùi 10 giây
@@ -461,7 +484,7 @@ export default function ListeningPlayerScreen({
     } else if (currentExchangeIndex > 0) {
       setCurrentExchangeIndex(currentExchangeIndex - 1);
     }
-  }, [timestamps, currentExchangeIndex, isTrackReady, progress.position, setCurrentExchangeIndex]);
+  }, [timestamps, currentExchangeIndex, isTrackReady, isTrackPlaying, progress.position, setCurrentExchangeIndex]);
 
   /**
    * Mục đích: Skip tới exchange tiếp theo hoặc tới 10s
@@ -475,7 +498,13 @@ export default function ListeningPlayerScreen({
       const nextIndex = currentExchangeIndex + 1;
       setCurrentExchangeIndex(nextIndex);
       if (isTrackReady && timestamps[nextIndex]) {
+        // Pause → seek → resume để tránh nghe audio câu cũ bị lọt
+        const wasPlaying = isTrackPlaying;
+        if (wasPlaying) { await TrackPlayer.pause(); }
         await TrackPlayer.seekTo(timestamps[nextIndex].startTime);
+        if (wasPlaying) {
+          setTimeout(() => TrackPlayer.play(), 50);
+        }
       }
     } else if (isTrackReady) {
       // Không có timestamps → tới 10 giây
@@ -489,6 +518,7 @@ export default function ListeningPlayerScreen({
     currentExchangeIndex,
     exchanges.length,
     isTrackReady,
+    isTrackPlaying,
     progress.duration,
     progress.position,
     setCurrentExchangeIndex,
@@ -503,9 +533,8 @@ export default function ListeningPlayerScreen({
    */
   const handleSwipeDownMinimize = useCallback(() => {
     // TODO: Implement mini player mode — chuyển sang compact/minimized view
-    showInfo('🔽 Minimize', 'Tính năng mini player sẽ sớm ra mắt!');
-    console.log('🔽 [Player] Swipe down — placeholder minimize');
-  }, [showInfo]);
+    console.log('🔽 [Player] Swipe down — placeholder minimize (chưa implement)');
+  }, []);
 
   // ========================
   // Gesture Handler — swipe left/right/down + double tap
@@ -537,6 +566,9 @@ export default function ListeningPlayerScreen({
       ? (progress.position / progress.duration) * 100
       : 0;
 
+  // Tour walkthrough — hướng dẫn người dùng mới
+  const tour = usePlayerTour();
+
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
@@ -559,13 +591,21 @@ export default function ListeningPlayerScreen({
           {conversation.title || config.topic || 'Bài nghe'}
         </AppText>
         {/* Nút Pocket Mode — bỏ túi nghe thụ động */}
-        <TouchableOpacity
-          onPress={() => setPocketMode(true)}
-          className="p-2 -mr-2"
-          accessibilityLabel="Bật Pocket Mode"
-          accessibilityRole="button">
-          <Icon name="Moon" className="w-5 h-5 text-neutrals400" />
-        </TouchableOpacity>
+        <TourTooltip
+          stepId="pocket"
+          activeStepId={tour.currentStepId}
+          onNext={tour.nextStep}
+          onSkip={tour.skipTour}
+          stepIndex={4}
+          totalSteps={TOUR_TOTAL}>
+          <TouchableOpacity
+            onPress={() => setPocketMode(true)}
+            className="p-2 -mr-2"
+            accessibilityLabel="Bật Pocket Mode"
+            accessibilityRole="button">
+            <Icon name="Smartphone" className="w-5 h-5 text-neutrals400" />
+          </TouchableOpacity>
+        </TourTooltip>
       </View>
 
       {/* Audio generation status banner */}
@@ -578,7 +618,7 @@ export default function ListeningPlayerScreen({
         </View>
       )}
 
-      {/* Transcript — wrapped với GestureDetector cho swipe + double tap */}
+      {/* Transcript — vùng hiển thị hội thoại */}
       <GestureDetector gesture={playerGesture}>
         <Animated.View style={[{flex: 1}, gestureAnimatedStyle]}>
       <ScrollView
@@ -586,6 +626,16 @@ export default function ListeningPlayerScreen({
         className="flex-1 px-6"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{paddingBottom: 160}}>
+
+        {/* Tour tooltip cho transcript — bọc summary thay vì toàn bộ ScrollView */}
+        <TourTooltip
+          stepId="transcript"
+          activeStepId={tour.currentStepId}
+          onNext={tour.nextStep}
+          onSkip={tour.skipTour}
+          stepIndex={0}
+          totalSteps={TOUR_TOTAL}>
+          <View>
         {/* Summary */}
         {conversation.summary && (
           <View className="bg-neutrals900 rounded-2xl p-4 mb-4">
@@ -594,6 +644,8 @@ export default function ListeningPlayerScreen({
             </AppText>
           </View>
         )}
+          </View>
+        </TourTooltip>
 
         {/* Danh sách exchanges */}
         <View className="gap-3">
@@ -633,11 +685,13 @@ export default function ListeningPlayerScreen({
                     {exchange.speaker}
                   </AppText>
                   {isActive && (
-                    <View className="ml-auto">
-                      <Icon
-                        name="Volume2"
-                        className="w-4 h-4 text-primary"
-                      />
+                    <View className="ml-auto flex-row items-center">
+                      <View className="flex-row items-end gap-0.5 h-3">
+                        <View className="w-0.5 h-1 bg-primary rounded-full animate-pulse" />
+                        <View className="w-0.5 h-2 bg-primary rounded-full" />
+                        <View className="w-0.5 h-3 bg-primary rounded-full animate-pulse" />
+                        <View className="w-0.5 h-1.5 bg-primary rounded-full" />
+                      </View>
                     </View>
                   )}
                   {isBookmarked && (
@@ -715,30 +769,53 @@ export default function ListeningPlayerScreen({
           </View>
         )}
 
-        <View className="flex-row items-center justify-between">
-          {/* Tốc độ */}
-          <TouchableOpacity
-            className="bg-neutrals900 rounded-full px-3 py-2"
-            onPress={cycleSpeed}>
-            <AppText className="text-foreground font-sans-bold text-sm">
-              {playbackSpeed}x
-            </AppText>
-          </TouchableOpacity>
+        <View className="flex-row items-center justify-center">
+          {/* Tốc độ — trái */}
+          <TourTooltip
+            stepId="speed"
+            activeStepId={tour.currentStepId}
+            onNext={tour.nextStep}
+            onSkip={tour.skipTour}
+            stepIndex={2}
+            totalSteps={TOUR_TOTAL}>
+            <TouchableOpacity
+              className="bg-neutrals900 rounded-full px-3 py-2"
+              onPress={cycleSpeed}>
+              <AppText className="text-foreground font-sans-bold text-sm">
+                {playbackSpeed}x
+              </AppText>
+            </TouchableOpacity>
+          </TourTooltip>
 
-          {/* Toggle bản dịch tiếng Việt */}
-          <TouchableOpacity
-            className={`rounded-full px-3 py-2 ${showTranslation ? 'bg-primary/20' : 'bg-neutrals900'}`}
-            onPress={() => {
-              toggleTranslation();
-              haptic.light();
-            }}>
-            <AppText className={`text-sm font-sans-bold ${showTranslation ? 'text-primary' : 'text-neutrals500'}`}>
-              🇻🇳
-            </AppText>
-          </TouchableOpacity>
+          {/* Toggle bản dịch tiếng Việt — trái */}
+          <TourTooltip
+            stepId="translation"
+            activeStepId={tour.currentStepId}
+            onNext={tour.nextStep}
+            onSkip={tour.skipTour}
+            stepIndex={3}
+            totalSteps={TOUR_TOTAL}>
+            <TouchableOpacity
+              className={`rounded-full px-3 py-2 ml-2 ${showTranslation ? 'bg-primary/20' : 'bg-neutrals900'}`}
+              onPress={() => {
+                toggleTranslation();
+                haptic.light();
+              }}>
+              <AppText className={`text-sm font-sans-bold ${showTranslation ? 'text-primary' : 'text-neutrals500'}`}>
+                🇻🇳
+              </AppText>
+            </TouchableOpacity>
+          </TourTooltip>
 
-          {/* Điều khiển phát */}
-          <View className="flex-row items-center gap-6">
+          {/* Điều khiển phát — CHÍNH GIỮA */}
+          <TourTooltip
+            stepId="playback"
+            activeStepId={tour.currentStepId}
+            onNext={tour.nextStep}
+            onSkip={tour.skipTour}
+            stepIndex={1}
+            totalSteps={TOUR_TOTAL}>
+          <View className="flex-row items-center gap-5 mx-4">
             {/* Lùi */}
             <TouchableOpacity onPress={handleSkipBack}>
               <Icon
@@ -770,8 +847,9 @@ export default function ListeningPlayerScreen({
               />
             </TouchableOpacity>
           </View>
+          </TourTooltip>
 
-          {/* Nút bài mới */}
+          {/* Nút bài mới — phải */}
           <TouchableOpacity
             className="bg-neutrals900 rounded-full px-3 py-2"
             onPress={handleNewConversation}>
@@ -785,10 +863,36 @@ export default function ListeningPlayerScreen({
         onClose={() => setSelectedWord(null)}
         onSaveWord={word => {
           addSavedWord(word);
+          // Persist vào VocabularyStore (AsyncStorage) — hiện trong tab Từ vựng
+          useVocabularyStore.getState().addWord(word, 'listening');
           showSuccess('Đã lưu từ "' + word + '"');
         }}
-        onPlayPronunciation={audioUrl => {
-          console.log('🔊 [PlayerScreen] Phát âm từ, URL:', audioUrl);
+        onPlayPronunciation={async (pronunciationUrl) => {
+          try {
+            console.log('🔊 [PlayerScreen] Phát âm từ, URL:', pronunciationUrl);
+            // Tạm pause main audio nếu đang phát
+            const wasPlaying = isTrackPlaying;
+            if (wasPlaying) {
+              await TrackPlayer.pause();
+            }
+            // Dùng TrackPlayer tạm thời phát pronunciation
+            // Lưu vị trí hiện tại trước
+            const currentProgress = await TrackPlayer.getProgress();
+            // Phát pronunciation bằng cách fetch audio URL
+            const Audio = require('react-native-audio-recorder-player').default;
+            const audioRecorderPlayer = new Audio();
+            await audioRecorderPlayer.startPlayer(pronunciationUrl);
+            audioRecorderPlayer.addPlayBackListener((e: any) => {
+              if (e.currentPosition >= e.duration - 100) {
+                audioRecorderPlayer.stopPlayer();
+                audioRecorderPlayer.removePlayBackListener();
+                console.log('✅ [PlayerScreen] Đã phát xong pronunciation');
+              }
+            });
+          } catch (error) {
+            console.error('❌ [PlayerScreen] Lỗi phát âm:', error);
+            showError('Lỗi phát âm', 'Không thể phát âm từ này');
+          }
         }}
       />
       {/* Pocket Mode — full-screen overlay đen */}

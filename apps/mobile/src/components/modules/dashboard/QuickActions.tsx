@@ -2,93 +2,97 @@ import React from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
+import {SKILL_COLORS, type SkillType} from '@/config/skillColors';
 
-// Cấu hình 3 skill cards
-const SKILLS = [
+// Cấu hình 3 skill cards — horizontal layout theo mockup
+const SKILLS: {
+  id: SkillType;
+  emoji: string;
+  label: string;
+  time: string;
+  route: string;
+}[] = [
   {
     id: 'listening',
     emoji: '🎧',
-    title: 'Luyện Nghe',
-    subtitle: 'Nghe hội thoại AI',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
+    label: 'Nghe',
+    time: '15 phút',
+    route: 'Listening',
   },
   {
     id: 'speaking',
     emoji: '🗣️',
-    title: 'Luyện Nói',
-    subtitle: 'Hội thoại với AI',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
+    label: 'Nói',
+    time: '10 phút',
+    route: 'Speaking',
   },
   {
     id: 'reading',
     emoji: '📖',
-    title: 'Luyện Đọc',
-    subtitle: 'Đọc bài theo level',
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/20',
+    label: 'Đọc',
+    time: '5 phút',
+    route: 'Reading',
   },
 ];
 
 /**
- * Mục đích: Widget hiển thị 3 skill cards (Listening, Speaking, Reading) để truy cập nhanh
+ * Mục đích: Widget 3 skill cards nằm ngang (Nghe, Nói, Đọc) theo mockup mới
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: Phần giữa Dashboard HomeScreen
- *   - Nhấn vào card → navigate đến feature tương ứng
- *   - Hiện tại chỉ Listening hoạt động (Phase 1C), Speaking + Reading sẽ thêm sau
+ * Khi nào sử dụng: Phần "Luyện tập nhanh" trên Dashboard
+ *   - 3 cards nằm ngang, mỗi card có màu nền riêng theo skill
+ *   - Nhấn → navigate đến feature tương ứng
  */
 export default function QuickActions() {
   const navigation = useNavigation();
 
   /**
    * Mục đích: Xử lý khi user nhấn vào skill card
-   * Tham số đầu vào: skillId (string) - ID của skill
+   * Tham số đầu vào: route (string) - tên screen
    * Tham số đầu ra: void
    * Khi nào sử dụng: Khi user nhấn vào 1 trong 3 skill cards
    */
-  const handleSkillPress = (skillId: string) => {
-    switch (skillId) {
-      case 'listening':
-        navigation.navigate('Listening');
-        break;
-      case 'speaking':
-        navigation.navigate('Speaking');
-        break;
-      case 'reading':
-        navigation.navigate('Reading');
-        break;
-    }
+  const handleSkillPress = (route: string) => {
+    navigation.navigate(route as never);
   };
 
   return (
-    <View className="px-6 py-4">
-      <AppText className="text-foreground font-sans-bold text-lg mb-3">
-        Bắt đầu học
+    <View className="px-4 py-2">
+      {/* Section title */}
+      <AppText className="text-foreground font-sans-bold text-base mb-3">
+        ⚡ Luyện tập nhanh
       </AppText>
 
-      <View className="gap-3">
-        {SKILLS.map(skill => (
-          <TouchableOpacity
-            key={skill.id}
-            className={`flex-row items-center p-4 rounded-2xl border ${skill.bgColor} ${skill.borderColor}`}
-            activeOpacity={0.7}
-            onPress={() => handleSkillPress(skill.id)}>
-            <View className="w-12 h-12 rounded-full items-center justify-center bg-neutrals900">
-              <AppText className="text-2xl">{skill.emoji}</AppText>
-            </View>
-            <View className="ml-4 flex-1">
-              <AppText className="text-foreground font-sans-semibold text-base">
-                {skill.title}
+      {/* 3 horizontal skill cards */}
+      <View className="flex-row gap-3">
+        {SKILLS.map(skill => {
+          const bgColor = SKILL_COLORS[skill.id].dark;
+          return (
+            <TouchableOpacity
+              key={skill.id}
+              className="flex-1 rounded-xl p-4"
+              style={{
+                backgroundColor: `${bgColor}15`,
+                borderWidth: 1,
+                borderColor: `${bgColor}30`,
+              }}
+              activeOpacity={0.7}
+              onPress={() => handleSkillPress(skill.route)}>
+              {/* Icon */}
+              <AppText className="text-[28px] mb-2">{skill.emoji}</AppText>
+              {/* Label */}
+              <AppText
+                className="font-sans-bold text-sm"
+                style={{color: bgColor}}>
+                {skill.label}
               </AppText>
-              <AppText className="text-neutrals400 text-sm mt-0.5">
-                {skill.subtitle}
+              {/* Thời gian */}
+              <AppText className="text-neutrals400 text-[11px] mt-1">
+                {skill.time}
               </AppText>
-            </View>
-            <AppText className="text-neutrals500 text-xl">→</AppText>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );

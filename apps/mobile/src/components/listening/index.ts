@@ -17,3 +17,4 @@ export {default as WaveformVisualizer} from './WaveformVisualizer';
 export {default as CompactPlayer} from './CompactPlayer';
 export {default as MinimizedPlayer} from './MinimizedPlayer';
 export {default as PocketMode} from './PocketMode';
+export {TourTooltip, usePlayerTour} from './PlayerTour';

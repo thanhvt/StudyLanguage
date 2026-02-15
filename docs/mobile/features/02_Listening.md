@@ -681,36 +681,45 @@ interface TtsSettings {
 ## 8. Implementation Tasks
 
 ### MVP Phase
-- [ ] Config screen with topic, duration, mode
-- [ ] Basic audio player with play/pause/seek
-- [ ] Transcript display with auto-scroll
-- [ ] Speed control (0.5x - 1.5x)
-- [ ] Generate conversation via API
+- [x] Config screen with topic, duration, mode
+- [x] Basic audio player with play/pause/seek
+- [x] Transcript display with auto-scroll
+- [x] Speed control (0.5x - 2.0x)
+- [x] Generate conversation via API
 
 ### Enhanced Phase
 
-- [ ] Bookmark sentences
+- [x] Bookmark sentences
 - [ ] Offline download
-- [ ] Background audio
-- [ ] Lock screen controls
-- [ ] **Custom Scenarios UI** (NEW ✨)
-- [ ] **Global Audio Player - Compact mode** (NEW ✨)
-- [ ] **Radio Mode: 1-min duration option** (NEW ✨)
-- [ ] **Radio Mode: Progress tracking UI** (NEW ✨)
-- [ ] **Session restoration from player** (NEW ✨)
-- [ ] **Topic picker subcategory highlight** (NEW ✨)
-- [ ] **TTS Provider Settings UI** (NEW ✨)
-- [ ] **Azure TTS Integration** (NEW ✨)
-- [ ] **Multi-talker logic** (NEW ✨)
+- [x] Background audio
+- [x] Lock screen controls
+- [x] **Custom Scenarios UI** (NEW ✨)
+- [x] **Global Audio Player - Compact mode** (NEW ✨)
+- [x] **Radio Mode: 1-min duration option** (NEW ✨)
+- [x] **Radio Mode: Progress tracking UI** (NEW ✨)
+- [x] **Session restoration from player** (NEW ✨)
+- [x] **Topic picker subcategory highlight** (NEW ✨)
+- [x] **TTS Provider Settings UI** (NEW ✨)
+- [x] **Azure TTS Integration** (NEW ✨)
+- [x] **Multi-talker logic** (NEW ✨)
 
 ### Advanced Phase
 
-- [ ] Pocket mode with gestures
+- [x] Pocket mode with gestures
 - [ ] Voice commands
-- [ ] Radio mode (playlists)
-- [ ] **Custom Scenarios CRUD** (NEW ✨)
-- [ ] **Global Audio Player - Minimized mode** (NEW ✨)
+- [x] Radio mode (playlists)
+- [x] **Custom Scenarios CRUD** (NEW ✨)
+- [x] **Global Audio Player - Minimized mode** (NEW ✨)
 - [ ] **Audio change confirmation dialog** (NEW ✨)
+- [x] **Saved Words viewer** — Tab "Từ vựng" trong History, persist qua AsyncStorage (DONE ✨)
+- [x] **Sentence Bookmarks viewer** — Hiển thị trong VocabularyTab, API getAll()(DONE ✨)
+- [x] **Session restoration fix** — Persist conversation data để "Tiếp tục nghe" hoạt động sau reload (FIXED ✨)
+- [x] **Walkthrough Tour** — 5-step interactive tour cho first-time users (DONE ✨)
+
+### Future Phase
+
+- [ ] 🧠 **Module Từ vựng riêng** — Tab bottom nav, flashcard, spaced repetition, search/filter
+- [ ] Voice commands
 
 ---
 

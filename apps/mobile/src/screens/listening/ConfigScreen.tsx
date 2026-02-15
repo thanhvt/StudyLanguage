@@ -522,12 +522,25 @@ export default function ListeningConfigScreen({
         className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
         style={{paddingBottom: Math.max(insets.bottom, 16)}}>
 
-        {/* Banner tiếp tục nghe — hiện khi có session đã lưu */}
-        {useAudioPlayerStore.getState().lastSession && (
+        {/* Banner tiếp tục nghe — hiện khi có session đã lưu VÀ có conversation data */}
+        {useAudioPlayerStore.getState().lastSession?.conversationData && (
           <TouchableOpacity
             className="flex-row items-center bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 mb-3"
             onPress={() => {
               haptic.light();
+              const session = useAudioPlayerStore.getState().lastSession;
+              if (!session?.conversationData) {
+                // Session cũ không có data → xóa session stale
+                useAudioPlayerStore.getState().clearSession();
+                console.warn('⚠️ [ConfigScreen] Session cũ không có conversationData, đã xóa');
+                return;
+              }
+              // Restore conversation vào listening store trước khi navigate
+              const listeningStore = useListeningStore.getState();
+              listeningStore.setConversation(session.conversationData);
+              listeningStore.setAudioUrl(session.audioUrl);
+              listeningStore.setTimestamps(session.timestamps);
+              console.log('✅ [ConfigScreen] Đã restore conversation data từ session');
               useAudioPlayerStore.getState().setPlayerMode('full');
               navigation.navigate('Player');
             }}

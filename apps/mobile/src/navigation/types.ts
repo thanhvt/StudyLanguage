@@ -14,8 +14,10 @@ export type AuthStackParamList = {
 // ===========================
 export type MainTabParamList = {
   Home: undefined;
-  History: undefined;
-  Profile: undefined;
+  Listening: undefined;
+  Speaking: undefined;
+  Reading: undefined;
+  More: undefined;
 };
 
 // ===========================
@@ -25,9 +27,6 @@ export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   Settings: undefined;
   About: undefined;
-  Listening: undefined;
-  Reading: undefined;
-  Speaking: undefined;
   // Demo screens (giữ cho development)
   ComponentsDemo: undefined;
 };

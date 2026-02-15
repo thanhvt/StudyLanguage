@@ -3,8 +3,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {MainTabParamList, AppStackParamList} from './types';
 import HomeScreen from '@/screens/home';
-import HistoryScreen from '@/screens/tabs/HistoryScreen';
-import ProfileScreen from '@/screens/tabs/ProfileScreen';
+import MoreScreen from '@/screens/MoreScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
 import AboutScreen from '@/screens/AboutScreen';
 import CustomTabBar from '@/navigation/components/CustomTabBar';
@@ -17,10 +16,15 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
 /**
- * Mục đích: Bottom tab navigator chính của app (sau khi đăng nhập)
+ * Mục đích: Bottom tab navigator chính — 5 tabs (redesigned)
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: Được render bên trong MainStack, hiển thị 3 tabs chính
+ * Khi nào sử dụng: Được render bên trong MainStack, hiển thị 5 tabs:
+ *   - Trang chủ (Home) → Dashboard
+ *   - Nghe (Listening) → ListeningStack
+ *   - Nói (Speaking) → SpeakingStack
+ *   - Đọc (Reading) → ReadingStack
+ *   - Thêm (More) → MoreScreen (Settings, Profile, About...)
  */
 function MainTabNavigator() {
   return (
@@ -32,17 +36,27 @@ function MainTabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{title: 'HOME'}}
+        options={{title: 'Trang chủ'}}
       />
       <Tab.Screen
-        name="History"
-        component={HistoryScreen}
-        options={{title: 'HISTORY'}}
+        name="Listening"
+        component={ListeningStack}
+        options={{title: 'Nghe'}}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{title: 'PROFILE'}}
+        name="Speaking"
+        component={SpeakingStack}
+        options={{title: 'Nói'}}
+      />
+      <Tab.Screen
+        name="Reading"
+        component={ReadingStack}
+        options={{title: 'Đọc'}}
+      />
+      <Tab.Screen
+        name="More"
+        component={MoreScreen}
+        options={{title: 'Thêm'}}
       />
     </Tab.Navigator>
   );
@@ -53,8 +67,8 @@ function MainTabNavigator() {
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: RootNavigator hiển thị khi user đã đăng nhập
- *   - MainTabs: tab navigator chính
- *   - Settings, About: push screen từ Profile tab
+ *   - MainTabs: tab navigator chính (5 tabs)
+ *   - Settings, About: push screen từ More tab
  */
 export default function MainStack() {
   return (
@@ -76,21 +90,6 @@ export default function MainStack() {
         name="About"
         component={AboutScreen}
         options={{title: 'Về ứng dụng'}}
-      />
-      <Stack.Screen
-        name="Listening"
-        component={ListeningStack}
-        options={{headerShown: false}}
-      />
-      <Stack.Screen
-        name="Reading"
-        component={ReadingStack}
-        options={{headerShown: false}}
-      />
-      <Stack.Screen
-        name="Speaking"
-        component={SpeakingStack}
-        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );

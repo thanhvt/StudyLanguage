@@ -127,7 +127,7 @@
 | # | Action | Expected Result | P/F |
 |:-:|--------|-----------------|:---:|
 | 1 | Quan sát 30 giây không chạm | Highlight tự di chuyển xuống theo câu đang đọc | |
-| 2 | Exchange #1 highlight | Background xanh, icon 🔊 hiện | |
+| 2 | Exchange #1 highlight | Background xanh, animated EQ bars (thanh nhỏ nhấp nháy) hiện | |
 | 3 | Khi speaker đổi | Highlight chuyển sang exchange mới | |
 | 4 | Tap exchange #5 (nhảy tới) | Audio seek tới timestamp exchange #5 | |
 | 5 | Transcript dài (>10 exchanges) — scroll xuống | Highlight vẫn đúng vị trí | |
@@ -180,7 +180,7 @@
 |:-:|--------|-----------------|:---:|
 | 1 | Swipe left trên vùng transcript | Nhảy câu trước, haptic feedback | |
 | 2 | Swipe right trên vùng transcript | Nhảy câu tiếp, haptic feedback | |
-| 3 | Swipe down trên vùng transcript | Toast "Tính năng mini player sẽ sớm ra mắt!" | |
+| 3 | Swipe down trên vùng transcript | Console log placeholder (không hiện toast) | |
 | 4 | Double tap vùng transcript | Toggle Play/Pause | |
 | 5 | Single tap vùng (không phải từ/exchange) | KHÔNG trigger play/pause (tránh false positive) | |
 | 6 | Swipe nhẹ (<50px) | KHÔNG trigger action (dưới threshold) | |
@@ -217,7 +217,7 @@
 
 | # | Action | Expected Result | P/F |
 |:-:|--------|-----------------|:---:|
-| 1 | Navigate trực tiếp tới PlayerScreen (không qua Config) | Hiện "Không có dữ liệu hội thoại" | |
+| 1 | Navigate trực tiếp tới PlayerScreen (không qua Config) | Hiện empty state: icon Headphones + "Chưa có bài nghe" + nút "Quay lại" | |
 | 2 | Tắt mạng → tap "Bắt đầu nghe" ở Config | Toast error "Cần kết nối mạng" | |
 | 3 | Audio đang gen → tắt mạng | Toast "Không thể tạo audio" + transcript vẫn đọc được | |
 | 4 | Tap Play khi chưa có audio | Toast "Audio chưa sẵn sàng" | |
@@ -298,6 +298,77 @@
 
 ---
 
+## Flow 12: Bug Fixes Verification (Sprint Hotfix)
+
+> **Mục đích:** Verify các bug fix và UX improvement từ sprint debug
+> **Ngày thêm:** 2026-02-15
+
+### MAN-LIS-024: "Tiếp tục nghe" — Session Restoration
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Mở app → Luyện Nghe → Chọn topic → "Bắt đầu nghe" | PlayerScreen mở, transcript + audio hiện | |
+| 2 | Nghe ~30 giây, đợi audio phát | Audio đang phát, progress bar chạy | |
+| 3 | Kill app hoàn toàn (force close) | App đóng | |
+| 4 | Mở lại app → Luyện Nghe | Nút "▶️ Tiếp tục nghe" hiện ở footer với title bài cũ | |
+| 5 | Tap "Tiếp tục nghe" | Navigate → PlayerScreen, transcript HIỆN ĐẦY ĐỦ (không phải "Không có dữ liệu") | |
+| 6 | Kill app → Clear AsyncStorage → Mở lại | Nút "Tiếp tục nghe" KHÔNG hiện (session đã bị xóa) | |
+| 7 | Xóa app data / reinstall → Mở Luyện Nghe | Nút "Tiếp tục nghe" KHÔNG hiện (không có stale session) | |
+
+### MAN-LIS-025: Empty State — "Chưa có bài nghe"
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Navigate trực tiếp tới PlayerScreen (deeplink hoặc code) | Hiện icon 🎧 + text "Chưa có bài nghe" + mô tả hướng dẫn | |
+| 2 | Tap nút "← Quay lại chọn chủ đề" | Navigate về ConfigScreen | |
+| 3 | Dark mode: kiểm tra empty state | Text + icon có contrast đủ | |
+
+### MAN-LIS-026: Custom Scenario Save — Spread Error Fix
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Mở TopicPicker → Tab "Tuỳ chỉnh" | Form tạo + danh sách scenarios hiện | |
+| 2 | Nhập tên "Test Bug Fix" + mô tả → Tap "💾 Lưu lại" | Toast thành công, scenario xuất hiện trong danh sách (KHÔNG crash) | |
+| 3 | Tắt mạng → Nhập tên mới → Tap "💾 Lưu lại" | Toast error "Lỗi lưu kịch bản" (KHÔNG crash TypeError) | |
+| 4 | Bật mạng lại → Nhập tên → Tap "💾 Lưu lại" | Hoạt động bình thường, scenario lưu thành công | |
+
+### MAN-LIS-027: TopicPickerModal Header Redesign
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Mở TopicPicker modal | Header: X (trái), "Chọn chủ đề" (giữa), trống (phải) | |
+| 2 | Chọn 1 scenario từ danh sách | Icon ✓ xanh xuất hiện ở bên phải header | |
+| 3 | Tap X ở bên trái | Modal đóng, scenario VẪN được chọn | |
+| 4 | Mở lại → Tap ✓ ở bên phải | Modal đóng, scenario confirmed | |
+
+### MAN-LIS-028: Pronunciation Playback Fix
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Trong PlayerScreen, tap vào từ "hello" | DictionaryPopup mở | |
+| 2 | Tap nút 🔊 phát âm | NGHE được phát âm từ "hello" (không chỉ console.log) | |
+| 3 | Main audio đang phát → Tap 🔊 phát âm | Main audio pause, pronunciation phát, sau đó main audio KHÔNG auto resume | |
+| 4 | Tap 🔊 khi không có URL audio (từ hiếm) | Hiện toast error "Không thể phát âm từ này" (không crash) | |
+
+### MAN-LIS-029: Audio Skip Sync (Pause→Seek→Resume)
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Audio đang phát câu #3 → Tap ⏩ Skip Forward | Audio nhảy sang câu #4 NGAY LẬP TỨC, không nghe lọt vài từ cuối câu #3 | |
+| 2 | Audio đang phát câu #5 → Tap ⏪ Skip Back | Audio nhảy về câu #4. Không nghe bleed từ câu #5 | |
+| 3 | Skip nhanh 3 lần liên tiếp | Audio nhảy đúng 3 câu, không bị nghe lọt audio cũ | |
+| 4 | Audio đang pause → Tap ⏩ Skip | Audio vẫn ở trạng thái pause, highlight chuyển đúng câu mới | |
+
+### MAN-LIS-030: Pocket Mode Icon Change
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Mở PlayerScreen → Quan sát header bên phải | Icon Smartphone (📱) hiện thay cho icon Moon (🌙) | |
+| 2 | Tap icon Smartphone | Pocket Mode mở: màn hình đen, 3 vùng cử chỉ | |
+| 3 | Double tap trong Pocket Mode | Thoát Pocket Mode, quay lại PlayerScreen | |
+
+---
+
 ## Tổng Kết Manual Test
 
 | Flow | Test IDs | Kết quả | Bug ID |
@@ -313,8 +384,9 @@
 | 9. Navigation | MAN-LIS-019 → 020 | | |
 | 10. Dark Mode & A11y | MAN-LIS-021 → 022 | | |
 | 11. Performance | MAN-LIS-023 | | |
+| **12. Bug Fixes** | **MAN-LIS-024 → 030** | | |
 
-**Tổng:** ___/23 PASS
+**Tổng:** ___/30 PASS
 
 **Bugs tìm thấy:**
 
@@ -328,6 +400,7 @@
 
 > **Nguồn gốc:** Merged từ `02_listening_manual_tests.md` (10 flows) + `13_listening_manual_tests.md` (27 tests, 6 flows).
 > **Ngày merge:** 2026-02-14
+> **Ngày cập nhật:** 2026-02-15 — Thêm Flow 12 (Bug Fixes Verification, MAN-LIS-024 → 030)
 
 > [!IMPORTANT]
 > File `02_listening_manual_tests.md` đã được deprecated. Tất cả nội dung đã merge vào đây.
@@ -342,3 +415,4 @@
 > - Error Handling 7 scenarios (MAN-LIS-017)
 > - Background & Lock Screen 7 bước (MAN-LIS-018)
 > - Performance 8 metrics (MAN-LIS-023)
+> - **Bug Fixes Verification 7 tests (MAN-LIS-024 → 030)**

@@ -1,19 +1,23 @@
 import React from 'react';
 import {ScrollView} from 'react-native';
 import StreakWidget from '@/components/modules/dashboard/StreakWidget';
-import QuickActions from '@/components/modules/dashboard/QuickActions';
 import StudyGoalCard from '@/components/modules/dashboard/StudyGoalCard';
+import QuickActions from '@/components/modules/dashboard/QuickActions';
+import WeeklyActivityChart from '@/components/modules/dashboard/WeeklyActivityChart';
+import RecentLessons from '@/components/modules/dashboard/RecentLessons';
 
 /**
- * Mục đích: Màn hình Dashboard chính - trang chủ của app
+ * Mục đích: Màn hình Dashboard chính - trang chủ của app (redesigned)
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Tab "Home" trong MainTabs, hiển thị sau khi đăng nhập
  *
- * Bao gồm:
- *   - StreakWidget: lời chào + streak học liên tiếp
- *   - QuickActions: 3 nút truy cập nhanh (Listening, Speaking, Reading)
- *   - StudyGoalCard: mục tiêu học tập hàng ngày + progress bar
+ * Layout theo mockup mới:
+ *   1. StreakWidget: greeting inline + streak text + 3 stat pills
+ *   2. StudyGoalCard: mục tiêu học tập compact + progress bar
+ *   3. QuickActions: 3 skill cards nằm ngang (Nghe, Nói, Đọc)
+ *   4. WeeklyActivityChart: biểu đồ cột hoạt động tuần
+ *   5. RecentLessons: danh sách bài học gần đây
  */
 export default function HomeScreen() {
   return (
@@ -22,9 +26,10 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{paddingBottom: 24}}>
       <StreakWidget />
-      <QuickActions />
       <StudyGoalCard />
+      <QuickActions />
+      <WeeklyActivityChart />
+      <RecentLessons />
     </ScrollView>
   );
 }
-
