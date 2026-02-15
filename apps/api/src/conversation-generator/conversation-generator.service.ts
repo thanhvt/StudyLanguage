@@ -131,6 +131,7 @@ ${keywordsInstruction}
 
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
+    this.logger.log('Prompt:', prompt);
     try {
       const response = await this.groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
