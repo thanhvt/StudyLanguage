@@ -101,21 +101,13 @@ export default function TopicPickerModal({
       onRequestClose={onClose}>
       <View
         className="flex-1 bg-background"
-        style={{paddingTop: insets.top}}>
-        {/* ======================== */}
-        {/* Pill Handle — iOS HIG affordance cho swipe down */}
-        {/* ======================== */}
-        <View className="items-center pt-2 pb-1">
-          <View
-            className="rounded-full bg-neutrals600"
-            style={{width: 36, height: 4}}
-          />
-        </View>
+        style={{paddingTop: insets.top}}
+        >
 
         {/* ======================== */}
         {/* Header — X trái, Title giữa, ✓ phải (khi đã chọn) */}
         {/* ======================== */}
-        <View className="flex-row items-center justify-between px-6 py-3 border-b border-border">
+        <View className="flex-row items-center justify-between px-6 py-3">
           {/* Nút X đóng — bên trái */}
           <TouchableOpacity
             onPress={onClose}
@@ -174,7 +166,7 @@ export default function TopicPickerModal({
         {/* Sticky Footer — luôn hiện CTA */}
         {/* ======================== */}
         <View
-          className="px-6 border-t border-border pt-3"
+          className="px-6 pt-3"
           style={{paddingBottom: Math.max(insets.bottom, 16)}}>
           {selectedTopic ? (
             // Đã chọn → nút Xác nhận

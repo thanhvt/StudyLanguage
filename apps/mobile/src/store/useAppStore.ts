@@ -5,6 +5,18 @@ import {colorScheme} from 'nativewind';
 import {LanguageCode} from '@/config/i18n';
 import {getDeviceLanguage} from '@/utils/getDeviceLanguage';
 
+// Loại accent color — đồng bộ với web-v1 themes.ts
+export type AccentColorId =
+  | 'ocean-scholar'
+  | 'sunset-focus'
+  | 'royal-purple'
+  | 'rose-focus'
+  | 'ocean-blue'
+  | 'emerald-study';
+
+// Loại font size
+export type FontSize = 'small' | 'medium' | 'large';
+
 // Loại theme hỗ trợ
 export type Theme = 'light' | 'dark';
 
@@ -39,6 +51,8 @@ const mmkvStorage: StateStorage = {
 interface AppState {
   // Trạng thái
   theme: Theme;
+  accentColor: AccentColorId;
+  fontSize: FontSize;
   language: LanguageCode;
   insets: Insets;
   isFirstLaunch: boolean;
@@ -46,6 +60,8 @@ interface AppState {
 
   // Hành động
   setTheme: (theme: Theme) => void;
+  setAccentColor: (color: AccentColorId) => void;
+  setFontSize: (size: FontSize) => void;
   setLanguage: (language: LanguageCode) => void;
   setInsets: (insets: Insets) => void;
   setIsFirstLaunch: (value: boolean) => void;
@@ -69,16 +85,23 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       // Giá trị mặc định
       theme: 'dark',
+      accentColor: 'ocean-scholar',
+      fontSize: 'medium',
       language: getDeviceLanguage(),
       insets: {left: 0, top: 0, right: 0, bottom: 0},
       isFirstLaunch: true,
       isLoading: false,
 
-      // Đặt theme
       setTheme: (theme) => {
         colorScheme.set(theme);
         set({theme});
       },
+
+      // Đặt accent color
+      setAccentColor: (accentColor) => set({accentColor}),
+
+      // Đặt font size
+      setFontSize: (fontSize) => set({fontSize}),
 
       // Đặt ngôn ngữ
       setLanguage: (language) => set({language}),
@@ -105,6 +128,8 @@ export const useAppStore = create<AppState>()(
       // Chỉ lưu trữ các giá trị cần persist, bỏ qua insets (tạm thời)
       partialize: (state) => ({
         theme: state.theme,
+        accentColor: state.accentColor,
+        fontSize: state.fontSize,
         language: state.language,
         isFirstLaunch: state.isFirstLaunch,
       }),

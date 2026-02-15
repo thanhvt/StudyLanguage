@@ -36,17 +36,6 @@ export class GenerateConversationDto {
   level?: 'beginner' | 'intermediate' | 'advanced';
 
   @ApiPropertyOptional({
-    description: 'Số lượt trao đổi (nếu không truyền sẽ tự tính từ duration)',
-    minimum: 4,
-    maximum: 30,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(4)
-  @Max(30)
-  numExchanges?: number;
-
-  @ApiPropertyOptional({
     description: 'Có bao gồm bản dịch tiếng Việt không',
     default: false,
   })

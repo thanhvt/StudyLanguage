@@ -101,6 +101,13 @@ export default function ListeningConfigScreen({
   const topicAccent = colors.skillListening; // Indigo
   const ctaGlowColor = colors.primary;
 
+  // Khi user chọn scenario từ TopicPicker → xóa topicInput để tránh conflict
+  React.useEffect(() => {
+    if (selectedTopic) {
+      setTopicInput('');
+    }
+  }, [selectedTopic]);
+
   /**
    * Mục đích: Lấy topic cuối cùng để gửi API (ưu tiên: selectedTopic > topicInput)
    * Tham số đầu vào: không
@@ -185,7 +192,13 @@ export default function ListeningConfigScreen({
     try {
       setGenerating(true);
       haptic.medium();
-      showLoading('Đang tạo bài nghe...', 'AI đang tạo hội thoại cho bạn 🎧');
+      // Hiện tóm tắt config trong loading để user biết đang generate gì
+      const levelLabel = {beginner: 'Cơ bản', intermediate: 'Trung bình', advanced: 'Nâng cao'}[config.level] || config.level;
+      const speakerCount = config.numSpeakers ?? 2;
+      showLoading(
+        'Đang tạo bài nghe...',
+        `📝 ${topic}\n⏱ ${config.durationMinutes} phút · 👥 ${speakerCount} người · 🎯 ${levelLabel}`,
+      );
 
       const result = await listeningApi.generateConversation({
         ...config,

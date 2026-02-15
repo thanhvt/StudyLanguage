@@ -10,7 +10,6 @@ export interface ListeningConfig {
   /** Thời lượng (phút) — backend chấp nhận 5-15 */
   durationMinutes: number;
   level: 'beginner' | 'intermediate' | 'advanced';
-  numExchanges?: number;
   includeVietnamese?: boolean;
   /** Số người nói: 2 (Dialog), 3 (Group), 4 (Team) */
   numSpeakers?: number;
@@ -184,7 +183,6 @@ export const listeningApi = {
       topic: config.topic,
       durationMinutes: clampDuration(config.durationMinutes),
       level: config.level,
-      numExchanges: config.numExchanges,
       includeVietnamese: config.includeVietnamese,
       // Backend DTO đã hỗ trợ 2 fields này
       numSpeakers: config.numSpeakers,

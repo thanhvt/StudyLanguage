@@ -1,0 +1,155 @@
+import {create} from 'zustand';
+import {persist, createJSONStorage, StateStorage} from 'zustand/middleware';
+import {MMKV} from 'react-native-mmkv';
+
+// ===========================
+// MMKV Storage Adapter cho Zustand
+// ===========================
+const settingsStorage = new MMKV({id: 'settings-storage'});
+
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    settingsStorage.set(name, value);
+  },
+  getItem: (name) => {
+    return settingsStorage.getString(name) ?? null;
+  },
+  removeItem: (name) => {
+    settingsStorage.delete(name);
+  },
+};
+
+// ===========================
+// Audio Settings Interface
+// ===========================
+interface AudioSettings {
+  backgroundMusic: {enabled: boolean; volume: number};
+  musicDucking: boolean;
+  soundEffects: boolean;
+  playbackSpeed: number; // 0.5 - 2.0
+  autoPlay: boolean;
+  handsFree: boolean;
+}
+
+// ===========================
+// Privacy Settings Interface
+// ===========================
+interface PrivacySettings {
+  saveRecordings: boolean;
+  autoDeleteDays: 30 | 60 | 90;
+  dataSync: boolean;
+}
+
+// ===========================
+// Settings Store Interface
+// ===========================
+interface SettingsState {
+  // Trạng thái
+  audio: AudioSettings;
+  privacy: PrivacySettings;
+
+  // Audio actions
+  setBackgroundMusic: (enabled: boolean) => void;
+  setMusicVolume: (volume: number) => void;
+  setMusicDucking: (enabled: boolean) => void;
+  setSoundEffects: (enabled: boolean) => void;
+  setPlaybackSpeed: (speed: number) => void;
+  setAutoPlay: (enabled: boolean) => void;
+  setHandsFree: (enabled: boolean) => void;
+
+  // Privacy actions
+  setSaveRecordings: (enabled: boolean) => void;
+  setAutoDeleteDays: (days: 30 | 60 | 90) => void;
+  setDataSync: (enabled: boolean) => void;
+}
+
+/**
+ * Mục đích: Store quản lý cài đặt Audio và Privacy
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: SettingsState (trạng thái + hành động)
+ * Khi nào sử dụng:
+ *   - AudioSettingsScreen: đọc/ghi cài đặt audio
+ *   - PrivacySettingsScreen: đọc/ghi cài đặt privacy
+ *   - Listening module: đọc playbackSpeed, autoPlay
+ *   - Speaking module: đọc saveRecordings
+ */
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set, get) => ({
+      // Giá trị mặc định audio
+      audio: {
+        backgroundMusic: {enabled: true, volume: 50},
+        musicDucking: true,
+        soundEffects: true,
+        playbackSpeed: 1.0,
+        autoPlay: true,
+        handsFree: false,
+      },
+
+      // Giá trị mặc định privacy
+      privacy: {
+        saveRecordings: true,
+        autoDeleteDays: 60,
+        dataSync: true,
+      },
+
+      // === Audio actions ===
+
+      // Bật/tắt nhạc nền
+      setBackgroundMusic: (enabled) =>
+        set((state) => ({
+          audio: {
+            ...state.audio,
+            backgroundMusic: {...state.audio.backgroundMusic, enabled},
+          },
+        })),
+
+      // Chỉnh âm lượng nhạc nền (0-100)
+      setMusicVolume: (volume) =>
+        set((state) => ({
+          audio: {
+            ...state.audio,
+            backgroundMusic: {...state.audio.backgroundMusic, volume},
+          },
+        })),
+
+      // Bật/tắt smart ducking (tự giảm nhạc khi lesson audio phát)
+      setMusicDucking: (musicDucking) =>
+        set((state) => ({audio: {...state.audio, musicDucking}})),
+
+      // Bật/tắt hiệu ứng âm thanh
+      setSoundEffects: (soundEffects) =>
+        set((state) => ({audio: {...state.audio, soundEffects}})),
+
+      // Đặt tốc độ phát mặc định (0.5 - 2.0)
+      setPlaybackSpeed: (playbackSpeed) =>
+        set((state) => ({audio: {...state.audio, playbackSpeed}})),
+
+      // Bật/tắt tự động phát câu tiếp theo
+      setAutoPlay: (autoPlay) =>
+        set((state) => ({audio: {...state.audio, autoPlay}})),
+
+      // Bật/tắt chế độ rảnh tay
+      setHandsFree: (handsFree) =>
+        set((state) => ({audio: {...state.audio, handsFree}})),
+
+      // === Privacy actions ===
+
+      // Bật/tắt lưu bản ghi âm
+      setSaveRecordings: (saveRecordings) =>
+        set((state) => ({privacy: {...state.privacy, saveRecordings}})),
+
+      // Đặt thời gian tự động xóa bản ghi (30/60/90 ngày)
+      setAutoDeleteDays: (autoDeleteDays) =>
+        set((state) => ({privacy: {...state.privacy, autoDeleteDays}})),
+
+      // Bật/tắt đồng bộ dữ liệu
+      setDataSync: (dataSync) =>
+        set((state) => ({privacy: {...state.privacy, dataSync}})),
+    }),
+    {
+      name: 'settings-storage',
+      storage: createJSONStorage(() => mmkvStorage),
+    },
+  ),
+);

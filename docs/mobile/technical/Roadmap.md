@@ -277,12 +277,10 @@ Roadmap triển khai mobile app theo 3 phases: MVP, Enhanced UX, và Advanced Fe
 | Task | Est. | Priority |
 |------|------|----------|
 | Full appearance settings + Accent color picker | 4h | P1 |
-| Avatar change (camera/gallery picker) | 2h | P1 |
 | Speaking goal display | 2h | P1 |
 | Week activity chart component | 3h | P1 |
 | Audio settings (Music, SFX, Speed, Hands-free) | 4h | P1 |
 | Storage management + Privacy settings | 4h | P1 |
-| Export/Delete data | 3h | P1 |
 
 #### UI Polish
 

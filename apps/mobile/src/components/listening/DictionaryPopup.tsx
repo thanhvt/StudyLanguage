@@ -184,16 +184,39 @@ export default function DictionaryPopup({
               )}
             </View>
 
-            {/* Nút phát âm */}
-            {result?.audio && (
-              <TouchableOpacity
-                onPress={handlePlayAudio}
-                className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center ml-3"
-                accessibilityLabel="Phát âm từ"
-                accessibilityRole="button">
-                <Icon name="Volume2" className="w-5 h-5 text-primary" />
-              </TouchableOpacity>
-            )}
+            {/* Nút hành động: phát âm + lưu từ + Google — top-right */}
+            <View className="flex-row items-center gap-2 ml-3">
+              {/* Nút phát âm */}
+              {result?.audio && (
+                <TouchableOpacity
+                  onPress={handlePlayAudio}
+                  className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center"
+                  accessibilityLabel="Phát âm từ"
+                  accessibilityRole="button">
+                  <Icon name="Volume2" className="w-5 h-5 text-primary" />
+                </TouchableOpacity>
+              )}
+              {/* Nút lưu từ */}
+              {result && onSaveWord && (
+                <TouchableOpacity
+                  onPress={handleSaveWord}
+                  className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center"
+                  accessibilityLabel="Lưu từ vào danh sách"
+                  accessibilityRole="button">
+                  <Icon name="Bookmark" className="w-5 h-5 text-primary" />
+                </TouchableOpacity>
+              )}
+              {/* Nút Google fallback */}
+              {result && (
+                <TouchableOpacity
+                  onPress={handleGoogleFallback}
+                  className="w-10 h-10 rounded-full bg-neutrals800 items-center justify-center"
+                  accessibilityLabel="Xem thêm trên Google"
+                  accessibilityRole="link">
+                  <Icon name="ExternalLink" className="w-5 h-5 text-neutrals400" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -263,38 +286,6 @@ export default function DictionaryPopup({
                 ))}
               </View>
             ))}
-
-            {/* Action buttons */}
-            <View className="flex-row gap-3 mt-2 pt-3 border-t border-neutrals800">
-              {/* Nút lưu từ */}
-              {onSaveWord && (
-                <TouchableOpacity
-                  onPress={handleSaveWord}
-                  className="flex-1 flex-row items-center justify-center bg-primary/15 rounded-xl py-3"
-                  accessibilityLabel="Lưu từ vào danh sách"
-                  accessibilityRole="button">
-                  <Icon
-                    name="Bookmark"
-                    className="w-4 h-4 text-primary mr-2"
-                  />
-                  <AppText className="text-primary text-sm font-sans-semibold">
-                    Lưu từ
-                  </AppText>
-                </TouchableOpacity>
-              )}
-
-              {/* Nút Google fallback */}
-              <TouchableOpacity
-                onPress={handleGoogleFallback}
-                className="flex-row items-center justify-center bg-neutrals800 rounded-xl py-3 px-4"
-                accessibilityLabel="Xem thêm trên Google"
-                accessibilityRole="link">
-                <Icon
-                  name="ExternalLink"
-                  className="w-4 h-4 text-neutrals400"
-                />
-              </TouchableOpacity>
-            </View>
           </View>
         )}
       </BottomSheetScrollView>

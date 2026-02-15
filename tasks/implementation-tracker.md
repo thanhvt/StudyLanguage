@@ -65,12 +65,6 @@ Target: Weeks 3-6 (Basic functional app)
 - [ ] Pronunciation Score Display
 - [ ] Playback User Recording
 
-### ✍️ Writing (Ref: `features/05_Writing.md`)
-- [ ] Topic Selection
-- [ ] Text Input Area with Word Count
-- [ ] Submit for AI Correction
-- [ ] Correction Diff View (Green/Red highlights)
-
 ### 📜 History & Profile (Ref: `features/07_History.md`, `08_Profile_Settings.md`)
 - [x] History Timeline List (SectionList grouped by date)
 - [x] Filter by Skill (FilterPills component)

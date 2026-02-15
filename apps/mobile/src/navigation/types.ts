@@ -26,6 +26,9 @@ export type MainTabParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   Settings: undefined;
+  AppearanceSettings: undefined;
+  AudioSettings: undefined;
+  PrivacySettings: undefined;
   About: undefined;
   // Demo screens (giữ cho development)
   ComponentsDemo: undefined;

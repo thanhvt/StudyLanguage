@@ -43,9 +43,9 @@ export class ConversationGeneratorService {
     topic: string;
     durationMinutes?: number;
     level?: 'beginner' | 'intermediate' | 'advanced';
-    numExchanges?: number;
     includeVietnamese?: boolean;
     keywords?: string;
+    numSpeakers?: number;
   }): Promise<{
     script: {
       speaker: string;
@@ -61,17 +61,26 @@ export class ConversationGeneratorService {
       level = 'intermediate',
       includeVietnamese = true,
       keywords,
+      numSpeakers = 2,
     } = options;
 
-    // Tính toán số lượt trao đổi dựa trên thời lượng
-    // Mỗi người nói = durationMinutes lần → tổng = durationMinutes * 2
-    const totalExchanges = options.numExchanges || durationMinutes * 2;
-    const exchangesPerPerson = Math.ceil(totalExchanges / 2);
+    // Tính toán số lượt trao đổi dựa trên thời lượng và số người nói
+    // Mỗi người nói = durationMinutes lần → tổng = durationMinutes * numSpeakers
+    const totalExchanges = durationMinutes * numSpeakers;
+    const exchangesPerPerson = Math.ceil(totalExchanges / numSpeakers);
     const totalWords = durationMinutes * 150; // 150 từ/phút (tốc độ TTS)
     const maxTokens = Math.min(8000, totalWords * 4); // Buffer x4 vì có thêm translation + vocabulary
 
+    // Tạo danh sách tên thật cho speakers theo số lượng
+    const allSpeakerNames = ['Sarah', 'Mike', 'Lisa', 'David'];
+    const speakerNames = allSpeakerNames.slice(0, numSpeakers);
+    const speakerList = speakerNames.join(', ');
+    const speakerDistribution = speakerNames
+      .map(name => `${name} speaks ${exchangesPerPerson} times`)
+      .join(', ');
+
     this.logger.log(
-      `Đang sinh hội thoại: "${topic}" - ${durationMinutes} phút - ${totalExchanges} lượt - Level: ${level}`,
+      `Đang sinh hội thoại: "${topic}" - ${durationMinutes} phút - ${numSpeakers} người - ${totalExchanges} lượt - Level: ${level}`,
     );
 
     const levelGuide = {
@@ -91,9 +100,9 @@ export class ConversationGeneratorService {
     const prompt = `Generate a natural English conversation about "${topic}".
 
 === REQUIREMENTS ===
-- Speakers: 2 (Person A and Person B)
+- Speakers: ${numSpeakers} (${speakerList})
 - Target duration: ${durationMinutes} minutes (approximately ${totalWords} words total)
-- Total exchanges: exactly ${totalExchanges} turns (Person A speaks ${exchangesPerPerson} times, Person B speaks ${exchangesPerPerson} times, alternating)
+- Total exchanges: exactly ${totalExchanges} turns (${speakerDistribution}, alternating in round-robin order)
 - Each turn: 3 to 4 sentences, approximately 60-80 words per turn
 - Level: ${level.toUpperCase()} - ${levelGuide[level]}
 - Tone: casual, everyday, natural
@@ -114,7 +123,7 @@ ${keywordsInstruction}
 {
   "script": [
     {
-      "speaker": "Person A",
+      "speaker": "${speakerNames[0]}",
       "text": "I've been meaning to try this place for a while...",
       "translation": "Tôi đã định thử quán này từ lâu rồi...",
       "keyPhrases": ["been meaning to - đã định làm gì đó", "for a while - từ lâu rồi"]

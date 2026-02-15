@@ -4,7 +4,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {MainTabParamList, AppStackParamList} from './types';
 import HomeScreen from '@/screens/home';
 import MoreScreen from '@/screens/MoreScreen';
-import SettingsScreen from '@/screens/SettingsScreen';
+import AppearanceSettingsScreen from '@/screens/AppearanceSettingsScreen';
+import AudioSettingsScreen from '@/screens/AudioSettingsScreen';
+import PrivacySettingsScreen from '@/screens/PrivacySettingsScreen';
 import AboutScreen from '@/screens/AboutScreen';
 import CustomTabBar from '@/navigation/components/CustomTabBar';
 import CustomScreenHeader from '@/navigation/components/ScreenHeader';
@@ -24,7 +26,7 @@ const Stack = createNativeStackNavigator<AppStackParamList>();
  *   - Nghe (Listening) → ListeningStack
  *   - Nói (Speaking) → SpeakingStack
  *   - Đọc (Reading) → ReadingStack
- *   - Thêm (More) → MoreScreen (Settings, Profile, About...)
+ *   - Hồ sơ (Profile) → ProfileScreen
  */
 function MainTabNavigator() {
   return (
@@ -56,19 +58,20 @@ function MainTabNavigator() {
       <Tab.Screen
         name="More"
         component={MoreScreen}
-        options={{title: 'Thêm'}}
+        options={{title: 'Hồ sơ'}}
       />
     </Tab.Navigator>
   );
 }
 
 /**
- * Mục đích: Stack navigator chính chứa tabs + các màn hình con (Settings, About...)
+ * Mục đích: Stack navigator chính chứa tabs + các màn hình settings
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: RootNavigator hiển thị khi user đã đăng nhập
  *   - MainTabs: tab navigator chính (5 tabs)
- *   - Settings, About: push screen từ More tab
+ *   - AppearanceSettings, AudioSettings, PrivacySettings: push từ Profile tab
+ *   - About: push từ Profile tab
  */
 export default function MainStack() {
   return (
@@ -82,9 +85,19 @@ export default function MainStack() {
         options={{headerShown: false}}
       />
       <Stack.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{title: 'Cài đặt'}}
+        name="AppearanceSettings"
+        component={AppearanceSettingsScreen}
+        options={{title: 'Giao diện'}}
+      />
+      <Stack.Screen
+        name="AudioSettings"
+        component={AudioSettingsScreen}
+        options={{title: 'Âm thanh'}}
+      />
+      <Stack.Screen
+        name="PrivacySettings"
+        component={PrivacySettingsScreen}
+        options={{title: 'Quyền riêng tư'}}
       />
       <Stack.Screen
         name="About"

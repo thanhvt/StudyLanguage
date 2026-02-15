@@ -1,4 +1,6 @@
 import {create} from 'zustand';
+import {persist, createJSONStorage} from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   ListeningConfig,
   ConversationResult,
@@ -166,8 +168,9 @@ const initialState: ListeningState = {
  *   - PlayerScreen: đọc conversation, điều khiển playback, audio state
  *   - QuickActions: reset khi bắt đầu bài mới
  */
-export const useListeningStore = create<ListeningState & ListeningActions>(
-  set => ({
+export const useListeningStore = create<ListeningState & ListeningActions>()(
+  persist(
+    set => ({
     ...initialState,
 
     setConfig: config =>
@@ -244,6 +247,15 @@ export const useListeningStore = create<ListeningState & ListeningActions>(
     setTtsVolume: volume => set({ttsVolume: Math.max(0, Math.min(100, volume))}),
 
     reset: () => set(initialState),
-  }),
+    }),
+    {
+      name: 'listening-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      // Chỉ persist favoriteScenarioIds — các state khác là session-specific
+      partialize: (state) => ({
+        favoriteScenarioIds: state.favoriteScenarioIds,
+      }),
+    },
+  ),
 );
 
