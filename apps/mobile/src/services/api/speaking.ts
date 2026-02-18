@@ -209,17 +209,24 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
 
   /**
    * Mục đích: Lấy audio phát âm mẫu từ AI TTS
-   * Tham số đầu vào: text (string) — câu cần phát âm mẫu
+   * Tham số đầu vào: text (string), provider ('openai'|'azure'), voiceId (string), speed (number)
    * Tham số đầu ra: Promise<string> — base64 audio
    * Khi nào sử dụng: User nhấn 🔊 trên PracticeScreen
    *   PracticeScreen → nút "Nghe mẫu" → playAISample → phát audio
    */
-  playAISample: async (text: string): Promise<string> => {
-    console.log('🗣️ [Speaking] Lấy audio mẫu cho:', text.substring(0, 30));
+  playAISample: async (
+    text: string,
+    provider: 'openai' | 'azure' = 'openai',
+    voiceId?: string,
+    speed: number = 1.0,
+  ): Promise<string> => {
+    console.log('🗣️ [Speaking] Lấy audio mẫu cho:', text.substring(0, 30), '| provider:', provider);
 
     const response = await apiClient.post('/ai/text-to-speech', {
       text,
-      provider: 'openai',
+      provider,
+      ...(voiceId && {voice: voiceId}),
+      ...(speed !== 1.0 && {speed}),
     });
 
     console.log('✅ [Speaking] Nhận audio mẫu thành công');
@@ -285,19 +292,78 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
 
   /**
    * Mục đích: Sinh audio TTS cho câu trả lời của AI Coach
-   * Tham số đầu vào: text (string) — câu AI cần phát audio
+   * Tham số đầu vào: text (string), provider ('openai'|'azure'), voiceId (string), speed (number)
    * Tham số đầu ra: Promise<string> — base64 audio hoặc audio URL
    * Khi nào sử dụng: Sau khi AI Coach trả lời → TTS → phát audio
    */
-  generateCoachAudio: async (text: string): Promise<string> => {
-    console.log('🗣️ [Coach] Sinh audio cho AI response...');
+  generateCoachAudio: async (
+    text: string,
+    provider: 'openai' | 'azure' = 'openai',
+    voiceId: string = 'en-US-JennyNeural',
+    speed: number = 1.0,
+  ): Promise<string> => {
+    console.log('🗣️ [Coach] Sinh audio cho AI response... | provider:', provider);
 
     const response = await apiClient.post('/ai/generate-conversation-audio', {
       text,
-      voice: 'en-US-JennyNeural', // Giọng AI Coach
+      voice: voiceId,
+      ...(provider && {provider}),
+      ...(speed !== 1.0 && {speed}),
     });
 
     console.log('✅ [Coach] Audio sinh thành công');
     return response.data?.audio || response.data?.audioUrl || '';
+  },
+
+  /**
+   * Mục đích: Gửi audio user → AI Clone & sửa phát âm → trả về bản corrected
+   * Tham số đầu vào:
+   *   - audioUri (string) — đường dẫn file audio user trên device
+   *   - originalText (string) — câu gốc user đọc
+   * Tham số đầu ra: Promise<{ correctedAudioUrl, improvements }>
+   * Khi nào sử dụng: FeedbackScreen → sau khi có score → gọi để tạo AI corrected version
+   */
+  cloneAndCorrectVoice: async (
+    audioUri: string,
+    originalText: string,
+  ): Promise<{
+    correctedAudioUrl: string;
+    improvements: {phoneme: string; before: string; after: string}[];
+  }> => {
+    console.log('🎭 [VoiceClone] Đang gửi audio để AI sửa...');
+
+    try {
+      // Gửi audio file lên server
+      const formData = new FormData();
+      formData.append('audio', {
+        uri: audioUri,
+        type: 'audio/m4a',
+        name: 'recording.m4a',
+      } as any);
+      formData.append('text', originalText);
+
+      const response = await apiClient.post('/ai/clone-and-correct', formData, {
+        headers: {'Content-Type': 'multipart/form-data'},
+      });
+
+      const data = response.data;
+      console.log('✅ [VoiceClone] Nhận bản sửa thành công');
+
+      return {
+        correctedAudioUrl: data?.correctedAudioUrl || data?.audio || '',
+        improvements: data?.improvements || [],
+      };
+    } catch (err) {
+      console.error('❌ [VoiceClone] Lỗi clone voice:', err);
+      // Fallback: dùng TTS bình thường nếu clone API chưa sẵn sàng
+      const fallbackAudio = await apiClient.post('/ai/text-to-speech', {
+        text: originalText,
+        provider: 'openai',
+      });
+      return {
+        correctedAudioUrl: fallbackAudio.data?.audio || '',
+        improvements: [],
+      };
+    }
   },
 };

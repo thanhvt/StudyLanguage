@@ -241,4 +241,165 @@ describe('speakingApi', () => {
       expect(result.totalMinutes).toBe(0);
     });
   });
+
+  // ============================================
+  // Sprint 7A: playAISample với TTS params
+  // ============================================
+
+  describe('playAISample — TTS params (Sprint 7A)', () => {
+    it('gửi đúng provider và voice khi truyền params', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audio: 'base64data'},
+      });
+
+      await speakingApi.playAISample('Hello', 'azure', 'en-US-AriaNeural', 1.5);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/ai/text-to-speech',
+        expect.objectContaining({
+          text: 'Hello',
+          provider: 'azure',
+          voice: 'en-US-AriaNeural',
+          speed: 1.5,
+        }),
+      );
+    });
+
+    it('mặc định provider là openai khi không truyền', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audio: 'base64data'},
+      });
+
+      await speakingApi.playAISample('Test');
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/ai/text-to-speech',
+        expect.objectContaining({
+          text: 'Test',
+          provider: 'openai',
+        }),
+      );
+    });
+
+    it('không gửi speed khi speed === 1.0', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audio: 'data'},
+      });
+
+      await speakingApi.playAISample('Test', 'openai', 'alloy', 1.0);
+
+      const payload = mockApiClient.post.mock.calls[0][1];
+      expect(payload.speed).toBeUndefined();
+    });
+  });
+
+  // ============================================
+  // Sprint 7A: generateCoachAudio với TTS params
+  // ============================================
+
+  describe('generateCoachAudio — TTS params (Sprint 7A)', () => {
+    it('gửi đúng voice và provider', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audio: 'coachAudioBase64'},
+      });
+
+      const result = await speakingApi.generateCoachAudio(
+        'How are you?',
+        'azure',
+        'en-US-DavisNeural',
+        0.8,
+      );
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/ai/generate-conversation-audio',
+        expect.objectContaining({
+          text: 'How are you?',
+          voice: 'en-US-DavisNeural',
+          provider: 'azure',
+          speed: 0.8,
+        }),
+      );
+      expect(result).toBe('coachAudioBase64');
+    });
+
+    it('fallback voice khi không truyền voiceId', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audioUrl: 'https://audio.url'},
+      });
+
+      const result = await speakingApi.generateCoachAudio('Hello');
+
+      const payload = mockApiClient.post.mock.calls[0][1];
+      expect(payload.voice).toBe('en-US-JennyNeural'); // Default
+      expect(result).toBe('https://audio.url');
+    });
+  });
+
+  // ============================================
+  // Sprint 7C: cloneAndCorrectVoice
+  // ============================================
+
+  describe('cloneAndCorrectVoice (Sprint 7C)', () => {
+    it('gửi FormData đúng format', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {
+          correctedAudioUrl: 'https://ai.audio/corrected.mp3',
+          improvements: [
+            {phoneme: '/θ/', before: '/t/', after: '/θ/'},
+            {phoneme: '/ɪ/', before: '/i:/', after: '/ɪ/'},
+          ],
+        },
+      });
+
+      const result = await speakingApi.cloneAndCorrectVoice(
+        '/path/to/recording.m4a',
+        'The weather is nice',
+      );
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/ai/clone-and-correct',
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: {'Content-Type': 'multipart/form-data'},
+        }),
+      );
+      expect(result.correctedAudioUrl).toBe('https://ai.audio/corrected.mp3');
+      expect(result.improvements).toHaveLength(2);
+      expect(result.improvements[0].phoneme).toBe('/θ/');
+    });
+
+    it('fallback TTS khi clone API lỗi', async () => {
+      // Lần 1: clone API fail
+      // Lần 2: fallback TTS thành công
+      mockApiClient.post
+        .mockRejectedValueOnce(new Error('Clone API unavailable'))
+        .mockResolvedValueOnce({
+          data: {audio: 'fallback-tts-audio'},
+        });
+
+      const result = await speakingApi.cloneAndCorrectVoice(
+        '/path/audio.m4a',
+        'Hello world',
+      );
+
+      // Phải gọi 2 lần: clone rồi fallback TTS
+      expect(mockApiClient.post).toHaveBeenCalledTimes(2);
+      expect(result.correctedAudioUrl).toBe('fallback-tts-audio');
+      expect(result.improvements).toEqual([]);
+    });
+
+    it('trả empty improvements khi API không có field', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {audio: 'audio-only'},
+      });
+
+      const result = await speakingApi.cloneAndCorrectVoice(
+        '/path/audio.m4a',
+        'Test',
+      );
+
+      expect(result.correctedAudioUrl).toBe('audio-only');
+      expect(result.improvements).toEqual([]);
+    });
+  });
 });

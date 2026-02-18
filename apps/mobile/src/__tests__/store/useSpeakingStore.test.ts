@@ -251,4 +251,60 @@ describe('useSpeakingStore', () => {
       expect(state.error).toBeNull();
     });
   });
+
+  // ============================================
+  // Sprint 7A: TTS Settings
+  // ============================================
+
+  describe('TTS Settings (Sprint 7A)', () => {
+    it('trạng thái mặc định TTS đúng', () => {
+      const state = useSpeakingStore.getState();
+
+      expect(state.ttsSettings.provider).toBe('openai');
+      expect(state.ttsSettings.voiceId).toBe('alloy');
+      expect(state.ttsSettings.speed).toBe(1.0);
+    });
+
+    it('setTtsSettings merge partial — chỉ cập nhật provider', () => {
+      useSpeakingStore.getState().setTtsSettings({provider: 'azure'});
+
+      const {ttsSettings} = useSpeakingStore.getState();
+      expect(ttsSettings.provider).toBe('azure');
+      // Các field khác giữ nguyên
+      expect(ttsSettings.voiceId).toBe('alloy');
+      expect(ttsSettings.speed).toBe(1.0);
+    });
+
+    it('setTtsSettings merge partial — chỉ cập nhật speed', () => {
+      useSpeakingStore.getState().setTtsSettings({speed: 1.5});
+
+      const {ttsSettings} = useSpeakingStore.getState();
+      expect(ttsSettings.speed).toBe(1.5);
+      expect(ttsSettings.provider).toBe('openai');
+    });
+
+    it('setTtsSettings cập nhật nhiều field cùng lúc', () => {
+      useSpeakingStore.getState().setTtsSettings({
+        provider: 'azure',
+        voiceId: 'en-US-AriaNeural',
+        speed: 0.8,
+      });
+
+      const {ttsSettings} = useSpeakingStore.getState();
+      expect(ttsSettings.provider).toBe('azure');
+      expect(ttsSettings.voiceId).toBe('en-US-AriaNeural');
+      expect(ttsSettings.speed).toBe(0.8);
+    });
+
+    it('setTtsSettings liên tiếp merge đúng', () => {
+      useSpeakingStore.getState().setTtsSettings({provider: 'azure'});
+      useSpeakingStore.getState().setTtsSettings({voiceId: 'en-GB-SoniaNeural'});
+      useSpeakingStore.getState().setTtsSettings({speed: 2.0});
+
+      const {ttsSettings} = useSpeakingStore.getState();
+      expect(ttsSettings.provider).toBe('azure');
+      expect(ttsSettings.voiceId).toBe('en-GB-SoniaNeural');
+      expect(ttsSettings.speed).toBe(2.0);
+    });
+  });
 });

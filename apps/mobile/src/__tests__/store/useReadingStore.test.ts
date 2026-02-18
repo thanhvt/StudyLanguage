@@ -164,6 +164,60 @@ describe('useReadingStore', () => {
       expect(state.error).toBeNull();
       expect(state.fontSize).toBe(16);
       expect(state.savedWords).toEqual([]);
+      expect(state.isFocusMode).toBe(false);
+      expect(state.isArticleSaved).toBe(false);
+    });
+  });
+
+  // ===================================
+  // Focus Mode — Sprint 2
+  // ===================================
+  describe('Focus Mode', () => {
+    it('toggleFocusMode bật Focus Mode', () => {
+      useReadingStore.getState().toggleFocusMode();
+
+      expect(useReadingStore.getState().isFocusMode).toBe(true);
+    });
+
+    it('toggleFocusMode tắt Focus Mode khi đang bật', () => {
+      useReadingStore.getState().toggleFocusMode(); // bật
+      useReadingStore.getState().toggleFocusMode(); // tắt
+
+      expect(useReadingStore.getState().isFocusMode).toBe(false);
+    });
+
+    it('toggleFocusMode toggle liên tục đúng', () => {
+      const store = useReadingStore.getState();
+      store.toggleFocusMode(); // true
+      expect(useReadingStore.getState().isFocusMode).toBe(true);
+
+      useReadingStore.getState().toggleFocusMode(); // false
+      expect(useReadingStore.getState().isFocusMode).toBe(false);
+
+      useReadingStore.getState().toggleFocusMode(); // true
+      expect(useReadingStore.getState().isFocusMode).toBe(true);
+    });
+  });
+
+  // ===================================
+  // Article Saved — Sprint 2
+  // ===================================
+  describe('Article Saved', () => {
+    it('setArticleSaved(true) đánh dấu đã lưu', () => {
+      useReadingStore.getState().setArticleSaved(true);
+
+      expect(useReadingStore.getState().isArticleSaved).toBe(true);
+    });
+
+    it('setArticleSaved(false) bỏ đánh dấu', () => {
+      useReadingStore.getState().setArticleSaved(true);
+      useReadingStore.getState().setArticleSaved(false);
+
+      expect(useReadingStore.getState().isArticleSaved).toBe(false);
+    });
+
+    it('isArticleSaved mặc định là false', () => {
+      expect(useReadingStore.getState().isArticleSaved).toBe(false);
     });
   });
 
@@ -183,6 +237,8 @@ describe('useReadingStore', () => {
         error: 'Lỗi test',
         fontSize: 22,
         savedWords: ['test', 'word'],
+        isFocusMode: true,
+        isArticleSaved: true,
       });
 
       // Reset
@@ -197,6 +253,8 @@ describe('useReadingStore', () => {
       expect(state.error).toBeNull();
       expect(state.fontSize).toBe(16);
       expect(state.savedWords).toEqual([]);
+      expect(state.isFocusMode).toBe(false);
+      expect(state.isArticleSaved).toBe(false);
     });
   });
 });

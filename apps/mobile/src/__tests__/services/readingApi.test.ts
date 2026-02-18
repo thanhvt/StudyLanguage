@@ -217,4 +217,150 @@ describe('readingApi', () => {
       );
     });
   });
+
+  // ===================================
+  // analyzePractice — Sprint 3
+  // ===================================
+  describe('analyzePractice', () => {
+    const mockAnalysisResult = {
+      accuracy: 85,
+      fluencyScore: 72,
+      errors: [
+        {
+          original: 'unprecedented',
+          spoken: 'unpresidented',
+          type: 'pronunciation',
+          suggestion: 'Phát âm: /ʌnˈpres.ɪ.den.tɪd/',
+        },
+      ],
+      feedback: 'Bạn đọc khá tốt! Cần chú ý phát âm từ "unprecedented".',
+    };
+
+    it('gửi đúng payload cho backend', async () => {
+      mockApiClient.post.mockResolvedValue({data: mockAnalysisResult});
+
+      await readingApi.analyzePractice(
+        'Climate change is unprecedented.',
+        'Climate change is unpresidented.',
+      );
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/reading/analyze-practice',
+        {
+          originalText: 'Climate change is unprecedented.',
+          userTranscript: 'Climate change is unpresidented.',
+        },
+      );
+    });
+
+    it('trả về kết quả phân tích đúng format', async () => {
+      mockApiClient.post.mockResolvedValue({data: mockAnalysisResult});
+
+      const result = await readingApi.analyzePractice(
+        'Original text here.',
+        'User transcript here.',
+      );
+
+      expect(result.accuracy).toBe(85);
+      expect(result.fluencyScore).toBe(72);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].type).toBe('pronunciation');
+      expect(result.feedback).toContain('unprecedented');
+    });
+
+    it('xử lý kết quả perfect score (không lỗi)', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {
+          accuracy: 100,
+          fluencyScore: 95,
+          errors: [],
+          feedback: 'Xuất sắc! Bạn đọc rất chính xác.',
+        },
+      });
+
+      const result = await readingApi.analyzePractice(
+        'Simple text.',
+        'Simple text.',
+      );
+
+      expect(result.accuracy).toBe(100);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('throw lỗi khi API fail', async () => {
+      mockApiClient.post.mockRejectedValue(new Error('Server Error'));
+
+      await expect(
+        readingApi.analyzePractice('text', 'transcript'),
+      ).rejects.toThrow('Server Error');
+    });
+  });
+
+  // ===================================
+  // saveReadingSession — Sprint 2
+  // ===================================
+  describe('saveReadingSession', () => {
+    const mockArticle = {
+      title: 'Climate Change Impact',
+      content: 'Article content here...',
+      wordCount: 350,
+      readingTime: 3,
+      level: 'intermediate',
+    };
+
+    it('gửi đúng payload lên /history', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {success: true, id: 'hist-456'},
+      });
+
+      await readingApi.saveReadingSession(mockArticle, 5);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith('/history', {
+        type: 'reading',
+        topic: 'Climate Change Impact',
+        content: {
+          title: 'Climate Change Impact',
+          wordCount: 350,
+          level: 'intermediate',
+          readingTime: 3,
+          savedWordsCount: 5,
+        },
+        durationMinutes: 3,
+      });
+    });
+
+    it('dùng default savedWordsCount = 0', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {success: true, id: 'hist-789'},
+      });
+
+      await readingApi.saveReadingSession(mockArticle);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/history',
+        expect.objectContaining({
+          content: expect.objectContaining({savedWordsCount: 0}),
+        }),
+      );
+    });
+
+    it('trả về success + id', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {success: true, id: 'hist-abc'},
+      });
+
+      const result = await readingApi.saveReadingSession(mockArticle, 3);
+
+      expect(result.success).toBe(true);
+      expect(result.id).toBe('hist-abc');
+    });
+
+    it('throw lỗi khi API fail', async () => {
+      mockApiClient.post.mockRejectedValue(new Error('Unauthorized'));
+
+      await expect(
+        readingApi.saveReadingSession(mockArticle),
+      ).rejects.toThrow('Unauthorized');
+    });
+  });
 });

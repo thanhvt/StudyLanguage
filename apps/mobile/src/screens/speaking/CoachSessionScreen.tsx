@@ -30,6 +30,7 @@ import type {ChatMessage} from '@/components/speaking/ChatBubble';
 import type {PronunciationCorrection} from '@/components/speaking/PronunciationAlert';
 import type {GrammarCorrection} from '@/components/speaking/GrammarFix';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import {useCoachTrackPlayer} from '@/hooks/useCoachTrackPlayer';
 
 // =======================
 // Types
@@ -81,6 +82,9 @@ export default function CoachSessionScreen() {
   const [chatItems, setChatItems] = useState<ChatItem[]>([]);
   const [textInput, setTextInput] = useState('');
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+
+  // Coach TrackPlayer — hỗ trợ phát audio AI ở background
+  const {playCoachAudio, stopCoach} = useCoachTrackPlayer();
 
   // Shorthand
   const session = coachSession;
@@ -242,6 +246,22 @@ export default function CoachSessionScreen() {
       addCoachMessage(aiMsg);
       setChatItems(prev => [...prev, {type: 'message', data: aiMsg}]);
 
+      // Sinh và phát audio AI response qua TrackPlayer (background capable)
+      try {
+        const {ttsSettings} = useSpeakingStore.getState();
+        const audioUrl = await speakingApi.generateCoachAudio(
+          result.response,
+          ttsSettings.provider,
+          ttsSettings.voiceId,
+          ttsSettings.speed,
+        );
+        if (audioUrl) {
+          await playCoachAudio(audioUrl);
+        }
+      } catch (audioErr) {
+        console.warn('⚠️ [Coach] Không phát được audio AI:', audioErr);
+      }
+
       // Kiểm tra kết thúc
       if (result.shouldEnd) {
         endCoachSession();
@@ -391,6 +411,8 @@ export default function CoachSessionScreen() {
       }
       audioRecorder.stopRecorder().catch(() => {});
       audioRecorder.stopPlayer().catch(() => {});
+      // Cleanup TrackPlayer khi rời màn hình
+      stopCoach();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

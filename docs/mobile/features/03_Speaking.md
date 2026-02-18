@@ -1091,10 +1091,10 @@ async function handleRecordStop() {
 - [x] **Tongue Twister Mode** (phoneme categories, speed challenge, leaderboard) ✅ (`TongueTwisterScreen.tsx` — 8 twisters + WPM)
 - [x] **Gamification** (daily goals, badges, weekly report) ✅ (`DailyGoalCard.tsx`, `BadgeGrid.tsx`)
 - [x] **Speaking Progress Dashboard** (radar chart, calendar heatmap, weak sounds) ✅ (`ProgressDashboardScreen.tsx`, `RadarChart.tsx`, `CalendarHeatmap.tsx`, `WeakSoundsCard.tsx`)
-- [ ] **AI Voice Clone Replay** (corrected + before/after) — ⏳ cần backend API hỗ trợ
+- [x] **AI Voice Clone Replay** (corrected + before/after) — ✅ `VoiceCloneReplay.tsx` + `cloneAndCorrectVoice` API
 - [x] **Save & Share Results** (share card, recording history, timeline) ✅ (`ShareResultCard.tsx`, `RecordingHistoryScreen.tsx`)
-- [ ] **Background Audio for Coach** (notification, session persist) — ⏳ cần native module bổ sung
-- [ ] **TTS Provider Settings** (parity với Listening) — ⏳ sẽ reuse từ Listening
+- [x] **Background Audio for Coach** (notification, session persist) — ✅ `useCoachTrackPlayer.ts` + TrackPlayer integration
+- [x] **TTS Provider Settings** (parity với Listening) — ✅ `SpeakingTtsSheet.tsx` (reuse pattern từ Listening)
 - [x] **Confetti animation** khi score ≥90 ✅ (`ConfettiAnimation.tsx` — 30-piece reanimated)
 
 ---

@@ -12,6 +12,9 @@ import {
   ScoreBreakdown,
   ConfettiAnimation,
 } from '@/components/speaking';
+import VoiceCloneReplay from '@/components/speaking/VoiceCloneReplay';
+import type {VoiceImprovement} from '@/components/speaking/VoiceCloneReplay';
+import {speakingApi} from '@/services/api/speaking';
 
 // =======================
 // Constants
@@ -68,6 +71,13 @@ export default function FeedbackScreen() {
   const [displayScore, setDisplayScore] = React.useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Voice Clone state
+  const [cloneLoading, setCloneLoading] = useState(false);
+  const [cloneResult, setCloneResult] = useState<{
+    correctedAudioUrl: string;
+    improvements: VoiceImprovement[];
+  } | null>(null);
+
   useEffect(() => {
     if (!feedback) return;
 
@@ -90,6 +100,28 @@ export default function FeedbackScreen() {
 
     return () => animValue.removeListener(listener);
   }, [feedback, animValue]);
+
+  /**
+   * Mục đích: Gọi AI Voice Clone khi màn hình mở
+   * Khi nào sử dụng: FeedbackScreen mount + có feedback + audioUri
+   */
+  useEffect(() => {
+    const audioUri = useSpeakingStore.getState().audioUri;
+    const text = sentences[currentIndex]?.text;
+    if (!feedback || !audioUri || !text) return;
+
+    setCloneLoading(true);
+    speakingApi.cloneAndCorrectVoice(audioUri, text)
+      .then(result => {
+        setCloneResult(result);
+        console.log('✅ [VoiceClone] Đã nhận bản sửa từ AI');
+      })
+      .catch(err => {
+        console.warn('⚠️ [VoiceClone] Không lấy được bản sửa:', err);
+      })
+      .finally(() => setCloneLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!feedback) {
     return (
@@ -242,6 +274,18 @@ export default function FeedbackScreen() {
             {sentences[currentIndex]?.text}
           </AppText>
         </View>
+
+        {/* AI Voice Clone Replay */}
+        {(cloneLoading || cloneResult) && (
+          <View className="mx-4 mb-4">
+            <VoiceCloneReplay
+              userAudioUrl={useSpeakingStore.getState().audioUri || ''}
+              correctedAudioUrl={cloneResult?.correctedAudioUrl || ''}
+              improvements={cloneResult?.improvements || []}
+              isLoading={cloneLoading}
+            />
+          </View>
+        )}
       </ScrollView>
 
       {/* Actions */}

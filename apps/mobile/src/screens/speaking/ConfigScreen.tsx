@@ -17,6 +17,7 @@ import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {speakingApi} from '@/services/api/speaking';
 import {SKILL_COLORS} from '@/config/skillColors';
 import Icon from '@/components/ui/Icon';
+import SpeakingTtsSheet from '@/components/speaking/SpeakingTtsSheet';
 
 // =======================
 // Constants
@@ -64,6 +65,7 @@ export default function SpeakingConfigScreen() {
   const [levelIndex, setLevelIndex] = useState(
     LEVEL_VALUES.indexOf(config.level as any),
   );
+  const [showTtsSheet, setShowTtsSheet] = useState(false);
 
   /**
    * Mục đích: Sinh câu practice rồi navigate sang PracticeScreen
@@ -258,6 +260,28 @@ export default function SpeakingConfigScreen() {
             />
           </TouchableOpacity>
 
+          {/* TTS Settings Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setShowTtsSheet(true)}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              ⚙️ Cài đặt giọng AI
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
           {/* Shadowing Mode Card */}
           <TouchableOpacity
             activeOpacity={0.7}
@@ -405,6 +429,12 @@ export default function SpeakingConfigScreen() {
           </AppButton>
         </View>
       </KeyboardAvoidingView>
+
+      {/* TTS Settings Sheet */}
+      <SpeakingTtsSheet
+        visible={showTtsSheet}
+        onClose={() => setShowTtsSheet(false)}
+      />
     </SafeAreaView>
   );
 }

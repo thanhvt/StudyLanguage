@@ -40,6 +40,16 @@ export interface CoachSession {
 // Speaking Store State
 // =======================
 
+/** Cài đặt TTS cho Speaking */
+export interface TtsSettings {
+  /** Provider TTS: OpenAI hoặc Azure */
+  provider: 'openai' | 'azure';
+  /** ID giọng đọc */
+  voiceId: string;
+  /** Tốc độ đọc (0.5 → 2.0) */
+  speed: number;
+}
+
 interface SpeakingState {
   /** Cấu hình luyện nói */
   config: SpeakingConfig;
@@ -63,6 +73,10 @@ interface SpeakingState {
   isTranscribing: boolean;
   /** Lỗi (nếu có) */
   error: string | null;
+
+  // ===== TTS Settings =====
+  /** Cài đặt TTS provider + voice + speed */
+  ttsSettings: TtsSettings;
 
   // ===== Coach Mode State =====
   /** Coach session hiện tại (null nếu chưa bắt đầu) */
@@ -116,6 +130,10 @@ interface SpeakingActions {
   endCoachSession: () => void;
   /** Reset coach session */
   resetCoach: () => void;
+
+  // ===== TTS Settings Actions =====
+  /** Cập nhật TTS settings (merge partial) */
+  setTtsSettings: (settings: Partial<TtsSettings>) => void;
 }
 
 const initialState: SpeakingState = {
@@ -133,6 +151,11 @@ const initialState: SpeakingState = {
   isGenerating: false,
   isTranscribing: false,
   error: null,
+  ttsSettings: {
+    provider: 'openai',
+    voiceId: 'alloy',
+    speed: 1.0,
+  },
   coachSession: null,
 };
 
@@ -269,5 +292,11 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>(
       }),
 
     resetCoach: () => set({coachSession: null}),
+
+    // ===== TTS Settings =====
+    setTtsSettings: (settings) =>
+      set(state => ({
+        ttsSettings: {...state.ttsSettings, ...settings},
+      })),
   }),
 );

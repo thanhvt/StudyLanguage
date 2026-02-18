@@ -51,7 +51,14 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 
 ### 3.1 Design Style: Dark Glassmorphism
 
-![Dashboard Glassmorphism Mockup](assets/dashboard_glassmorphism_mockup.png)
+| Theme | Preview |
+|-------|---------|
+| 🌅 **Sunset Dark** | ![Sunset Dark](assets/dashboard_dark.png) |
+| ☀️ **Sunset Light** | ![Sunset Light](assets/dashboard_light.png) |
+| 🌇 **Glass Sunset Dark** | ![Glass Sunset Dark](assets/dashboard_sunset_dark.png) |
+| 🌤️ **Glass Sunset Light** | ![Glass Sunset Light](assets/dashboard_sunset_light.png) |
+| 🌊 **Ocean Dark** | ![Ocean Dark](assets/dashboard_ocean_dark.png) |
+| 💎 **Ocean Light** | ![Ocean Light](assets/dashboard_ocean_light.png) |
 
 ### 3.2 Design Specs
 
@@ -85,10 +92,36 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 - **Icon Size:** `32px`, centered
 - **Label:** Bold, white, centered dưới icon
 
-#### Bottom Tab Bar
-- **Background:** `rgba(255,255,255,0.06)` với `backdrop-filter: blur(24px)`
-- **Active Tab:** Glow effect + tinted icon
-- **Tabs:** Home | History | Vocab | Profile
+#### Recent Lessons (Bài học gần đây)
+- **Header:** "🕐 Bài học gần đây" + "Xem tất cả →" (accent color)
+- **Layout:** Vertical list, glassmorphism rows
+- **Each item:**
+  - Skill icon (color-coded: 🎧 xanh, 🗣️ xanh lá, 📖 cam)
+  - Title + thời gian (relative time) + duration
+  - Play/resume button ▶️
+- **Row background:** `var(--bg-tertiary)`, border-radius `12px`
+- **Max:** 2-3 items hiển thị, scroll nếu nhiều hơn
+
+#### Bottom Tab Bar (6 Tabs — Gradient Glow)
+
+| Tab | Icon | Color (Active) |
+|-----|------|---------------|
+| Dashboard | 🏠 | Theme accent |
+| Listening | 🎧 | `#4F6BED` (Indigo) |
+| Reading | 📖 | `#D97706` (Amber) |
+| Speaking | 🗣️ | `#22C55E` (Green) |
+| History | 📜 | Theme accent |
+| Settings | ⚙️ | Theme accent |
+
+**Design Effects:**
+- **Background:** Frosted glass `rgba(10,10,26,0.75)` + `backdrop-filter: blur(24px)`
+- **Top border:** Rainbow gradient line (`cyan → violet → pink → transparent`)
+- **Active indicator:** Glowing bar phía trên tab (`width: 24px, height: 3px`)
+  - Gradient: `linear-gradient(90deg, #06b6d4, #a78bfa)`
+  - Glow: `box-shadow: 0 0 10px`, pulsing animation `2s`
+- **Active icon:** `drop-shadow(0 0 6px)` + `scale(1.1)`
+- **Tap:** Scale `0.9` on press, smooth `0.25s` transition
+- **Font size:** `9px` (compact cho 6 tabs)
 - **Safe Area:** Bottom padding cho notch devices
 
 #### Typography
@@ -97,6 +130,7 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 - **Streak:** `16px`, Regular, `rgba(255,255,255,0.7)`
 - **Card Label:** `14px`, SemiBold, White
 - **Section Title:** `18px`, SemiBold, White
+- **Tab Label:** `9px`, Weight 500 (inactive) / 600 (active)
 
 ---
 

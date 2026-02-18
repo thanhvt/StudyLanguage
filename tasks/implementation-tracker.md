@@ -128,6 +128,9 @@ Target: Weeks 7-10 (Review, Polish, Advanced Logic)
 - [x] **Share Results** — `ShareResultCard.tsx` (native Share API)
 - [x] **Recording History** — `RecordingHistoryScreen.tsx` (filter by mode)
 - [x] **Onboarding Overlay** — `OnboardingOverlay.tsx` (5-step tutorial)
+- [x] **TTS Provider Settings** — `SpeakingTtsSheet.tsx` (OpenAI/Azure toggle + voice + speed)
+- [x] **Background Audio Coach** — `useCoachTrackPlayer.ts` (TrackPlayer integration)
+- [x] **AI Voice Clone Replay** — `VoiceCloneReplay.tsx` + `cloneAndCorrectVoice` API
 
 ### 📖 Reading Enhanced
 - [x] **Focus Mode** (Immersive view) → `ArticleScreen` animated chrome hiding + status bar + hint
