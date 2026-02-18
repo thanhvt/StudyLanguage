@@ -345,7 +345,275 @@ interface SettingsState {
 
 ---
 
-## 6. Related Documents
+## 6. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>` (trừ Feedback submit)
+
+### 6.1 User Module (`/api/user`)
+
+#### `GET /api/user/stats`
+
+> Lấy stats tổng quan cho Dashboard/Profile
+
+**Response:**
+
+```json
+{
+  "streak": 7,
+  "totalMinutes": 500,
+  "level": "intermediate",
+  "goals": { "daily": 30, "completed": 25 },
+  "totalSessions": 42
+}
+```
+
+---
+
+#### `GET /api/user/word-of-the-day`
+
+> Lấy từ vựng của ngày hôm nay
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "word": {
+    "word": "serendipity",
+    "ipa": "/ˌsɛr.ənˈdɪp.ɪ.ti/",
+    "meaning": "Sự tình cờ may mắn",
+    "example": "Finding that book was pure serendipity."
+  }
+}
+```
+
+---
+
+#### `GET /api/user/last-session`
+
+> Lấy session cuối cùng để hiển thị "Continue Last Lesson"
+
+**Response:** Session object hoặc `null`
+
+---
+
+#### `PATCH /api/user/profile`
+
+> Cập nhật thông tin profile
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `displayName` | string | ❌ | Tên hiển thị mới |
+| `avatarUrl` | string | ❌ | URL avatar mới |
+
+---
+
+#### `POST /api/user/avatar`
+
+> Upload ảnh avatar (multipart form-data)
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `avatar` | File | ✅ | File ảnh avatar |
+
+**Response:**
+
+```json
+{ "avatarUrl": "https://supabase-storage-url/avatars/user-id.jpg" }
+```
+
+---
+
+#### `GET /api/user/gamification`
+
+> Lấy dữ liệu XP, level, badges, goals
+
+**Response:**
+
+```json
+{
+  "xp": 1250,
+  "level": 5,
+  "badges": [{ "id": "streak_7", "name": "7-Day Streak", "unlockedAt": "..." }],
+  "dailyGoal": { "target": 10, "completed": 8 }
+}
+```
+
+---
+
+#### `POST /api/user/gamification/check-badge`
+
+> Kiểm tra và unlock badges mới sau mỗi lesson
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `totalSessions` | number | ❌ | Tổng số sessions đã hoàn thành |
+| `totalMinutes` | number | ❌ | Tổng số phút học |
+| `streak` | number | ❌ | Streak hiện tại |
+
+**Response:**
+
+```json
+{
+  "newBadges": [{ "id": "first_50", "name": "50 Sessions", "icon": "🏆" }]
+}
+```
+
+---
+
+#### `GET /api/user/settings`
+
+> Lấy settings đồng bộ từ server
+
+**Response:**
+
+```json
+{
+  "settings": {
+    "theme": "dark",
+    "fontSize": "medium",
+    "ttsProvider": "azure",
+    "notifications": true
+  }
+}
+```
+
+---
+
+#### `PUT /api/user/settings`
+
+> Sync settings lên server (overwrite)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `settings` | object | ✅ | JSON object chứa toàn bộ settings |
+
+---
+
+#### `POST /api/user/export-data`
+
+> Export toàn bộ data (GDPR compliance)
+
+**Response:** JSON chứa tất cả data của user
+
+---
+
+#### `DELETE /api/user/delete-account`
+
+> ⚠️ Xóa account và toàn bộ data (KHÔNG THỂ hoàn tác)
+
+**Response:**
+
+```json
+{ "success": true, "message": "Tài khoản đã được xóa vĩnh viễn" }
+```
+
+---
+
+### 6.2 Notifications Module (`/api/notifications`)
+
+#### `POST /api/notifications/register-device`
+
+> Đăng ký FCM/APNs token cho push notification
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `token` | string | ✅ | FCM/APNs device token |
+| `platform` | enum | ✅ | `ios` \| `android` |
+
+---
+
+#### `POST /api/notifications/send`
+
+> Gửi push notification (internal/admin)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `userId` | string | ✅ | ID user nhận notification |
+| `title` | string | ✅ | Tiêu đề |
+| `body` | string | ✅ | Nội dung |
+| `data` | object | ❌ | Data payload tùy chỉnh |
+
+---
+
+#### `DELETE /api/notifications/unregister`
+
+> Xóa device token khi user logout
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `token` | string | ✅ | Token cần xóa |
+
+---
+
+### 6.3 Feedback Module (`/api/feedback`)
+
+#### `POST /api/feedback`
+
+> Gửi góp ý/phản hồi (🔓 không yêu cầu auth)
+
+**Request Body:** `CreateFeedbackDto` (type, message, rating, contactEmail...)
+
+---
+
+#### `GET /api/feedback`
+
+> Lấy danh sách feedback của user (🔒 yêu cầu auth)
+
+---
+
+### 6.4 Sync Module (`/api/sync`)
+
+#### `POST /api/sync/queue`
+
+> Upload và process offline action queue
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `actions` | `SyncActionDto[]` | ✅ | Danh sách actions cần sync |
+
+**SyncActionDto:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `id` | string | ✅ | ID unique của action |
+| `type` | enum | ✅ | `CREATE` \| `UPDATE` \| `DELETE` |
+| `table` | string | ✅ | Tên table (e.g., `history`, `bookmarks`) |
+| `data` | object | ✅ | Data để sync |
+| `timestamp` | string | ✅ | ISO timestamp khi action xảy ra |
+
+---
+
+#### `GET /api/sync/status`
+
+> Kiểm tra sync status và timestamp cuối
+
+**Response:**
+
+```json
+{ "lastSync": "2025-01-15T10:30:00Z", "serverTime": "2025-01-15T10:35:00Z" }
+```
+
+---
+
+## 7. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [01_Authentication.md](01_Authentication.md) - Login/Logout

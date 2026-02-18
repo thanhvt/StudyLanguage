@@ -284,6 +284,42 @@
 
 ---
 
+## Flow 8: Tab Switching & Swipe Down Fixes (Bug Fix)
+
+> **Ngày thêm:** 2026-02-19
+> **Ref:** `PlayerScreen.tsx` — `useFocusEffect` + `handleSwipeDownMinimize`
+
+### MAN-ENH-029 ✅ Tab Switch — CompactPlayer hiện khi đổi tab
+
+| # | Bước | Expected | P/F | Bug ID |
+|:-:|------|----------|:---:|--------|
+| 1 | Generate bài → vào PlayerScreen, audio đang phát | Full player hiện | | |
+| 2 | Tap tab **Reading** (bottom tab) | CompactPlayer hiện ở bottom | | |
+| 3 | Tap tab **Dashboard** | CompactPlayer vẫn hiện | | |
+| 4 | Tap tab **Listening** | PlayerScreen hiện lại full mode | | |
+| 5 | Audio vẫn phát xuyên suốt | ✅ Không bị dừng khi đổi tab | | |
+| 6 | Audio KHÔNG phát + đổi tab | CompactPlayer KHÔNG hiện | | |
+| 7 | Đổi tab nhanh 5 lần | Ổn định, không crash | | |
+
+### MAN-ENH-030 ✅ Swipe Down → Compact mode (FIXED)
+
+| # | Bước | Expected | P/F | Bug ID |
+|:-:|------|----------|:---:|--------|
+| 1 | PlayerScreen đang phát | Full player hiện | | |
+| 2 | Swipe down vùng transcript | Player đóng, CompactPlayer hiện, audio tiếp tục | | |
+| 3 | Haptic | Rung nhẹ | | |
+| 4 | Swipe down khi KHÔNG phát | Player đóng, hidden mode (không CompactPlayer) | | |
+
+### MAN-ENH-031 ⚠️ Back button — CompactPlayer cũng hiện
+
+| # | Bước | Expected | P/F | Bug ID |
+|:-:|------|----------|:---:|--------|
+| 1 | PlayerScreen đang phát → Tap ← Back | CompactPlayer hiện ở Config screen | | |
+| 2 | Audio vẫn phát | ✅ Không bị dừng | | |
+| 3 | Tap CompactPlayer | Quay lại Full player | | |
+
+---
+
 ## Bảng tổng kết
 
 | Flow | Tests | Pass | Fail | Skip |
@@ -295,7 +331,8 @@
 | 5. Pocket Mode | 6 | | | |
 | 6. Custom Scenarios | 6 | | | |
 | 7. Audio Change Confirm | 1 | | | |
-| **TOTAL** | **28** | | | |
+| 8. Tab Switch & Swipe Down | 3 | | | |
+| **TOTAL** | **31** | | | |
 
 ---
 

@@ -11,11 +11,12 @@
 
 | Loại Test | Số lượng | Trạng thái |
 |-----------|----------|------------|
-| **Unit Tests** (Jest) | 34 tests | ✅ 34/34 passed |
+| **Unit Tests** (Jest) | 47 tests | ✅ 47/47 passed |
 | **Smoke Tests** (Manual) | 8 scenarios | 🔲 Chưa test |
-| **Functional Tests** (Manual) | 22 scenarios | 🔲 Chưa test |
-| **Monkey Tests** (Free-form) | 12 scenarios | 🔲 Chưa test |
+| **Functional Tests** (Manual) | 49 scenarios (+27 Sprint 7) | 🔲 Chưa test |
+| **Monkey Tests** (Free-form) | 17 scenarios (+5 Sprint 7) | 🔲 Chưa test |
 | **Edge Case Tests** (Manual) | 10 scenarios | 🔲 Chưa test |
+| **E2E Flows** (Manual) | 8 flows (+3 Sprint 7) | 🔲 Chưa test |
 
 ---
 
@@ -312,4 +313,135 @@ Toggle IPA ON → IPA hiện → Toggle Stress ON → Highlight
 | 1. Toggle IPA | IPA transcription | ☐ |
 | 2. Toggle Stress | Stressed syllables | ☐ |
 | 3. Record + Feedback | Toggles persist | ☐ |
+
+---
+
+## 🆕 Sprint 7: TTS Provider Settings + Background Audio + AI Voice Clone
+
+> **Thêm mới:** 2026-02-19 — Sprint 7 (3 features cuối cùng)  
+> **Files liên quan:** `SpeakingTtsSheet.tsx`, `useCoachTrackPlayer.ts`, `VoiceCloneReplay.tsx`, `CoachSessionScreen.tsx`, `FeedbackScreen.tsx`
+
+### 7.1 TTS Provider Settings — `SpeakingTtsSheet.tsx`
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-TTS-01 | ✅ | Mở TTS settings sheet | 1. ConfigScreen → Tap "⚙️ Cài đặt giọng AI" | Bottom sheet mở, hiện chọn Provider (OpenAI/Azure), danh sách voices, slider speed | 🔴 | 🔲 |
+| FT-TTS-02 | ✅ | Chọn provider OpenAI | 1. Tap chip "🤖 OpenAI" | Chip highlight xanh, danh sách voice đổi sang voices OpenAI (alloy, echo, fable...) | 🔴 | 🔲 |
+| FT-TTS-03 | ✅ | Chọn provider Azure | 1. Tap chip "☁️ Azure" | Chip highlight xanh, danh sách voice đổi sang Azure voices (JennyNeural, AriaNeural...) | 🔴 | 🔲 |
+| FT-TTS-04 | ✅ | Chọn voice | 1. Tap 1 voice row (ví dụ "echo") | Radio button selected, haptic light | 🟡 | 🔲 |
+| FT-TTS-05 | ✅ | Điều chỉnh speed slider | 1. Kéo slider từ 1.0x → 1.5x | Label cập nhật "1.5x", giá trị lưu vào store | 🟡 | 🔲 |
+| FT-TTS-06 | ✅ | Preview voice | 1. Chọn voice + Tap "🔊 Preview"<br>2. Nghe audio | AI phát câu mẫu bằng giọng đã chọn, đúng speed | 🔴 | 🔲 |
+| FT-TTS-07 | ⚠️ | Speed min/max boundary | 1. Kéo slider về 0.5x<br>2. Kéo slider về 2.0x | Không vượt ra ngoài range, label hiện đúng | 🟢 | 🔲 |
+| FT-TTS-08 | ✅ | Đóng sheet + settings persist | 1. Chọn Azure + echo + 1.3x<br>2. Đóng sheet<br>3. Mở lại | Settings vẫn giữ nguyên (Azure, echo, 1.3x) | 🔴 | 🔲 |
+| FT-TTS-09 | ✅ | TTS settings áp dụng vào Practice | 1. Cài Azure + AriaNeural + 0.8x<br>2. Vào Practice → Tap "Nghe mẫu" | AI mẫu phát bằng giọng Azure AriaNeural, speed 0.8 | 🔴 | 🔲 |
+
+### 7.2 Background Audio for Coach — `useCoachTrackPlayer.ts`
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-BGA-01 | ✅ | Coach AI audio phát bình thường | 1. Vào Coach Session<br>2. Nói → AI trả lời | AI response phát audio tự động | 🔴 | 🔲 |
+| FT-BGA-02 | ✅ | Audio tiếp tục khi minimize app | 1. Đang phát AI audio<br>2. Home button (minimize) | Audio tiếp tục phát khi app ở background | 🔴 | 🔲 |
+| FT-BGA-03 | ✅ | Notification controls hiện | 1. AI đang phát<br>2. Kéo notification tray / Control Center | Hiện media notification: play/pause, tên "AI Coach — [topic]" | 🟡 | 🔲 |
+| FT-BGA-04 | ✅ | Pause/Resume từ notification | 1. AI đang phát ở background<br>2. Tap Pause trên notification<br>3. Tap Play | Audio dừng → tiếp tục đúng vị trí | 🟡 | 🔲 |
+| FT-BGA-05 | ✅ | Audio dừng khi rời CoachSession | 1. AI đang phát<br>2. Tap Back (rời màn hình) | Audio dừng ngay, không tiếp phát ở background | 🔴 | 🔲 |
+| FT-BGA-06 | ⚠️ | Ngắt âm khi có cuộc gọi | 1. AI đang phát<br>2. Nhận cuộc gọi<br>3. Cúp máy | Audio pause khi gọi, có thể resume sau | 🟡 | 🔲 |
+| FT-BGA-07 | ✅ | TTS settings áp dụng cho Coach audio | 1. Cài TTS → Azure + DavisNeural + 1.2x<br>2. Vào Coach → Nói | AI trả lời bằng giọng Azure DavisNeural, speed 1.2 | 🔴 | 🔲 |
+| FT-BGA-08 | ⚠️ | Nhiều tin nhắn liên tiếp | 1. Nói nhanh 3 tin<br>2. AI trả lời 3 lần | Audio phát lần lượt, không chồng chéo | 🟡 | 🔲 |
+| FT-BGA-09 | ⚠️ | Lock screen playback | 1. AI phát → Lock screen | Audio tiếp tục, lock screen hiện media controls | 🟡 | 🔲 |
+
+### 7.3 AI Voice Clone Replay — `VoiceCloneReplay.tsx`
+
+| ID | Type | Scenario | Steps | Expected Result | Severity | ✅/❌ |
+|:---|:-----|:---------|:------|:----------------|:---------|:------|
+| FT-VCR-01 | ✅ | Voice Clone tự động load | 1. FeedbackScreen mở (có score) | Section "🎭 AI Voice Clone" hiện loading spinner, sau đó hiện 2 audio cards | 🔴 | 🔲 |
+| FT-VCR-02 | ✅ | Phát audio bản gốc | 1. Tap card "🎤 Bản gốc" (nút ▶️ đỏ) | Audio user play, card highlight border đỏ | 🔴 | 🔲 |
+| FT-VCR-03 | ✅ | Phát audio AI đã sửa | 1. Tap card "🤖 AI đã sửa" (nút ▶️ tím) | Audio corrected play, card highlight border tím | 🔴 | 🔲 |
+| FT-VCR-04 | ✅ | Chuyển track giữa chừng | 1. Đang phát bản gốc<br>2. Tap "🤖 AI đã sửa" | Track cũ dừng, track mới play | 🟡 | 🔲 |
+| FT-VCR-05 | ✅ | Dừng track đang phát | 1. Đang phát bản gốc<br>2. Tap lại "🎤 Bản gốc" | Audio dừng, icon đổi lại ▶️ | 🟡 | 🔲 |
+| FT-VCR-06 | ✅ | Waveform comparison hiện | 1. Scroll xuống Voice Clone section | Waveform overlay 2 màu (AI mẫu xanh, user xanh dương), legend đúng | 🟢 | 🔲 |
+| FT-VCR-07 | ✅ | Improvements list hiện | 1. Scroll xuống "📝 Chi tiết cải thiện" | Danh sách phoneme: trước (đỏ) → sau (xanh), badge phoneme tím | 🟡 | 🔲 |
+| FT-VCR-08 | ⚠️ | API clone fail → fallback TTS | 1. Backend clone-and-correct lỗi | VoiceCloneReplay vẫn hiện, dùng TTS bình thường, improvements rỗng | 🟡 | 🔲 |
+| FT-VCR-09 | ⚠️ | Loading skeleton hiển thị đúng | 1. Mạng chậm, chờ clone API | Spinner + text "🎭 Đang phân tích giọng nói..." hiện | 🟢 | 🔲 |
+
+### 7.4 E2E Flow — Sprint 7 Features
+
+#### Flow A: TTS Settings → Practice → Verify Voice
+
+```
+ConfigScreen → Tap "⚙️ Cài đặt giọng AI" → Chọn Azure + AriaNeural + 1.5x
+→ Đóng sheet → Vào Practice → Tap "Nghe mẫu" → Verify: giọng Azure, speed 1.5x
+```
+
+| Step | Expected | ☐ |
+|------|----------|---|
+| 1. Mở TTS sheet | Bottom sheet hiện | ☐ |
+| 2. Chọn Azure + AriaNeural | Chips & voice row selected | ☐ |
+| 3. Kéo speed 1.5x | Label "1.5x" | ☐ |
+| 4. Đóng sheet | Settings persist | ☐ |
+| 5. Practice → Nghe mẫu | Giọng Azure AriaNeural 1.5x | ☐ |
+
+#### Flow B: Coach Session → Background Audio
+
+```
+CoachSetup → Start → Chat với AI → AI trả lời (audio)
+→ Minimize app → Audio tiếp tục → Notification controls → Resume app
+```
+
+| Step | Expected | ☐ |
+|------|----------|---|
+| 1. Start Coach | CoachSession mở | ☐ |
+| 2. Nói "Tell me about AI" | AI trả lời text + audio | ☐ |
+| 3. Minimize | Audio tiếp tục ở background | ☐ |
+| 4. Notification Pause | Audio dừng | ☐ |
+| 5. Resume app | UI đúng, state nhất quán | ☐ |
+
+#### Flow C: Practice → Feedback → Voice Clone Compare
+
+```
+Practice → Ghi âm → Feedback → Voice Clone tự load
+→ Phát "Bản gốc" → Phát "AI đã sửa" → So sánh improvements
+```
+
+| Step | Expected | ☐ |
+|------|----------|---|
+| 1. Ghi âm | Upload thành công | ☐ |
+| 2. Feedback | Score + breakdowns | ☐ |
+| 3. Voice Clone load | Loading → 2 cards hiện | ☐ |
+| 4. Phát Bản gốc | User recording play | ☐ |
+| 5. Phát AI đã sửa | Corrected version play | ☐ |
+| 6. Improvements | Phoneme list (nếu có) | ☐ |
+
+---
+
+## 🧪 Monkey Tests Bổ Sung (Sprint 7)
+
+| ID | Scenario | Thao tác | Quan sát | ✅/❌ |
+|:---|:---------|:---------|:---------|:------|
+| MNK-S7-01 | Spam toggle Provider | 1. Mở TTS sheet<br>2. Tap OpenAI → Azure → OpenAI nhanh 10 lần | Provider đổi đúng theo lần tap cuối, không crash | 🔲 |
+| MNK-S7-02 | Spam play/stop VoiceClone | 1. FeedbackScreen<br>2. Tap play "Bản gốc" → "AI sửa" → "Bản gốc" nhanh | Không chồng audio, dừng đúng, không crash | 🔲 |
+| MNK-S7-03 | Minimize + resume nhanh (Coach) | 1. Coach đang phát AI audio<br>2. Home → mở lại × 5 nhanh | Audio state nhất quán, không leak player instance | 🔲 |
+| MNK-S7-04 | Coach: gửi 10 tin liên tục | 1. Text mode<br>2. Gửi 10 tin nhanh | Audio queue xử lý đúng, mỗi response phát | 🔲 |
+| MNK-S7-05 | TTS sheet + back navigation | 1. Mở TTS sheet<br>2. Tap Back (hardware) | Sheet đóng, config giữ nguyên, không crash | 🔲 |
+
+---
+
+## 📊 Sprint 7 Unit Test Coverage Update
+
+### Store Tests — `useSpeakingStore.test.ts` (27 tests)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1–8 | (Sprint 1–6 — giữ nguyên) | 22 | ✅ |
+| 9 | TTS Settings (default, merge partial, multi, sequential) | 5 | ✅ |
+
+### API Tests — `speakingApi.test.ts` (20 tests)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1–5 | (Sprint 1–6 — giữ nguyên) | 12 | ✅ |
+| 6 | playAISample — TTS params (provider, default, speed=1.0) | 3 | ✅ |
+| 7 | generateCoachAudio — TTS params (voice+provider, fallback) | 2 | ✅ |
+| 8 | cloneAndCorrectVoice (FormData, fallback, empty) | 3 | ✅ |
+
+> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useSpeakingStore|speakingApi" --verbose`
 

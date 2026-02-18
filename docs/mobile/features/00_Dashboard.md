@@ -227,7 +227,73 @@ react-native-haptic-feedback // Tap feedback
 
 ---
 
-## 7. Related Documents
+## 7. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>`
+
+### 7.1 User Module (`/api/user`)
+
+#### `GET /api/user/stats`
+
+> Lấy stats tổng quan cho Dashboard widgets
+
+**Response:**
+
+```json
+{
+  "streak": 7,
+  "totalMinutes": 500,
+  "level": "intermediate",
+  "goals": { "daily": 30, "completed": 25 },
+  "totalSessions": 42
+}
+```
+
+---
+
+#### `GET /api/user/word-of-the-day`
+
+> Lấy từ vựng hàng ngày cho Word of Day widget
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "word": {
+    "word": "serendipity",
+    "ipa": "/ˌsɛr.ənˈdɪp.ɪ.ti/",
+    "meaning": "Sự tình cờ may mắn",
+    "example": "Finding that book was pure serendipity."
+  }
+}
+```
+
+---
+
+#### `GET /api/user/last-session`
+
+> Lấy session cuối cùng cho "Continue Last Lesson" card
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "type": "listening",
+  "title": "Business Meeting",
+  "date": "2025-01-15T10:30:00Z",
+  "duration": 5,
+  "progress": 60
+}
+```
+
+> Trả về `null` nếu chưa có session nào
+
+---
+
+## 8. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [01_Authentication.md](01_Authentication.md) - Auth flows

@@ -249,4 +249,145 @@ describe('useAudioPlayerStore', () => {
       expect(useAudioPlayerStore.getState().isPlaying).toBe(false);
     });
   });
+
+  // ========================
+  // Tab Switching — useFocusEffect (blur/focus)
+  // Mô phỏng PlayerScreen.useFocusEffect:
+  //   - Khi screen blur + isPlaying = true → setPlayerMode('compact')
+  //   - Khi screen focus lại → setPlayerMode('full')
+  // ========================
+  describe('Tab Switching (useFocusEffect simulation)', () => {
+    it('đang phát + blur → chuyển compact', () => {
+      // Arrange: đang ở full mode + đang phát
+      useAudioPlayerStore.getState().setPlayerMode('full');
+      useAudioPlayerStore.getState().setIsPlaying(true);
+
+      // Act: mô phỏng screen blur logic
+      const state = useAudioPlayerStore.getState();
+      if (state.isPlaying && state.playerMode === 'full') {
+        state.setPlayerMode('compact');
+      }
+
+      // Assert
+      expect(useAudioPlayerStore.getState().playerMode).toBe('compact');
+    });
+
+    it('KHÔNG phát + blur → giữ nguyên full', () => {
+      // Arrange: full mode + KHÔNG phát
+      useAudioPlayerStore.getState().setPlayerMode('full');
+      useAudioPlayerStore.getState().setIsPlaying(false);
+
+      // Act: mô phỏng screen blur logic
+      const state = useAudioPlayerStore.getState();
+      if (state.isPlaying && state.playerMode === 'full') {
+        state.setPlayerMode('compact');
+      }
+
+      // Assert: vẫn full vì không phát
+      expect(useAudioPlayerStore.getState().playerMode).toBe('full');
+    });
+
+    it('focus lại → chuyển full', () => {
+      // Arrange: compact mode (sau khi blur)
+      useAudioPlayerStore.getState().setPlayerMode('compact');
+
+      // Act: mô phỏng screen focus logic
+      useAudioPlayerStore.getState().setPlayerMode('full');
+
+      // Assert
+      expect(useAudioPlayerStore.getState().playerMode).toBe('full');
+    });
+
+    it('chuyển tab nhiều lần liên tục không crash', () => {
+      for (let i = 0; i < 10; i++) {
+        // Focus → đang ở full
+        useAudioPlayerStore.getState().setPlayerMode('full');
+        useAudioPlayerStore.getState().setIsPlaying(true);
+
+        // Blur → compact
+        const state = useAudioPlayerStore.getState();
+        if (state.isPlaying && state.playerMode === 'full') {
+          state.setPlayerMode('compact');
+        }
+        expect(useAudioPlayerStore.getState().playerMode).toBe('compact');
+      }
+    });
+
+    it('đang ở compact mode + blur → KHÔNG đổi (chỉ full mới đổi)', () => {
+      // Arrange: đã ở compact + đang phát
+      useAudioPlayerStore.getState().setPlayerMode('compact');
+      useAudioPlayerStore.getState().setIsPlaying(true);
+
+      // Act: mô phỏng blur logic — điều kiện playerMode === 'full' KHÔNG thoả
+      const state = useAudioPlayerStore.getState();
+      if (state.isPlaying && state.playerMode === 'full') {
+        state.setPlayerMode('compact');
+      }
+
+      // Assert: vẫn compact, không thay đổi gì
+      expect(useAudioPlayerStore.getState().playerMode).toBe('compact');
+    });
+  });
+
+  // ========================
+  // Swipe Down Minimize
+  // Mô phỏng PlayerScreen.handleSwipeDownMinimize:
+  //   - Nếu có audioUrl + isPlaying → compact + goBack
+  //   - Nếu KHÔNG phát → hidden + goBack
+  // ========================
+  describe('Swipe Down Minimize', () => {
+    it('đang phát → setPlayerMode compact', () => {
+      // Arrange
+      useAudioPlayerStore.getState().setPlayerMode('full');
+      useAudioPlayerStore.getState().setIsPlaying(true);
+
+      // Act: mô phỏng handleSwipeDownMinimize logic (audioUrl truthy + isPlaying)
+      const hasAudio = true; // audioUrl !== null
+      const isPlaying = useAudioPlayerStore.getState().isPlaying;
+      if (hasAudio && isPlaying) {
+        useAudioPlayerStore.getState().setPlayerMode('compact');
+      } else {
+        useAudioPlayerStore.getState().setPlayerMode('hidden');
+      }
+
+      // Assert
+      expect(useAudioPlayerStore.getState().playerMode).toBe('compact');
+    });
+
+    it('KHÔNG phát → setPlayerMode hidden', () => {
+      // Arrange
+      useAudioPlayerStore.getState().setPlayerMode('full');
+      useAudioPlayerStore.getState().setIsPlaying(false);
+
+      // Act: mô phỏng handleSwipeDownMinimize logic (KHÔNG phát)
+      const hasAudio = true;
+      const isPlaying = useAudioPlayerStore.getState().isPlaying;
+      if (hasAudio && isPlaying) {
+        useAudioPlayerStore.getState().setPlayerMode('compact');
+      } else {
+        useAudioPlayerStore.getState().setPlayerMode('hidden');
+      }
+
+      // Assert
+      expect(useAudioPlayerStore.getState().playerMode).toBe('hidden');
+    });
+
+    it('không có audio → setPlayerMode hidden', () => {
+      // Arrange
+      useAudioPlayerStore.getState().setPlayerMode('full');
+      useAudioPlayerStore.getState().setIsPlaying(false);
+
+      // Act: mô phỏng handleSwipeDownMinimize logic (KHÔNG có audio)
+      const hasAudio = false;
+      const isPlaying = useAudioPlayerStore.getState().isPlaying;
+      if (hasAudio && isPlaying) {
+        useAudioPlayerStore.getState().setPlayerMode('compact');
+      } else {
+        useAudioPlayerStore.getState().setPlayerMode('hidden');
+      }
+
+      // Assert
+      expect(useAudioPlayerStore.getState().playerMode).toBe('hidden');
+    });
+  });
 });

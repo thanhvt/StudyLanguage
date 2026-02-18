@@ -360,7 +360,191 @@ paragraph.split(/(\s+)/).map(token => (
 
 ---
 
-## 7. Related Documents
+## 7. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>`
+
+### 7.1 Reading Module (`/api/reading`)
+
+#### `POST /api/reading/generate-article`
+
+> Sinh bài đọc theo chủ đề và level
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề bài đọc |
+| `level` | string | ❌ | `beginner` \| `intermediate` \| `advanced`, default: intermediate |
+| `wordCount` | number | ❌ | Số từ mong muốn |
+
+**Response:**
+
+```json
+{
+  "title": "The Art of Travel",
+  "content": "Traveling opens your mind...",
+  "wordCount": 350,
+  "level": "intermediate",
+  "vocabulary": ["serendipity", "wander"]
+}
+```
+
+---
+
+#### `POST /api/reading/analyze-practice`
+
+> Phân tích kết quả reading practice (so sánh transcript với văn bản gốc)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `originalText` | string | ✅ | Văn bản gốc của bài đọc |
+| `userTranscript` | string | ✅ | Transcript từ Whisper (user đọc) |
+
+**Response:**
+
+```json
+{
+  "accuracy": 92,
+  "fluencyScore": 85,
+  "errors": [{ "word": "serendipity", "expected": "serendipity", "got": "serendipiti" }],
+  "feedback": "Great reading! Pay attention to..."
+}
+```
+
+---
+
+#### `GET /api/reading/saved-words?page=1&limit=20`
+
+> Lấy danh sách từ đã lưu (paginated)
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `page` | number | ❌ | Trang hiện tại, default: 1 |
+| `limit` | number | ❌ | Số lượng mỗi trang, default: 20 |
+
+**Response:**
+
+```json
+{
+  "words": [
+    { "id": "uuid", "word": "serendipity", "meaning": "sự tình cờ may mắn", "context": "...", "articleId": "..." }
+  ],
+  "total": 45,
+  "page": 1,
+  "limit": 20
+}
+```
+
+---
+
+#### `POST /api/reading/saved-words`
+
+> Lưu từ mới vào danh sách (tap-to-translate → Save)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `word` | string | ✅ | Từ cần lưu |
+| `meaning` | string | ❌ | Nghĩa tiếng Việt |
+| `context` | string | ❌ | Ngữ cảnh (câu chứa từ) |
+| `articleId` | string | ❌ | ID bài đọc liên quan |
+
+---
+
+#### `DELETE /api/reading/saved-words/:id`
+
+> Xóa từ khỏi danh sách đã lưu
+
+---
+
+### 7.2 Dictionary Module (`/api/dictionary`)
+
+#### `GET /api/dictionary/lookup?word=serendipity`
+
+> Tra nghĩa, IPA, ví dụ cho 1 từ tiếng Anh (proxy Free Dictionary API)
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `word` | string | ✅ | Từ cần tra |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "result": {
+    "word": "serendipity",
+    "ipa": "/ˌsɛr.ənˈdɪp.ɪ.ti/",
+    "audio": "https://...",
+    "meanings": [
+      { "partOfSpeech": "noun", "definition": "The occurrence of events by chance...", "example": "..." }
+    ]
+  }
+}
+```
+
+---
+
+### 7.3 AI Module (`/api/ai`)
+
+#### `POST /api/ai/text-to-speech`
+
+> TTS cho auto-read article feature
+
+> Xem chi tiết request/response ở [02_Listening.md - Section 8.1](02_Listening.md#post-apiaitext-to-speech)
+
+---
+
+#### `POST /api/ai/evaluate-pronunciation`
+
+> Đánh giá phát âm cho Reading Practice
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `originalText` | string | ✅ | Văn bản gốc |
+| `userTranscript` | string | ✅ | Transcript user đọc |
+
+**Response:**
+
+```json
+{ "overallScore": 88, "feedback": "Very clear reading..." }
+```
+
+---
+
+### 7.4 Conversation Generator (`/api/conversation-generator`)
+
+#### `POST /api/conversation-generator/generate-text`
+
+> Sinh bài đọc bằng Groq (alternative to Reading generate-article)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `prompt` | string | ✅ | Prompt mô tả bài đọc cần sinh |
+| `systemPrompt` | string | ❌ | System prompt cho AI |
+
+**Response:**
+
+```json
+{ "text": "Generated article content..." }
+```
+
+---
+
+## 8. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [07_History.md](07_History.md) - Saved words & History

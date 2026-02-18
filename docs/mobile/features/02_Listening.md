@@ -700,7 +700,674 @@ interface TtsSettings {
 
 ---
 
-## 8. Related Documents
+## 8. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>` (trừ khi ghi chú khác)
+
+### 8.1 AI Module (`/api/ai`)
+
+#### `POST /api/ai/generate-conversation`
+
+> Sinh kịch bản hội thoại theo chủ đề (OpenAI)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề hội thoại |
+| `durationMinutes` | number | ✅ | Thời lượng (phút) |
+| `numSpeakers` | number | ❌ | Số người nói, default: 2 |
+| `keywords` | string | ❌ | Từ khóa gợi ý |
+
+**Response:**
+
+```json
+{
+  "script": [
+    { "speaker": "Alex", "text": "Have you heard about..." },
+    { "speaker": "Sarah", "text": "Yes, I think..." }
+  ]
+}
+```
+
+---
+
+#### `POST /api/ai/transcribe`
+
+> Chuyển audio thành text (Whisper STT)
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audio` | File | ✅ | File audio cần transcribe |
+
+**Response:**
+
+```json
+{ "text": "I want to go for a walk today" }
+```
+
+---
+
+#### `POST /api/ai/text-to-speech`
+
+> Chuyển text thành audio (OpenAI hoặc Azure TTS)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `text` | string | ✅ | Text cần chuyển thành audio |
+| `voice` | string | ❌ | Voice ID |
+| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+| `emotion` | string | ❌ | Emotion cho Azure (cheerful, sad...) |
+| `randomVoice` | boolean | ❌ | Random giọng nói |
+| `randomEmotion` | boolean | ❌ | Random cảm xúc |
+| `pitch` | string | ❌ | Pitch adjustment (Azure) |
+| `rate` | string | ❌ | Tốc độ đọc (Azure) |
+| `volume` | string | ❌ | Âm lượng (Azure) |
+
+**Response:**
+
+```json
+{
+  "audio": "<base64-encoded-audio>",
+  "contentType": "audio/mpeg",
+  "wordTimestamps": [{ "word": "hello", "offset": 0, "duration": 500 }]
+}
+```
+
+> `wordTimestamps` chỉ có khi `provider=azure`
+
+---
+
+#### `POST /api/ai/generate-conversation-audio`
+
+> Sinh audio cho toàn bộ hội thoại với nhiều giọng
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `conversation` | `{ speaker, text }[]` | ✅ | Danh sách câu hội thoại |
+| `provider` | enum | ❌ | `openai` \| `azure` |
+| `voice` | string | ❌ | Voice ID chung |
+| `emotion` | string | ❌ | Emotion cho Azure |
+| `randomVoice` | boolean | ❌ | Random giọng cho từng speaker |
+| `randomEmotion` | boolean | ❌ | Random emotion |
+| `multiTalker` | boolean | ❌ | Dùng multi-talker Azure voice pair |
+| `multiTalkerPairIndex` | number | ❌ | Index của cặp giọng |
+| `voicePerSpeaker` | `Record<string, string>` | ❌ | Map speaker → voice ID |
+| `pitch` | string | ❌ | Pitch adjustment |
+| `rate` | string | ❌ | Tốc độ đọc |
+| `volume` | string | ❌ | Âm lượng |
+
+**Response:**
+
+```json
+{
+  "audio": "<base64>",
+  "contentType": "audio/mpeg",
+  "timestamps": [{ "startTime": 0, "endTime": 3500 }],
+  "wordTimestamps": [...],
+  "audioUrl": "https://supabase-storage-url/..."
+}
+```
+
+---
+
+#### `POST /api/ai/generate-conversation-audio-sse`
+
+> Sinh audio với SSE progress updates (streaming)
+
+**Request Body:** Giống `generate-conversation-audio`
+
+**Response:** SSE stream với events:
+
+```
+data: { "type": "progress", "current": 1, "total": 5, "speaker": "Alex" }
+data: { "type": "complete", "audio": "<base64>", "timestamps": [...] }
+data: { "type": "error", "message": "..." }
+```
+
+---
+
+#### `GET /api/ai/voices?provider=azure`
+
+> Lấy danh sách voices khả dụng
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+
+**Response:**
+
+```json
+{
+  "voices": [{ "id": "en-US-AvaMultilingualNeural", "name": "Ava", "gender": "Female" }],
+  "multiTalker": [{ "pair": ["Andrew", "Ava"], "index": 0 }]
+}
+```
+
+---
+
+#### `POST /api/ai/generate-interactive-conversation`
+
+> Sinh hội thoại tương tác với [YOUR TURN] markers
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề hội thoại |
+| `contextDescription` | string | ❌ | Mô tả ngữ cảnh bổ sung |
+
+**Response:**
+
+```json
+{
+  "scenario": "At a restaurant",
+  "script": [
+    { "speaker": "Waiter", "text": "Welcome! Table for two?", "isUserTurn": false },
+    { "speaker": "You", "text": "[YOUR TURN]", "isUserTurn": true }
+  ]
+}
+```
+
+---
+
+#### `POST /api/ai/continue-conversation`
+
+> AI tiếp tục hội thoại dựa trên user input
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `conversationHistory` | `{ speaker, text }[]` | ✅ | Lịch sử hội thoại |
+| `userInput` | string | ✅ | Câu user vừa nói |
+| `topic` | string | ✅ | Chủ đề hội thoại |
+
+**Response:**
+
+```json
+{
+  "response": "That's a great point! However...",
+  "shouldEnd": false
+}
+```
+
+---
+
+### 8.2 Conversation Generator (`/api/conversation-generator`)
+
+> Module dùng Groq LLM thay thế OpenAI cho text generation
+
+#### `POST /api/conversation-generator/generate`
+
+> Sinh hội thoại theo chủ đề tự do (Groq)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề hội thoại |
+| `durationMinutes` | number | ❌ | Thời lượng (5-15 phút), default: 5 |
+| `level` | enum | ❌ | `beginner` \| `intermediate` \| `advanced` |
+| `includeVietnamese` | boolean | ❌ | Bao gồm bản dịch tiếng Việt |
+| `numSpeakers` | number | ❌ | Số người nói (2-4), default: 2 |
+| `keywords` | string | ❌ | Từ khóa gợi ý (max 200 chars) |
+
+---
+
+#### `GET /api/conversation-generator/scenario?type=restaurant`
+
+> Sinh hội thoại theo kịch bản có sẵn
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `type` | enum | ✅ | `restaurant` \| `hotel` \| `shopping` \| `airport` \| `hospital` \| `job_interview` \| `phone_call` \| `small_talk` |
+| `customContext` | string | ❌ | Yêu cầu bổ sung cho kịch bản |
+
+---
+
+#### `POST /api/conversation-generator/practice`
+
+> Sinh hội thoại luyện tập từ vựng và ngữ pháp
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `keywords` | string[] | ✅ | Danh sách từ vựng cần luyện |
+| `grammarFocus` | string | ❌ | Cấu trúc ngữ pháp |
+| `topic` | string | ❌ | Chủ đề, default: daily life |
+| `level` | enum | ❌ | `beginner` \| `intermediate` \| `advanced` |
+
+---
+
+#### `POST /api/conversation-generator/generate-text`
+
+> Sinh văn bản tổng quát (bài đọc, câu hỏi) bằng Groq
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `prompt` | string | ✅ | Prompt gửi đến AI |
+| `systemPrompt` | string | ❌ | System prompt (vai trò AI) |
+
+**Response:**
+
+```json
+{ "text": "Generated text content..." }
+```
+
+---
+
+#### `POST /api/conversation-generator/generate-interactive`
+
+> Sinh hội thoại tương tác (Groq) — tương tự `/ai/generate-interactive-conversation`
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề |
+| `contextDescription` | string | ❌ | Mô tả ngữ cảnh |
+
+---
+
+#### `POST /api/conversation-generator/continue-conversation`
+
+> AI phản hồi hội thoại + phát hiện lỗi ngữ pháp (Groq)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `conversationHistory` | `{ speaker, text }[]` | ✅ | Lịch sử hội thoại |
+| `userInput` | string | ✅ | Câu user vừa nói |
+| `topic` | string | ✅ | Chủ đề |
+
+---
+
+#### `POST /api/conversation-generator/evaluate-pronunciation`
+
+> Đánh giá phát âm chi tiết từng từ (Groq)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `originalText` | string | ✅ | Văn bản gốc (mẫu) |
+| `userTranscript` | string | ✅ | Transcript từ Whisper |
+
+---
+
+#### `GET /api/conversation-generator/health`
+
+> Kiểm tra trạng thái Groq API
+
+**Response:**
+
+```json
+{ "status": "ok" }
+```
+
+---
+
+### 8.3 Radio Module (`/api/radio`)
+
+#### `GET /api/radio/preview`
+
+> Lấy preview thông tin Radio playlist trước khi tạo
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "duration": 30,
+    "trackCount": 10,
+    "estimatedTime": "~30 giây"
+  }
+}
+```
+
+---
+
+#### `POST /api/radio/generate`
+
+> Tạo Radio playlist mới 🔒
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `duration` | number | ✅ | Thời lượng: `1` \| `30` \| `60` \| `120` phút |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "id": "...", "items": [...], "duration": 30 }
+}
+```
+
+---
+
+### 8.4 Playlists Module (`/api/playlists`)
+
+#### `GET /api/playlists`
+
+> Lấy danh sách playlists của user
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "uuid", "name": "My Playlist", "description": "...", "itemCount": 5 }
+  ]
+}
+```
+
+---
+
+#### `POST /api/playlists`
+
+> Tạo playlist mới
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `name` | string | ✅ | Tên playlist |
+| `description` | string | ❌ | Mô tả |
+
+---
+
+#### `GET /api/playlists/:id`
+
+> Lấy chi tiết playlist kèm items
+
+---
+
+#### `PUT /api/playlists/:id`
+
+> Cập nhật tên/mô tả playlist
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `name` | string | ❌ | Tên mới |
+| `description` | string | ❌ | Mô tả mới |
+
+---
+
+#### `DELETE /api/playlists/:id`
+
+> Xóa playlist
+
+---
+
+#### `POST /api/playlists/:id/items`
+
+> Thêm item vào playlist
+
+**Request Body:** `AddPlaylistItemDto` (topic, conversation, duration, numSpeakers...)
+
+---
+
+#### `DELETE /api/playlists/:id/items/:itemId`
+
+> Xóa item khỏi playlist
+
+---
+
+#### `PUT /api/playlists/:id/reorder`
+
+> Sắp xếp lại items trong playlist
+
+**Request Body:**
+
+```json
+{ "items": [{ "id": "item-uuid", "position": 0 }, { "id": "item-uuid-2", "position": 1 }] }
+```
+
+---
+
+#### `PUT /api/playlists/:id/items/:itemId/audio`
+
+> Cập nhật audio URL cho item
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audioUrl` | string | ✅ | URL audio trên Supabase Storage |
+| `audioTimestamps` | `{ startTime, endTime }[]` | ❌ | Timestamps từng câu |
+
+---
+
+### 8.5 Listen Later Module (`/api/listen-later`)
+
+#### `GET /api/listen-later`
+
+> Lấy danh sách Nghe Sau
+
+---
+
+#### `POST /api/listen-later`
+
+> Thêm item vào Nghe Sau
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề |
+| `conversation` | `{ speaker, text }[]` | ✅ | Nội dung hội thoại |
+| `duration` | number | ✅ | Thời lượng (phút) |
+| `numSpeakers` | number | ✅ | Số người nói |
+| `category` | string | ❌ | Phân loại |
+| `subCategory` | string | ❌ | Phân loại phụ |
+| `audioUrl` | string | ❌ | URL audio đã sinh |
+| `audioTimestamps` | array | ❌ | Timestamps |
+
+---
+
+#### `PATCH /api/listen-later/:id/audio`
+
+> Cập nhật audio cho item Nghe Sau
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audioUrl` | string | ✅ | URL audio |
+| `audioTimestamps` | `{ startTime, endTime }[]` | ❌ | Timestamps |
+
+---
+
+#### `DELETE /api/listen-later/:id`
+
+> Xóa item khỏi Nghe Sau
+
+---
+
+#### `DELETE /api/listen-later`
+
+> Xóa tất cả items trong Nghe Sau
+
+---
+
+### 8.6 Bookmarks Module (`/api/bookmarks`)
+
+#### `POST /api/bookmarks`
+
+> Tạo bookmark câu mới (long press transcript)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `historyEntryId` | string | ❌ | ID session liên quan |
+| `sentenceIndex` | number | ✅ | Vị trí câu trong transcript |
+| `speaker` | string | ✅ | Người nói |
+| `sentenceText` | string | ✅ | Nội dung câu tiếng Anh |
+| `sentenceTranslation` | string | ❌ | Bản dịch tiếng Việt |
+| `topic` | string | ❌ | Chủ đề bài nghe |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "bookmark": { "id": "uuid", "sentenceIndex": 3, "sentenceText": "..." },
+  "alreadyExists": false
+}
+```
+
+---
+
+#### `GET /api/bookmarks?page=1&limit=20`
+
+> Lấy danh sách bookmarks (paginated)
+
+---
+
+#### `GET /api/bookmarks/session/:historyEntryId`
+
+> Lấy bookmarks theo session cụ thể
+
+---
+
+#### `DELETE /api/bookmarks/:id`
+
+> Xóa bookmark theo ID
+
+---
+
+#### `POST /api/bookmarks/remove-by-index`
+
+> Toggle bookmark off theo sentence index
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `historyEntryId` | string | ❌ | ID session |
+| `sentenceIndex` | number | ✅ | Vị trí câu cần bỏ bookmark |
+
+---
+
+### 8.7 Lessons Module (`/api/lessons`)
+
+#### `POST /api/lessons`
+
+> Tạo lesson mới (lưu bài học vào database)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `type` | enum | ✅ | `listening` \| `speaking` \| `reading` \| `writing` |
+| `topic` | string | ✅ | Chủ đề bài học |
+| `content` | any | ✅ | Nội dung bài học (conversation, article...) |
+| `durationMinutes` | number | ❌ | Thời lượng |
+| `numSpeakers` | number | ❌ | Số speaker |
+| `keywords` | string | ❌ | Từ khóa |
+| `mode` | enum | ❌ | `passive` \| `interactive` |
+| `status` | enum | ❌ | `draft` \| `completed` |
+
+**Response:**
+
+```json
+{ "success": true, "lesson": { "id": "uuid", "type": "listening", "topic": "...", "createdAt": "..." } }
+```
+
+---
+
+#### `PATCH /api/lessons/:id/audio`
+
+> Cập nhật audio URL và timestamps cho lesson
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audioUrl` | string | ✅ | URL audio trên Supabase Storage |
+| `audioTimestamps` | `{ startTime, endTime }[]` | ❌ | Timestamps từng câu |
+
+**Response:**
+
+```json
+{ "success": true, "message": "Đã lưu audio URL" }
+```
+
+---
+
+### 8.8 Custom Scenarios Module (`/api/custom-scenarios`)
+
+#### `GET /api/custom-scenarios`
+
+> Lấy danh sách custom scenarios của user
+
+---
+
+#### `POST /api/custom-scenarios`
+
+> Tạo custom scenario mới
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `name` | string | ✅ | Tên scenario |
+| `description` | string | ❌ | Mô tả |
+| `category` | string | ❌ | Phân loại |
+
+---
+
+#### `PATCH /api/custom-scenarios/:id`
+
+> Cập nhật custom scenario
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `name` | string | ❌ | Tên mới |
+| `description` | string | ❌ | Mô tả mới |
+| `isFavorite` | boolean | ❌ | Đánh dấu yêu thích |
+
+---
+
+#### `PATCH /api/custom-scenarios/:id/favorite`
+
+> Toggle trạng thái favorite
+
+---
+
+#### `DELETE /api/custom-scenarios/:id`
+
+> Xóa custom scenario
+
+---
+
+## 9. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [10_Native_Features.md](10_Native_Features.md) - Gestures

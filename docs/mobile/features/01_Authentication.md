@@ -233,7 +233,76 @@ interface AuthState {
 
 ---
 
-## 8. Related Documents
+## 8. API Reference
+
+> Authentication sử dụng **Supabase Auth** trực tiếp (không qua custom API controller)
+
+### 8.1 Supabase Auth (Client SDK)
+
+#### Google OAuth Sign-In
+
+```typescript
+// Luồng đăng nhập Google OAuth
+const { data, error } = await supabase.auth.signInWithOAuth({
+  provider: 'google',
+  options: {
+    redirectTo: 'studylanguage://auth/callback',
+    queryParams: { access_type: 'offline', prompt: 'consent' }
+  }
+});
+```
+
+---
+
+#### Session Management
+
+```typescript
+// Lấy session hiện tại
+const { data: { session } } = await supabase.auth.getSession();
+
+// Token refresh tự động
+supabase.auth.onAuthStateChange((event, session) => {
+  // event: 'SIGNED_IN' | 'SIGNED_OUT' | 'TOKEN_REFRESHED'
+});
+
+// Đăng xuất
+await supabase.auth.signOut();
+```
+
+---
+
+### 8.2 SupabaseAuthGuard (Server-side)
+
+> Tất cả API endpoints (trừ `/feedback` POST) đều sử dụng `SupabaseAuthGuard`
+
+**Header yêu cầu:**
+
+```
+Authorization: Bearer <Supabase JWT Access Token>
+```
+
+**Token claims:**
+
+```json
+{
+  "sub": "user-uuid",
+  "email": "user@gmail.com",
+  "role": "authenticated",
+  "iat": 1700000000,
+  "exp": 1700003600
+}
+```
+
+**Error responses:**
+
+| Status | Mô tả |
+|---|---|
+| `401 Unauthorized` | Token thiếu hoặc hết hạn |
+| `403 Forbidden` | Token không hợp lệ |
+
+---
+
+## 9. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [08_Profile_Settings.md](08_Profile_Settings.md) - Settings for auth preferences

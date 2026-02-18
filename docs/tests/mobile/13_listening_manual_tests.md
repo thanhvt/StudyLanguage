@@ -367,6 +367,36 @@
 | 2 | Tap icon Smartphone | Pocket Mode mở: màn hình đen, 3 vùng cử chỉ | |
 | 3 | Double tap trong Pocket Mode | Thoát Pocket Mode, quay lại PlayerScreen | |
 
+### MAN-LIS-031: Tab Switching — CompactPlayer hiện khi đổi tab (FIX BUG)
+
+> **Bug:** Khi audio đang phát ở PlayerScreen → chuyển tab (ví dụ: Reading, Dashboard) → CompactPlayer KHÔNG hiện.
+> **Fix:** `useFocusEffect` trong PlayerScreen detect blur → `setPlayerMode('compact')`.
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | Generate bài → PlayerScreen đang phát audio | Audio phát, full player hiện | |
+| 2 | Tap tab **Reading** ở bottom tab bar | CompactPlayer hiện ở bottom Reading screen | |
+| 3 | Kiểm tra CompactPlayer | Tên bài nghe + waveform + nút Play/Pause hiện đúng | |
+| 4 | Audio vẫn phát | ✅ Không bị dừng khi đổi tab | |
+| 5 | Tap tab **Dashboard** | CompactPlayer vẫn hiện ở bottom Dashboard | |
+| 6 | Tap tab **Listening** | PlayerScreen hiện lại ở full mode (không trùng, không flash) | |
+| 7 | Tap CompactPlayer (khi đang ở tab khác) | Navigate lại PlayerScreen full mode | |
+| 8 | Audio KHÔNG phát + đổi tab | CompactPlayer KHÔNG hiện (chỉ hiện khi đang phát) | |
+| 9 | Đổi tab 5 lần liên tục nhanh | CompactPlayer hiện/ẩn đúng, KHÔNG crash, audio liên tục | |
+
+### MAN-LIS-032: Swipe Down Minimize — Compact mode + goBack (FIX BUG)
+
+> **Bug:** Swipe down trên PlayerScreen chỉ `console.log`, không có action thực tế.
+> **Fix:** `handleSwipeDownMinimize` giờ set `compact` mode + `navigation.goBack()`.
+
+| # | Action | Expected Result | P/F |
+|:-:|--------|-----------------|:---:|
+| 1 | PlayerScreen đang phát audio | Full player hiện | |
+| 2 | Swipe down trên vùng transcript | Player đóng, CompactPlayer hiện, audio tiếp tục phát | |
+| 3 | Haptic feedback | Rung nhẹ khi swipe down trigger | |
+| 4 | Swipe down khi audio KHÔNG phát | Player đóng, CompactPlayer KHÔNG hiện (hidden mode) | |
+| 5 | Swipe down → Tap CompactPlayer | Quay lại PlayerScreen full mode, audio vẫn phát | |
+
 ---
 
 ## Tổng Kết Manual Test
@@ -384,9 +414,9 @@
 | 9. Navigation | MAN-LIS-019 → 020 | | |
 | 10. Dark Mode & A11y | MAN-LIS-021 → 022 | | |
 | 11. Performance | MAN-LIS-023 | | |
-| **12. Bug Fixes** | **MAN-LIS-024 → 030** | | |
+| **12. Bug Fixes** | **MAN-LIS-024 → 032** | | |
 
-**Tổng:** ___/30 PASS
+**Tổng:** ___/32 PASS
 
 **Bugs tìm thấy:**
 

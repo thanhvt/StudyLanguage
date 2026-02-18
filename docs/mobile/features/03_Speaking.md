@@ -1099,7 +1099,231 @@ async function handleRecordStop() {
 
 ---
 
-## 9. Related Documents
+## 9. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>`
+
+### 9.1 Speaking Module (`/api/speaking`)
+
+#### `GET /api/speaking/tongue-twisters?level=beginner`
+
+> Lấy danh sách tongue twisters theo level
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `level` | string | ❌ | `beginner` \| `intermediate` \| `advanced` |
+
+**Response:**
+
+```json
+[
+  { "id": "1", "text": "She sells seashells...", "level": "beginner", "category": "s-sounds" }
+]
+```
+
+---
+
+#### `GET /api/speaking/stats`
+
+> Lấy thống kê speaking của user
+
+**Response:**
+
+```json
+{
+  "totalSessions": 42,
+  "totalMinutes": 180,
+  "topicsCount": 15,
+  "weeklyData": [{ "day": "Mon", "minutes": 25 }]
+}
+```
+
+---
+
+#### `POST /api/speaking/voice-clone`
+
+> Clone giọng user qua Azure Custom Voice (đang phát triển)
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audio` | File | ✅ | Audio sample của user |
+| `text` | string | ✅ | Text cần TTS bằng giọng clone |
+
+**Response:** Audio buffer hoặc placeholder (feature đang phát triển)
+
+---
+
+### 9.2 AI Module - TTS/STT (`/api/ai`)
+
+#### `POST /api/ai/transcribe`
+
+> Chuyển audio thành text (Whisper STT) — dùng cho recording → text
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `audio` | File | ✅ | File audio cần transcribe |
+
+**Response:**
+
+```json
+{ "text": "I want to go for a walk today" }
+```
+
+---
+
+#### `POST /api/ai/text-to-speech`
+
+> Chuyển text thành audio (OpenAI hoặc Azure TTS) — dùng cho Coach voice
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `text` | string | ✅ | Text cần TTS |
+| `voice` | string | ❌ | Voice ID |
+| `provider` | enum | ❌ | `openai` \| `azure` |
+| `emotion` | string | ❌ | Emotion cho Azure |
+| `randomVoice` | boolean | ❌ | Random giọng |
+| `randomEmotion` | boolean | ❌ | Random emotion |
+| `pitch` | string | ❌ | Pitch adjustment |
+| `rate` | string | ❌ | Tốc độ đọc |
+| `volume` | string | ❌ | Âm lượng |
+
+**Response:**
+
+```json
+{
+  "audio": "<base64>",
+  "contentType": "audio/mpeg",
+  "wordTimestamps": [{ "word": "hello", "offset": 0, "duration": 500 }]
+}
+```
+
+---
+
+#### `POST /api/ai/evaluate-pronunciation`
+
+> Đánh giá phát âm của user
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `originalText` | string | ✅ | Văn bản mẫu |
+| `userTranscript` | string | ✅ | Transcript từ Whisper |
+
+**Response:**
+
+```json
+{
+  "overallScore": 85,
+  "feedback": "Good pronunciation! Pay attention to..."
+}
+```
+
+---
+
+#### `GET /api/ai/voices?provider=azure`
+
+> Lấy danh sách voices khả dụng cho TTS Provider Settings
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+
+---
+
+### 9.3 Conversation Generator (`/api/conversation-generator`)
+
+#### `POST /api/conversation-generator/generate-interactive`
+
+> Sinh hội thoại tương tác cho Roleplay mode
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề roleplay |
+| `contextDescription` | string | ❌ | Mô tả ngữ cảnh |
+
+---
+
+#### `POST /api/conversation-generator/continue-conversation`
+
+> AI phản hồi trong multi-turn conversation
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `conversationHistory` | `{ speaker, text }[]` | ✅ | Lịch sử hội thoại |
+| `userInput` | string | ✅ | Câu user vừa nói |
+| `topic` | string | ✅ | Chủ đề |
+
+**Response:**
+
+```json
+{
+  "response": "That's correct! Now let's...",
+  "shouldEnd": false
+}
+```
+
+---
+
+#### `POST /api/conversation-generator/evaluate-pronunciation`
+
+> Đánh giá phát âm chi tiết từng từ (Groq)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `originalText` | string | ✅ | Văn bản gốc |
+| `userTranscript` | string | ✅ | Transcript user đọc |
+
+---
+
+#### `POST /api/conversation-generator/generate`
+
+> Sinh hội thoại cho Practice mode
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `topic` | string | ✅ | Chủ đề |
+| `durationMinutes` | number | ❌ | Thời lượng (5-15 phút) |
+| `level` | enum | ❌ | `beginner` \| `intermediate` \| `advanced` |
+| `numSpeakers` | number | ❌ | Số người nói (2-4) |
+| `keywords` | string | ❌ | Từ khóa gợi ý |
+
+---
+
+### 9.4 Custom Scenarios Module (`/api/custom-scenarios`)
+
+> Xem chi tiết ở [02_Listening.md - Section 8.8](02_Listening.md#88-custom-scenarios-module-apicustom-scenarios)
+
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| `GET` | `/api/custom-scenarios` | Lấy danh sách |
+| `POST` | `/api/custom-scenarios` | Tạo mới |
+| `PATCH` | `/api/custom-scenarios/:id` | Cập nhật |
+| `PATCH` | `/api/custom-scenarios/:id/favorite` | Toggle favorite |
+| `DELETE` | `/api/custom-scenarios/:id` | Xóa |
+
+---
+
+## 10. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [02_Listening.md](02_Listening.md) - Parity: Custom Scenarios, TTS Settings

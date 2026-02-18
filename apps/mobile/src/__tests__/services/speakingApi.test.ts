@@ -288,7 +288,7 @@ describe('speakingApi', () => {
 
       await speakingApi.playAISample('Test', 'openai', 'alloy', 1.0);
 
-      const payload = mockApiClient.post.mock.calls[0][1];
+      const payload = mockApiClient.post.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.speed).toBeUndefined();
     });
   });
@@ -329,7 +329,7 @@ describe('speakingApi', () => {
 
       const result = await speakingApi.generateCoachAudio('Hello');
 
-      const payload = mockApiClient.post.mock.calls[0][1];
+      const payload = mockApiClient.post.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.voice).toBe('en-US-JennyNeural'); // Default
       expect(result).toBe('https://audio.url');
     });

@@ -938,7 +938,169 @@ react-native-share             // Share API
 
 ---
 
-## 7. Related Documents
+## 7. API Reference
+
+> **Base URL:** `/api`  
+> **Auth:** Tất cả endpoints yêu cầu `Authorization: Bearer <Supabase JWT>`
+
+### 7.1 History Module (`/api/history`)
+
+#### `GET /api/history`
+
+> Lấy danh sách lịch sử học tập (paginated, filterable)
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `type` | enum | ❌ | `listening` \| `speaking` \| `reading` \| `writing` |
+| `status` | enum | ❌ | `all` \| `pinned` \| `favorite` \| `deleted` |
+| `search` | string | ❌ | Từ khóa tìm kiếm |
+| `page` | number | ❌ | Trang hiện tại, default: 1 |
+| `limit` | number | ❌ | Số bản ghi mỗi trang, default: 20 |
+| `dateFrom` | string | ❌ | Ngày bắt đầu (YYYY-MM-DD) |
+| `dateTo` | string | ❌ | Ngày kết thúc (YYYY-MM-DD) |
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "type": "listening",
+      "title": "Business Meeting",
+      "date": "2025-01-15T10:30:00Z",
+      "duration": 5,
+      "score": 85,
+      "isPinned": false,
+      "isFavorite": true
+    }
+  ],
+  "total": 120,
+  "page": 1,
+  "limit": 20,
+  "hasMore": true
+}
+```
+
+---
+
+#### `GET /api/history/stats`
+
+> Lấy thống kê lịch sử học tập
+
+**Response:**
+
+```json
+{
+  "todayCount": 3,
+  "weekCount": 15,
+  "streak": 7,
+  "heatmapData": [{ "date": "2025-01-15", "count": 3 }],
+  "weeklyData": [{ "day": "Mon", "minutes": 45 }]
+}
+```
+
+---
+
+#### `GET /api/history/analytics?period=week`
+
+> Lấy analytics data cho biểu đồ
+
+**Query Params:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `period` | enum | ❌ | `week` \| `month` \| `year` |
+
+**Response:**
+
+```json
+{
+  "data": [{ "date": "2025-01-15", "sessions": 3, "minutes": 45 }],
+  "summary": { "totalSessions": 42, "totalMinutes": 500, "averagePerDay": 6 }
+}
+```
+
+---
+
+#### `POST /api/history/batch-action`
+
+> Batch action trên nhiều entries (multi-select mode)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `ids` | string[] | ✅ | Danh sách ID entries |
+| `action` | enum | ✅ | `delete` \| `pin` \| `unpin` \| `favorite` \| `unfavorite` |
+
+---
+
+#### `GET /api/history/:id`
+
+> Lấy chi tiết một bản ghi lịch sử
+
+---
+
+#### `PATCH /api/history/:id/pin`
+
+> Toggle trạng thái ghim (pin/unpin)
+
+---
+
+#### `PATCH /api/history/:id/favorite`
+
+> Toggle trạng thái yêu thích (favorite/unfavorite)
+
+---
+
+#### `PATCH /api/history/:id/notes`
+
+> Cập nhật ghi chú cho bản ghi
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `notes` | string | ✅ | Nội dung ghi chú (gửi "" để xóa) |
+
+---
+
+#### `POST /api/history/:id/export`
+
+> Export session summary (text) để share
+
+**Response:**
+
+```json
+{
+  "summary": "📝 Session: Business Meeting\n⏱ Duration: 5 min\n🎯 Score: 85/100\n..."
+}
+```
+
+---
+
+#### `DELETE /api/history/:id`
+
+> Soft delete (có thể phục hồi)
+
+---
+
+#### `POST /api/history/:id/restore`
+
+> Khôi phục bản ghi đã xóa mềm
+
+---
+
+#### `DELETE /api/history/:id/permanent`
+
+> Xóa vĩnh viễn (hard delete, KHÔNG thể phục hồi)
+
+---
+
+## 8. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [00_Dashboard.md](00_Dashboard.md) - Visual identity consistency (accent colors)
