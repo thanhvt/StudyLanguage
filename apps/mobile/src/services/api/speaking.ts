@@ -242,4 +242,62 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
       recentTopics: [],
     };
   },
+
+  /**
+   * Mục đích: Gửi tin nhắn user → AI Coach trả lời + sửa lỗi
+   * Tham số đầu vào:
+   *   - conversationHistory: {speaker, text}[] — lịch sử hội thoại
+   *   - userInput: string — câu user vừa nói/gõ
+   *   - topic: string — chủ đề hội thoại
+   * Tham số đầu ra: Promise<CoachResponse> — AI response + grammar corrections
+   * Khi nào sử dụng: CoachSessionScreen → user gửi tin → gọi API → nhận phản hồi
+   */
+  continueConversation: async (
+    conversationHistory: {speaker: string; text: string}[],
+    userInput: string,
+    topic: string,
+  ): Promise<{
+    response: string;
+    shouldEnd: boolean;
+    corrections?: {original: string; correction: string; explanation: string}[];
+  }> => {
+    console.log('🗣️ [Coach] Gửi tin nhắn cho AI Coach...');
+    console.log('  Input:', userInput.substring(0, 50));
+
+    const response = await apiClient.post(
+      '/conversation-generator/continue-conversation',
+      {
+        conversationHistory,
+        userInput,
+        topic,
+      },
+    );
+
+    const data = response.data;
+    console.log('✅ [Coach] AI trả lời:', data?.response?.substring(0, 50));
+
+    return {
+      response: data?.response || "That's interesting! Can you tell me more?",
+      shouldEnd: data?.shouldEnd ?? false,
+      corrections: data?.corrections ?? [],
+    };
+  },
+
+  /**
+   * Mục đích: Sinh audio TTS cho câu trả lời của AI Coach
+   * Tham số đầu vào: text (string) — câu AI cần phát audio
+   * Tham số đầu ra: Promise<string> — base64 audio hoặc audio URL
+   * Khi nào sử dụng: Sau khi AI Coach trả lời → TTS → phát audio
+   */
+  generateCoachAudio: async (text: string): Promise<string> => {
+    console.log('🗣️ [Coach] Sinh audio cho AI response...');
+
+    const response = await apiClient.post('/ai/generate-conversation-audio', {
+      text,
+      voice: 'en-US-JennyNeural', // Giọng AI Coach
+    });
+
+    console.log('✅ [Coach] Audio sinh thành công');
+    return response.data?.audio || response.data?.audioUrl || '';
+  },
 };

@@ -8,14 +8,13 @@
 
 ## 1. Overview
 
-Module trang chủ hiển thị tổng quan tiến trình học tập, gợi ý bài học tiếp theo, và quick access đến 3 skills. Thiết kế tối giản, thoáng, phù hợp mobile.
+Module trang chủ hiển thị tổng quan tiến trình học tập, và quick access đến 3 skills. Thiết kế tối giản, thoáng, phù hợp mobile.
 
 ### 1.1 Dashboard Views
 
 | View | Condition | Key Elements |
 |------|-----------|--------------|
 | **Auth Dashboard** | User đã đăng nhập | Greeting, Streak, Quick Actions |
-| **Guest Dashboard** | Chưa đăng nhập | Hero banner, CTA Login, Quick Actions (demo) |
 
 ### 1.2 Widget Selection (Mobile-Optimized)
 
@@ -46,100 +45,58 @@ Chỉ giữ các widget phù hợp mobile, loại bỏ chart phức tạp:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Guest User Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [App Launch] → [Splash] → [Guest Dashboard]                  │
-│                              │                              │
-│                    ┌─────────┼──────────┐                   │
-│                    │         │          │                    │
-│              [Hero CTA] [Quick Actions] [Features]          │
-│              (Login)    (Demo mode)     (Why us?)           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## 3. UI Mockups
 
-### 3.1 Auth Dashboard - Main Screen
+### 3.1 Design Style: Dark Glassmorphism
 
-```
-┌─────────────────────────────────┐
-│  📚 StudyLanguage            🔔  │
-├─────────────────────────────────┤
-│                                 │
-│  Chào buổi sáng, Thành! 👋     │
-│  🔥 12 ngày liên tiếp           │
-│  🗣️ Speaking: 8/10 câu (NEW ✨) │
-│                                 │
-├─────────────────────────────────┤
+![Dashboard Glassmorphism Mockup](assets/dashboard_glassmorphism_mockup.png)
 
-│                                 │
-├─────────────────────────────────┤
+### 3.2 Design Specs
 
-├─────────────────────────────────┤
-│  📚 Bắt đầu luyện tập          │
-│  ┌────────┐┌────────┐┌────────┐│
-│  │ 🎧     ││ 🗣️     ││ 📖     ││
-│  │ Nghe   ││ Nói    ││ Đọc    ││
-│  └────────┘└────────┘└────────┘│
-│                                 │
-└─────────────────────────────────┘
-│ 🏠  │  📜  │  📚  │  👤  │
-└─────────────────────────────────┘
-```
+#### Background
+- **Color:** Deep navy gradient (`#0A0E1A` → `#0F1628`)
+- **Effects:** Subtle light streaks và lens flare ở các cạnh
+- **Atmosphere:** Premium, dark mode, không gian vũ trụ
 
-**Specs:**
-- Greeting: Dynamic theo thời gian (Sáng/Chiều/Tối)
-- Streak: Inline với greeting, icon 🔥
+#### Header
+- Logo "📚 StudyLanguage" bên trái, white text
+- Notification bell 🔔 bên phải
+- Padding: `16px` horizontal
 
-- Quick Actions: 3 skill cards, equal width, tap to navigate
+#### Greeting Card (Glassmorphism)
+- **Background:** `rgba(255,255,255,0.08)` với `backdrop-filter: blur(20px)`
+- **Border:** `1px solid rgba(255,255,255,0.12)` với subtle blue-teal glow
+- **Border Radius:** `16px`
+- **Content:** Greeting text + Streak count
+- **Shadow:** `0 8px 32px rgba(0,0,0,0.3)`
 
-### 3.2 Guest Dashboard
+#### Quick Action Cards (3 columns)
+| Card | Glow Color | Background |
+|------|-----------|------------|
+| 🎧 Nghe | `#4F7CFF` → `#6C5CE7` (Blue/Indigo) | `rgba(79,124,255,0.1)` |
+| 🗣️ Nói | `#00B894` → `#55EFC4` (Green/Emerald) | `rgba(0,184,148,0.1)` |
+| 📖 Đọc | `#FDCB6E` → `#E17055` (Amber/Orange) | `rgba(253,203,110,0.1)` |
 
-```
-┌─────────────────────────────────┐
-│  📚 StudyLanguage            ⋮  │
-├─────────────────────────────────┤
-│                                 │
-│  ┌─────────────────────────┐   │
-│  │  ✨ AI-Powered Learning  │   │
-│  │                         │   │
-│  │  Chào mừng bạn! 👋      │   │
-│  │                         │   │
-│  │  Bắt đầu học tiếng Anh  │   │
-│  │  với AI ngay hôm nay.   │   │
-│  │                         │   │
-│  │  [🔑 Đăng nhập]         │   │
-│  │  [Dùng thử miễn phí]    │   │
-│  └─────────────────────────┘   │
-│                                 │
-├─────────────────────────────────┤
-│  📚 Chọn kỹ năng luyện tập     │
-│  ┌────────┐┌────────┐┌────────┐│
-│  │ 🎧     ││ 🗣️     ││ 📖     ││
-│  │ Nghe   ││ Nói    ││ Đọc    ││
-│  └────────┘└────────┘└────────┘│
-│                                 │
-├─────────────────────────────────┤
-│  💡 Tại sao chọn chúng tôi?    │
-│  ┌─────────────────────────┐   │
-│  │ 🤖 AI Thông minh        │   │
-│  │ 📱 Học mọi lúc mọi nơi  │   │
-│  │ 📚 Nội dung đa dạng     │   │
-│  └─────────────────────────┘   │
-│                                 │
-└─────────────────────────────────┘
-```
+- **Border:** `1px solid` với gradient tương ứng
+- **Border Radius:** `14px`
+- **Glassmorphism:** `backdrop-filter: blur(16px)`
+- **Icon Size:** `32px`, centered
+- **Label:** Bold, white, centered dưới icon
 
-**Specs:**
-- Hero card: Gradient background, prominent CTA
-- Quick Actions: Same layout as auth, nhưng navigate đến demo/login
-- Features list: 3 selling points
+#### Bottom Tab Bar
+- **Background:** `rgba(255,255,255,0.06)` với `backdrop-filter: blur(24px)`
+- **Active Tab:** Glow effect + tinted icon
+- **Tabs:** Home | History | Vocab | Profile
+- **Safe Area:** Bottom padding cho notch devices
+
+#### Typography
+- **Font:** SF Pro Display / Inter
+- **Greeting:** `24px`, Bold, White
+- **Streak:** `16px`, Regular, `rgba(255,255,255,0.7)`
+- **Card Label:** `14px`, SemiBold, White
+- **Section Title:** `18px`, SemiBold, White
 
 ---
 

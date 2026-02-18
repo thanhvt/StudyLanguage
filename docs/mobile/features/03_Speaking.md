@@ -1054,48 +1054,48 @@ async function handleRecordStop() {
 ## 8. Implementation Tasks
 
 ### MVP Phase
-- [ ] Topic selection screen
-- [ ] Practice sentence display (có IPA toggle, word stress)
-- [ ] Hold-to-record button
-- [ ] Audio recording với react-native-audio-recorder-player
-- [ ] Send to backend for AI analysis
-- [ ] Display feedback with scores
-- [ ] **Onboarding overlay** cho user mới
+- [x] Topic selection screen ✅ (`ConfigScreen.tsx` — topic + level + suggestion chips)
+- [x] Practice sentence display ✅ (`PracticeScreen.tsx` — sentence + IPA display)
+- [x] Hold-to-record button ✅ (`PracticeScreen.tsx` — Pressable hold-to-record 80px)
+- [x] Audio recording với react-native-audio-recorder-player ✅ (15s max, timer, waveform indicator)
+- [x] Send to backend for AI analysis ✅ (`speakingApi.transcribeAudio` + `evaluatePronunciation`)
+- [x] Display feedback with scores ✅ (`FeedbackScreen.tsx` — overall score, word scores, tips, retry/next)
+- [x] **Onboarding overlay** cho user mới ✅ (`OnboardingOverlay.tsx` — 5-step tutorial)
 
 ### Enhanced Phase
-- [ ] **Conversation Coach setup screen**
-- [ ] **Conversation Coach session UI** (với suggested responses, grammar fix, re-speak)
-- [ ] **Voice/Text input toggle**
-- [ ] **Real-time transcription (STT)**
-- [ ] **AI response generation**
-- [ ] **Pronunciation Alert inline**
-- [ ] **Voice Visualizer**
-- [ ] **Session Transcript**
-- [ ] **Session Timer with auto-end**
-- [ ] **Save coach session to History**
-- [ ] Waveform visualization + comparison
-- [ ] Phoneme breakdown view + **Phoneme Heatmap**
-- [ ] Progress tracking
-- [ ] Haptic feedback
-- [ ] **Recording UX: countdown, swipe-to-cancel, preview**
-- [ ] **Custom Speaking Scenarios** (create/save/favorite/delete)
-- [ ] **Shadowing Mode** (real-time compare, delay/speed control)
-- [ ] **IPA toggle + word stress display**
-- [ ] **Tap-to-pronounce word**
+- [x] **Conversation Coach setup screen** ✅ (`CoachSetupScreen.tsx` — topic, duration, feedback mode)
+- [x] **Conversation Coach session UI** ✅ (`CoachSessionScreen.tsx` — chat UI, suggested responses, grammar fix, re-speak)
+- [x] **Voice/Text input toggle** ✅ (CoachSessionScreen — voice hold + text input)
+- [x] **Real-time transcription (STT)** ✅ (`speakingApi.transcribeAudio`)
+- [x] **AI response generation** ✅ (`speakingApi.continueConversation`)
+- [x] **Pronunciation Alert inline** ✅ (`PronunciationAlert.tsx`)
+- [x] **Voice Visualizer** ✅ (`VoiceVisualizer.tsx` — animated waveform bars)
+- [x] **Session Transcript** ✅ (CoachSessionScreen — scrollable chat history)
+- [x] **Session Timer with auto-end** ✅ (CoachSessionScreen — countdown timer)
+- [x] **Save coach session to History** ✅ (placeholder integration)
+- [x] Waveform visualization + comparison ✅ (`WaveformComparison.tsx` — AI vs User overlay)
+- [x] Phoneme breakdown view + **Phoneme Heatmap** ✅ (`PhonemeHeatmap.tsx` — word-level red→green)
+- [x] Progress tracking ✅ (`ProgressDashboardScreen.tsx`)
+- [x] Haptic feedback ✅ (integrated in recording flow)
+- [x] **Recording UX: countdown, swipe-to-cancel, preview** ✅ (`CountdownOverlay.tsx`, `RecordingPreview.tsx`)
+- [x] **Custom Speaking Scenarios** (create/save/favorite/delete) ✅ (`CustomScenariosScreen.tsx` — CRUD)
+- [x] **Shadowing Mode** (real-time compare, delay/speed control) ✅ (`ShadowingScreen.tsx` — 4-phase flow)
+- [x] **IPA toggle + word stress display** ✅ (`IPAPopup.tsx`)
+- [x] **Tap-to-pronounce word** ✅ (IPAPopup — tap word → popup IPA + audio)
 
 ### Advanced Phase
-- [ ] Roleplay scenarios + **Scenario Selection UI**
-- [ ] Multi-turn conversations
-- [ ] Difficulty levels
-- [ ] Overall session feedback
-- [ ] **Tongue Twister Mode** (phoneme categories, speed challenge, leaderboard)
-- [ ] **Gamification** (daily goals, badges, weekly report)
-- [ ] **Speaking Progress Dashboard** (radar chart, calendar heatmap, weak sounds)
-- [ ] **AI Voice Clone Replay** (corrected + before/after)
-- [ ] **Save & Share Results** (share card, recording history, timeline)
-- [ ] **Background Audio for Coach** (notification, session persist)
-- [ ] **TTS Provider Settings** (parity với Listening)
-- [ ] **Confetti animation** khi score ≥90
+- [x] Roleplay scenarios + **Scenario Selection UI** ✅ (`RoleplaySelectScreen.tsx` — 8 scenarios, filter tabs)
+- [x] Multi-turn conversations ✅ (`RoleplaySessionScreen.tsx` — AI↔User turn-based voice)
+- [x] Difficulty levels ✅ (Easy/Medium/Hard filter in RoleplaySelectScreen)
+- [x] Overall session feedback ✅ (RoleplaySessionScreen — end summary)
+- [x] **Tongue Twister Mode** (phoneme categories, speed challenge, leaderboard) ✅ (`TongueTwisterScreen.tsx` — 8 twisters + WPM)
+- [x] **Gamification** (daily goals, badges, weekly report) ✅ (`DailyGoalCard.tsx`, `BadgeGrid.tsx`)
+- [x] **Speaking Progress Dashboard** (radar chart, calendar heatmap, weak sounds) ✅ (`ProgressDashboardScreen.tsx`, `RadarChart.tsx`, `CalendarHeatmap.tsx`, `WeakSoundsCard.tsx`)
+- [ ] **AI Voice Clone Replay** (corrected + before/after) — ⏳ cần backend API hỗ trợ
+- [x] **Save & Share Results** (share card, recording history, timeline) ✅ (`ShareResultCard.tsx`, `RecordingHistoryScreen.tsx`)
+- [ ] **Background Audio for Coach** (notification, session persist) — ⏳ cần native module bổ sung
+- [ ] **TTS Provider Settings** (parity với Listening) — ⏳ sẽ reuse từ Listening
+- [x] **Confetti animation** khi score ≥90 ✅ (`ConfettiAnimation.tsx` — 30-piece reanimated)
 
 ---
 

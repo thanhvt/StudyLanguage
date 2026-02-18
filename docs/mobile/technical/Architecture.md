@@ -54,10 +54,9 @@ apps/mobile/
 ├── src/                        # Source code
 │   ├── screens/                # Screen components
 │   │   ├── tabs/               # Tab screens
-│   │   │   ├── HomeScreen.tsx
+│   │   │   ├── DashboardScreen.tsx
 │   │   │   ├── HistoryScreen.tsx
-│   │   │   ├── VocabularyScreen.tsx
-│   │   │   └── ProfileScreen.tsx
+│   │   │   └── SettingsScreen.tsx
 │   │   ├── auth/               # Auth flow
 │   │   │   ├── LoginScreen.tsx
 │   │   │   └── OnboardingScreen.tsx
@@ -143,39 +142,40 @@ Root Navigator (Stack)
 │   └── Login
 │
 └── Main Tab Navigator
-    ├── Home Tab
-    │   └── Home Stack
-    │       ├── Home Screen
-    │       ├── Listening Stack
-    │       │   ├── Config
-    │       │   └── Player
-    │       ├── Speaking Stack
-    │       │   ├── Setup
-    │       │   └── Practice
-    │       └── Reading Stack
-    │           ├── Config
-    │           └── Article
+    ├── Dashboard Tab
+    │   └── Dashboard Stack
+    │       ├── Dashboard Screen
+    │       └── Detail screens
+    │
+    ├── Listening Tab
+    │   └── Listening Stack
+    │       ├── Config
+    │       └── Player
+    │
+    ├── Reading Tab
+    │   └── Reading Stack
+    │       ├── Config
+    │       └── Article
+    │
+    ├── Speaking Tab
+    │   └── Speaking Stack
+    │       ├── Setup / Topic Selection
+    │       └── Practice
     │
     ├── History Tab
     │   └── History Stack
     │       ├── Timeline
     │       └── Detail
     │
-    ├── Vocabulary Tab
-    │   └── Vocabulary Stack
-    │       ├── Word List
-    │       ├── Flashcard Review
-    │       └── Word Detail
-    │
-    └── Profile Tab
-        └── Profile Stack
-            ├── Profile
-            └── Settings
-                ├── Appearance
-                ├── Notifications
-                ├── Audio
-                ├── Storage
-                └── Privacy
+    └── Settings Tab
+        └── Settings Stack
+            ├── Settings
+            ├── Appearance
+            ├── Notifications
+            ├── Audio
+            ├── Storage
+            ├── Privacy
+            └── About
 ```
 
 ### 4.2 React Navigation Configuration
@@ -215,24 +215,34 @@ export default function MainTabs() {
   return (
     <Tab.Navigator>
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: 'Home', tabBarIcon: HomeIcon }}
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ title: 'Dashboard', tabBarIcon: HomeIcon }}
+      />
+      <Tab.Screen
+        name="Listening"
+        component={ListeningScreen}
+        options={{ title: 'Listening', tabBarIcon: HeadphonesIcon }}
+      />
+      <Tab.Screen
+        name="Reading"
+        component={ReadingScreen}
+        options={{ title: 'Reading', tabBarIcon: BookOpenIcon }}
+      />
+      <Tab.Screen
+        name="Speaking"
+        component={SpeakingScreen}
+        options={{ title: 'Speaking', tabBarIcon: MicIcon }}
       />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
-        options={{ title: 'History', tabBarIcon: HistoryIcon }}
+        options={{ title: 'History', tabBarIcon: ClockIcon }}
       />
       <Tab.Screen
-        name="Vocabulary"
-        component={VocabularyScreen}
-        options={{ title: 'Vocabulary', tabBarIcon: BookIcon }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ title: 'Profile', tabBarIcon: UserIcon }}
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings', tabBarIcon: SettingsIcon }}
       />
     </Tab.Navigator>
   );

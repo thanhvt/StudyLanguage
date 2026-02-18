@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useCallback, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   ActivityIndicator,
   ScrollView,
@@ -134,6 +135,33 @@ export default function ListeningPlayerScreen({
     setPlayerMode('full');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Mục đích: Xử lý khi user rời PlayerScreen (chuyển tab, navigate away)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: React Navigation gọi khi screen mất focus (tab switch, goBack)
+   *   - Nếu audio đang phát → setPlayerMode('compact') để hiện CompactPlayer
+   *   - Khi screen gain focus lại → setPlayerMode('full')
+   */
+  useFocusEffect(
+    useCallback(() => {
+      // Khi screen được focus lại → đặt mode full
+      setPlayerMode('full');
+      console.log('🎧 [Player] Screen focused — playerMode = full');
+
+      return () => {
+        // Khi screen mất focus (blur) → kiểm tra audio đang phát
+        const currentState = useAudioPlayerStore.getState();
+        const trackState = TrackPlayer.getPlaybackState();
+        // Dùng giá trị isPlaying từ global store (đã sync ở useEffect phía trên)
+        if (currentState.isPlaying && currentState.playerMode === 'full') {
+          setPlayerMode('compact');
+          console.log('🔽 [Player] Screen blurred khi đang phát → chuyển compact mode');
+        }
+      };
+    }, [setPlayerMode]),
+  );
 
   // Đồng bộ trạng thái playing sang global store
   useEffect(() => {
@@ -525,16 +553,28 @@ export default function ListeningPlayerScreen({
   ]);
 
   /**
-   * Mục đích: Xử lý swipe down minimize — placeholder
+   * Mục đích: Xử lý swipe down → chuyển sang compact mode (mini player)
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User swipe down trên player (MOB-LIS-ENH-HP-006)
-   *   - TODO: Chuyển sang Mini Player mode khi implement xong
+   *   - Audio vẫn tiếp tục phát
+   *   - PlayerScreen đóng lại, CompactPlayer hiện overlay
+   *   - Tap CompactPlayer → quay lại PlayerScreen full mode
    */
   const handleSwipeDownMinimize = useCallback(() => {
-    // TODO: Implement mini player mode — chuyển sang compact/minimized view
-    console.log('🔽 [Player] Swipe down — placeholder minimize (chưa implement)');
-  }, []);
+    haptic.light();
+    if (audioUrl && isTrackPlaying) {
+      // Đang phát → chuyển compact để audio tiếp tục + CompactPlayer hiện
+      setPlayerMode('compact');
+      navigation.goBack();
+      console.log('🔽 [Player] Swipe down → compact mode (audio tiếp tục phát)');
+    } else {
+      // Không phát → ẩn player hoàn toàn
+      setPlayerMode('hidden');
+      navigation.goBack();
+      console.log('🔽 [Player] Swipe down → hidden (không có audio)');
+    }
+  }, [haptic, audioUrl, isTrackPlaying, setPlayerMode, navigation]);
 
   // ========================
   // Gesture Handler — swipe left/right/down + double tap

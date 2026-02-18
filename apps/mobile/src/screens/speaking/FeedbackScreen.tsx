@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {View, ScrollView, Animated} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -7,6 +7,11 @@ import AppButton from '@/components/ui/AppButton';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {SKILL_COLORS} from '@/config/skillColors';
 import Icon from '@/components/ui/Icon';
+import {
+  PhonemeHeatmap,
+  ScoreBreakdown,
+  ConfettiAnimation,
+} from '@/components/speaking';
 
 // =======================
 // Constants
@@ -61,6 +66,7 @@ export default function FeedbackScreen() {
   // Animated score counter
   const animValue = useRef(new Animated.Value(0)).current;
   const [displayScore, setDisplayScore] = React.useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (!feedback) return;
@@ -75,6 +81,12 @@ export default function FeedbackScreen() {
     const listener = animValue.addListener(({value}) => {
       setDisplayScore(Math.round(value));
     });
+
+    // Confetti khi điểm >= 80
+    if (feedback.overallScore >= 80) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+    }
 
     return () => animValue.removeListener(listener);
   }, [feedback, animValue]);
@@ -124,6 +136,9 @@ export default function FeedbackScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* Confetti Animation */}
+      <ConfettiAnimation visible={showConfetti} />
+
       {/* Header */}
       <View className="flex-row items-center px-4 pt-2 pb-3">
         <AppButton
@@ -176,76 +191,18 @@ export default function FeedbackScreen() {
           </AppText>
         </View>
 
-        {/* Sub-scores */}
-        <View className="flex-row mx-4 gap-3 mb-6">
-          {[
+        {/* Score Breakdown (thay thế sub-scores cũ) */}
+        <ScoreBreakdown
+          scores={[
             {label: 'Phát âm', value: feedback.pronunciation, icon: '🎯'},
             {label: 'Trôi chảy', value: feedback.fluency, icon: '💬'},
             {label: 'Tốc độ', value: feedback.pace, icon: '⚡'},
-          ].map(item => (
-            <View
-              key={item.label}
-              className="flex-1 items-center py-3 rounded-2xl"
-              style={{backgroundColor: `${speakingColor}10`}}
-            >
-              <AppText variant="bodySmall" raw>
-                {item.icon}
-              </AppText>
-              <AppText
-                variant="heading3"
-                weight="bold"
-                className="text-foreground"
-                raw
-              >
-                {item.value}
-              </AppText>
-              <AppText variant="bodySmall" className="text-neutrals400" raw>
-                {item.label}
-              </AppText>
-            </View>
-          ))}
-        </View>
+          ]}
+        />
 
-        {/* Word-by-word */}
+        {/* Phoneme Heatmap (thay thế word-by-word cũ) */}
         {feedback.wordByWord.length > 0 && (
-          <View className="mx-4 mb-6">
-            <AppText variant="body" weight="semibold" className="mb-3 text-foreground" raw>
-              📊 Chi tiết từng từ
-            </AppText>
-            <View className="flex-row flex-wrap gap-2">
-              {feedback.wordByWord.map((w, i) => {
-                const color = getWordColor(w.score);
-                return (
-                  <View
-                    key={`${w.word}-${i}`}
-                    className="px-3 py-2 rounded-xl"
-                    style={{backgroundColor: `${color}15`}}
-                  >
-                    <AppText variant="body" weight="medium" style={{color}} raw>
-                      {w.word}
-                    </AppText>
-                    <AppText
-                      variant="bodySmall"
-                      style={{color, opacity: 0.8}}
-                      raw
-                    >
-                      {w.score}
-                    </AppText>
-                    {w.issue && (
-                      <AppText
-                        variant="bodySmall"
-                        className="text-neutrals400 mt-1"
-                        style={{fontSize: 10}}
-                        raw
-                      >
-                        {w.issue}
-                      </AppText>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
+          <PhonemeHeatmap words={feedback.wordByWord} />
         )}
 
         {/* Tips */}

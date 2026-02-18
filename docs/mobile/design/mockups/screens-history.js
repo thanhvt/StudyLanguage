@@ -46,7 +46,7 @@ function renderHistory() {
         <span class="score-badge medium">4/5</span>
       </div>
     </div>
-    ${tabBar('more')}
+    ${tabBar('history')}
   `);
 
   // F4: Session Detail - Listening
@@ -94,7 +94,7 @@ function renderHistory() {
         <button class="cta-btn secondary" style="margin:0;padding:12px;font-size:13px">🗣️ Bắt đầu nói</button>
       </div>
     </div>
-    ${tabBar('more')}
+    ${tabBar('history')}
   `);
 
   // F11: Skeleton Loading
@@ -113,7 +113,7 @@ function renderHistory() {
       <div class="skeleton" style="height:72px;margin-bottom:8px;border-radius:var(--r-lg)"></div>
       <div class="skeleton" style="height:72px;margin-bottom:8px;border-radius:var(--r-lg)"></div>
     </div>
-    ${tabBar('more')}
+    ${tabBar('history')}
   `);
 
   // F14: Search

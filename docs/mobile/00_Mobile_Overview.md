@@ -126,22 +126,36 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 ## 6. Navigation Structure
 
 ```
-Tab Navigator (Bottom)
-├── 🏠 Home (Dashboard)
+Tab Navigator (Bottom) — 6 tabs
+├── 🏠 Dashboard
 │   ├── Greeting + Streak
 │   ├── Study Goal + Next Lesson
-│   ├── Quick Actions (Listening, Speaking, Reading)
-│   └── Recent Activity (MVP)
+│   ├── Quick Actions
+│   └── Recent Activity
+│
+├── 🎧 Listening
+│   ├── Config Screen (topic, duration, level)
+│   └── Player Screen
+│
+├── 📖 Reading
+│   ├── Config Screen (topic, level)
+│   └── Article Screen
+│
+├── 🗣️ Speaking
+│   ├── Topic Selection
+│   └── Practice Screen
 │
 ├── 📜 History
 │   ├── Filter Tabs (All, Listening, Speaking, Reading)
 │   ├── Timeline List
 │   └── 📚 Saved Words (từ vựng đã lưu từ các module)
 │
-└── 👤 Profile
-    ├── User Info
-    ├── Statistics
-    └── Settings Links
+└── ⚙️ Settings
+    ├── Appearance (Theme, Language)
+    ├── Audio Settings
+    ├── Notifications
+    ├── Storage & Privacy
+    └── About
 ```
 
 ---

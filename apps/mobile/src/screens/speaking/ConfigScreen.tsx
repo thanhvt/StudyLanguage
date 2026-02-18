@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {
   View,
   ScrollView,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -206,6 +207,166 @@ export default function SpeakingConfigScreen() {
                   : 'Idioms, phrasal verbs, từ vựng chuyên sâu (C1-C2)'}
             </AppText>
           </View>
+
+          {/* AI Coach Card */}
+          <View
+            className="p-4 rounded-2xl mb-6"
+            style={{
+              backgroundColor: `${speakingColor}12`,
+              borderWidth: 1,
+              borderColor: `${speakingColor}30`,
+            }}>
+            <View className="flex-row items-center mb-2">
+              <AppText variant="body" weight="bold" raw>
+                🤖 AI Conversation Coach
+              </AppText>
+            </View>
+            <AppText
+              variant="bodySmall"
+              className="text-neutrals400 mb-3"
+              raw>
+              Trò chuyện tự do với AI Coach. AI sẽ sửa lỗi phát âm và ngữ pháp realtime.
+            </AppText>
+            <AppButton
+              variant="outline"
+              size="sm"
+              onPress={() => navigation.navigate('CoachSetup')}
+              style={{borderColor: speakingColor}}>
+              Bắt đầu Coach Mode →
+            </AppButton>
+          </View>
+
+          {/* Custom Scenarios Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('CustomScenarios')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              📋 Kịch bản tùy chỉnh
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
+          {/* Shadowing Mode Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Shadowing')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              🎧 Chế độ Shadowing
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
+          {/* Roleplay Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('RoleplaySelect')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 12,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              🎭 Chế độ Roleplay
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
+          {/* Tongue Twister Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('TongueTwister')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              👅 Tongue Twister Challenge
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
+          {/* Progress Dashboard Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('ProgressDashboard')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              📈 Tiến độ & Thành tích
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
+          {/* Recording History Card */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('RecordingHistory')}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 24,
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" raw style={{flex: 1}}>
+              📂 Lịch sử ghi âm
+            </AppText>
+            <Icon
+              name="ChevronRight"
+              className="w-4 h-4"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
 
           {/* Tip card */}
           <View

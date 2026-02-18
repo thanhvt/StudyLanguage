@@ -244,27 +244,6 @@ Chế độ luyện đọc với AI phản hồi:
 - Audio: Tap to hear pronunciation
 - Save: Add to vocabulary list
 
-### 3.9 Font Size & Display Settings
-
-```
-┌─────────────────────────────────┐
-│         Hiển thị                │
-├─────────────────────────────────┤
-│                                 │
-│  Cỡ chữ                         │
-│  Aa────────●──────────Aa       │
-│  Small            Large         │
-│                                 │
-│  Theme                          │
-│  [☀️ Light] [🌙 Dark] [📱 Auto] │
-│                                 │
-│  Line spacing                   │
-│  [Compact] [Normal] [Relaxed]   │
-│                                 │
-│       [Áp dụng]                 │
-└─────────────────────────────────┘
-```
-
 ---
 
 ## 4. Features Detail
@@ -288,14 +267,6 @@ Chế độ luyện đọc với AI phản hồi:
 | Audio | Pronunciation audio |
 | Save | Add to vocabulary |
 
-### 4.3 Font & Display
-
-| Setting | Options |
-|---------|---------|
-| Font size | 14sp, 16sp, 18sp, 20sp, 22sp |
-| Theme | Light, Dark, Auto |
-| Line spacing | 1.2, 1.5, 1.8 |
-
 ---
 
 ## 5. Technical Implementation
@@ -303,60 +274,67 @@ Chế độ luyện đọc với AI phản hồi:
 ### 5.1 Libraries
 
 ```typescript
-react-native-tts          // Text-to-Speech
-@react-native-async-storage // Font preferences
+react-native-tts                // TTS auto-read
+@react-native-voice/voice       // STT cho Reading Practice
+react-native-gesture-handler    // Pinch-to-zoom
+zustand                         // State management (useReadingStore)
+@tanstack/react-query           // API caching (optional)
 ```
 
-### 5.2 State Structure
+### 5.2 File Structure
+
+| File | Purpose |
+|------|---------|
+| `screens/reading/ConfigScreen.tsx` | Config UI (topic, level, length) |
+| `screens/reading/ArticleScreen.tsx` | Article view + TTS + Highlight + Focus Mode + Save |
+| `screens/reading/PracticeScreen.tsx` | Reading practice (STT + AI analysis) |
+| `hooks/useTtsReader.ts` | TTS auto-read (play/pause/stop/skip) |
+| `hooks/usePinchZoom.ts` | Pinch gesture → fontSize (12-28sp) |
+| `hooks/useReadingPractice.ts` | Practice state machine (idle→record→analyze→result) |
+| `store/useReadingStore.ts` | Zustand store (config, article, fontSize, savedWords, focusMode) |
+| `services/api/reading.ts` | API service (7 endpoints) |
+| `navigation/stacks/ReadingStack.tsx` | Navigator (Config → Article → Practice) |
+
+### 5.3 State Structure (Actual)
 
 ```typescript
 interface ReadingState {
-  // Config
-  config: {
-    topic: string;
-    level: 'beginner' | 'intermediate' | 'advanced';
-    length: 'short' | 'medium' | 'long';
-    autoRead: boolean;
-  };
-  
-  // Article
-  article: {
-    title: string;
-    content: string;
-    wordCount: number;
-    readingTime: number;
-    level: string;
-  };
-  
-  // Reader
-  reader: {
-    fontSize: number;
-    theme: 'light' | 'dark' | 'auto';
-    lineSpacing: number;
-    isListening: boolean;
-    currentPosition: number;
-  };
-
-  // Dictionary
-  dictionary: {
-    selectedWord: string | null;
-    definition: WordDefinition | null;
-  };
+  config: ReadingConfig;          // { topic, level, length }
+  article: ArticleResult | null;  // { title, content, wordCount, readingTime, level }
+  isGenerating: boolean;
+  error: string | null;
+  fontSize: number;               // 12-28sp, default 16
+  savedWords: string[];           // In-memory, lowercase
+  isFocusMode: boolean;           // Ẩn header/footer
+  isArticleSaved: boolean;        // Đã lưu vào History chưa
 }
 ```
 
-### 5.3 Word Detection
+### 5.4 API Endpoints
+
+| Method | Endpoint | Function |
+|--------|----------|----------|
+| POST | `/reading/generate-article` | `generateArticle()` |
+| POST | `/reading/saved-words` | `saveWord()` |
+| GET | `/reading/saved-words` | `getSavedWords()` |
+| DELETE | `/reading/saved-words/:id` | `deleteWord()` |
+| POST | `/reading/analyze-practice` | `analyzePractice()` |
+| POST | `/history` | `saveReadingSession()` |
+
+### 5.5 Word Detection
 
 ```typescript
-// Pseudo-code for tap-to-translate
-function handleWordTap(event: TextTouchEvent) {
-  const position = event.nativeEvent.position;
-  const word = extractWordAtPosition(content, position);
-  
-  // Show dictionary popup
-  setSelectedWord(word);
-  fetchDefinition(word);
-}
+// Tap-to-translate: mỗi từ là 1 TouchableOpacity
+paragraph.split(/(\s+)/).map(token => (
+  <TouchableOpacity onPress={() => handleWordTap(token)}>
+    <AppText style={{
+      color: isWordHighlighted(token) ? readingColor : foreground,
+      backgroundColor: isWordHighlighted(token) ? readingColor + '20' : 'transparent',
+    }}>
+      {token}
+    </AppText>
+  </TouchableOpacity>
+));
 ```
 
 ---
@@ -364,22 +342,21 @@ function handleWordTap(event: TextTouchEvent) {
 ## 6. Implementation Tasks
 
 ### MVP Phase
-- [ ] Config screen (topic, level, length)
-- [ ] Generate article via API
-- [ ] Article display with scrolling
-- [ ] Tap-to-translate popup
+- [x] Config screen (topic, level, length)
+- [x] Generate article via API
+- [x] Article display with scrolling
+- [x] Tap-to-translate popup
 
 ### Enhanced Phase
-- [ ] Font size controls + **Display settings** (line spacing, theme toggle) (NEW ✨)
-- [ ] Save words to vocabulary
-- [ ] Highlight new vocabulary
-- [ ] **Dictionary popup: save word + audio playback** (NEW ✨)
-- [ ] **Pinch-to-zoom text** (NEW ✨)
-- [ ] **TTS auto-read article** (NEW ✨)
-- [ ] **Direct save reading articles** (NEW ✨)
-- [ ] **Space shortcut for recording** (NEW ✨)
-- [ ] **Reading practice with AI analysis** (NEW ✨)
-- [ ] **Focus Mode toggle** (NEW ✨)
+- [x] Font size controls *(A+/A- done)*
+- [x] Save words to vocabulary *(in-memory store + DictionaryPopup)*
+- [x] Highlight new vocabulary *(amber badge khi từ đã lưu)*
+- [x] **Dictionary popup: save word + audio playback** *(reuse từ Listening, audio via Linking.openURL)*
+- [x] **Pinch-to-zoom text** *(usePinchZoom hook + GestureDetector)*
+- [x] **TTS auto-read article** *(useTtsReader hook, paragraph highlight + auto-scroll)*
+- [x] **Direct save reading articles** *(saveReadingSession → History API)*
+- [x] **Reading practice with AI analysis** *(PracticeScreen + useReadingPractice + STT + analyzePractice API)*
+- [x] **Focus Mode toggle** *(animated chrome hiding, status bar, hint label)*
 
 ---
 

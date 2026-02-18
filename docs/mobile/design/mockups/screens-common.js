@@ -101,23 +101,25 @@ function renderCommon() {
     <div class="app-bar"><span class="back">←</span><span class="title">Tab Bar States</span><span class="action"></span></div>
     <div class="scroll-content" style="padding:16px">
       <div class="section-card">
-        <div class="section-title">Default (Home active)</div>
+        <div class="section-title">Default (Dashboard active)</div>
         <div style="display:flex;justify-content:space-around;align-items:center;padding:12px 0;background:var(--tab-bg);border-radius:var(--r-md);border:1px solid var(--border)">
-          <div style="text-align:center"><div style="font-size:20px">🏠</div><div style="font-size:10px;color:var(--tab-active);font-weight:600">Home</div><div style="width:4px;height:4px;border-radius:50%;background:var(--tab-active);margin:2px auto 0"></div></div>
+          <div style="text-align:center"><div style="font-size:20px">🏠</div><div style="font-size:10px;color:var(--tab-active);font-weight:600">Dashboard</div><div style="width:4px;height:4px;border-radius:50%;background:var(--tab-active);margin:2px auto 0"></div></div>
           <div style="text-align:center"><div style="font-size:20px">🎧</div><div style="font-size:10px;color:var(--tab-inactive)">Listen</div></div>
-          <div style="text-align:center"><div style="font-size:20px">🗣️</div><div style="font-size:10px;color:var(--tab-inactive)">Speak</div></div>
           <div style="text-align:center"><div style="font-size:20px">📖</div><div style="font-size:10px;color:var(--tab-inactive)">Read</div></div>
-          <div style="text-align:center;position:relative"><div style="font-size:20px">☰</div><div style="font-size:10px;color:var(--tab-inactive)">More</div><div style="position:absolute;top:-2px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--error)"></div></div>
+          <div style="text-align:center"><div style="font-size:20px">🗣️</div><div style="font-size:10px;color:var(--tab-inactive)">Speak</div></div>
+          <div style="text-align:center"><div style="font-size:20px">📜</div><div style="font-size:10px;color:var(--tab-inactive)">History</div></div>
+          <div style="text-align:center;position:relative"><div style="font-size:20px">⚙️</div><div style="font-size:10px;color:var(--tab-inactive)">Settings</div><div style="position:absolute;top:-2px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--error)"></div></div>
         </div>
       </div>
       <div class="section-card">
         <div class="section-title">Listen active</div>
         <div style="display:flex;justify-content:space-around;align-items:center;padding:12px 0;background:var(--tab-bg);border-radius:var(--r-md);border:1px solid var(--border)">
-          <div style="text-align:center"><div style="font-size:20px">🏠</div><div style="font-size:10px;color:var(--tab-inactive)">Home</div></div>
+          <div style="text-align:center"><div style="font-size:20px">🏠</div><div style="font-size:10px;color:var(--tab-inactive)">Dashboard</div></div>
           <div style="text-align:center"><div style="font-size:20px">🎧</div><div style="font-size:10px;color:var(--tab-active);font-weight:600">Listen</div><div style="width:4px;height:4px;border-radius:50%;background:var(--tab-active);margin:2px auto 0"></div></div>
-          <div style="text-align:center"><div style="font-size:20px">🗣️</div><div style="font-size:10px;color:var(--tab-inactive)">Speak</div></div>
           <div style="text-align:center"><div style="font-size:20px">📖</div><div style="font-size:10px;color:var(--tab-inactive)">Read</div></div>
-          <div style="text-align:center"><div style="font-size:20px">☰</div><div style="font-size:10px;color:var(--tab-inactive)">More</div></div>
+          <div style="text-align:center"><div style="font-size:20px">🗣️</div><div style="font-size:10px;color:var(--tab-inactive)">Speak</div></div>
+          <div style="text-align:center"><div style="font-size:20px">📜</div><div style="font-size:10px;color:var(--tab-inactive)">History</div></div>
+          <div style="text-align:center"><div style="font-size:20px">⚙️</div><div style="font-size:10px;color:var(--tab-inactive)">Settings</div></div>
         </div>
       </div>
     </div>

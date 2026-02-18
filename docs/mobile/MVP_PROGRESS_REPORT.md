@@ -47,7 +47,7 @@
 #### 🧭 Navigation (100%)
 | Feature | Status | Files |
 |---------|--------|-------|
-| Tab Navigator (Home, History, Profile) | ✅ | `navigation/` |
+| Tab Navigator (Dashboard, Listening, Reading, Speaking, History, Settings) | ✅ | `navigation/` |
 | Stack Navigators (Auth, Listening) | ✅ | `navigation/` |
 | Custom Tab Bar | ✅ | `navigation/` |
 
@@ -138,7 +138,7 @@
 ### Test Execution Order
 1. Auth flow (Splash → Onboarding → Login → Auto-login)
 2. Listening E2E (Config → Generate → Player)
-3. Navigation (Tab switching, Stack push/pop)
+3. Navigation (6-tab switching, Stack push/pop)
 4. Dashboard & Profile (Display, Settings)
 
 ### Test Detail Files

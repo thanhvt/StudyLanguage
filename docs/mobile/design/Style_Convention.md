@@ -103,7 +103,7 @@ Every screen follows this vertical structure:
 ├─────────────────────────────────┤
 │  [Primary CTA Button]          │  ← Fixed bottom (if needed)
 └─────────────────────────────────┘
-│  🏠  │  📜  │  👤  │            │  ← Tab Bar (only on tab screens)
+│ 🏠 │ 🎧 │ 📖 │ 🗣️ │ 📜 │ ⚙️ │  ← Tab Bar (6 tabs)
 └─────────────────────────────────┘
 ```
 
@@ -328,7 +328,7 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 | Pop (back) | Slide to right | Player → Config |
 | Modal present | Slide from bottom | Bottom Sheet, Popups |
 | Modal dismiss | Slide to bottom | Close bottom sheet |
-| Tab switch | Crossfade / None | Home ↔ History ↔ Profile |
+| Tab switch | Crossfade / None | Dashboard ↔ Listening ↔ Reading ↔ Speaking ↔ History ↔ Settings |
 
 ### 4.2 Header Patterns
 
@@ -346,13 +346,13 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 ### 4.3 Tab Bar
 
 ```
-┌─────────────────────────────────┐
-│  🏠 Home  │  📜 History  │  👤 Profile  │
-└─────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  🏠 Dashboard │ 🎧 Listening │ 📖 Reading │ 🗣️ Speaking │ 📜 History │ ⚙️ Settings │
+└──────────────────────────────────────────────────────────┘
 ```
 
 **Rules:**
-- 3 tabs only (Home, History, Profile)
+- 6 tabs: Dashboard, Listening, Reading, Speaking, History, Settings
 - Active tab: Primary color icon + label
 - Inactive tab: `text-secondary` color
 - Badge: Red dot for notifications (if applicable)

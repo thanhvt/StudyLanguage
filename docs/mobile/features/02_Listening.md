@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Module nghe hiểu với AI-generated conversations, tối ưu cho học trên di chuyển với offline support và background playback.
+Module nghe hiểu với AI-generated conversations, tối ưu cho học trên di chuyển với background playback.
 
 ### 1.1 Modes
 
@@ -499,15 +499,6 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 | Notification | Persistent player notification |
 | Auto-pause | Pause on call/another audio |
 
-### 4.4 Offline Support
-
-| Feature | Description |
-|---------|-------------|
-| Download | Save lesson locally |
-| Storage | SQLite + File System |
-| Max lessons | 50 lessons (configurable) |
-| Auto-download | On WiFi, download new lessons |
-| Sync | Upload progress when online |
 
 ---
 
@@ -665,20 +656,7 @@ interface TtsSettings {
 
 ---
 
-## 7. Voice Commands
-
-| Command | Action |
-|---------|--------|
-| "Next" / "Tiếp theo" | Next sentence |
-| "Repeat" / "Lặp lại" | Repeat current |
-| "Slower" | Decrease speed |
-| "Faster" | Increase speed |
-| "Save" / "Lưu" | Bookmark |
-| "Pause" / "Play" | Toggle playback |
-
----
-
-## 8. Implementation Tasks
+## 7. Implementation Tasks
 
 ### MVP Phase
 - [x] Config screen with topic, duration, mode
@@ -690,7 +668,7 @@ interface TtsSettings {
 ### Enhanced Phase
 
 - [x] Bookmark sentences
-- [ ] Offline download
+
 - [x] Background audio
 - [x] Lock screen controls
 - [x] **Custom Scenarios UI** (NEW ✨)
@@ -702,30 +680,29 @@ interface TtsSettings {
 - [x] **TTS Provider Settings UI** (NEW ✨)
 - [x] **Azure TTS Integration** (NEW ✨)
 - [x] **Multi-talker logic** (NEW ✨)
-
-### Advanced Phase
+- [x] **Waveform Visualizer** — Animated bars khi đang phát, tích hợp trong progress bar
+- [x] **Translation toggle** — Bật/tắt bản dịch tiếng Việt (🇻🇳 button)
+- [x] **Tappable Transcript** — Tap từng từ trong transcript → DictionaryPopup tra nghĩa
+- [x] **Player Gestures** — Swipe L/R (skip), swipe down (minimize), double-tap (play/pause) + haptic feedback
+- [x] **Cross-tab CompactPlayer** — `useFocusEffect` tự chuyển compact mode khi screen blur (FIX ✨)
+- [x] **Swipe-down minimize** — Swipe down trên PlayerScreen → compact mode + goBack (FIX ✨)
+- [x] **TTS Prosody Controls** — Emotion, Pitch, Rate, Volume cho Azure TTS (AdvancedOptionsSheet)
 
 - [x] Pocket mode with gestures
-- [ ] Voice commands
 - [x] Radio mode (playlists)
 - [x] **Custom Scenarios CRUD** (NEW ✨)
 - [x] **Global Audio Player - Minimized mode** (NEW ✨)
-- [ ] **Audio change confirmation dialog** (NEW ✨)
+- [x] **Audio change confirmation dialog** (NEW ✨) — ConfigScreen `handleGenerate()` kiểm tra audio đang phát
 - [x] **Saved Words viewer** — Tab "Từ vựng" trong History, persist qua AsyncStorage (DONE ✨)
 - [x] **Sentence Bookmarks viewer** — Hiển thị trong VocabularyTab, API getAll()(DONE ✨)
 - [x] **Session restoration fix** — Persist conversation data để "Tiếp tục nghe" hoạt động sau reload (FIXED ✨)
 - [x] **Walkthrough Tour** — 5-step interactive tour cho first-time users (DONE ✨)
 
-### Future Phase
-
-- [ ] 🧠 **Module Từ vựng riêng** — Tab bottom nav, flashcard, spaced repetition, search/filter
-- [ ] Voice commands
-
 ---
 
-## 9. Related Documents
+## 8. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
-- [10_Native_Features.md](10_Native_Features.md) - Gestures, Voice commands
+- [10_Native_Features.md](10_Native_Features.md) - Gestures
 - [09_Special_Modes.md](09_Special_Modes.md) - Pocket mode, Car mode
 - [Architecture.md](../technical/Architecture.md) - Audio handling

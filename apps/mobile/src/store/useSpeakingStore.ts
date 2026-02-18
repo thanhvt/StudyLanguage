@@ -4,6 +4,37 @@ import type {
   Sentence,
   FeedbackResult,
 } from '@/services/api/speaking';
+import type {ChatMessage} from '@/components/speaking/ChatBubble';
+
+// =======================
+// Coach Types
+// =======================
+
+/** Cấu hình Conversation Coach mode */
+export interface CoachSetup {
+  /** Chủ đề hội thoại */
+  topic: string;
+  /** Thời lượng session (phút) */
+  durationMinutes: number;
+  /** Mức độ sửa lỗi */
+  feedbackMode: 'beginner' | 'intermediate' | 'advanced';
+}
+
+/** Trạng thái 1 coach session */
+export interface CoachSession {
+  /** Cấu hình setup ban đầu */
+  setup: CoachSetup;
+  /** Danh sách tin nhắn */
+  messages: ChatMessage[];
+  /** Thời gian còn lại (seconds) */
+  remainingSeconds: number;
+  /** Chế độ input: voice hoặc text */
+  inputMode: 'voice' | 'text';
+  /** Đang chờ AI trả lời */
+  isAIResponding: boolean;
+  /** Session đã kết thúc */
+  isEnded: boolean;
+}
 
 // =======================
 // Speaking Store State
@@ -32,6 +63,10 @@ interface SpeakingState {
   isTranscribing: boolean;
   /** Lỗi (nếu có) */
   error: string | null;
+
+  // ===== Coach Mode State =====
+  /** Coach session hiện tại (null nếu chưa bắt đầu) */
+  coachSession: CoachSession | null;
 }
 
 interface SpeakingActions {
@@ -65,6 +100,22 @@ interface SpeakingActions {
   clearRecording: () => void;
   /** Reset toàn bộ store */
   reset: () => void;
+
+  // ===== Coach Mode Actions =====
+  /** Bắt đầu coach session mới */
+  startCoachSession: (setup: CoachSetup) => void;
+  /** Thêm 1 message vào hội thoại */
+  addCoachMessage: (message: ChatMessage) => void;
+  /** Chuyển chế độ input (voice/text) */
+  setCoachInputMode: (mode: 'voice' | 'text') => void;
+  /** Giảm timer 1 giây */
+  tickCoachTimer: () => void;
+  /** Set AI đang trả lời */
+  setCoachAIResponding: (value: boolean) => void;
+  /** Kết thúc coach session */
+  endCoachSession: () => void;
+  /** Reset coach session */
+  resetCoach: () => void;
 }
 
 const initialState: SpeakingState = {
@@ -82,14 +133,17 @@ const initialState: SpeakingState = {
   isGenerating: false,
   isTranscribing: false,
   error: null,
+  coachSession: null,
 };
 
 /**
- * Mục đích: Zustand store cho Speaking module
+ * Mục đích: Zustand store cho Speaking module (Practice + Coach Mode)
  * Khi nào sử dụng:
  *   - ConfigScreen: đọc/ghi config, gọi generate
  *   - PracticeScreen: quản lý recording, navigate sentences
  *   - FeedbackScreen: đọc feedback, retry/next
+ *   - CoachSetupScreen: tạo coach session
+ *   - CoachSessionScreen: gửi/nhận messages, quản lý timer
  *   - QuickActions: reset khi bắt đầu session mới
  */
 export const useSpeakingStore = create<SpeakingState & SpeakingActions>(
@@ -140,5 +194,80 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>(
       set({audioUri: null, recordingDuration: 0, isRecording: false, feedback: null}),
 
     reset: () => set(initialState),
+
+    // ===== Coach Mode Actions =====
+
+    startCoachSession: setup =>
+      set({
+        coachSession: {
+          setup,
+          messages: [],
+          remainingSeconds: setup.durationMinutes * 60,
+          inputMode: 'voice',
+          isAIResponding: false,
+          isEnded: false,
+        },
+        isRecording: false,
+        audioUri: null,
+        error: null,
+      }),
+
+    addCoachMessage: message =>
+      set(state => {
+        if (!state.coachSession) return {};
+        return {
+          coachSession: {
+            ...state.coachSession,
+            messages: [...state.coachSession.messages, message],
+          },
+        };
+      }),
+
+    setCoachInputMode: mode =>
+      set(state => {
+        if (!state.coachSession) return {};
+        return {
+          coachSession: {...state.coachSession, inputMode: mode},
+        };
+      }),
+
+    tickCoachTimer: () =>
+      set(state => {
+        if (!state.coachSession || state.coachSession.isEnded) return {};
+        const remaining = state.coachSession.remainingSeconds - 1;
+        if (remaining <= 0) {
+          return {
+            coachSession: {
+              ...state.coachSession,
+              remainingSeconds: 0,
+              isEnded: true,
+            },
+          };
+        }
+        return {
+          coachSession: {
+            ...state.coachSession,
+            remainingSeconds: remaining,
+          },
+        };
+      }),
+
+    setCoachAIResponding: value =>
+      set(state => {
+        if (!state.coachSession) return {};
+        return {
+          coachSession: {...state.coachSession, isAIResponding: value},
+        };
+      }),
+
+    endCoachSession: () =>
+      set(state => {
+        if (!state.coachSession) return {};
+        return {
+          coachSession: {...state.coachSession, isEnded: true},
+        };
+      }),
+
+    resetCoach: () => set({coachSession: null}),
   }),
 );

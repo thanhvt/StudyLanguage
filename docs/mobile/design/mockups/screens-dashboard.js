@@ -122,7 +122,7 @@ function renderDashboard() {
         </div>
       </div>
     </div>
-    ${tabBar('home')}
+    ${tabBar('dashboard')}
   `);
 
   return moduleSection('dashboard', '🏠', 'Dashboard', 1, authDashboard);

@@ -178,4 +178,58 @@ export const readingApi = {
     const response = await apiClient.delete(`/reading/saved-words/${wordId}`);
     return response.data;
   },
+
+  /**
+   * Mục đích: Phân tích kết quả luyện đọc bằng AI
+   * Tham số đầu vào: originalText (string) — text gốc, userTranscript (string) — text user đọc
+   * Tham số đầu ra: Promise<PracticeAnalysis> — accuracy, fluencyScore, errors, feedback
+   * Khi nào sử dụng: User đọc xong 1 câu/đoạn → gửi transcript để AI phân tích
+   */
+  analyzePractice: async (
+    originalText: string,
+    userTranscript: string,
+  ): Promise<{
+    accuracy: number;
+    fluencyScore: number;
+    errors: Array<{
+      original: string;
+      spoken: string;
+      type: string;
+      suggestion?: string;
+    }>;
+    feedback: string;
+  }> => {
+    console.log('📖 [Reading] Gửi phân tích practice...');
+    const response = await apiClient.post('/reading/analyze-practice', {
+      originalText,
+      userTranscript,
+    });
+    return response.data;
+  },
+
+  /**
+   * Mục đích: Lưu bài đọc vào lịch sử (History)
+   * Tham số đầu vào: article (ArticleResult) — bài đọc cần lưu, savedWordsCount (number)
+   * Tham số đầu ra: Promise<{success: boolean; id: string}>
+   * Khi nào sử dụng: User nhấn nút "Lưu bài" ở bottom bar trong ArticleScreen
+   */
+  saveReadingSession: async (
+    article: ArticleResult,
+    savedWordsCount: number = 0,
+  ): Promise<{success: boolean; id: string}> => {
+    console.log('📖 [Reading] Lưu bài đọc vào lịch sử:', article.title);
+    const response = await apiClient.post('/history', {
+      type: 'reading',
+      topic: article.title,
+      content: {
+        title: article.title,
+        wordCount: article.wordCount,
+        level: article.level,
+        readingTime: article.readingTime,
+        savedWordsCount,
+      },
+      durationMinutes: article.readingTime,
+    });
+    return response.data;
+  },
 };

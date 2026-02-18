@@ -86,13 +86,14 @@
     }
 
     // Tab bar
-    function tabBar(active = 'home') {
+    function tabBar(active = 'dashboard') {
       const tabs = [
-        { id: 'home', icon: '🏠', label: 'Trang chủ' },
+        { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
         { id: 'listen', icon: '🎧', label: 'Nghe' },
-        { id: 'speak', icon: '🗣️', label: 'Nói' },
         { id: 'read', icon: '📖', label: 'Đọc' },
-        { id: 'more', icon: '☰', label: 'Thêm' },
+        { id: 'speak', icon: '🗣️', label: 'Nói' },
+        { id: 'history', icon: '📜', label: 'Lịch sử' },
+        { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
       ];
       return `<div class="tab-bar">${tabs.map(t =>
         `<div class="tab-item ${t.id === active ? 'active' : ''}">

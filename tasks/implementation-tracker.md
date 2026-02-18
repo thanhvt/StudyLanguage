@@ -42,28 +42,26 @@ Target: Weeks 3-6 (Basic functional app)
 - [ ] Recent Activity List
 
 ### 🎧 Listening (Ref: `features/02_Listening.md`)
-- [ ] Topic selection UI
-- [ ] Duration selector (5, 10, 15, 20 min)
-- [ ] Mode toggle (Podcast / Interactive)
-- [ ] Audio Player (Basic controls: Play, Pause, Seek)
-- [ ] Transcript Auto-scroll
-- [ ] Speed Control Sheet
+- [x] Topic selection UI (TopicPicker + TopicPickerModal)
+- [x] Duration selector (DurationSelector component)
+- [x] Mode toggle (Podcast + Radio mode)
+- [x] Audio Player (TrackPlayer + background playback)
+- [x] Transcript Auto-scroll (highlight active exchange)
+- [x] Speed Control (0.5x - 2.0x, persist via AudioPlayerStore)
 
 ### 📖 Reading (Ref: `features/04_Reading.md`)
-- [ ] Article Generation API integration
-- [ ] Article View (Text render)
-- [ ] Tap-to-translate (Dictionary popup)
-- [ ] Text-to-Speech playback
-- [ ] Comprehension Quiz UI
-- [ ] Quiz Result Screen
+- [x] Article Generation API integration
+- [x] Article View (Text render)
+- [x] Tap-to-translate (Dictionary popup)
+- [x] Text-to-Speech playback *(useTtsReader hook, react-native-tts)*
 
 ### 🗣️ Speaking (Ref: `features/03_Speaking.md`)
-- [ ] Practice Mode UI
-- [ ] Hold-to-record Button
-- [ ] Audio Recording Logic
-- [ ] Submit to AI & Get Feedback
-- [ ] Pronunciation Score Display
-- [ ] Playback User Recording
+- [x] Practice Mode UI
+- [x] Hold-to-record Button
+- [x] Audio Recording Logic
+- [x] Submit to AI & Get Feedback
+- [x] Pronunciation Score Display
+- [x] Playback User Recording
 
 ### 📜 History & Profile (Ref: `features/07_History.md`, `08_Profile_Settings.md`)
 - [x] History Timeline List (SectionList grouped by date)
@@ -86,8 +84,7 @@ Target: Weeks 3-6 (Basic functional app)
 Target: Weeks 7-10 (Review, Polish, Advanced Logic)
 
 ### 🧠 App-wide Logic
-- [ ] Offline Support (SQLite + Download Manager)
-- [ ] Background Audio Playback
+- [x] Background Audio Playback (TrackPlayer + autoHandleInterruptions)
 - [ ] Push Notifications (Daily Reminder)
 - [ ] Deep Linking Configuration
 
@@ -97,23 +94,52 @@ Target: Weeks 7-10 (Review, Polish, Advanced Logic)
 - [ ] Streak Calendar (Heatmap partial)
 
 ### 🎧 Listening Enhanced
-- [ ] **TTS Provider Settings** (OpenAI/Azure choices)
-- [ ] **Voice & Emotion Selection**
-- [ ] **Multi-talker Mode** (Azure)
-- [ ] A-B Loop Feature
-- [ ] Lock Screen Controls
+- [x] **TTS Provider Settings** (OpenAI/Azure choices)
+- [x] **Voice & Emotion Selection** (AdvancedOptionsSheet)
+- [x] **Multi-talker Mode** (Azure DragonHD)
+- [x] Lock Screen Controls (TrackPlayer playbackService)
+- [x] **Background Audio** (autoHandleInterruptions)
+- [x] **Custom Scenarios** (CRUD + Favorites)
+- [x] **Global Audio Player** (Compact + Minimized modes)
+- [x] **Radio Mode** (Playlists + 1-min duration + progress)
+- [x] **Session Restoration** (Persist + Resume)
+- [x] **Pocket Mode** (Black screen + gestures)
+- [x] **Bookmark Sentences** (API + optimistic UI)
+- [x] **Walkthrough Tour** (5-step interactive tour)
 
 ### 🗣️ Speaking Enhanced
-- [ ] **AI Conversation Coach Mode** (Chat UI)
-- [ ] **Real-time Transcription (STT)**
-- [ ] **Pronunciation Alerts** (Inline feedback)
-- [ ] Voice Visualizer Animation
+- [x] **AI Conversation Coach Mode** (Chat UI) — `CoachSetupScreen` + `CoachSessionScreen`
+- [x] **Real-time Transcription (STT)** — `speakingApi.transcribeAudio`
+- [x] **Pronunciation Alerts** (Inline feedback) — `PronunciationAlert.tsx`
+- [x] Voice Visualizer Animation — `VoiceVisualizer.tsx`
+- [x] **Grammar Correction** — `GrammarFix.tsx`
+- [x] **Suggested Responses** — `SuggestedResponses.tsx`
+- [x] **Recording UX** (countdown, preview, cancel) — `CountdownOverlay`, `RecordingPreview`
+- [x] **Custom Speaking Scenarios** — `CustomScenariosScreen.tsx`
+- [x] **Shadowing Mode** (4-phase flow) — `ShadowingScreen.tsx`
+- [x] **Waveform Comparison** — `WaveformComparison.tsx`
+- [x] **Phoneme Heatmap** — `PhonemeHeatmap.tsx`
+- [x] **Score Breakdown** — `ScoreBreakdown.tsx`
+- [x] **Confetti Animation** — `ConfettiAnimation.tsx`
+- [x] **IPA Popup** — `IPAPopup.tsx`
+- [x] **Roleplay Mode** — `RoleplaySelectScreen` + `RoleplaySessionScreen`
+- [x] **Tongue Twister Mode** — `TongueTwisterScreen.tsx` (8 twisters + WPM)
+- [x] **Progress Dashboard** — `ProgressDashboardScreen` (RadarChart, CalendarHeatmap, BadgeGrid, DailyGoalCard, WeakSoundsCard)
+- [x] **Share Results** — `ShareResultCard.tsx` (native Share API)
+- [x] **Recording History** — `RecordingHistoryScreen.tsx` (filter by mode)
+- [x] **Onboarding Overlay** — `OnboardingOverlay.tsx` (5-step tutorial)
 
 ### 📖 Reading Enhanced
-- [ ] **Focus Mode** (Immersive view)
-- [ ] **Reading Practice** (Record & Feedback)
-- [ ] **Space Shortcut** (Hardware keyboard support)
-- [ ] Direct Save Article
+- [x] **Focus Mode** (Immersive view) → `ArticleScreen` animated chrome hiding + status bar + hint
+- [x] **Reading Practice** (Record & Feedback) → `PracticeScreen` + `useReadingPractice` hook + STT
+- [x] **Pinch-to-zoom** → `usePinchZoom` hook + `GestureDetector` (12-28sp)
+- [x] **TTS auto-read article** → `useTtsReader` hook + paragraph highlight + auto-scroll
+- [x] Direct Save Article → `saveReadingSession` API + bottom bar button
+- [x] Font size controls (A+/A- in ArticleScreen)
+- [x] Dictionary popup: save word + audio playback (`Linking.openURL`)
+- [x] Highlight saved vocabulary (amber badge in article)
+- [x] Reading Store + API service + Unit tests
+- [x] `analyzePractice` API endpoint wired
 
 ### 📜 History Enhanced
 - [ ] **Stats Dashboard** (Total hours, Lessons count)
@@ -132,7 +158,7 @@ Target: Weeks 7-10 (Review, Polish, Advanced Logic)
 ## 🔮 Phase 4: Advanced Features
 Target: Weeks 11-14
 
-- [ ] **Pocket Mode** (Gesture controls, black screen)
+- [x] **Pocket Mode** (Gesture controls, black screen) — PocketMode.tsx
 - [ ] **Car Mode** (Simplified UI, Voice commands)
 - [ ] **Widgets** (iOS/Android Home Screen)
 - [ ] **Biometric Login** (FaceID/TouchID)

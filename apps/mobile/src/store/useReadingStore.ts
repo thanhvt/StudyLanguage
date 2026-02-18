@@ -18,6 +18,10 @@ interface ReadingState {
   fontSize: number;
   /** Từ đã lưu trong session hiện tại */
   savedWords: string[];
+  /** Chế độ tập trung (ẩn header/footer) */
+  isFocusMode: boolean;
+  /** Bài đọc đã được lưu vào History chưa */
+  isArticleSaved: boolean;
 }
 
 interface ReadingActions {
@@ -35,6 +39,10 @@ interface ReadingActions {
   addSavedWord: (word: string) => void;
   /** Xóa từ khỏi danh sách đã lưu */
   removeSavedWord: (word: string) => void;
+  /** Bật/tắt Focus Mode */
+  toggleFocusMode: () => void;
+  /** Đánh dấu bài đọc đã lưu */
+  setArticleSaved: (value: boolean) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -50,6 +58,8 @@ const initialState: ReadingState = {
   error: null,
   fontSize: 16,
   savedWords: [],
+  isFocusMode: false,
+  isArticleSaved: false,
 };
 
 /**
@@ -85,6 +95,11 @@ export const useReadingStore = create<ReadingState & ReadingActions>(
       set(state => ({
         savedWords: state.savedWords.filter(w => w !== word.toLowerCase()),
       })),
+
+    toggleFocusMode: () =>
+      set(state => ({isFocusMode: !state.isFocusMode})),
+
+    setArticleSaved: value => set({isArticleSaved: value}),
 
     reset: () => set(initialState),
   }),

@@ -32,7 +32,7 @@ function renderProfile() {
       <div class="list-item"><span class="li-icon">ℹ️</span><div class="li-content"><div class="li-title">About</div></div><span class="li-arrow">›</span></div>
       <div style="padding:16px"><button class="cta-btn" style="background:var(--error);margin:0;width:100%">🚪 Đăng xuất</button></div>
     </div>
-    ${tabBar('more')}
+    ${tabBar('settings')}
   `);
 
   // G2: Appearance
