@@ -79,7 +79,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 |---------|------------|
 | Playback & Background | react-native-track-player | Best-in-class background audio & lock screen controls |
 | Recording | react-native-audio-recorder-player | Robust recording with metering |
-| Text-to-Speech | Azure Speech SDK / OpenAI API | High quality cloud TTS |
+| Text-to-Speech | Azure Speech SDK | High quality cloud TTS |
 | Sound Effects | react-native-sound | Low latency UI sounds |
 
 ### 4.4 Native Features
@@ -93,7 +93,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 
 ### 4.5 Backend
 - **Auth & Database:** Supabase JS Client
-- **AI Services:** OpenAI via NestJS Backend
+- **AI Services:** Azure AI via NestJS Backend
 - **HTTP Client:** Axios
 
 ---
@@ -160,21 +160,6 @@ Tab Navigator (Bottom) — 6 tabs
 
 ---
 
-## 7. Roadmap Overview
-
-### Phase 1: MVP (4-6 tuần)
-> Setup project, Auth, Navigation, 4 Skills basic, History
-
-### Phase 2: Enhanced UX (3-4 tuần)
-> Offline manager, Notifications, Widgets, Background audio
-
-### Phase 3: Advanced Features (4-6 tuần)
-> Car/Bedtime mode, Roleplay, Gamification, Family leaderboard
-
-📋 **Chi tiết:** Xem [Roadmap.md](technical/Roadmap.md)
-
----
-
 ## 8. Related Documents
 
 ### Features
@@ -191,7 +176,6 @@ Tab Navigator (Bottom) — 6 tabs
 
 ### Technical
 - [Architecture.md](technical/Architecture.md) - Tech architecture
-- [Roadmap.md](technical/Roadmap.md) - Implementation timeline
 
 ### Design
 - [UI_Design_System.md](design/UI_Design_System.md) - Design tokens

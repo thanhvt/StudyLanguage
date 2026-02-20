@@ -468,7 +468,7 @@ function renderListening() {
     <div class="scroll-content">
       <div class="section-card">
         <div class="section-title">🔊 Nhà cung cấp</div>
-        <div class="chip-row"><span class="chip active">OpenAI</span><span class="chip">Azure</span></div>
+        <div class="chip-row"><span class="chip active">Azure</span></div>
       </div>
       <div class="section-card">
         <div class="section-title">🗣️ Giọng nói (Speaker 1)</div>

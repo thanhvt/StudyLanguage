@@ -11,7 +11,7 @@
 
 Test scenarios cho toàn bộ features của Mobile App, được tổ chức theo:
 - **Feature module** (Dashboard, Auth, Listening, Speaking, Reading, History, Profile, Special Modes, Native)
-- **Development phase** (MVP → Enhanced → Advanced) theo `Roadmap.md`
+- **Development phase** (MVP → Enhanced → Advanced)
 - **Test type** (Happy Path ✅ / Edge Case ⚠️ / Error State ❌)
 - **Test level** (Unit → Smoke → Functional → Monkey → Edge Case → E2E)
 

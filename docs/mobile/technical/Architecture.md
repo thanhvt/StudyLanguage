@@ -37,8 +37,8 @@ Kiến trúc kỹ thuật cho mobile app StudyLanguage, tối ưu cho offline-fi
 ┌─────────────────────────────────────────────────────────────┐
 │                    Backend Services                          │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Supabase   │  │   NestJS     │  │   OpenAI     │      │
-│  │  (Auth, DB)  │  │   (API)      │  │   (AI)       │      │
+│  │   Supabase   │  │   NestJS     │  │   Azure AI   │      │
+│  │  (Auth, DB)  │  │   (API)      │  │   (TTS)      │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -844,5 +844,4 @@ export const secureStorage = {
 ## 12. Related Documents
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
-- [Roadmap.md](Roadmap.md) - Implementation timeline
 - [UI_Design_System.md](../design/UI_Design_System.md) - Design system

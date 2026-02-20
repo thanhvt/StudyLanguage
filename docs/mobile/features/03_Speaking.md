@@ -80,7 +80,7 @@ Cấu hình giọng AI mẫu khi phát âm sample (parity với Listening):
 
 | Feature | Description |
 |---------|-------------|
-| **Provider** | Dùng chung config từ Listening (OpenAI / Azure) |
+| **Provider** | Dùng chung config từ Listening (Azure TTS) |
 | **Emotion Context** | AI mẫu nói với emotion phù hợp context câu |
 | **Voice Selection** | Chọn giọng mẫu hoặc random |
 
@@ -588,7 +588,7 @@ async function handleRecordStop() {
 
 #### `POST /api/ai/text-to-speech`
 
-> Chuyển text thành audio (OpenAI hoặc Azure TTS) — dùng cho Coach voice
+> Chuyển text thành audio (Azure TTS) — dùng cho Coach voice
 
 **Request Body:**
 
@@ -596,7 +596,7 @@ async function handleRecordStop() {
 |---|---|---|---|
 | `text` | string | ✅ | Text cần TTS |
 | `voice` | string | ❌ | Voice ID |
-| `provider` | enum | ❌ | `openai` \| `azure` |
+| `provider` | enum | ❌ | `azure` (mặc định) |
 | `emotion` | string | ❌ | Emotion cho Azure |
 | `randomVoice` | boolean | ❌ | Random giọng |
 | `randomEmotion` | boolean | ❌ | Random emotion |
@@ -646,7 +646,7 @@ async function handleRecordStop() {
 
 | Field | Type | Required | Mô tả |
 |---|---|---|---|
-| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+| `provider` | enum | ❌ | `azure` (mặc định) |
 
 ---
 

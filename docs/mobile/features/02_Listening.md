@@ -43,7 +43,7 @@ Audio player persistent, hoạt động xuyên suốt các trang.
 - Persist playback across page navigation
 - Confirmation dialog khi đổi audio đang phát
 - Lưu user preferences (volume, speed, mute)
-- Session restoration: Resume từ player hoặc recent lessons (NEW ✨)
+- Session restoration: Resume từ player hoặc recent lessons
 
 ### 1.4 Radio Mode Enhancements
 
@@ -51,7 +51,7 @@ Cải tiến Radio Mode với nhiều tính năng mới:
 
 | Feature | Description |
 |---------|-------------|
-| **Duration Options** | 1, 5, 10, 15, 20, 30 phút (1 phút là tùy chọn mới) |
+| **Duration Options** | 1, 5, 10, 15, 20, 30 phút |
 | **Progress Tracking** | Hiển thị progress khi đang generate playlist |
 | **Toast Notifications** | Thông báo feedback khi generate hoàn tất |
 | **Immediate Playback** | Phát ngay sau khi generate hoặc chọn existing playlist |
@@ -64,11 +64,11 @@ Cấu hình nâng cao cho giọng đọc AI (Web-v2 parity):
 
 | Feature | Description |
 |---------|-------------|
-| **Provider** | Chọn OpenAI (default) hoặc Azure (advanced) |
-| **Voice** | Chọn giọng đọc theo provider (Alloy, Nova / Jenny, Guy...) |
-| **Emotion** | Cảm xúc giọng đọc (Azure only: Cheerful, Sad, Angry...) |
-| **Multi-talker** | Chế độ 2 người nói (Azure only) |
-| **Advanced** | Pitch, Rate, Volume tuning |
+| **Provider** | Azure TTS (duy nhất) |
+| **Voice** | Chọn giọng đọc Azure (Jenny, Guy, Ava, Andrew...) |
+| **Emotion** | Cảm xúc giọng đọc (Cheerful, Sad, Angry...) |
+| **Multi-talker** | Chế độ 2 người nói |
+| **Advanced** | Pitch, Rate |
 | **Randomize** | Ngẫu nhiên giọng đọc và/hoặc cảm xúc mỗi bài nghe |
 
 ### 1.7 Background Playback Requirements
@@ -238,7 +238,7 @@ interface ListeningState {
 │                                                             │
 │ [Config]  →  [API: Generate]  →  [Cache Audio]  →  [Play]  │
 │                    │                   │                    │
-│                    └── OpenAI ─────────┘                    │
+│                    └── Azure TTS ──────┘                    │
 │                                                             │
 │ [Player Events]  →  [Update State]  →  [Update UI]         │
 │                                                             │
@@ -305,7 +305,7 @@ interface AudioPlayerState {
 
 ```typescript
 interface TtsSettings {
-  provider: 'openai' | 'azure';
+  provider: 'azure';
   voice?: string;
   emotion?: string; // Azure only
   
@@ -393,7 +393,7 @@ interface TtsSettings {
 
 #### `POST /api/ai/generate-conversation`
 
-> Sinh kịch bản hội thoại theo chủ đề (OpenAI)
+> Sinh kịch bản hội thoại theo chủ đề (AI)
 
 **Request Body:**
 
@@ -437,7 +437,7 @@ interface TtsSettings {
 
 #### `POST /api/ai/text-to-speech`
 
-> Chuyển text thành audio (OpenAI hoặc Azure TTS)
+> Chuyển text thành audio (Azure TTS)
 
 **Request Body:**
 
@@ -445,7 +445,7 @@ interface TtsSettings {
 |---|---|---|---|
 | `text` | string | ✅ | Text cần chuyển thành audio |
 | `voice` | string | ❌ | Voice ID |
-| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+| `provider` | enum | ❌ | `azure` (mặc định) |
 | `emotion` | string | ❌ | Emotion cho Azure (cheerful, sad...) |
 | `randomVoice` | boolean | ❌ | Random giọng nói |
 | `randomEmotion` | boolean | ❌ | Random cảm xúc |
@@ -463,7 +463,7 @@ interface TtsSettings {
 }
 ```
 
-> `wordTimestamps` chỉ có khi `provider=azure`
+> `wordTimestamps` luôn có (Azure TTS)
 
 ---
 
@@ -476,7 +476,7 @@ interface TtsSettings {
 | Field | Type | Required | Mô tả |
 |---|---|---|---|
 | `conversation` | `{ speaker, text }[]` | ✅ | Danh sách câu hội thoại |
-| `provider` | enum | ❌ | `openai` \| `azure` |
+| `provider` | enum | ❌ | azure (mặc định) |
 | `voice` | string | ❌ | Voice ID chung |
 | `emotion` | string | ❌ | Emotion cho Azure |
 | `randomVoice` | boolean | ❌ | Random giọng cho từng speaker |
@@ -526,7 +526,7 @@ data: { "type": "error", "message": "..." }
 
 | Field | Type | Required | Mô tả |
 |---|---|---|---|
-| `provider` | enum | ❌ | `openai` \| `azure`, default: openai |
+| `provider` | enum | ❌ | `azure` (mặc định) |
 
 **Response:**
 
@@ -589,7 +589,7 @@ data: { "type": "error", "message": "..." }
 
 ### 8.2 Conversation Generator (`/api/conversation-generator`)
 
-> Module dùng Groq LLM thay thế OpenAI cho text generation
+> Module dùng Groq LLM cho text generation
 
 #### `POST /api/conversation-generator/generate`
 
