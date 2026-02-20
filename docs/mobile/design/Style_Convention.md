@@ -2,7 +2,8 @@
 
 > **Module:** Design Convention  
 > **Scope:** UI/UX Consistency Rules for React Native  
-> **Reference:** [UI_Design_System.md](UI_Design_System.md)
+> **Reference:** [UI_Design_System.md](UI_Design_System.md)  
+> **Master Source of Truth:** [Obsidian_Glass_Style_Guide.md](Obsidian_Glass_Style_Guide.md)
 
 ---
 
@@ -70,9 +71,9 @@ Need overlay/modal?
 
 | Skill | Color | Hex |
 |-------|-------|-----|
-| Listening | Blue/Indigo | `#4F46E5` |
-| Speaking | Green | `#16A34A` |
-| Reading | Amber | `#D97706` |
+| Listening | Indigo | `#6366F1` |
+| Speaking | Green | `#4ade80` |
+| Reading | Gold | `#fbbf24` |
 
 ### 1.4 Bottom Sheet vs Modal vs Alert
 
@@ -110,8 +111,8 @@ Every screen follows this vertical structure:
 **Rules:**
 - Header: Always show back arrow `←` + screen title (left-aligned)
 - Header right: Optional action icon(s) — max 2 icons
-- Content: `16px` horizontal padding (use `md` spacing token)
-- Primary CTA: Fixed at bottom with `16px` padding when needed
+- Content: `24px` horizontal padding (use `xl` spacing token)
+- Primary CTA: Fixed at bottom with `24px` padding when needed
 - Safe area: Always respect device safe area insets
 
 ### 2.2 Config/Form Screen Template
@@ -144,9 +145,9 @@ Used by: Listening Config, Reading Config, Speaking Setup, Conversation Coach Se
 
 **Rules:**
 - Each config section: Emoji icon + Label + optional helper text
-- Section spacing: `24px` (`lg` token) between sections
+- Section spacing: `20px` (`lg` token) between sections
 - Advanced options: Collapsible → opens Bottom Sheet
-- Primary CTA: Always at the bottom, full-width with `16px` horizontal margin
+- Primary CTA: Always at the bottom, full-width with `24px` horizontal margin
 
 ### 2.3 Player/Practice Screen Template
 
@@ -430,7 +431,7 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 |------|--------|
 | Use design tokens from `UI_Design_System.md` | Consistency across app |
 | Handle all 4 UX states (Loading, Error, Empty, Success) | Professional feel |
-| Use `md` (16px) horizontal screen padding | Consistent spacing |
+| Use `xl` (24px) horizontal screen padding | Consistent spacing |
 | Add haptic feedback on interactive elements | Native feel |
 | Use skeleton loading for first-time data fetch | Perceived performance |
 | Respect platform conventions (iOS vs Android) | User familiarity |
@@ -466,16 +467,16 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 
 | Skill | Emoji | Color | Hex |
 |-------|-------|-------|-----|
-| Listening | 🎧 | Blue/Indigo | `#4F46E5` |
-| Speaking | 🗣️ | Green | `#16A34A` |
-| Reading | 📖 | Amber | `#D97706` |
+| Listening | 🎧 | Indigo | `#6366F1` |
+| Speaking | 🗣️ | Green | `#4ade80` |
+| Reading | 📖 | Gold | `#fbbf24` |
 
 ### Standard Interactions
 
 | Element | Press Effect | Haptic |
 |---------|-------------|--------|
-| Card tap | Scale 0.95x, 150ms | Light impact |
-| Button tap | Scale 0.97x, 100ms | Light impact |
+| Card tap | Scale 0.92x, spring (damping=15) | Light impact |
+| Button tap | Scale 0.92x, spring (damping=15) | Light impact |
 | Successful action | — | Success notification |
 | Error / Warning | Shake animation | Warning notification |
 | Destructive confirm | — | Heavy impact |
@@ -487,14 +488,17 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 |-------|-------|-------|
 | `xs` | 4px | Icon padding, tight gaps |
 | `sm` | 8px | Between related items, card spacing |
-| `md` | 16px | Screen padding, section content padding |
-| `lg` | 24px | Between sections |
-| `xl` | 32px | Large section breaks |
+| `md` | 12px | Padding nhỏ trong cards |
+| `base` | 16px | Standard padding (px-4, py-4) |
+| `lg` | 20px | Section spacing |
+| `xl` | 24px | Screen horizontal padding (px-6) |
+| `2xl` | 32px | Khoảng cách section lớn |
 
 ---
 
 ## 8. Related Documents
 
+- [Obsidian_Glass_Style_Guide.md](Obsidian_Glass_Style_Guide.md) — **🎯 Master source of truth** cho design tokens, colors, shadows, animations
 - [UI_Design_System.md](UI_Design_System.md) — Design tokens (colors, typography, components)
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) — Project overview
 - [Architecture.md](../technical/Architecture.md) — Technical architecture

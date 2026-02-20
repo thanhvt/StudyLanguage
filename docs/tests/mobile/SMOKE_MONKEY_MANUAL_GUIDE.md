@@ -121,7 +121,7 @@ Mục đích: Test chi tiết **từng feature** trên device thật — kiểm 
 |---|:---|:----|:-------------------|:----------------|:--------|
 | 23 | MNL-LIS-023 | Happy path full flow | 1. Chọn topic "Daily Stand-up"<br>2. Duration = 5<br>3. Speakers = 2<br>4. Tap Start | Loading indicator → Navigate sang Player/Result screen | ☐ |
 | 24 | MNL-LIS-024 | Start without topic | Không chọn topic → Tap Start | Validation error hiện: "Chọn topic trước" | ☐ |
-| 25 | MNL-LIS-025 | Start offline | Tắt wifi/4G → Tap Start | Error toast/dialog: "Cần kết nối mạng" | ☐ |
+| 25 | MNL-LIS-025 | Start khi mất mạng | Tắt wifi/4G → Tap Start | Error toast/dialog: "Cần kết nối mạng" | ☐ |
 
 ### G. Custom Scenario
 

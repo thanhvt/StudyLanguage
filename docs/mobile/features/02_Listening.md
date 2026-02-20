@@ -377,7 +377,7 @@ interface TtsSettings {
 - [x] **Custom Scenarios CRUD** (NEW ✨)
 - [x] **Global Audio Player - Minimized mode** (NEW ✨)
 - [x] **Audio change confirmation dialog** (NEW ✨) — ConfigScreen `handleGenerate()` kiểm tra audio đang phát
-- [x] **Saved Words viewer** — Tab "Từ vựng" trong History, persist qua AsyncStorage (DONE ✨)
+- [x] **Saved Words viewer** — Tab "Từ vựng" trong History, persist qua MMKV (DONE ✨)
 - [x] **Sentence Bookmarks viewer** — Hiển thị trong VocabularyTab, API getAll()(DONE ✨)
 - [x] **Session restoration fix** — Persist conversation data để "Tiếp tục nghe" hoạt động sau reload (FIXED ✨)
 - [x] **Walkthrough Tour** — 5-step interactive tour cho first-time users (DONE ✨)

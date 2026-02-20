@@ -46,7 +46,7 @@
 | D2 | MVP-HP-005 | Streak hiển thị | Xem Dashboard | 🔥 streak count + animation | ☐ |
 | D3 | MVP-HP-010 | Haptic feedback | Tap Quick Action | Có light haptic khi tap | ☐ |
 | D4 | MVP-HP-011 | Dashboard login | Đã login → Dashboard | Greeting + tên, streak, Quick Actions | ☐ |
-| D5 | MVP-ERR-001 | Dashboard offline | Tắt mạng → Dashboard | Cached data hoặc error + Retry | ☐ |
+| D5 | MVP-ERR-001 | Dashboard không có mạng | Tắt mạng → Dashboard | Cached data hoặc error + Retry | ☐ |
 | D6 | ENH-HP-002 | Continue session | Có session dang dở | Card "Continue" với progress bar | ☐ |
 
 ---
@@ -119,9 +119,7 @@
 | N7 | ENH-HP-023 | Lock screen player | Tắt màn hình | Lock screen controls hiện | ☐ |
 | N8 | ENH-HP-025 | Call interrupt | Đang phát → cuộc gọi đến → cúp | Pause → Auto-resume | ☐ |
 | N9 | ENH-HP-026 | Headphone unplug | Rút tai nghe đang phát | Pause ngay | ☐ |
-| N10 | ENH-HP-028 | Offline indicator | Tắt mạng | Banner "⚠️ Offline Mode" | ☐ |
-| N11 | ENH-HP-029 | Play offline | Offline → mở bài đã download | Audio phát OK | ☐ |
-| N12 | ENH-HP-030 | Cached history | Offline → History | Cached data hiển thị | ☐ |
+
 
 ---
 

@@ -119,7 +119,7 @@ EC-XX       : Edge Case — trường hợp biên, boundary
 - Advanced audio player & gestures
 - Conversation Coach, Shadowing mode
 - Search, filter, analytics
-- Notifications, offline, background audio
+- Background audio
 
 ### Phase 3: Advanced (Tuần 13-20)
 - Special modes (Car, Bedtime, Workout, Pocket)

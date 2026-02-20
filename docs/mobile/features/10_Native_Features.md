@@ -17,10 +17,8 @@ Các tính năng đặc thù mobile platform, tận dụng hardware và OS capab
 | **Gestures** | Swipe, pinch, long-press |
 | **Voice Commands** | Hands-free control |
 | **Widgets** | Home screen widgets |
-| **Notifications** | Push & local notifications |
 | **Background Audio** | Play when app minimized |
 | **Haptic Feedback** | Touch vibration |
-| **Offline Mode** | Work without network |
 
 ---
 
@@ -130,7 +128,7 @@ Các tính năng đặc thù mobile platform, tận dụng hardware và OS capab
 ```typescript
 // Libraries
 @react-native-voice/voice  // Speech recognition
-@react-native-voice/voice  // Offline fallback
+@react-native-voice/voice  // Speech recognition
 
 // Flow
 [Wake word detected] → [Listen] → [Process] → [Execute] → [Confirm]
@@ -214,64 +212,6 @@ Similar to iOS but with more customization options:
 | Word count | Open History (Saved Words) |
 
 ---
-
-## 5. Notifications 🔔
-
-### 5.1 Push Notification Types
-
-| Type | Timing | Content | Action |
-|------|--------|---------|--------|
-| **Daily Reminder** | 19:00 | "Sẵn sàng học chưa? 💪" | Open app |
-| **Streak Warning** | 21:00 | "2 giờ nữa mất streak! 🔥" | Open app |
-| **Achievement** | Instant | "🎉 7 ngày liên tục!" | Open profile |
-| **Review Reminder** | 10:00 | "15 từ cần ôn hôm nay" | Open vocab |
-| **Weekly Tip** | Sunday | "Mẹo: Luyện phát âm mỗi ngày" | Open tip |
-
-### 5.2 Notification UI
-
-```
-┌─────────────────────────────────┐
-│ 📚 StudyLanguage                │
-│ Đừng quên học hôm nay! 💪       │
-│ Bạn đang giữ streak 7 ngày     │
-│                                 │
-│ [Bắt đầu ngay]      [Nhắc sau]  │
-└─────────────────────────────────┘
-```
-
-### 5.3 Rich Notifications (iOS)
-
-```
-┌─────────────────────────────────┐
-│ 📚 StudyLanguage        now    │
-├─────────────────────────────────┤
-│ 💡 Word of the Day              │
-│                                 │
-│ Serendipity                     │
-│ /ˌser.ənˈdɪp.ə.ti/              │
-│ May mắn bất ngờ                 │
-│                                 │
-│ [🔊 Pronounce] [💾 Save] [Open] │
-└─────────────────────────────────┘
-```
-
-### 5.4 Notification Settings
-
-| Setting | Options |
-|---------|---------|
-| Daily Reminder | Time picker |
-| Streak Warning | ON/OFF |
-| Achievements | ON/OFF |
-| Review Reminders | Time picker |
-| Quiet Hours | Time range |
-
-### 5.5 Local Notifications
-
-| Type | Trigger | Content |
-|------|---------|---------|
-| Download complete | After download | "Bài học đã tải xong" |
-| Storage warning | Storage > 80% | "Dung lượng sắp đầy" |
-| Session complete | After lesson | "Chúc mừng! +10 XP" |
 
 ---
 
@@ -366,7 +306,7 @@ Nhạc nền Lofi/Chill du dương chạy song song với bài học — feature
 | **Chỉ in-app controls** | Không hiện trên lock screen — lock screen chỉ dành cho lesson audio |
 | **Tách biệt audio** | Music dùng `Audio` API riêng, lesson dùng `react-native-track-player` |
 | **Smart Ducking** | Tự giảm volume 80% khi lesson audio đang phát |
-| **Persist state** | Lưu volume, track, playing state vào AsyncStorage |
+| **Persist state** | Lưu volume, track, playing state vào MMKV |
 | **Auto-pause** | Dừng khi app bị kill hoặc rút tai nghe |
 
 #### Danh sách nhạc (từ Pixabay — Free, no attribution)
@@ -435,7 +375,7 @@ interface BackgroundMusicState {
 | Play/Pause/Next/Prev/Shuffle | ✅ | ✅ |
 | Volume control | ✅ | ✅ |
 | Smart Ducking | ✅ | ✅ |
-| Persist state | ✅ localStorage | ✅ AsyncStorage |
+| Persist state | ✅ localStorage | ✅ MMKV |
 | Lock screen controls | N/A (web) | ❌ **Không** (chỉ lesson audio) |
 | Sidebar controls | ✅ | ❌ → In-app widget |
 | Loop single track | ✅ | ✅ |
@@ -485,77 +425,7 @@ ReactNativeHapticFeedback.trigger('selection');
 
 ---
 
-## 8. Offline Mode 📴
 
-### 8.1 Offline Capabilities
-
-| Feature | Offline Support |
-|---------|-----------------|
-| Play downloaded lessons | ✅ Full |
-| View history | ✅ Cached |
-| Review saved words | ✅ Full |
-| Read saved articles | ✅ Full |
-| Generate new content | ❌ Requires network |
-| Speaking practice | ❌ Requires AI |
-| Sync progress | ⏳ Queued for sync |
-
-### 8.2 Download Manager
-
-```
-┌─────────────────────────────────┐
-│  📥 Downloaded Lessons      ⚙️  │
-├─────────────────────────────────┤
-│                                 │
-│  Auto-download on WiFi: [ON]    │
-│  Max storage: 500 MB            │
-│                                 │
-├─────────────────────────────────┤
-│                                 │
-│  ✅ Coffee Shop Talk    (15 MB) │
-│  ✅ Tech Interview      (12 MB) │
-│  ⏳ Airport Guide        (8 MB) │
-│     Downloading... 45%          │
-│  ☐ Climate Change       (10 MB) │
-│                                 │
-│  ───────────────────────────── │
-│  Storage: 35 MB / 500 MB        │
-│  [████░░░░░░░░░░░░░░░░]         │
-│                                 │
-│  [Download All Starred]         │
-│                                 │
-└─────────────────────────────────┘
-```
-
-### 8.3 Offline Indicator
-
-```
-┌─────────────────────────────────┐
-│  ⚠️ Offline Mode                │
-│                                 │
-│  Một số tính năng bị giới hạn:  │
-│  • Không thể tạo bài mới        │
-│  • Không thể luyện nói         │
-│                                 │
-│  Bạn vẫn có thể:                │
-│  ✅ Nghe bài đã download        │
-│  ✅ Xem từ đã lưu              │
-│  ✅ Đọc bài đã lưu              │
-│                                 │
-│        [Thử kết nối lại]        │
-│                                 │
-└─────────────────────────────────┘
-```
-
-### 8.4 Sync Queue
-
-| Status | Behavior |
-|--------|----------|
-| Online | Sync immediately |
-| Offline | Queue locally |
-| Back online | Sync pending items |
-| Conflict | Latest timestamp wins |
-
----
 
 ## 9. Deep Linking 🔗
 
@@ -580,7 +450,7 @@ https://studylanguage.app/share/abc   # Shared content
 
 | Source | Link | Action |
 |--------|------|--------|
-| Push notification | studylanguage://history/saved-words | Open saved words |
+| Notification tap | studylanguage://history/saved-words | Open saved words |
 | Widget | studylanguage://listening | Open Listening |
 | Share | https://studylanguage.app/... | Open shared |
 
@@ -596,14 +466,10 @@ react-native-gesture-handler
 react-native-reanimated
 
 // Voice
-@react-native-voice/voice   // Speech recognition (online + offline)
+@react-native-voice/voice   // Speech recognition
 
 // Widgets (iOS)
 react-native-widget-extension
-
-// Notifications
-notifee                     // Local & rich notifications
-@react-native-firebase/messaging // Remote push
 
 // Background Audio
 react-native-track-player   // Playback + lock screen controls
@@ -611,10 +477,9 @@ react-native-track-player   // Playback + lock screen controls
 // Haptics
 react-native-haptic-feedback
 
-// Offline
-@react-native-async-storage/async-storage
+// Storage
+react-native-mmkv            // Fast key-value storage
 react-native-fs             // File system access
-react-native-sqlite-storage // SQLite database
 
 // Deep Linking
 React Native Linking (built-in) // No extra lib needed
@@ -628,22 +493,17 @@ React Native Linking (built-in) // No extra lib needed
 - [ ] Gesture system implementation
 - [ ] **Speaking gestures** (swipe-to-cancel, countdown haptic, tap-to-pronounce) (NEW ✨)
 - [ ] Voice command recognition
-- [ ] Push notifications setup
 - [ ] **Android notification player** (foreground service MediaSession) (NEW ✨)
 - [ ] Background audio player
 - [ ] **Background Music** (Lofi tracks, in-app controls, smart ducking, persist) (NEW ✨)
 - [ ] **Audio interruption handling** (ducking, pause/resume per source) (NEW ✨)
 - [ ] Haptic feedback integration
-- [ ] Offline download manager
-- [ ] **Download manager UI** (progress, storage breakdown) (NEW ✨)
-- [ ] **Offline indicator UI** (limited features banner) (NEW ✨)
 
 ### Advanced Phase
 - [ ] iOS widgets
 - [ ] Android widgets
 - [ ] Voice wake word
 - [ ] Deep linking
-- [ ] Rich notifications
 - [ ] Lock screen controls
 
 ---

@@ -312,7 +312,7 @@
 | 3 | Kill app hoàn toàn (force close) | App đóng | |
 | 4 | Mở lại app → Luyện Nghe | Nút "▶️ Tiếp tục nghe" hiện ở footer với title bài cũ | |
 | 5 | Tap "Tiếp tục nghe" | Navigate → PlayerScreen, transcript HIỆN ĐẦY ĐỦ (không phải "Không có dữ liệu") | |
-| 6 | Kill app → Clear AsyncStorage → Mở lại | Nút "Tiếp tục nghe" KHÔNG hiện (session đã bị xóa) | |
+| 6 | Kill app → Clear MMKV → Mở lại | Nút "Tiếp tục nghe" KHÔNG hiện (session đã bị xóa) | |
 | 7 | Xóa app data / reinstall → Mở Luyện Nghe | Nút "Tiếp tục nghe" KHÔNG hiện (không có stale session) | |
 
 ### MAN-LIS-025: Empty State — "Chưa có bài nghe"

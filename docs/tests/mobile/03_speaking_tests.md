@@ -263,7 +263,7 @@
 
 | ID | Scenario | Steps trên Device | Expected | iOS | Android |
 |:---|:---------|:-------------------|:---------|:----|:--------|
-| DEV-SPK-012 | Upload offline | 1. Ghi âm xong<br>2. Tắt WiFi | Error + Retry, recording lưu local | ☐ | ☐ |
+| DEV-SPK-012 | Upload khi mất mạng | 1. Ghi âm xong<br>2. Tắt WiFi | Error + Retry, recording lưu local | ☐ | ☐ |
 | DEV-SPK-013 | AI timeout | 1. Ghi âm → gửi<br>2. Server chậm >30s | Timeout error → Retry | ☐ | ☐ |
 | DEV-SPK-014 | Mạng 3G | 1. Chuyển 3G<br>2. Full flow | Chậm hơn nhưng hoàn thành | ☐ | ☐ |
 
@@ -331,7 +331,7 @@ Tắt WiFi → Ghi âm → Error → Bật WiFi → Retry → Thành công
 
 | Step | Expected | ☐ |
 |------|----------|---|
-| 1. Offline + record | Recording OK local | ☐ |
+| 1. Mất mạng + record | Recording OK local | ☐ |
 | 2. Upload fail | Error + Retry button | ☐ |
 | 3. WiFi + Retry | Upload + Feedback | ☐ |
 

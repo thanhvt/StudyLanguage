@@ -36,7 +36,7 @@ Do đặc thù của việc học thụ động là diễn ra khi người dùng
     4.  **Ôn tập từ vựng cũ (Spaced Repetition Review)** - Audio flashcard.
     5.  **Tin tức tóm tắt (Daily News Brief):** AI tóm tắt tin tức user quan tâm (Bóng đá, Tech) thành tiếng Anh đơn giản.
 *   **Hành vi:**
-    *   **Mobile:** Tự động tải trước (Pre-load) khi có WiFi để nghe offline trên xe bus.
+    *   **Mobile:** Tự động tải trước (Pre-load) khi có WiFi.
 
 #### B. Shadowing Gaps (Khoảng lặng thông minh) - [Mobile Focus]
 *   **Mô tả:** Chế độ luyện nói nhại lại mà không cần bấm Pause.
@@ -102,4 +102,4 @@ Giao diện tối giản khi phát hiện người dùng đang di chuyển.
 
 #### B. Sync Architecture (Cơ chế đồng bộ)
 *   **Position Sync:** Đang nghe dở trên Web ở công ty -> Mở Mobile App trên xe bus nghe tiếp đúng đoạn đó.
-*   **Offline First:** Mobile App tự động tải trước (Prefetch) 1 Playlist vào buổi sáng (khi có Wifi nhà) để sẵn sàng cho chuyến đi.
+*   **Pre-fetch:** Mobile App tự động tải trước (Prefetch) 1 Playlist vào buổi sáng (khi có Wifi nhà) để sẵn sàng cho chuyến đi.

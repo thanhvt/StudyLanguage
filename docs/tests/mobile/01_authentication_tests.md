@@ -25,7 +25,7 @@
 | MOB-AUTH-MVP-HP-005 | ✅ | Login lần đầu - tạo profile | 1. Login với Google account mới | Tự động tạo profile trên backend, hiển thị Dashboard | 🔴 |
 | MOB-AUTH-MVP-HP-006 | ✅ | Login lần sau - user cũ | 1. Login với account đã có | Load data cũ (history, settings, streak) đúng | 🔴 |
 | MOB-AUTH-MVP-ERR-001 | ❌ | User hủy Google OAuth | 1. Tap "Continue with Google"<br>2. Tap "Cancel" / Dismiss picker | Quay về Auth screen, không crash, hiện message thân thiện | 🔴 |
-| MOB-AUTH-MVP-ERR-002 | ❌ | Login khi mất mạng | 1. Tắt WiFi & Data<br>2. Tap "Continue with Google" | Hiện error "Không có kết nối mạng" + icon offline | 🔴 |
+| MOB-AUTH-MVP-ERR-002 | ❌ | Login khi mất mạng | 1. Tắt WiFi & Data<br>2. Tap "Continue with Google" | Hiện error "Không có kết nối mạng" + icon cảnh báo | 🔴 |
 | MOB-AUTH-MVP-ERR-003 | ❌ | Google server error | 1. Google OAuth trả về lỗi server | Hiện error "Đăng nhập thất bại, thử lại sau" + Retry button | 🔴 |
 | MOB-AUTH-MVP-EC-001 | ⚠️ | Double-tap nút login | 1. Tap "Continue with Google" 2 lần liên tiếp | Chỉ trigger 1 lần, nút disabled khi đang loading | 🟡 |
 
@@ -33,7 +33,7 @@
 
 | ID | Type | Scenario | Steps | Expected Result | Severity |
 |:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-AUTH-MVP-HP-007 | ✅ | Token lưu vào SecureStore | 1. Login thành công | Access token & refresh token lưu trong SecureStore (không AsyncStorage) | 🔴 |
+| MOB-AUTH-MVP-HP-007 | ✅ | Token lưu vào SecureStore | 1. Login thành công | Access token & refresh token lưu trong SecureStore (không MMKV) | 🔴 |
 | MOB-AUTH-MVP-HP-008 | ✅ | Auto re-login khi mở lại app | 1. Login thành công<br>2. Kill app<br>3. Mở lại app | Tự động login, vào thẳng Dashboard, không cần chọn Google lại | 🔴 |
 | MOB-AUTH-MVP-HP-009 | ✅ | Token refresh tự động | 1. Access token hết hạn<br>2. App gọi API | Tự động dùng refresh token để lấy access token mới, không logout user | 🔴 |
 | MOB-AUTH-MVP-ERR-004 | ❌ | Token refresh thất bại | 1. Refresh token cũng hết hạn<br>2. App gọi API | Logout user, redirect về Auth screen, message "Phiên đăng nhập hết hạn" | 🔴 |
@@ -46,7 +46,7 @@
 | MOB-AUTH-MVP-HP-010 | ✅ | Logout thành công | 1. Vào Profile<br>2. Tap "Đăng xuất"<br>3. Confirm dialog | Token xóa, redirect Auth screen, cached data clear | 🔴 |
 | MOB-AUTH-MVP-HP-011 | ✅ | Confirm dialog khi logout | 1. Tap "Đăng xuất" | Hiện dialog "Bạn có chắc muốn đăng xuất? Dữ liệu chưa sync sẽ bị mất." | 🟡 |
 | MOB-AUTH-MVP-HP-012 | ✅ | Cancel logout | 1. Tap "Đăng xuất"<br>2. Tap "Hủy" | Quay về Profile, vẫn logged in | 🟡 |
-| MOB-AUTH-MVP-ERR-005 | ❌ | Logout khi offline | 1. Tắt mạng<br>2. Logout | Local token xóa, chuyển Auth screen. Sync lại khi có mạng | 🟡 |
+| MOB-AUTH-MVP-ERR-005 | ❌ | Logout khi mất mạng | 1. Tắt mạng<br>2. Logout | Local token xóa, chuyển Auth screen. Sync lại khi có mạng | 🟡 |
 
 ---
 

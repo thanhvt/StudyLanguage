@@ -40,4 +40,4 @@
 | ID | Feature | Test Case Scenario | Interaction | Expected Result |
 | :--- | :--- | :--- | :--- | :--- |
 | **SIT-010** | **Learning Position** | Nghe bài A đến phút 5:00 trên Web -> Pause -> Mở Mobile | Mobile App fetch state `last_position` | Mobile hiển thị nút "Resum from 5:00" |
-| **SIT-011** | **Notification** | Web trigger nhắc nhở học tập | BE push notification to FCM | Mobile user nhận được Push Notification |
+

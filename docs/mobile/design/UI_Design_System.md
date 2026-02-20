@@ -1,7 +1,8 @@
 # 🎨 UI Design System - Mobile
 
 > **Module:** Design System  
-> **Scope:** React Native + NativeWind
+> **Scope:** React Native + NativeWind  
+> **Master Reference:** [Obsidian_Glass_Style_Guide.md](Obsidian_Glass_Style_Guide.md) — Source of truth cho tất cả design tokens
 
 ---
 
@@ -22,10 +23,10 @@ Primary (Green Nature):
 │ #f0fdf4│#dcfce7│#bbf7d0│#86efac│#4ade80│#22c55e│#16a34a│#15803d│
 └─────────────────────────────────────────────────────────────┘
 
-Accent Colors (6 options):
+Accent Colors (6 options — ❌ KHÔNG dùng Purple/Violet):
 ┌──────────────────────────────────────────────────────────────┐
-│  🟢 Green   │  🔵 Blue   │  🟣 Purple │  🟠 Orange │  🔴 Red  │
-│  #22c55e   │  #3b82f6  │  #a855f7  │  #f97316  │  #ef4444 │
+│  🟢 Green   │  🔵 Blue   │  🔷 Indigo │  🟠 Orange │  🔴 Red  │
+│  #22c55e   │  #3b82f6  │  #6366F1  │  #f97316  │  #ef4444 │
 │             │           │           │           │          │
 │  🩷 Pink    │           │           │           │          │
 │  #ec4899   │           │           │           │          │
@@ -36,11 +37,12 @@ Accent Colors (6 options):
 
 | Color | Light Mode | Dark Mode | Usage |
 |-------|------------|-----------|-------|
-| Background | #ffffff | #0a0a0a | App background |
-| Surface | #f5f5f5 | #171717 | Cards, sheets |
+| Background | #ffffff | #000000 | App background (OLED pure black) |
+| Surface | #f5f5f5 | #0a0a0a | Cards, containers |
+| Surface Raised | #ffffff | #171717 | Elevated cards, sheets |
 | Border | #e5e5e5 | #262626 | Dividers |
 | Text Primary | #171717 | #fafafa | Main text |
-| Text Secondary | #737373 | #a3a3a3 | Secondary text |
+| Text Secondary | #737373 | #6e6e6e | Secondary text |
 | Success | #22c55e | #4ade80 | Correct, success |
 | Warning | #f59e0b | #fbbf24 | Warnings |
 | Error | #ef4444 | #f87171 | Errors |
@@ -48,9 +50,11 @@ Accent Colors (6 options):
 ### 2.3 OLED Optimization (Dark Mode)
 
 ```
-Background:     #000000 (pure black - pixels off)
-Surface:        #0a0a0a 
-Surface Raised: #171717
+Background:     #000000 (pure black - pixels off, OLED-first)
+Surface:        #0a0a0a (card nền, container)
+Surface Raised: #171717 (card nổi, elevated element)
+Neutrals900:    #1c1c1c (input field background)
+Neutrals800:    #1d1d1d (viền nhẹ, separator)
 ```
 
 ---
@@ -105,27 +109,30 @@ const fontSizes = {
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 4px | Tight spacing |
-| sm | 8px | Between related items |
-| md | 16px | Standard padding |
-| lg | 24px | Section spacing |
-| xl | 32px | Large spacing |
-| 2xl | 48px | Section breaks |
+| xs | 4px | Icon gaps nhỏ |
+| sm | 8px | Giữa icon & text, inline gaps |
+| md | 12px | Padding nhỏ trong cards |
+| base | 16px | Standard padding (px-4, py-4) |
+| lg | 20px | Section spacing |
+| xl | 24px | Screen horizontal padding (px-6) |
+| 2xl | 32px | Khoảng cách section lớn |
+| 3xl | 48px | Safe area offsets |
 
 ### 4.2 Screen Padding
 
 ```
 ┌─────────────────────────────────┐
-│←─ 16px ─→              ←─ 16px ─→│
+│←─ 24px ─→              ←─ 24px ─→│
 │  ┌─────────────────────────┐   │
-│  │                         │   │
+│  │  p-4 (16px) nội bộ      │   │
 │  │       Content           │   │
-│  │                         │   │
+│  │  gap-3 (12px) giữa items│   │
 │  └─────────────────────────┘   │
-│                                 │
+│  mb-4 (16px) giữa sections    │
 └─────────────────────────────────┘
 
-Standard horizontal padding: 16px
+Standard horizontal padding: 24px (px-6)
+Card internal padding: 16px (p-4)
 Safe area insets: Respected on notched devices
 ```
 
@@ -170,29 +177,36 @@ Recommended: 12px for comfortable tapping
 ### 6.1 Buttons
 
 ```
-Primary Button:
+Primary Button (CTA):
 ┌─────────────────────────────────┐
-│         Start Learning          │
+│     🎧 Bắt đầu nghe            │
 └─────────────────────────────────┘
-Height: 48px (touch target)
-Border Radius: 12px
-Background: primary-500
-Text: white, 16sp, semibold
+Height: 56px
+Border Radius: 16px (rounded-2xl)
+Background: primary (#4ade80)
+Text: #000000, 16sp, bold
+Shadow: Glow (green shadow, opacity 0.35)
+
+Disabled:
+Background: neutrals700 (#414240)
+Text: neutrals400
+Shadow: none
+Opacity: 1.0 (KHÔNG dùng opacity, chỉ đổi màu)
 
 Secondary Button:
 ┌─────────────────────────────────┐
 │           Cancel                │
 └─────────────────────────────────┘
 Height: 48px
-Border: 1px primary-500
+Border: 1px primary
 Background: transparent
-Text: primary-500
+Text: primary
 
 Ghost Button:
          Learn More →
 Height: 44px
 Background: transparent
-Text: primary-500
+Text: primary
 
 Icon Button:
     ┌────┐
@@ -310,20 +324,26 @@ Fill: primary gradient
 ### 6.7 Chips/Pills
 
 ```
-[  Topic 1  ] [  Topic 2  ] [  Topic 3  ]
+[  🌱 Topic 1  ] [  🌿 Topic 2  ] [  🌳 Topic 3  ]
 
 Selected:
-Background: primary-500
-Text: white
+Background: {accentColor} at 8% opacity
+Border: 1px {accentColor} (solid)
+Text: {accentColor}, bold (700)
 
 Unselected:
-Background: surface
-Border: 1px border
-Text: text-primary
+Background: transparent
+Border: 1px neutrals800 (#1d1d1d)
+Text: foreground (#fafafa), regular (400)
 
-Height: 36px
-Padding: 8px 16px
-Border Radius: 18px
+Padding: py-3 (12px vertical)
+Border Radius: 16px (rounded-2xl)
+Flex: flex-1 (equal width distribution)
+Gap: 12px giữa các chips
+
+Animation:
+  onPressIn: scale → 0.92 (spring: damping=15, stiffness=300)
+  onPressOut: scale → 1.0 (spring: damping=12, stiffness=200)
 ```
 
 **Usage Guidance:**
@@ -338,11 +358,15 @@ Border Radius: 18px
 
 ### 7.1 Icon Library
 
-| Platform | Library |
-|----------|---------|
-| iOS | SF Symbols (via react-native-sfsymbols) |
-| Android | Material Symbols |
-| Cross-platform | Lucide Icons (fallback) |
+| Library | Usage |
+|---------|---------|
+| **Lucide Icons** (lucide-react-native) | Primary — cross-platform, consistent style |
+
+```
+Size:     w-5 h-5 (20px) standard, w-6 h-6 (24px) header actions
+Color:    neutrals400 for UI icons, primary for accent states
+Stroke:   2px (default Lucide)
+```
 
 ### 7.2 Icon Sizes
 
@@ -354,13 +378,13 @@ Border Radius: 18px
 | lg | 32px | Feature icons |
 | xl | 48px | Empty states |
 
-### 7.3 Feature Icons
+### 7.3 Feature / Skill Colors
 
-| Feature | Icon | Color |
-|---------|------|-------|
-| Listening | 🎧 headphones | Blue |
-| Speaking | 🗣️ waveform | Orange |
-| Reading | 📖 book-open | Green |
+| Feature | Emoji | Color | Hex |
+|---------|-------|-------|-----|
+| Listening | 🎧 | Indigo | `#6366F1` |
+| Speaking | 🗣️ | Green | `#4ade80` |
+| Reading | 📖 | Gold | `#fbbf24` |
 
 ---
 
@@ -368,23 +392,26 @@ Border Radius: 18px
 
 ### 8.1 Timing
 
-| Type | Duration | Easing |
-|------|----------|--------|
-| Micro | 150ms | ease-out |
-| Small | 250ms | ease-in-out |
-| Medium | 350ms | ease-in-out |
-| Large | 500ms | spring |
+| Action | Duration | Easing | Khi nào |
+|--------|----------|--------|--------|
+| Button/Card press | spring | damping=15, stiff=300 | Nhấn giữ chip/button/card |
+| Button/Card release | spring | damping=12, stiff=200 | Thả chip/button/card |
+| Expand/Collapse | 250ms | bezier(0.4, 0, 0.2, 1) | Mở/đóng section |
+| Modal appear | 300ms | slide (native) | Sheet/Modal mở |
+| Modal dismiss | 200ms | slide (native) | Sheet/Modal đóng |
+| Fade in | 200ms | ease-out | Content xuất hiện |
+| Fade out | 150ms | ease-in | Content biến mất |
 
 ### 8.2 Common Animations
 
 ```typescript
-// Button press
-scale: 0.97
-duration: 100ms
-
-// Card hover/press
-scale: 0.98
-duration: 150ms
+// Chip/Card/Button press animation (spring — scale 0.92)
+const handlePressIn = () => {
+  scale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
+};
+const handlePressOut = () => {
+  scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+};
 
 // Page transition
 translateX: 0 → screen-width
@@ -394,12 +421,13 @@ easing: ease-in-out
 // Modal appear
 translateY: screen-height → 0
 opacity: 0 → 1
-duration: 350ms
-
-// Swipe card
-rotate: 0 → ±15deg
-translateX: 0 → ±screen-width
 duration: 300ms
+
+// Collapsible expand
+withTiming(isExpanded ? 1 : 0, {
+  duration: 250,
+  easing: Easing.bezier(0.4, 0, 0.2, 1),
+});
 ```
 
 ### 8.3 Reduce Motion Support
@@ -417,12 +445,12 @@ const duration = reduceMotion ? 0 : 300;
 
 ### 9.1 Shadow Levels (iOS)
 
-| Level | shadowOffset | shadowRadius | shadowOpacity |
-|-------|--------------|--------------|---------------|
-| sm | 0, 1 | 2 | 0.05 |
-| md | 0, 2 | 4 | 0.08 |
-| lg | 0, 4 | 8 | 0.12 |
-| xl | 0, 8 | 16 | 0.16 |
+| Level | shadowOffset | shadowRadius | shadowOpacity | Dùng cho |
+|-------|--------------|--------------|---------------|----------|
+| sm (subtle) | 0, 2 | 4 | 0.06 | Section cards |
+| md (medium) | 0, 4 | 8 | 0.12 | Buttons, floating actions |
+| lg (strong) | 0, -4 | 16 | 0.15 | Bottom sheets, modals |
+| xl (glow) | 0, 4 | 12 | 0.35 | CTA buttons (colored shadow) |
 
 ### 9.2 Elevation (Android)
 
@@ -430,8 +458,8 @@ const duration = reduceMotion ? 0 : 300;
 |-------|-----------|
 | sm | 2 |
 | md | 4 |
-| lg | 8 |
-| xl | 16 |
+| lg | 20 |
+| xl | 8 |
 
 ---
 
@@ -445,7 +473,7 @@ const duration = reduceMotion ? 0 : 300;
 | Surface | #f5f5f5 | #0a0a0a |
 | Surface Raised | #ffffff | #171717 |
 | Text Primary | #171717 | #fafafa |
-| Text Secondary | #737373 | #a3a3a3 |
+| Text Secondary | #737373 | #6e6e6e |
 | Border | #e5e5e5 | #262626 |
 | Primary | #22c55e | #4ade80 |
 
@@ -547,6 +575,7 @@ module.exports = {
 
 ## 14. Related Documents
 
-- [Style_Convention.md](Style_Convention.md) - **Usage patterns, screen templates, UX states, navigation rules**
-- [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
-- [Architecture.md](../technical/Architecture.md) - Technical implementation
+- [Obsidian_Glass_Style_Guide.md](Obsidian_Glass_Style_Guide.md) — **🎯 Master source of truth** cho design tokens, colors, shadows, animations
+- [Style_Convention.md](Style_Convention.md) — Usage patterns, screen templates, UX states, navigation rules
+- [00_Mobile_Overview.md](../00_Mobile_Overview.md) — Project overview
+- [Architecture.md](../technical/Architecture.md) — Technical implementation

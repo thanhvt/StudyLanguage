@@ -144,15 +144,6 @@
 | MOB-LIS-ADV-HP-001 | ✅ | Set A-B Loop | 1. Long press set point A<br>2. Long press set point B | Audio lặp đi lặp lại đoạn A→B | 🟡 |
 | MOB-LIS-ADV-HP-002 | ✅ | Clear A-B Loop | 1. Tap "Clear Loop" | Trở về phát bình thường | 🟡 |
 
-### 11. Offline Playback
-
-| ID | Type | Scenario | Steps | Expected Result | Severity |
-|:---|:-----|:---------|:------|:----------------|:---------|
-| MOB-LIS-ADV-HP-003 | ✅ | Download bài nghe | 1. Tap ⬇️ Download trên lesson | Download progress hiển thị, save offline | 🟡 |
-| MOB-LIS-ADV-HP-004 | ✅ | Phát bài đã download offline | 1. Tắt mạng<br>2. Mở bài đã download | Audio phát bình thường từ local storage | 🔴 |
-| MOB-LIS-ADV-EC-001 | ⚠️ | Download bị gián đoạn | 1. Bắt đầu download<br>2. Mất mạng giữa chừng | Hiện retry, resume download khi có mạng lại | 🟡 |
-| MOB-LIS-ADV-EC-002 | ⚠️ | Storage đầy | 1. Storage device gần đầy<br>2. Download bài | Hiện warning "Không đủ dung lượng" | 🟡 |
-
 ---
 
 ## Smoke Tests
@@ -240,7 +231,7 @@
 | MOB-LIS-MNL-019 | ✅ | Close sheet | Swipe down/tap backdrop | Sheet đóng, settings giữ | 🟡 |
 | MOB-LIS-MNL-020 | ✅ | Full E2E flow | Config đầy đủ → Start | Loading → Player screen | 🔴 |
 | MOB-LIS-MNL-021 | ❌ | Start không topic | Bỏ trống topic → Start | Validation error hiện | 🟡 |
-| MOB-LIS-MNL-022 | ❌ | Start offline | Tắt mạng → Start | Error toast/dialog | 🔴 |
+| MOB-LIS-MNL-022 | ❌ | Start không có mạng | Tắt mạng → Start | Error toast/dialog | 🔴 |
 | MOB-LIS-MNL-023 | ✅ | Custom scenario Quick Use | Nhập tên + desc → Quick Use | Topic fill, ready | 🟡 |
 | MOB-LIS-MNL-024 | ✅ | Custom scenario Save | Nhập → Save | Lưu local, hiện trong list | 🟡 |
 
@@ -792,7 +783,7 @@ ConfigScreen → Tắt WiFi → Tap Start → Error toast
 | 1. No WiFi + Start | Error toast, config giữ nguyên | ☐ |
 | 2. WiFi on + Start | Generate thành công | ☐ |
 | 3. WiFi off khi phát | Audio cache vẫn phát | ☐ |
-| 4. Tap từ offline | Dictionary error toast | ☐ |
+| 4. Tap từ khi không có mạng | Dictionary error toast | ☐ |
 
 
 ---

@@ -63,7 +63,7 @@ Hệ thống xác thực cho mobile app sử dụng **Google OAuth** là phươn
 |------|---------|--------|
 | Access Token | SecureStore | Encrypted, secure |
 | Refresh Token | SecureStore | Encrypted, secure |
-| User Profile | AsyncStorage | Quick access |
+| User Profile | MMKV | Quick access |
 | Auth State | Zustand (memory) | Fast UI updates |
 
 ### 4.2 Libraries
@@ -123,7 +123,7 @@ interface AuthState {
 
 ### 6.1 Best Practices
 - ✅ Tokens stored in SecureStore (encrypted)
-- ✅ No sensitive data in AsyncStorage
+- ✅ No sensitive data in MMKV
 - ✅ HTTPS only for all API calls
 - ✅ Session timeout after 30 days inactivity
 

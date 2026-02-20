@@ -123,7 +123,7 @@
 
 ---
 
-## SMOKE-09: Offline Error Handling
+## SMOKE-09: Network Error Handling
 
 | # | Bước | Expected | iOS | Android | Ghi chú |
 |:-:|------|----------|:---:|:-------:|---------|
@@ -144,7 +144,7 @@
 | SMOKE-06 New Conversation Reset | | | |
 | SMOKE-07 Scenario Quick Generate | | | |
 | SMOKE-08 Navigation | | | |
-| SMOKE-09 Offline Handling | | | |
+| SMOKE-09 Network Error Handling | | | |
 
 **Tổng:** ___/9 PASS (iOS) | ___/9 PASS (Android)
 

@@ -13,14 +13,13 @@
 ### 1.1. Mục tiêu Mobile App
 Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 - **Học mọi lúc, mọi nơi:** Tối ưu cho việc học trong thời gian chết (di chuyển, xe bus, trước khi ngủ)
-- **Trải nghiệm mượt mà:** Tương tác tự nhiên với gestures, voice commands, offline mode
+- **Trải nghiệm mượt mà:** Tương tác tự nhiên với gestures, voice commands
 - **Đồng bộ liền mạch:** Sync hoàn hảo với Web App
 
 ### 1.2. Đặc điểm Mobile-First
 | Nguyên tắc | Mô tả |
 |------------|-------|
 | **Thumb-Friendly** | Các nút bấm chính nằm trong vùng ngón tay cái dễ chạm |
-| **Offline-First** | Hoạt động tốt ngay cả khi mất mạng |
 | **Battery-Optimized** | Tối ưu pin, không drain battery khi chạy nền |
 | **Fast Loading** | Skeleton loading, progressive image loading |
 | **Native Feel** | Sử dụng haptic feedback, native transitions |
@@ -52,8 +51,7 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 ### 2.3. State Management \u0026 Data
 - **TanStack Query (React Query):** Cache \u0026 sync data
 - **Zustand:** Global state management (nhẹ hơn Redux)
-- **AsyncStorage:** Local storage cho settings
-- **SQLite:** Offline database (nội dung đã tải)
+- **MMKV (react-native-mmkv):** Fast key-value storage cho settings
 
 ### 2.4. Audio \u0026 Media
 - **Expo AV:** Play/Record audio
@@ -61,8 +59,6 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 - **Background Audio:** Expo Audio để nghe khi app minimize
 
 ### 2.5. Native Features
-- **Expo Notifications:** Push notifications
-- **Expo Calendar:** Tích hợp lịch
 - **Expo File System:** Quản lý file download
 - **Expo Sensors:** Phát hiện chuyển động (car mode)
 - **Expo Location:** Location-based content
@@ -215,11 +211,6 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
   - "Next" / "Tiếp theo"
   - "Repeat" / "Lặp lại"
   - "Save" / "Lưu"
-
-#### E. Offline Support
-- **Pre-download:** User có thể download bài nghe trước khi mất mạng
-- **Storage:** Lưu trong local storage, tối đa 50 bài
-- **Sync:** Tự động tải bài mới khi có WiFi
 
 ---
 
@@ -552,7 +543,7 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 ├─────────────────────────────────┤
 │  ⚙️ Settings                    │
 │  › Appearance                   │
-│  › Notifications                │
+│  › Storage & Privacy
 │  › Download \u0026 Storage          │
 │  › Audio Settings               │
 │  › Privacy                      │
@@ -570,7 +561,7 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 - Font Size: Small / Medium / Large
 - Language: English / Tiếng Việt
 
-**Notifications:**
+**Audio Settings:**
 - Daily Reminder: Time picker
 - Streak Warning: ON/OFF
 - Achievement: ON/OFF
@@ -628,8 +619,7 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 
 **Technical:**
 - Sử dụng Expo Speech Recognition
-- Offline mode: On-device recognition (limited)
-- Online mode: Cloud-based (accurate hơn)
+- Online mode: Cloud-based (accurate)
 
 ### 4.3. Widgets
 
@@ -670,27 +660,6 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 - **Media controls:** Play/Pause/Next khi nghe podcast
 - **Notification persistent:** Bài học đang dở
 
-### 4.5. Notifications
-
-#### A. Push Notifications
-| Type | Timing | Content |
-|------|--------|---------|
-| **Daily Reminder** | 19:00 (customizable) | "Đã sẵn sàng học chưa? 💪" |
-| **Streak Warning** | 21:00 | "2 giờ nữa mất streak! 🔥" |
-| **Achievement** | Instant | "Chúc mừng! 🎉 7 ngày liên tục!" |
-| **Review Reminder** | 10:00 | "15 từ cần ôn tập hôm nay" |
-| **Personalized Tip** | Weekly | "Mẹo: Luyện phát âm 'th' mỗi ngày" |
-
-**Best Practices:**
-- Tối đa 2 notification/ngày
-- Không gửi trong giờ ngủ (22:00-07:00)
-- User có thể tùy chỉnh hoàn toàn
-
-#### B. Local Notifications
-- Reminder khi download xong bài
-- Warning khi storage đầy
-- Congratulations khi hoàn thành bài
-
 ### 4.6. Background Modes
 
 #### A. Background Audio
@@ -703,40 +672,7 @@ Xây dựng ứng dụng mobile hoàn chỉnh cho phép người dùng:
 - Upload recordings khi connected WiFi
 - Download lessons khi idle + WiFi
 
-### 4.7. Offline Mode
-
-#### A. Offline Capabilities
-✅ **Hoạt động offline:**
-- Nghe bài đã download
-- Xem history đã cache
-- Review vocabulary đã lưu
-- Đọc reading materials đã cache
-
-❌ **Không hoạt động offline:**
-- Generate bài mới (cần AI)
-- Speaking practice (cần AI scoring)
-- Real-time translation
-
-#### B. Download Manager
-```
-┌─────────────────────────────────┐
-│  📥 Downloaded Lessons      ✅  │
-├─────────────────────────────────┤
-│  Auto-download on WiFi: ON      │
-│  Max storage: 500MB             │
-├─────────────────────────────────┤
-│  ✅ Coffee Shop (15 MB)         │
-│  ✅ Tech Talk (12 MB)           │
-│  ⏳ Airport Guide (8 MB)        │
-│  [ ] Climate Change (10 MB)     │
-│                                 │
-│  Storage: 35 MB / 500 MB        │
-│                                 │
-│  [Download All New Lessons]     │
-└─────────────────────────────────┘
-```
-
-### 4.8. Haptic Feedback
+### 4.7. Haptic Feedback
 
 | Event | Haptic Type |
 |-------|-------------|
@@ -886,7 +822,7 @@ Screen 2: 4 Skills
   "Luyện cả 3 kỹ năng với AI"
 
 Screen 3: Anywhere
-  "Học mọi lúc, mọi nơi - Online \u0026 Offline"
+  "Học mọi lúc, mọi nơi"
 
 Screen 4: Login
   [Tiếp tục với Google]
@@ -911,9 +847,7 @@ Screen 4: Login
 | Permission | When to ask | Why |
 |------------|-------------|-----|
 | **Microphone** | Khi vào Speaking lần đầu | Ghi âm phát âm |
-| **Notifications** | Sau 3 bài học | Nhắc nhở học tập |
 | **Location** | Khi enable location-based | Nội dung theo ngữ cảnh |
-| **Calendar** | Khi enable integration | Meeting prep |
 | **Photo** | Khi dùng Screenshot Translate | OCR từ ảnh |
 
 **Best Practice:** Explain before ask
@@ -941,9 +875,7 @@ Screen 4: Login
 - ✅ Login flow hoạt động
 - ✅ Generate \u0026 play audio
 - ✅ Recording \u0026 AI scoring
-- ✅ Offline mode
 - ✅ Background audio
-- ✅ Push notifications
 - ✅ Sync giữa devices
 
 #### B. Performance Tests
@@ -1039,13 +971,10 @@ Screen 4: Login
 - ✅ Google Login
 - ✅ 4 Skills basic functionality
 - ✅ History timeline
-- ✅ Basic offline support
 - ✅ Light/Dark mode
 
 ### Phase 2: Enhanced UX (3-4 tuần)
-- ✅ Offline mode advanced (download manager)
 - ✅ Vocabulary system + flashcards
-- ✅ Notifications
 - ✅ Widgets
 - ✅ Background audio
 - ✅ Gestures \u0026 Voice commands
@@ -1056,7 +985,6 @@ Screen 4: Login
 - ✅ Conversation roleplay
 - ✅ Learning streak + Gamification
 - ✅ Family leaderboard
-- ✅ Calendar integration
 - ✅ Screenshot translate
 
 ---
@@ -1067,8 +995,8 @@ Tài liệu này định nghĩa **đầy đủ** yêu cầu cho phiên bản Mob
 
 ✅ **Tính đầy đủ:** Bao gồm toàn bộ tính năng từ Web + Tính năng đặc thù Mobile
 ✅ **Tính rõ ràng:** UI mockup, flow chi tiết cho từng module
-✅ **Tối ưu Mobile:** Gestures, voice, offline, battery-friendly
-✅ **Trải nghiệm cao cấp:** Animation, haptic, notification thông minh
+✅ **Tối ưu Mobile:** Gestures, voice, battery-friendly
+✅ **Trải nghiệm cao cấp:** Animation, haptic, interaction mượt mà
 ✅ **Khả thi kỹ thuật:** Công nghệ phù hợp (React Native, Expo, Supabase)
 
 **Mục tiêu cuối cùng:** 

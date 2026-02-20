@@ -135,7 +135,6 @@ Cho phép resume session từ Global Audio Player hoặc Recent Lessons:
 | Scenario | Behavior |
 |----------|----------|
 | Online | Sync immediately after session |
-| Offline | Queue for sync, show pending icon |
 | Conflict | Latest timestamp wins |
 
 ### 4.4 Gestures (NEW ✨)
@@ -252,7 +251,7 @@ react-native-haptic-feedback   // Haptic trên tap, swipe, long press
 victory-native                 // Charts (progress, distribution)
 react-native-view-shot         // Tạo share image card
 react-native-share             // Share API
-@react-native-async-storage/async-storage // Recent searches
+react-native-mmkv                     // Fast key-value storage (settings, recent searches)
 ```
 
 ---
@@ -277,7 +276,7 @@ react-native-share             // Share API
 - [ ] Quick actions (long press bottom sheet)
 - [ ] **Swipe-to-action (delete/pin)** (NEW ✨)
 - [ ] Infinite scroll pagination
-- [ ] Offline sync queue
+
 - [ ] **Session restoration from audio player**
 - [ ] **Persist audio URL in history**
 - [ ] **Navigate to skill page from player**
@@ -466,5 +465,5 @@ react-native-share             // Share API
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [00_Dashboard.md](00_Dashboard.md) - Visual identity consistency (accent colors)
 - [02_Listening.md](02_Listening.md) - Gesture system reference
-- [10_Native_Features.md](10_Native_Features.md) - Offline sync
+- [10_Native_Features.md](10_Native_Features.md) - Background audio, haptics
 - [Architecture.md](../technical/Architecture.md) - Data sync

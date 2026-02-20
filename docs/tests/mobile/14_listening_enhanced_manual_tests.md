@@ -66,7 +66,7 @@
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
 | 1 | Generate bài → đóng app | OK | | |
-| 2 | Đợi lâu (hoặc clear AsyncStorage nếu dev mode) | Session cũ hết | | |
+| 2 | Đợi lâu (hoặc clear MMKV nếu dev mode) | Session cũ hết | | |
 | 3 | Mở lại app → Config screen | Không hiện banner "Tiếp tục nghe" | | |
 
 ---
@@ -160,7 +160,7 @@
 ### MAN-ENH-015 ❌ Radio lỗi khi mất mạng
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | Tắt WiFi + Mobile Data | Offline | | |
+| 1 | Tắt WiFi + Mobile Data | Mất mạng | | |
 | 2 | Tap "Bắt đầu Radio" | Error toast "Không thể tạo playlist" | | |
 | 3 | Kiểm tra UI | Nút retry hoặc error state hiện | | |
 | 4 | Bật mạng lại → thử lại | Generate thành công | | |
@@ -261,10 +261,10 @@
 | 3 | Tap **Xoá** | Scenario biến mất, toast "Đã xoá" | | |
 | 4 | Kiểm tra: scenario đã xoá không hiện lại | ✅ | | |
 
-### MAN-ENH-027 ❌ Custom Scenarios offline
+### MAN-ENH-027 ❌ Custom Scenarios khi mất mạng
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | Tắt mạng | Offline | | |
+| 1 | Tắt mạng | Mất mạng | | |
 | 2 | Mở Custom Scenario panel | Danh sách không load (loading spinner hoặc trống) | | |
 | 3 | Nhập tên → Tap "Lưu lại" | Toast error "Lỗi lưu kịch bản" | | |
 | 4 | Bật mạng → thử lại | Lưu thành công | | |

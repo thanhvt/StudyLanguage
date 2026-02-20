@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-Kiến trúc kỹ thuật cho mobile app StudyLanguage, tối ưu cho offline-first và cross-platform.
+Kiến trúc kỹ thuật cho mobile app StudyLanguage, tối ưu cho cross-platform.
 
 ---
 
@@ -93,7 +93,6 @@ apps/mobile/
 │   ├── hooks/                  # Custom hooks
 │   │   ├── useAudio.ts
 │   │   ├── useRecording.ts
-│   │   ├── useOffline.ts
 │   │   └── ...
 │   ├── services/               # API & external services
 │   │   ├── api/
@@ -171,7 +170,6 @@ Root Navigator (Stack)
         └── Settings Stack
             ├── Settings
             ├── Appearance
-            ├── Notifications
             ├── Audio
             ├── Storage
             ├── Privacy
@@ -273,7 +271,7 @@ export default function MainTabs() {
 │         └──────────┬───────────┘                             │
 │                    │                                         │
 │         ┌──────────▼───────────┐                             │
-│         │   AsyncStorage       │                             │
+│         │   MMKV               │                             │
 │         │   SecureStore        │                             │
 │         │   SQLite             │                             │
 │         └──────────────────────┘                             │
@@ -287,7 +285,10 @@ export default function MainTabs() {
 // store/auth.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {MMKV} from 'react-native-mmkv';
+
+// MMKV Storage Adapter cho Zustand
+const storage = new MMKV();
 
 interface AuthState {
   user: User | null;
@@ -315,7 +316,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ({
+        getItem: (name: string) => storage.getString(name) ?? null,
+        setItem: (name: string, value: string) => storage.set(name, value),
+        removeItem: (name: string) => storage.delete(name),
+      })),
     }
   )
 );
@@ -357,9 +362,7 @@ export function useGenerateListening() {
 | Data Type | Storage | Reason |
 |-----------|---------|--------|
 | Auth tokens | SecureStore | Encrypted |
-| User preferences | AsyncStorage | Quick access |
-| Downloaded lessons | SQLite + FileSystem | Offline |
-| Session history | SQLite | Offline query |
+| User preferences | MMKV | Quick access |
 | Cache | React Query | Memory + persist |
 
 ### 6.2 SQLite Schema
@@ -390,7 +393,7 @@ CREATE TABLE vocabulary (
   created_at TEXT
 );
 
--- Session history (offline cache)
+-- Session history
 CREATE TABLE history (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL,
@@ -403,31 +406,7 @@ CREATE TABLE history (
 );
 ```
 
-### 6.3 Offline Sync
 
-```typescript
-// services/sync.ts
-class SyncService {
-  async syncPendingData() {
-    const pendingHistory = await db.getUnsyncedHistory();
-    
-    for (const item of pendingHistory) {
-      try {
-        await api.syncHistory(item);
-        await db.markSynced(item.id);
-      } catch (error) {
-        console.log('Sync failed, will retry later');
-      }
-    }
-  }
-  
-  // Called when app comes online
-  async onNetworkRestore() {
-    await this.syncPendingData();
-    await this.downloadNewContent();
-  }
-}
-```
 
 ---
 

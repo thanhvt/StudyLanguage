@@ -119,8 +119,7 @@
 
 ### Phase 3.3 (Ưu tiên thấp - Nice to have)
 7. **Car Mode** - Specialized use case
-8. **Calendar Integration** - Cần permission phức tạp
-9. **Screenshot Translate** - Có thể dùng app khác thay thế
+8. **Screenshot Translate** - Có thể dùng app khác thay thế
 
 ---
 
@@ -133,12 +132,11 @@
 
 ### 7.2. Storage Requirements
 - Thêm table lưu learning history, streak data, achievements
-- Audio cache cho offline learning
+- Audio cache cho learning
 - User preferences sync
 
 ### 7.3. Third-party Integrations
-- Calendar API (Google Calendar, Apple Calendar)
-- Push notification service (Firebase Cloud Messaging)
+
 - Email service (cho Weekly Report)
 
 ---

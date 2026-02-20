@@ -227,7 +227,7 @@ Cung cấp cho người dùng một nơi tập trung để **xem lại toàn b�
 
 ### 3.3. Performance
 - **Lazy loading:** Load thêm khi scroll xuống (infinite scroll)
-- **Cached locally:** Nội dung text cache trên device để xem offline
+- **Cached locally:** Nội dung text cache trên device
 - **Audio streaming:** Audio không cache toàn bộ, stream khi cần
 
 ### 3.4. Empty States
@@ -333,9 +333,9 @@ GET    /api/vocabulary                 # List vocabulary
 POST   /api/vocabulary/:id/review      # Mark as reviewed
 ```
 
-### 4.4. Offline Support
+### 4.4. Local Storage
 - Sử dụng **React Query** với persistence để cache data
-- SQLite local (React Native) cho offline access
+- MMKV local (React Native) cho fast access
 - Sync khi có internet connection
 
 ---

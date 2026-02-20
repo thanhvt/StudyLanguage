@@ -10,7 +10,7 @@
 | ID | Component | Mock Scenario | Expected Behavior |
 | :--- | :--- | :--- | :--- |
 | **MCK-001** | **OpenAI Service** | **Mock Response 500 error:** Giả lập OpenAI bị down service | App không crash, hiển thị thông báo "AI services are currently busy, please try again later" |
-| **MCK-002** | **Network** | **Offline Mode:** Tắt mạng hoàn toàn (Airplane mode) | Khi vào bài học mới -> Báo "No Internet". Khi vào bài cũ -> Load data từ Cache |
+| **MCK-002** | **Network** | **No Internet:** Tắt mạng hoàn toàn (Airplane mode) | Khi vào bài học mới -> Báo "No Internet". Khi vào bài cũ -> Load data từ Cache |
 | **MCK-003** | **Speaking Score** | **Mock Random Score:** Dev mode không gọi Whisper tốn tiền | Bấm record -> Trả về ngay lập tức điểm số random 0-100 để test UI animation |
 
 ---

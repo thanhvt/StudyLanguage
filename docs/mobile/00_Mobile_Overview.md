@@ -16,7 +16,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | # | Goal | Description |
 |---|------|-------------|
 | 1 | **Học mọi lúc, mọi nơi** | Tối ưu cho di chuyển, trước khi ngủ, nghỉ trưa |
-| 2 | **Trải nghiệm mượt mà** | Gestures, voice commands, offline mode |
+| 2 | **Trải nghiệm mượt mà** | Gestures, voice commands |
 | 3 | **Đồng bộ liền mạch** | Sync hoàn hảo với Web App |
 | 4 | **AI-Powered Learning** | Content generation, feedback, personalization |
 
@@ -44,7 +44,6 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | Nguyên tắc | Mô tả |
 |------------|-------|
 | 🔘 **Thumb-Friendly** | Các nút bấm chính nằm trong vùng ngón tay cái dễ chạm |
-| 📴 **Offline-First** | Hoạt động tốt ngay cả khi mất mạng |
 | 🔋 **Battery-Optimized** | Tối ưu pin, không drain battery khi chạy nền nhưng khi người dùng cho app chạy foreground / background thì vẫn hoạt động tốt (vẫn phát ra âm thanh, nhận được thông báo, v.v.)|
 | ⚡ **Fast Loading** | Skeleton loading, progressive image loading |
 | 📳 **Native Feel** | Haptic feedback, native transitions |
@@ -70,8 +69,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 |-------|------------|---------|
 | Server State | TanStack Query | Cache & sync data |
 | Client State | Zustand | Global state (lightweight) |
-| Local Storage | AsyncStorage | Settings, preferences |
-| Offline DB | SQLite | Downloaded content |
+| Local Storage | MMKV (react-native-mmkv) | Settings, preferences |
 | Secure Storage | react-native-keychain | Tokens, credentials (Keychain/Keystore) |
 
 ### 4.3 Audio & Media
@@ -83,8 +81,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | Sound Effects | react-native-sound | Low latency UI sounds |
 
 ### 4.4 Native Features
-- **Push Notifications:** Notifee + @react-native-firebase/messaging
-- **Calendar Integration:** react-native-calendar-events
+
 - **File System:** react-native-fs
 - **Motion Detection:** react-native-sensors
 - **Location:** react-native-geolocation-service
@@ -104,11 +101,10 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 
 | Module | MVP | Enhanced | Advanced |
 |--------|-----|----------|----------|
-| � **Dashboard** | Greeting + Streak | Quick Actions | - |
+| 🏠 **Dashboard** | Greeting + Streak | Quick Actions | - |
 | 🎧 **Listening** | Podcast mode, Basic player | TTS Provider Panel, Radio Mode | Background audio, Lock screen |
-| 🗣️ **Speaking** | Voice Recorder | Conversation Coach (Basic) | Realtime Transcription, AI Feedback |
+| 🗣️ **Speaking** | Voice Recorder | Conversation Coach | Realtime Transcription, AI Feedback |
 | 📖 **Reading** | Article view, Focus Mode | Tap-to-translate, Quiz | Reading Practice with AI |
-
 | 📜 **History** | Timeline view | Analytics (Stats, Chart) | Heatmap, AI Insights, Pinned Items |
 
 ### 5.2 Mobile-Specific Features
@@ -116,8 +112,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 | Feature | MVP | Enhanced | Advanced |
 |---------|-----|----------|----------|
 | **Gestures** | Basic swipe | Full gesture system | Voice commands |
-| **Offline** | Downloaded lessons | Download manager | Auto-sync WiFi |
-| **Notifications** | Daily reminder | Streak warning | Personalized tips |
+
 | **Widgets** | - | Basic widget | Word of the day |
 | **Special Modes** | - | - | Car, Bedtime, Workout |
 
@@ -129,7 +124,7 @@ Xây dựng ứng dụng mobile học tiếng Anh AI-powered, cho phép người
 Tab Navigator (Bottom) — 6 tabs
 ├── 🏠 Dashboard
 │   ├── Greeting + Streak
-│   ├── Study Goal + Next Lesson
+│   ├── Study Goal
 │   ├── Quick Actions
 │   └── Recent Activity
 │
@@ -153,7 +148,6 @@ Tab Navigator (Bottom) — 6 tabs
 └── ⚙️ Settings
     ├── Appearance (Theme, Language)
     ├── Audio Settings
-    ├── Notifications
     ├── Storage & Privacy
     └── About
 ```
@@ -190,5 +184,5 @@ Tab Navigator (Bottom) — 6 tabs
 | App launch time | < 2 seconds |
 | Screen transitions | 60fps smooth |
 | Battery drain (passive) | < 5%/hour |
-| Offline capability | Core features work |
+
 | User retention D7 | > 50% |

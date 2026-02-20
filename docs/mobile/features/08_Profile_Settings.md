@@ -60,7 +60,7 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 ### 4.1 Storage
 
 ```typescript
-// AsyncStorage keys
+// MMKV keys
 const SETTINGS_KEYS = {
   THEME: '@settings/theme',
   ACCENT_COLOR: '@settings/accentColor',
@@ -300,49 +300,7 @@ interface SettingsState {
 { "success": true, "message": "Tài khoản đã được xóa vĩnh viễn" }
 ```
 
----
 
-### 6.2 Notifications Module (`/api/notifications`)
-
-#### `POST /api/notifications/register-device`
-
-> Đăng ký FCM/APNs token cho push notification
-
-**Request Body:**
-
-| Field | Type | Required | Mô tả |
-|---|---|---|---|
-| `token` | string | ✅ | FCM/APNs device token |
-| `platform` | enum | ✅ | `ios` \| `android` |
-
----
-
-#### `POST /api/notifications/send`
-
-> Gửi push notification (internal/admin)
-
-**Request Body:**
-
-| Field | Type | Required | Mô tả |
-|---|---|---|---|
-| `userId` | string | ✅ | ID user nhận notification |
-| `title` | string | ✅ | Tiêu đề |
-| `body` | string | ✅ | Nội dung |
-| `data` | object | ❌ | Data payload tùy chỉnh |
-
----
-
-#### `DELETE /api/notifications/unregister`
-
-> Xóa device token khi user logout
-
-**Request Body:**
-
-| Field | Type | Required | Mô tả |
-|---|---|---|---|
-| `token` | string | ✅ | Token cần xóa |
-
----
 
 ### 6.3 Feedback Module (`/api/feedback`)
 
@@ -400,4 +358,4 @@ interface SettingsState {
 
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) - Project overview
 - [01_Authentication.md](01_Authentication.md) - Login/Logout
-- [10_Native_Features.md](10_Native_Features.md) - Notifications
+- [10_Native_Features.md](10_Native_Features.md) - Native features
