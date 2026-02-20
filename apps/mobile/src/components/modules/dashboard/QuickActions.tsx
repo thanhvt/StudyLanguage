@@ -1,5 +1,6 @@
 import React from 'react';
 import {TouchableOpacity, View} from 'react-native';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
 import {SKILL_COLORS, type SkillType} from '@/config/skillColors';
@@ -42,6 +43,7 @@ const SKILLS: {
  * Khi nào sử dụng: Phần "Luyện tập nhanh" trên Dashboard
  *   - 3 cards nằm ngang, mỗi card có màu nền riêng theo skill
  *   - Nhấn → navigate đến feature tương ứng
+ *   - Animated: mỗi card xuất hiện staggered FadeInDown
  */
 export default function QuickActions() {
   const navigation = useNavigation();
@@ -63,34 +65,38 @@ export default function QuickActions() {
         ⚡ Luyện tập nhanh
       </AppText>
 
-      {/* 3 horizontal skill cards */}
+      {/* 3 horizontal skill cards - staggered animation */}
       <View className="flex-row gap-3">
-        {SKILLS.map(skill => {
+        {SKILLS.map((skill, index) => {
           const bgColor = SKILL_COLORS[skill.id].dark;
           return (
-            <TouchableOpacity
+            <Animated.View
               key={skill.id}
-              className="flex-1 rounded-xl p-4"
-              style={{
-                backgroundColor: `${bgColor}15`,
-                borderWidth: 1,
-                borderColor: `${bgColor}30`,
-              }}
-              activeOpacity={0.7}
-              onPress={() => handleSkillPress(skill.route)}>
-              {/* Icon */}
-              <AppText className="text-[28px] mb-2">{skill.emoji}</AppText>
-              {/* Label */}
-              <AppText
-                className="font-sans-bold text-sm"
-                style={{color: bgColor}}>
-                {skill.label}
-              </AppText>
-              {/* Thời gian */}
-              <AppText className="text-neutrals400 text-[11px] mt-1">
-                {skill.time}
-              </AppText>
-            </TouchableOpacity>
+              entering={FadeInDown.delay(index * 100).duration(400).springify()}
+              className="flex-1">
+              <TouchableOpacity
+                className="rounded-xl p-4"
+                style={{
+                  backgroundColor: `${bgColor}15`,
+                  borderWidth: 1,
+                  borderColor: `${bgColor}30`,
+                }}
+                activeOpacity={0.7}
+                onPress={() => handleSkillPress(skill.route)}>
+                {/* Icon */}
+                <AppText className="text-[28px] mb-2">{skill.emoji}</AppText>
+                {/* Label */}
+                <AppText
+                  className="font-sans-bold text-sm"
+                  style={{color: bgColor}}>
+                  {skill.label}
+                </AppText>
+                {/* Thời gian */}
+                <AppText className="text-neutrals400 text-[11px] mt-1">
+                  {skill.time}
+                </AppText>
+              </TouchableOpacity>
+            </Animated.View>
           );
         })}
       </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import {TouchableOpacity, View} from 'react-native';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
 
@@ -32,6 +33,7 @@ const RECENT_ITEMS = [
  *   - 2 items mặc định: emoji + title + time info + play icon
  *   - Mock data tĩnh, nối API sau
  *   - "Xem tất cả" navigate tới History
+ *   - Animated: mỗi lesson item xuất hiện staggered FadeInDown
  */
 export default function RecentLessons() {
   const navigation = useNavigation();
@@ -70,11 +72,12 @@ export default function RecentLessons() {
         </TouchableOpacity>
       </View>
 
-      {/* Lesson items */}
+      {/* Lesson items - staggered animation */}
       <View className="gap-2">
-        {RECENT_ITEMS.map(item => (
-          <View
+        {RECENT_ITEMS.map((item, index) => (
+          <Animated.View
             key={item.id}
+            entering={FadeInDown.delay(index * 100).duration(400).springify()}
             className="flex-row items-center bg-neutrals900 rounded-xl p-3 border border-neutrals800"
             style={{gap: 10}}>
             {/* Emoji icon */}
@@ -97,7 +100,7 @@ export default function RecentLessons() {
               className="w-8 h-8 bg-warning/20 rounded-full items-center justify-center">
               <AppText className="text-warning text-sm">▶️</AppText>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         ))}
       </View>
     </View>

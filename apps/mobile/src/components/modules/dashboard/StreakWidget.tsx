@@ -1,5 +1,6 @@
 import React from 'react';
 import {View} from 'react-native';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useAuthStore} from '@/store/useAuthStore';
 
@@ -11,6 +12,7 @@ import {useAuthStore} from '@/store/useAuthStore';
  *   - Greeting dạng inline bold: "Chào buổi sáng, {name}! 👋"
  *   - Streak subtitle: "Chuỗi X ngày liên tiếp 🔥"
  *   - Stats Row: 3 pill cards ngang (Streak, Tổng giờ, Từ mới)
+ *   - Animated: stat pills xuất hiện staggered FadeInDown
  */
 export default function StreakWidget() {
   const user = useAuthStore(state => state.user);
@@ -38,6 +40,13 @@ export default function StreakWidget() {
     return 'Chào buổi tối';
   };
 
+  // Dữ liệu 3 stat pills — dễ mở rộng sau
+  const statPills = [
+    {label: 'Streak', value: `🔥 ${streak}`, delay: 100},
+    {label: 'Tổng giờ', value: `${totalHours}h`, delay: 200},
+    {label: 'Từ mới', value: `${newWords}`, delay: 300},
+  ];
+
   return (
     <View className="px-4 pt-safe-offset-4 pb-2">
       {/* Greeting inline */}
@@ -60,37 +69,21 @@ export default function StreakWidget() {
         </AppText>
       </View>
 
-      {/* Stats Row - 3 pills */}
+      {/* Stats Row - 3 pills với staggered animation */}
       <View className="flex-row gap-2 mt-4">
-        {/* Streak pill */}
-        <View className="flex-1 bg-neutrals900 rounded-2xl py-3 px-3 items-center border border-neutrals800">
-          <AppText className="text-foreground font-sans-bold text-lg">
-            🔥 {streak}
-          </AppText>
-          <AppText className="text-neutrals400 text-xs mt-1">
-            Streak
-          </AppText>
-        </View>
-
-        {/* Tổng giờ pill */}
-        <View className="flex-1 bg-neutrals900 rounded-2xl py-3 px-3 items-center border border-neutrals800">
-          <AppText className="text-foreground font-sans-bold text-lg">
-            {totalHours}h
-          </AppText>
-          <AppText className="text-neutrals400 text-xs mt-1">
-            Tổng giờ
-          </AppText>
-        </View>
-
-        {/* Từ mới pill */}
-        <View className="flex-1 bg-neutrals900 rounded-2xl py-3 px-3 items-center border border-neutrals800">
-          <AppText className="text-foreground font-sans-bold text-lg">
-            {newWords}
-          </AppText>
-          <AppText className="text-neutrals400 text-xs mt-1">
-            Từ mới
-          </AppText>
-        </View>
+        {statPills.map(pill => (
+          <Animated.View
+            key={pill.label}
+            entering={FadeInDown.delay(pill.delay).duration(400).springify()}
+            className="flex-1 bg-neutrals900 rounded-2xl py-3 px-3 items-center border border-neutrals800">
+            <AppText className="text-foreground font-sans-bold text-lg">
+              {pill.value}
+            </AppText>
+            <AppText className="text-neutrals400 text-xs mt-1">
+              {pill.label}
+            </AppText>
+          </Animated.View>
+        ))}
       </View>
     </View>
   );
