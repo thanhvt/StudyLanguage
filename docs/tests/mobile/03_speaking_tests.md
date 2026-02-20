@@ -1,9 +1,9 @@
 # 🗣️ Speaking Module — Tài Liệu Test Toàn Diện
 
-> **Module:** Speaking (Practice Mode MVP)  
-> **Phase:** MVP  
+> **Module:** Speaking (Practice Mode MVP + Sprint 7)  
+> **Phase:** MVP → Enhanced  
 > **Ref:** `docs/mobile/features/03_Speaking.md`  
-> **Last Updated:** 2026-02-13
+> **Last Updated:** 2026-02-19
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Loại Test | Số lượng | Trạng thái |
 |-----------|----------|------------|
-| **Unit Tests** (Jest) | 47 tests | ✅ 47/47 passed |
+| **Unit Tests** (Jest) | 111 tests (5 suites) | ✅ 111/111 passed |
 | **Smoke Tests** (Manual) | 8 scenarios | 🔲 Chưa test |
 | **Functional Tests** (Manual) | 49 scenarios (+27 Sprint 7) | 🔲 Chưa test |
 | **Monkey Tests** (Free-form) | 17 scenarios (+5 Sprint 7) | 🔲 Chưa test |
@@ -22,9 +22,9 @@
 
 ## 1️⃣ UNIT TESTS (Automated)
 
-> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useSpeakingStore|speakingApi" --verbose`
+> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useSpeakingStore|speakingApi|speakingTtsSheet|voiceCloneReplay|speakingScreens" --verbose`
 
-### Store Tests — `useSpeakingStore.test.ts` (22 tests ✅)
+### Store Tests — `useSpeakingStore.test.ts` (36 tests ✅)
 
 | # | Test Group | Cases | Status |
 |---|-----------|-------|--------|
@@ -36,16 +36,50 @@
 | 6 | Error (set, clear) | 2 | ✅ |
 | 7 | Defaults (initial state) | 1 | ✅ |
 | 8 | Reset (full reset) | 1 | ✅ |
+| 9 | TTS Settings (Sprint 7A — defaults, merge, partial) | 5 | ✅ |
+| 10 | Coach Mode Actions (start, message, timer, input, AI, end, reset, null-safe) | 9 | ✅ |
 
-### API Tests — `speakingApi.test.ts` (12 tests ✅)
+### API Tests — `speakingApi.test.ts` (23 tests ✅)
 
 | # | Test Group | Cases | Status |
 |---|-----------|-------|--------|
 | 1 | generateSentences (prompt, JSON parse, markdown, fallback) | 4 | ✅ |
 | 2 | transcribeAudio (FormData upload, empty response) | 2 | ✅ |
 | 3 | evaluatePronunciation (payload, mapping, fallback) | 3 | ✅ |
-| 4 | playAISample (payload) | 1 | ✅ |
+| 4 | playAISample (payload + TTS params Sprint 7A) | 4 | ✅ |
 | 5 | getStats (data, fallback) | 2 | ✅ |
+| 6 | generateCoachAudio — TTS params (Sprint 7A) | 2 | ✅ |
+| 7 | cloneAndCorrectVoice (Sprint 7C — FormData, fallback, empty) | 3 | ✅ |
+| 8 | continueConversation (Coach Mode — payload, parse, fallback) | 3 | ✅ |
+
+### Component Tests — `speakingTtsSheet.test.ts` (15 tests ✅)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Voice Data Integrity (count, fields, no duplicates, defaults) | 6 | ✅ |
+| 2 | Provider Switch Logic (OpenAI↔Azure, speed retention) | 3 | ✅ |
+| 3 | Speed Range (default, min 0.5, max 2.0) | 3 | ✅ |
+| 4 | Voice Selection (all OpenAI + Azure voices) | 3 | ✅ |
+
+### Component Tests — `voiceCloneReplay.test.ts` (13 tests ✅)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Audio State Machine (null→play, play→stop, switch track) | 6 | ✅ |
+| 2 | VoiceImprovement Data (fields, IPA format) | 3 | ✅ |
+| 3 | VoiceCloneResult Structure | 3 | ✅ |
+| 4 | Edge Cases (rapid toggle, empty data) | 2 | ✅ |
+
+### Screen Tests — `speakingScreens.test.ts` (24 tests ✅)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Shadowing Phase State Machine | 3 | ✅ |
+| 2 | TongueTwister Data Integrity | 4 | ✅ |
+| 3 | TongueTwister WPM Calculation | 3 | ✅ |
+| 4 | Roleplay Scenario Data | 3 | ✅ |
+| 5 | Roleplay Filter Logic | 5 | ✅ |
+| 6 | Shared formatTime utility | 6 | ✅ |
 
 ---
 
@@ -171,7 +205,7 @@
 
 | # | Hạng mục | Tiêu chí | Status |
 |---|----------|----------|--------|
-| 1 | Unit tests | 34/34 passed | ✅ |
+| 1 | Unit tests | 111/111 passed (5 suites) | ✅ |
 | 2 | Smoke tests (8 items) | Tất cả PASS | 🔲 |
 | 3 | Critical bugs (🔴) | 0 bugs | 🔲 |
 | 4 | Functional tests | Tất cả Happy Path ✅ PASS | 🔲 |
@@ -425,16 +459,15 @@ Practice → Ghi âm → Feedback → Voice Clone tự load
 
 ---
 
-## 📊 Sprint 7 Unit Test Coverage Update
-
-### Store Tests — `useSpeakingStore.test.ts` (27 tests)
+### Store Tests — `useSpeakingStore.test.ts` (36 tests)
 
 | # | Test Group | Cases | Status |
 |---|-----------|-------|--------|
 | 1–8 | (Sprint 1–6 — giữ nguyên) | 22 | ✅ |
 | 9 | TTS Settings (default, merge partial, multi, sequential) | 5 | ✅ |
+| 10 | Coach Mode Actions (start, message, timer, input, AI, end, reset, null-safe) | 9 | ✅ |
 
-### API Tests — `speakingApi.test.ts` (20 tests)
+### API Tests — `speakingApi.test.ts` (23 tests)
 
 | # | Test Group | Cases | Status |
 |---|-----------|-------|--------|
@@ -442,6 +475,11 @@ Practice → Ghi âm → Feedback → Voice Clone tự load
 | 6 | playAISample — TTS params (provider, default, speed=1.0) | 3 | ✅ |
 | 7 | generateCoachAudio — TTS params (voice+provider, fallback) | 2 | ✅ |
 | 8 | cloneAndCorrectVoice (FormData, fallback, empty) | 3 | ✅ |
+| 9 | continueConversation (Coach Mode — payload, parse, fallback) | 3 | ✅ |
 
-> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useSpeakingStore|speakingApi" --verbose`
+### Component Tests — `speakingTtsSheet.test.ts` (15 tests) ✅
+### Component Tests — `voiceCloneReplay.test.ts` (13 tests) ✅
+### Screen Tests — `speakingScreens.test.ts` (24 tests) ✅
+
+> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useSpeakingStore|speakingApi|speakingTtsSheet|voiceCloneReplay|speakingScreens" --verbose`
 

@@ -38,6 +38,9 @@ export default function PocketMode({onExit}: {onExit: () => void}) {
   const isPlaying = useAudioPlayerStore(s => s.isPlaying);
   const setGlobalPlaying = useAudioPlayerStore(s => s.setIsPlaying);
 
+  // BUG-02 fix: Guard để tránh single-tap action chạy khi double-tap thoát
+  const isExitingRef = useRef(false);
+
   // Flash feedback khi tap
   const flashOpacity = useSharedValue(0);
 
@@ -75,6 +78,8 @@ export default function PocketMode({onExit}: {onExit: () => void}) {
    * Khi nào sử dụng: User tap vùng giữa
    */
   const handlePlayPause = useCallback(async () => {
+    // BUG-02 fix: Bỏ qua nếu đang thoát (double-tap đã trigger)
+    if (isExitingRef.current) { return; }
     try {
       haptic.medium();
       if (isPlaying) {
@@ -98,6 +103,8 @@ export default function PocketMode({onExit}: {onExit: () => void}) {
    * Khi nào sử dụng: User tap vùng trên
    */
   const handleSeekBack = useCallback(async () => {
+    // BUG-02 fix: Bỏ qua nếu đang thoát
+    if (isExitingRef.current) { return; }
     try {
       haptic.light();
       const progress = await TrackPlayer.getProgress();
@@ -116,6 +123,8 @@ export default function PocketMode({onExit}: {onExit: () => void}) {
    * Khi nào sử dụng: User tap vùng dưới
    */
   const handleSeekForward = useCallback(async () => {
+    // BUG-02 fix: Bỏ qua nếu đang thoát
+    if (isExitingRef.current) { return; }
     try {
       haptic.light();
       const progress = await TrackPlayer.getProgress();
@@ -127,10 +136,11 @@ export default function PocketMode({onExit}: {onExit: () => void}) {
     }
   }, [haptic, showFeedback]);
 
-  // Double-tap gesture → thoát
+  // BUG-02 fix: Double-tap gesture → thoát, set guard trước khi gọi onExit
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
+      isExitingRef.current = true;
       haptic.heavy();
       onExit();
     });

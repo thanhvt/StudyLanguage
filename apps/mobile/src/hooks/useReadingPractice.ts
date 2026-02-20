@@ -69,6 +69,8 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
   const [isRecording, setIsRecording] = useState(false);
 
   const originalTextRef = useRef(originalText);
+  // Ref để tránh stale closure trong stopRecording — luôn giữ giá trị transcript mới nhất
+  const transcriptRef = useRef('');
 
   useEffect(() => {
     originalTextRef.current = originalText;
@@ -85,6 +87,7 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
     const onSpeechResults = (event: SpeechResultsEvent) => {
       const text = event.value?.[0] ?? '';
       setTranscript(text);
+      transcriptRef.current = text; // Cập nhật ref để tránh stale closure
       console.log('🎤 [Practice] STT transcript:', text);
     };
 
@@ -146,8 +149,8 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
       setIsRecording(false);
       console.log('⏹️ [Practice] Dừng ghi âm');
 
-      // Lấy transcript cuối cùng
-      const finalTranscript = transcript; // closure captures latest
+      // Dùng ref thay vì state để tránh stale closure — transcriptRef luôn giữ giá trị mới nhất
+      const finalTranscript = transcriptRef.current;
 
       if (!finalTranscript || finalTranscript.trim().length === 0) {
         setError('Không nhận được giọng nói. Vui lòng thử lại.');
@@ -172,7 +175,7 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
       setError('Lỗi phân tích. Vui lòng thử lại.');
       setPhase('idle');
     }
-  }, [transcript]);
+  }, []);
 
   /**
    * Mục đích: Reset toàn bộ practice state

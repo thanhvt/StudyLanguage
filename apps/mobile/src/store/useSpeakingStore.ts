@@ -1,4 +1,6 @@
 import {create} from 'zustand';
+import {persist, createJSONStorage, StateStorage} from 'zustand/middleware';
+import {MMKV} from 'react-native-mmkv';
 import type {
   SpeakingConfig,
   Sentence,
@@ -169,8 +171,26 @@ const initialState: SpeakingState = {
  *   - CoachSessionScreen: gửi/nhận messages, quản lý timer
  *   - QuickActions: reset khi bắt đầu session mới
  */
-export const useSpeakingStore = create<SpeakingState & SpeakingActions>(
-  set => ({
+// ===========================
+// MMKV Storage Adapter cho Zustand — persist TTS settings
+// ===========================
+const speakingStorage = new MMKV({id: 'speaking-storage'});
+
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    speakingStorage.set(name, value);
+  },
+  getItem: (name) => {
+    return speakingStorage.getString(name) ?? null;
+  },
+  removeItem: (name) => {
+    speakingStorage.delete(name);
+  },
+};
+
+export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
+  persist(
+    set => ({
     ...initialState,
 
     setConfig: config =>
@@ -299,4 +319,13 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>(
         ttsSettings: {...state.ttsSettings, ...settings},
       })),
   }),
+    {
+      name: 'speaking-store',
+      storage: createJSONStorage(() => mmkvStorage),
+      // Chỉ persist TTS settings — các state khác là session-specific
+      partialize: (state) => ({
+        ttsSettings: state.ttsSettings,
+      }),
+    },
+  ),
 );

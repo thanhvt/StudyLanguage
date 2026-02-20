@@ -6,6 +6,7 @@ import MenuList from '@/components/ui/MenuList';
 import {useAuthStore} from '@/store/useAuthStore';
 import {authService} from '@/services/supabase/auth';
 import {useNavigation} from '@react-navigation/native';
+import {useDialog} from '@/components/ui/DialogProvider';
 
 /**
  * Mục đích: Tab Profile hiển thị thông tin user và các tuỳ chọn
@@ -13,28 +14,42 @@ import {useNavigation} from '@react-navigation/native';
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Tab thứ 3 trong MainTabs
  *   - Hiển thị avatar, tên, email từ authStore
- *   - Nút Sign Out → reset authStore → RootNavigator chuyển về AuthStack
+ *   - Nút Sign Out → confirm dialog → reset authStore → RootNavigator chuyển về AuthStack
  */
 export default function ProfileScreen() {
   const user = useAuthStore(state => state.user);
   const reset = useAuthStore(state => state.reset);
   const navigation = useNavigation();
+  const {showConfirm} = useDialog();
 
   /**
-   * Mục đích: Xử lý đăng xuất
+   * Mục đích: Thực hiện đăng xuất sau khi user confirm
    * Tham số đầu vào: không có
    * Tham số đầu ra: void
-   * Khi nào sử dụng: Khi user nhấn nút Sign Out
+   * Khi nào sử dụng: Callback khi user nhấn "Xác nhận" trong confirm dialog
    */
-  const handleSignOut = async () => {
+  const performSignOut = async () => {
     try {
       await authService.signOut();
-    } catch (error) {
-      console.error('Lỗi đăng xuất:', error);
-    } finally {
+    } catch (_error) {
       // Luôn reset store dù signOut thành công hay không
+    } finally {
       reset();
     }
+  };
+
+  /**
+   * Mục đích: Hiển thị confirm dialog trước khi đăng xuất
+   * Tham số đầu vào: không có
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi user nhấn nút "Đăng xuất" trên ProfileScreen
+   */
+  const handleSignOut = () => {
+    showConfirm(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất? Dữ liệu chưa đồng bộ có thể bị mất.',
+      performSignOut,
+    );
   };
 
   const displayName =

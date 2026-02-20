@@ -57,10 +57,17 @@ export const authService = {
    * Khi nào sử dụng: Khi app khởi động, kiểm tra đã đăng nhập chưa
    */
   getSession: async (): Promise<Session | null> => {
-    const {
-      data: {session},
-    } = await supabase.auth.getSession();
-    return session;
+    try {
+      const {
+        data: {session},
+        error,
+      } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (error: any) {
+      console.error('Lỗi lấy session:', error?.message);
+      return null;
+    }
   },
 
   /**
@@ -70,10 +77,17 @@ export const authService = {
    * Khi nào sử dụng: Hiển thị thông tin user ở Dashboard, ProfileScreen
    */
   getUser: async (): Promise<User | null> => {
-    const {
-      data: {user},
-    } = await supabase.auth.getUser();
-    return user;
+    try {
+      const {
+        data: {user},
+        error,
+      } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    } catch (error: any) {
+      console.error('Lỗi lấy user:', error?.message);
+      return null;
+    }
   },
 
   /**

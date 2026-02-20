@@ -54,7 +54,6 @@ export default function RecentLessons() {
    */
   const handlePlay = (itemId: string) => {
     // TODO: Resume bài học cụ thể
-    console.log('▶️ Phát lại bài học:', itemId);
   };
 
   return (

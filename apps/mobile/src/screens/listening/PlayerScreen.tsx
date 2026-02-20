@@ -26,6 +26,8 @@ import {usePlayerGestures} from '@/hooks/usePlayerGestures';
 import {TappableTranscript, DictionaryPopup, WaveformVisualizer, PocketMode, TourTooltip, usePlayerTour} from '@/components/listening';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {useVocabularyStore} from '@/store/useVocabularyStore';
+// BUG-05 fix: Dùng chung utility thay vì khai báo local
+import {formatTime} from '@/utils/formatTime';
 
 // Tốc độ có thể chọn
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -502,7 +504,8 @@ export default function ListeningPlayerScreen({
         if (wasPlaying) { await TrackPlayer.pause(); }
         await TrackPlayer.seekTo(timestamps[prevIndex].startTime);
         if (wasPlaying) {
-          setTimeout(() => TrackPlayer.play(), 50);
+          // BUG-06 fix: tăng delay từ 50ms lên 150ms để seek kịp hoàn tất trên slow device
+          setTimeout(() => TrackPlayer.play(), 150);
         }
       }
     } else if (isTrackReady) {
@@ -531,7 +534,8 @@ export default function ListeningPlayerScreen({
         if (wasPlaying) { await TrackPlayer.pause(); }
         await TrackPlayer.seekTo(timestamps[nextIndex].startTime);
         if (wasPlaying) {
-          setTimeout(() => TrackPlayer.play(), 50);
+          // BUG-06 fix: tăng delay từ 50ms lên 150ms để seek kịp hoàn tất trên slow device
+          setTimeout(() => TrackPlayer.play(), 150);
         }
       }
     } else if (isTrackReady) {
@@ -580,25 +584,18 @@ export default function ListeningPlayerScreen({
   // Gesture Handler — swipe left/right/down + double tap
   // MOB-LIS-ENH-HP-004 → 007
   // ========================
+  // BUG-08 fix: Đổi hướng swipe theo convention media player chuẩn
+  // Swipe left (←) = TIẾn (tua tay từ phải sang trái = đi tới)
+  // Swipe right (→) = LÙI (tua tay từ trái sang phải = quay lại)
   const {gesture: playerGesture, animatedStyle: gestureAnimatedStyle} =
     usePlayerGestures({
-      onSwipeLeft: handleSkipBack,
-      onSwipeRight: handleSkipForward,
+      onSwipeLeft: handleSkipForward,
+      onSwipeRight: handleSkipBack,
       onSwipeDown: handleSwipeDownMinimize,
       onDoubleTap: handlePlayPause,
     });
 
-  /**
-   * Mục đích: Format thời gian từ giây sang m:ss
-   * Tham số đầu vào: seconds (number)
-   * Tham số đầu ra: string (vd: "2:05")
-   * Khi nào sử dụng: Hiển thị current time / duration ở thanh progress
-   */
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // BUG-05 fix: Đã chuyển formatTime sang @/utils/formatTime.ts
 
   // Tính progress percentage cho progress bar
   const progressPercent =
@@ -915,18 +912,27 @@ export default function ListeningPlayerScreen({
             if (wasPlaying) {
               await TrackPlayer.pause();
             }
-            // Dùng TrackPlayer tạm thời phát pronunciation
-            // Lưu vị trí hiện tại trước
+            // Lưu vị trí hiện tại trước khi phát pronunciation
             const currentProgress = await TrackPlayer.getProgress();
-            // Phát pronunciation bằng cách fetch audio URL
+            // Phát pronunciation bằng audioRecorderPlayer riêng
             const Audio = require('react-native-audio-recorder-player').default;
             const audioRecorderPlayer = new Audio();
             await audioRecorderPlayer.startPlayer(pronunciationUrl);
-            audioRecorderPlayer.addPlayBackListener((e: any) => {
+            audioRecorderPlayer.addPlayBackListener(async (e: any) => {
               if (e.currentPosition >= e.duration - 100) {
                 audioRecorderPlayer.stopPlayer();
                 audioRecorderPlayer.removePlayBackListener();
                 console.log('✅ [PlayerScreen] Đã phát xong pronunciation');
+                // BUG-01 fix: Resume main audio sau khi pronunciation kết thúc
+                if (wasPlaying) {
+                  try {
+                    await TrackPlayer.seekTo(currentProgress.position);
+                    await TrackPlayer.play();
+                    console.log('▶️ [PlayerScreen] Đã resume main audio tại', currentProgress.position, 'giây');
+                  } catch (resumeErr) {
+                    console.warn('⚠️ [PlayerScreen] Không thể resume main audio:', resumeErr);
+                  }
+                }
               }
             });
           } catch (error) {

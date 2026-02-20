@@ -307,4 +307,142 @@ describe('useSpeakingStore', () => {
       expect(ttsSettings.speed).toBe(2.0);
     });
   });
+
+  // ============================================
+  // Sprint 7: Coach Mode Actions
+  // ============================================
+
+  describe('Coach Mode Actions', () => {
+    const mockSetup = {
+      topic: 'Daily conversation',
+      durationMinutes: 10,
+      feedbackMode: 'intermediate' as const,
+    };
+
+    it('startCoachSession khởi tạo session đúng', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      const {coachSession} = useSpeakingStore.getState();
+      expect(coachSession).not.toBeNull();
+      expect(coachSession!.setup.topic).toBe('Daily conversation');
+      expect(coachSession!.setup.durationMinutes).toBe(10);
+      expect(coachSession!.messages).toEqual([]);
+      expect(coachSession!.remainingSeconds).toBe(600); // 10 * 60
+      expect(coachSession!.inputMode).toBe('voice');
+      expect(coachSession!.isAIResponding).toBe(false);
+      expect(coachSession!.isEnded).toBe(false);
+    });
+
+    it('addCoachMessage thêm tin nhắn vào messages', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      const mockMessage = {
+        id: 'msg-1',
+        role: 'user' as const,
+        text: 'Hello, how are you?',
+        timestamp: Date.now(),
+      };
+      useSpeakingStore.getState().addCoachMessage(mockMessage);
+
+      const {coachSession} = useSpeakingStore.getState();
+      expect(coachSession!.messages).toHaveLength(1);
+      expect(coachSession!.messages[0].text).toBe('Hello, how are you?');
+    });
+
+    it('tickCoachTimer giảm remainingSeconds mỗi giây', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      useSpeakingStore.getState().tickCoachTimer();
+      useSpeakingStore.getState().tickCoachTimer();
+      useSpeakingStore.getState().tickCoachTimer();
+
+      const {coachSession} = useSpeakingStore.getState();
+      expect(coachSession!.remainingSeconds).toBe(597); // 600 - 3
+      expect(coachSession!.isEnded).toBe(false);
+    });
+
+    it('tickCoachTimer auto-end khi hết thời gian', () => {
+      // Tạo session 1 giây
+      useSpeakingStore.getState().startCoachSession({
+        ...mockSetup,
+        durationMinutes: 0, // 0 phút = 0 giây
+      });
+      // Set remainingSeconds = 1 thủ công
+      useSpeakingStore.setState(state => ({
+        coachSession: state.coachSession
+          ? {...state.coachSession, remainingSeconds: 1}
+          : null,
+      }));
+
+      useSpeakingStore.getState().tickCoachTimer();
+
+      const {coachSession} = useSpeakingStore.getState();
+      expect(coachSession!.remainingSeconds).toBe(0);
+      expect(coachSession!.isEnded).toBe(true);
+    });
+
+    it('setCoachInputMode đổi voice ↔ text', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      useSpeakingStore.getState().setCoachInputMode('text');
+      expect(useSpeakingStore.getState().coachSession!.inputMode).toBe('text');
+
+      useSpeakingStore.getState().setCoachInputMode('voice');
+      expect(useSpeakingStore.getState().coachSession!.inputMode).toBe('voice');
+    });
+
+    it('setCoachAIResponding toggle trạng thái AI', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      useSpeakingStore.getState().setCoachAIResponding(true);
+      expect(useSpeakingStore.getState().coachSession!.isAIResponding).toBe(true);
+
+      useSpeakingStore.getState().setCoachAIResponding(false);
+      expect(useSpeakingStore.getState().coachSession!.isAIResponding).toBe(false);
+    });
+
+    it('endCoachSession set isEnded = true', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+
+      useSpeakingStore.getState().endCoachSession();
+
+      const {coachSession} = useSpeakingStore.getState();
+      expect(coachSession!.isEnded).toBe(true);
+    });
+
+    it('resetCoach xóa toàn bộ coachSession', () => {
+      useSpeakingStore.getState().startCoachSession(mockSetup);
+      useSpeakingStore.getState().addCoachMessage({
+        id: 'msg-1',
+        role: 'ai' as const,
+        text: 'Welcome!',
+        timestamp: Date.now(),
+      });
+
+      useSpeakingStore.getState().resetCoach();
+
+      expect(useSpeakingStore.getState().coachSession).toBeNull();
+    });
+
+    it('Coach actions an toàn khi coachSession = null (null-safe)', () => {
+      // Đảm bảo các action không crash khi coachSession chưa khởi tạo
+      expect(useSpeakingStore.getState().coachSession).toBeNull();
+
+      // Gọi tất cả actions — không crash
+      useSpeakingStore.getState().addCoachMessage({
+        id: 'msg-1',
+        role: 'user' as const,
+        text: 'Test',
+        timestamp: Date.now(),
+      });
+      useSpeakingStore.getState().setCoachInputMode('text');
+      useSpeakingStore.getState().tickCoachTimer();
+      useSpeakingStore.getState().setCoachAIResponding(true);
+      useSpeakingStore.getState().endCoachSession();
+      useSpeakingStore.getState().resetCoach();
+
+      // Vẫn null, không crash
+      expect(useSpeakingStore.getState().coachSession).toBeNull();
+    });
+  });
 });

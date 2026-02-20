@@ -1,6 +1,23 @@
 import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {persist, createJSONStorage, StateStorage} from 'zustand/middleware';
+import {MMKV} from 'react-native-mmkv';
+
+// ===========================
+// MMKV Storage Adapter cho Zustand — thay thế AsyncStorage (nhanh hơn ~30x)
+// ===========================
+const audioPlayerStorage = new MMKV({id: 'audio-player-storage'});
+
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    audioPlayerStorage.set(name, value);
+  },
+  getItem: (name) => {
+    return audioPlayerStorage.getString(name) ?? null;
+  },
+  removeItem: (name) => {
+    audioPlayerStorage.delete(name);
+  },
+};
 import type {ConversationTimestamp, ConversationResult} from '@/services/api/listening';
 
 // =======================
@@ -81,8 +98,7 @@ const initialState: AudioPlayerState = {
  *   - PlayerScreen: đọc/ghi playbackSpeed, volume; gọi saveSession khi có audio
  *   - ConfigScreen: đọc lastSession để hiện "Tiếp tục nghe" button
  *   - MainStack: đọc playerMode để quyết định render Compact/Minimized
- *
- * PERSIST: playbackSpeed, volume, lastSession được lưu qua AsyncStorage
+ *   - PERSIST: playbackSpeed, volume, lastSession được lưu qua MMKV
  * KHÔNG PERSIST: playerMode, isPlaying (runtime-only)
  */
 export const useAudioPlayerStore = create<
@@ -113,7 +129,7 @@ export const useAudioPlayerStore = create<
     }),
     {
       name: 'audio-player-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Chỉ persist các field cần thiết — runtime state không persist
       partialize: state => ({
         playbackSpeed: state.playbackSpeed,

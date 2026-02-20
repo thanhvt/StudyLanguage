@@ -104,12 +104,15 @@ export const useSettingsStore = create<SettingsState>()(
           },
         })),
 
-      // Chỉnh âm lượng nhạc nền (0-100)
+      // Chỉnh âm lượng nhạc nền (0-100) — clamp để không lưu giá trị ngoài biên
       setMusicVolume: (volume) =>
         set((state) => ({
           audio: {
             ...state.audio,
-            backgroundMusic: {...state.audio.backgroundMusic, volume},
+            backgroundMusic: {
+              ...state.audio.backgroundMusic,
+              volume: Math.max(0, Math.min(100, volume)),
+            },
           },
         })),
 
@@ -121,9 +124,14 @@ export const useSettingsStore = create<SettingsState>()(
       setSoundEffects: (soundEffects) =>
         set((state) => ({audio: {...state.audio, soundEffects}})),
 
-      // Đặt tốc độ phát mặc định (0.5 - 2.0)
+      // Đặt tốc độ phát mặc định (0.5 - 2.0) — clamp để không lưu giá trị ngoài biên
       setPlaybackSpeed: (playbackSpeed) =>
-        set((state) => ({audio: {...state.audio, playbackSpeed}})),
+        set((state) => ({
+          audio: {
+            ...state.audio,
+            playbackSpeed: Math.max(0.5, Math.min(2.0, playbackSpeed)),
+          },
+        })),
 
       // Bật/tắt tự động phát câu tiếp theo
       setAutoPlay: (autoPlay) =>

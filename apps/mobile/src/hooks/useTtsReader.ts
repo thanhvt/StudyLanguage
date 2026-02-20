@@ -61,7 +61,7 @@ export function useTtsReader(paragraphs: string[]): UseTtsReaderReturn {
      * Tham số đầu ra: void
      * Khi nào sử dụng: Event 'tts-finish' từ react-native-tts
      */
-    const finishListener = Tts.addEventListener('tts-finish', () => {
+    const handleFinish = () => {
       if (!isReadingRef.current) return;
 
       const nextIndex = indexRef.current + 1;
@@ -82,10 +82,12 @@ export function useTtsReader(paragraphs: string[]): UseTtsReaderReturn {
         indexRef.current = -1;
         setCurrentParagraphIndex(-1);
       }
-    });
+    };
+
+    Tts.addEventListener('tts-finish', handleFinish);
 
     return () => {
-      finishListener?.remove();
+      Tts.removeEventListener('tts-finish', handleFinish);
       Tts.stop();
     };
   }, []);

@@ -402,4 +402,84 @@ describe('speakingApi', () => {
       expect(result.improvements).toEqual([]);
     });
   });
+
+  // ============================================
+  // Sprint 7: continueConversation (Coach Mode)
+  // ============================================
+
+  describe('continueConversation (Coach Mode)', () => {
+    it('gửi đúng payload (history, userInput, topic)', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {
+          response: "That's great! Tell me more.",
+          shouldEnd: false,
+          corrections: [],
+        },
+      });
+
+      const history = [
+        {speaker: 'ai', text: 'Hello! What do you like to do?'},
+        {speaker: 'user', text: 'I like to play soccer'},
+      ];
+
+      await speakingApi.continueConversation(
+        history,
+        'I like to play soccer',
+        'Hobbies',
+      );
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/conversation-generator/continue-conversation',
+        {
+          conversationHistory: history,
+          userInput: 'I like to play soccer',
+          topic: 'Hobbies',
+        },
+      );
+    });
+
+    it('parse response đúng format (response, shouldEnd, corrections)', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {
+          response: 'Interesting! How often do you play?',
+          shouldEnd: false,
+          corrections: [
+            {
+              original: 'I go to play every day',
+              correction: 'I play every day',
+              explanation: 'Không cần "go to" trước "play"',
+            },
+          ],
+        },
+      });
+
+      const result = await speakingApi.continueConversation(
+        [{speaker: 'user', text: 'I go to play every day'}],
+        'I go to play every day',
+        'Hobbies',
+      );
+
+      expect(result.response).toBe('Interesting! How often do you play?');
+      expect(result.shouldEnd).toBe(false);
+      expect(result.corrections).toHaveLength(1);
+      expect(result.corrections![0].explanation).toContain('go to');
+    });
+
+    it('dùng fallback khi response thiếu fields', async () => {
+      mockApiClient.post.mockResolvedValue({
+        data: {},
+      });
+
+      const result = await speakingApi.continueConversation(
+        [],
+        'Hello',
+        'Greeting',
+      );
+
+      // Fallback response text
+      expect(result.response).toBe("That's interesting! Can you tell me more?");
+      expect(result.shouldEnd).toBe(false);
+      expect(result.corrections).toEqual([]);
+    });
+  });
 });

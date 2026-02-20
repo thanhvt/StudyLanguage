@@ -1,9 +1,26 @@
 import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {persist, createJSONStorage, StateStorage} from 'zustand/middleware';
+import {MMKV} from 'react-native-mmkv';
+
+// ===========================
+// MMKV Storage Adapter cho Zustand — thay thế AsyncStorage (nhanh hơn ~30x)
+// ===========================
+const vocabularyStorage = new MMKV({id: 'vocabulary-storage'});
+
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    vocabularyStorage.set(name, value);
+  },
+  getItem: (name) => {
+    return vocabularyStorage.getString(name) ?? null;
+  },
+  removeItem: (name) => {
+    vocabularyStorage.delete(name);
+  },
+};
 
 // =======================
-// Vocabulary Store — Từ vựng đã lưu (persist qua AsyncStorage)
+// Vocabulary Store — Từ vựng đã lưu (persist qua MMKV)
 // =======================
 
 /**
@@ -121,7 +138,7 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
     }),
     {
       name: 'vocabulary-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
     },
   ),
 );

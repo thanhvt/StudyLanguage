@@ -62,6 +62,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
   // Ref cho current index (tránh stale closure trong event listener)
   const currentTrackIndexRef = useRef(-1);
 
+  // BUG-03 fix: Ref cho handlePlayTrack để event listener luôn dùng phiên bản mới nhất
+  const handlePlayTrackRef = useRef<((item: RadioPlaylistItem, index: number) => Promise<void>) | undefined>(undefined);
+
   /**
    * Mục đích: Auto chuyển sang track tiếp theo khi track hiện tại kết thúc
    * Khi nào sử dụng: TrackPlayer phát xong queue → listener tự chạy
@@ -77,10 +80,12 @@ export default function RadioScreen({navigation}: {navigation: any}) {
           setGlobalPlaying(false);
           return;
         }
-        // Tự động phát track tiếp theo
+        // Tự động phát track tiếp theo — dùng ref để tránh stale closure
         const nextIdx = idx + 1;
         console.log(`📻 [Radio] Auto next → track ${nextIdx + 1}`);
-        await handlePlayTrack(items[nextIdx], nextIdx);
+        if (handlePlayTrackRef.current) {
+          await handlePlayTrackRef.current(items[nextIdx], nextIdx);
+        }
         // Auto scroll tới track đang phát
         flatListRef.current?.scrollToIndex({index: nextIdx, animated: true});
       },
@@ -160,6 +165,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
     },
     [haptic, showError, setGlobalPlaying, setPlayerMode],
   );
+
+  // BUG-03 fix: Cập nhật ref sau mỗi render để event listener luôn dùng phiên bản mới nhất
+  handlePlayTrackRef.current = handlePlayTrack;
 
   /**
    * Mục đích: Render một track item trong danh sách

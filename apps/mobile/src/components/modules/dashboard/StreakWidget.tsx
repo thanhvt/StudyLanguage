@@ -32,6 +32,7 @@ export default function StreakWidget() {
    */
   const getGreeting = () => {
     const hour = new Date().getHours();
+    if (hour >= 22 || hour < 6) return 'Vẫn đang học';
     if (hour < 12) return 'Chào buổi sáng';
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';

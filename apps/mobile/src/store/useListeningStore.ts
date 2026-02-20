@@ -1,6 +1,23 @@
 import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {persist, createJSONStorage, StateStorage} from 'zustand/middleware';
+import {MMKV} from 'react-native-mmkv';
+
+// ===========================
+// MMKV Storage Adapter cho Zustand — thay thế AsyncStorage (nhanh hơn ~30x)
+// ===========================
+const listeningStorage = new MMKV({id: 'listening-storage'});
+
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    listeningStorage.set(name, value);
+  },
+  getItem: (name) => {
+    return listeningStorage.getString(name) ?? null;
+  },
+  removeItem: (name) => {
+    listeningStorage.delete(name);
+  },
+};
 import type {
   ListeningConfig,
   ConversationResult,
@@ -182,7 +199,8 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setGenerating: value => set({isGenerating: value}),
     togglePlaying: () => set(state => ({isPlaying: !state.isPlaying})),
     setPlaying: value => set({isPlaying: value}),
-    setCurrentExchangeIndex: index => set({currentExchangeIndex: index}),
+    // BUG-04 fix: Clamp index để không bị âm
+    setCurrentExchangeIndex: index => set({currentExchangeIndex: Math.max(0, index)}),
     setPlaybackSpeed: speed => set({playbackSpeed: speed}),
 
     setSelectedTopic: (topic, categoryId, subCategoryId) =>
@@ -250,7 +268,7 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     }),
     {
       name: 'listening-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Chỉ persist favoriteScenarioIds — các state khác là session-specific
       partialize: (state) => ({
         favoriteScenarioIds: state.favoriteScenarioIds,

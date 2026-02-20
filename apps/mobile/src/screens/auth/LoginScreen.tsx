@@ -202,12 +202,7 @@ export default function LoginScreen() {
       offlineAccess: true,
     });
 
-    if (!Config.GOOGLE_IOS_CLIENT_ID) {
-      console.warn(
-        '⚠️ [Login] GOOGLE_IOS_CLIENT_ID chưa được cấu hình trong .env. Google Sign-In trên iOS sẽ không hoạt động.',
-      );
-    }
-    console.log('🔧 [Login] Google Sign-In đã cấu hình');
+
 
     // Entry animation cho toàn bộ content
     contentOpacity.value = withDelay(200, withTiming(1, {duration: 600}));
@@ -239,7 +234,7 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      console.log('🔑 [Login] Bắt đầu Google Sign-In...');
+
 
       // Kiểm tra Google Play Services (Android)
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
@@ -252,27 +247,25 @@ export default function LoginScreen() {
         throw new Error('Không nhận được ID token từ Google');
       }
 
-      console.log('✅ [Login] Đã nhận idToken, gửi tới Supabase...');
+
 
       // Gửi idToken cho Supabase để tạo session
       const {user, session} = await authService.signInWithGoogle(idToken);
 
       if (user && session) {
-        console.log('✅ [Login] Đăng nhập thành công:', user.email);
+
         setUser(user);
         setSession(session);
       }
     } catch (error: any) {
-      console.error('❌ [Login] Lỗi đăng nhập:', error);
+
 
       // Xử lý các lỗi cụ thể của Google Sign-In
       if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('ℹ️ [Login] User đã huỷ đăng nhập');
         return; // Không hiện alert khi user tự huỷ
       }
 
       if (error?.code === statusCodes.IN_PROGRESS) {
-        console.log('ℹ️ [Login] Đang xử lý đăng nhập...');
         return;
       }
 

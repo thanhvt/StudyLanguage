@@ -61,6 +61,11 @@ export default function ListeningConfigScreen({
   const multiTalkerPairIndex = useListeningStore(state => state.multiTalkerPairIndex);
   const setMultiTalkerPairIndex = useListeningStore(state => state.setMultiTalkerPairIndex);
 
+  // BUG-07 fix: Đọc lastSession qua hook thay vì getState() trong render
+  const lastSession = useAudioPlayerStore(state => state.lastSession);
+  const clearSession = useAudioPlayerStore(state => state.clearSession);
+  const audioPlayerSetPlayerMode = useAudioPlayerStore(state => state.setPlayerMode);
+
   // Local state
   const [topicInput, setTopicInput] = useState('');
   const [showCustomScenario, setShowCustomScenario] = useState(false);
@@ -359,7 +364,7 @@ export default function ListeningConfigScreen({
               {/* Free text input */}
               <TextInput
                 className="bg-neutrals900 rounded-xl px-4 py-3 text-base border border-neutrals800"
-                style={{color: '#1a1a1a'}}
+                style={{color: colors.foreground}}
                 placeholder="vd: ordering coffee, travel tips..."
                 placeholderTextColor={colors.neutrals500}
                 value={topicInput}
@@ -536,25 +541,25 @@ export default function ListeningConfigScreen({
         style={{paddingBottom: Math.max(insets.bottom, 16)}}>
 
         {/* Banner tiếp tục nghe — hiện khi có session đã lưu VÀ có conversation data */}
-        {useAudioPlayerStore.getState().lastSession?.conversationData && (
+        {/* BUG-07 fix: Dùng hook lastSession thay vì getState() trong render */}
+        {lastSession?.conversationData && (
           <TouchableOpacity
             className="flex-row items-center bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 mb-3"
             onPress={() => {
               haptic.light();
-              const session = useAudioPlayerStore.getState().lastSession;
-              if (!session?.conversationData) {
+              if (!lastSession?.conversationData) {
                 // Session cũ không có data → xóa session stale
-                useAudioPlayerStore.getState().clearSession();
+                clearSession();
                 console.warn('⚠️ [ConfigScreen] Session cũ không có conversationData, đã xóa');
                 return;
               }
               // Restore conversation vào listening store trước khi navigate
               const listeningStore = useListeningStore.getState();
-              listeningStore.setConversation(session.conversationData);
-              listeningStore.setAudioUrl(session.audioUrl);
-              listeningStore.setTimestamps(session.timestamps);
+              listeningStore.setConversation(lastSession.conversationData);
+              listeningStore.setAudioUrl(lastSession.audioUrl);
+              listeningStore.setTimestamps(lastSession.timestamps);
               console.log('✅ [ConfigScreen] Đã restore conversation data từ session');
-              useAudioPlayerStore.getState().setPlayerMode('full');
+              audioPlayerSetPlayerMode('full');
               navigation.navigate('Player');
             }}
             activeOpacity={0.7}
@@ -566,7 +571,7 @@ export default function ListeningConfigScreen({
                 Tiếp tục nghe
               </AppText>
               <AppText className="text-neutrals400 text-xs" numberOfLines={1}>
-                {useAudioPlayerStore.getState().lastSession?.title}
+                {lastSession?.title}
               </AppText>
             </View>
             <Icon name="ChevronRight" className="w-4 h-4 text-primary" />

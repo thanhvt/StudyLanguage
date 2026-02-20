@@ -16,6 +16,8 @@ import TrackPlayer, {useProgress, usePlaybackState, State} from 'react-native-tr
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+// BUG-05 fix: Dùng chung utility thay vì duplicate
+import {formatTime} from '@/utils/formatTime';
 
 /**
  * Mục đích: Mini player cố định bottom — hiện khi user rời PlayerScreen mà audio vẫn phát
@@ -34,7 +36,6 @@ export default function CompactPlayer() {
 
   const playerMode = useAudioPlayerStore(state => state.playerMode);
   const lastSession = useAudioPlayerStore(state => state.lastSession);
-  const isPlaying = useAudioPlayerStore(state => state.isPlaying);
   const setPlayerMode = useAudioPlayerStore(state => state.setPlayerMode);
 
   const progress = useProgress();
@@ -154,8 +155,8 @@ export default function CompactPlayer() {
 
           {/* Nội dung chính */}
           <View className="flex-row items-center px-4 py-3">
-            {/* Waveform nhỏ */}
-            <WaveformVisualizer isPlaying={isPlaying} height={16} />
+            {/* Waveform nhỏ — BUG-12 fix: dùng isTrackPlaying thống nhất */}
+            <WaveformVisualizer isPlaying={isTrackPlaying} height={16} />
 
             {/* Title — tappable để expand */}
             <TouchableOpacity
@@ -204,21 +205,4 @@ export default function CompactPlayer() {
   );
 }
 
-// ========================
-// Utility
-// ========================
-
-/**
- * Mục đích: Format số giây thành mm:ss
- * Tham số đầu vào: seconds (number)
- * Tham số đầu ra: string (mm:ss)
- * Khi nào sử dụng: Hiển thị thời gian trên compact player
- */
-function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) {
-    return '0:00';
-  }
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
+// BUG-05 fix: Đã chuyển formatTime sang @/utils/formatTime.ts — xóa bản duplicate

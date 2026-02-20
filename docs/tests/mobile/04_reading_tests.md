@@ -11,7 +11,7 @@
 
 | Loại Test | Số lượng | Trạng thái |
 |-----------|----------|------------|
-| **Unit Tests** (Jest) | 42 tests | ✅ 42/42 passed |
+| **Unit Tests** (Jest) | 73 tests | ✅ 73/73 passed |
 | **Smoke Tests** (Manual) | 8 scenarios | 🔲 Chưa test |
 | **Enhanced Feature Tests** (Manual) | 32 scenarios | 🔲 Chưa test |
 | **Monkey Tests** (Free-form) | 14 scenarios | 🔲 Chưa test |
@@ -21,7 +21,7 @@
 
 ## 1️⃣ UNIT TESTS (Automated)
 
-> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useReadingStore|readingApi" --verbose`
+> Chạy: `cd apps/mobile && npx jest --testPathPatterns="useReadingStore|readingApi|useReadingPractice|useTtsReader|usePinchZoom" --verbose`
 
 ### Store Tests — `useReadingStore.test.ts` (24 tests ✅)
 
@@ -48,6 +48,50 @@
 | 4 | deleteWord (endpoint) | 1 | ✅ |
 | 5 | **analyzePractice** (payload, format, perfect score, error) | 4 | ✅ 🆕 |
 | 6 | **saveReadingSession** (payload, default, response, error) | 4 | ✅ 🆕 |
+
+### Hook Tests — `useReadingPractice.test.ts` (12 tests ✅ 🆕)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Trạng thái ban đầu | 1 | ✅ |
+| 2 | startRecording (phase, Voice.start, reset) | 2 | ✅ |
+| 3 | startRecording fail (no mic) | 1 | ✅ |
+| 4 | onSpeechResults (transcript realtime) | 1 | ✅ |
+| 5 | onSpeechError (error + reset) | 1 | ✅ |
+| 6 | stopRecording + analyze (phase transitions) | 1 | ✅ |
+| 7 | stopRecording transcript rỗng | 1 | ✅ |
+| 8 | API analyze fail | 1 | ✅ |
+| 9 | resetPractice (full reset + Voice.cancel) | 1 | ✅ |
+| 10 | Cleanup khi unmount | 1 | ✅ |
+
+### Hook Tests — `useTtsReader.test.ts` (13 tests ✅ 🆕)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | Trạng thái ban đầu | 1 | ✅ |
+| 2 | play() — bắt đầu đọc | 1 | ✅ |
+| 3 | pause() — dừng + isPaused | 1 | ✅ |
+| 4 | Resume after pause | 1 | ✅ |
+| 5 | stop() — reset hoàn toàn | 1 | ✅ |
+| 6 | Auto-advance (đọc xong đoạn → đoạn tiếp) | 1 | ✅ |
+| 7 | Đọc xong đoạn cuối → reset | 1 | ✅ |
+| 8 | skipTo(n) | 1 | ✅ |
+| 9 | skipTo ngoài phạm vi | 2 | ✅ |
+| 10 | Paragraphs rỗng | 1 | ✅ |
+| 11 | TTS config setup | 1 | ✅ |
+
+### Hook Tests — `usePinchZoom.test.ts` (8 tests ✅ 🆕)
+
+| # | Test Group | Cases | Status |
+|---|-----------|-------|--------|
+| 1 | onPinchStart (lưu base) | 1 | ✅ |
+| 2 | Zoom in (scale > 1) | 1 | ✅ |
+| 3 | Zoom out (scale < 1) | 1 | ✅ |
+| 4 | Max boundary (28sp) | 1 | ✅ |
+| 5 | Min boundary (12sp) | 1 | ✅ |
+| 6 | Scale = 1.0 → không đổi | 1 | ✅ |
+| 7 | Nhiều lần pinch liên tiếp | 1 | ✅ |
+| 8 | Default fontSize | 1 | ✅ |
 
 ---
 
@@ -225,7 +269,7 @@
 
 | # | Hạng mục | Tiêu chí | Status |
 |---|----------|----------|--------|
-| 1 | Unit tests | 42/42 passed | ✅ |
+| 1 | Unit tests | 73/73 passed | ✅ |
 | 2 | Smoke tests (8 items) | Tất cả PASS | 🔲 |
 | 3 | Critical bugs (🔴) | 0 bugs | 🔲 |
 | 4 | Enhanced features (32 items) | Tất cả Happy Path ✅ PASS | 🔲 |

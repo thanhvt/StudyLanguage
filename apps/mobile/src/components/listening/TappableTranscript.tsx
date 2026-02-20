@@ -41,8 +41,8 @@ const TappableTranscript = React.memo(function TappableTranscript({
    */
   const handlePress = useCallback(
     (word: string) => {
-      // Loại bỏ dấu câu để tra từ chính xác
-      const cleanWord = word.replace(/[^a-zA-Z'-]/g, '');
+      // BUG-13 fix: Hỗ trợ cả Unicode letters (café, résumé, naïve...)
+      const cleanWord = word.replace(/[^a-zA-Z\u00C0-\u024F'-]/g, '');
       if (cleanWord.length > 0) {
         onWordPress(cleanWord);
       }

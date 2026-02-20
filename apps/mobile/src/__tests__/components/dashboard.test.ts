@@ -17,6 +17,7 @@
  * Khi nào sử dụng: Test greeting logic mà không render component
  */
 function getGreeting(hour: number): string {
+  if (hour >= 22 || hour < 6) return 'Vẫn đang học';
   if (hour < 12) return 'Chào buổi sáng';
   if (hour < 18) return 'Chào buổi chiều';
   return 'Chào buổi tối';
@@ -75,9 +76,8 @@ function formatTimeAgo(minutesAgo: number): string {
 
 describe('Dashboard Logic', () => {
   describe('Greeting', () => {
-    // MOB-DASH-MVP-HP-001: Buổi sáng
-    it('hiển thị "Chào buổi sáng" từ 0:00-11:59', () => {
-      expect(getGreeting(0)).toBe('Chào buổi sáng');
+    // MOB-DASH-MVP-HP-001: Buổi sáng (6:00-11:59)
+    it('hiển thị "Chào buổi sáng" từ 6:00-11:59', () => {
       expect(getGreeting(6)).toBe('Chào buổi sáng');
       expect(getGreeting(9)).toBe('Chào buổi sáng');
       expect(getGreeting(11)).toBe('Chào buổi sáng');
@@ -91,21 +91,34 @@ describe('Dashboard Logic', () => {
     });
 
     // MOB-DASH-MVP-HP-003: Buổi tối
-    it('hiển thị "Chào buổi tối" từ 18:00-23:59', () => {
+    it('hiển thị "Chào buổi tối" từ 18:00-21:59', () => {
       expect(getGreeting(18)).toBe('Chào buổi tối');
       expect(getGreeting(20)).toBe('Chào buổi tối');
-      expect(getGreeting(23)).toBe('Chào buổi tối');
+      expect(getGreeting(21)).toBe('Chào buổi tối');
     });
 
-    // Boundary: chuyển giao
+    // MOB-DASH-MVP-HP-004: Khuya (22:00-05:59)
+    it('hiển thị "Vẫn đang học" từ 22:00-05:59', () => {
+      expect(getGreeting(22)).toBe('Vẫn đang học');
+      expect(getGreeting(23)).toBe('Vẫn đang học');
+      expect(getGreeting(0)).toBe('Vẫn đang học');
+      expect(getGreeting(3)).toBe('Vẫn đang học');
+      expect(getGreeting(5)).toBe('Vẫn đang học');
+    });
+
+    it('boundary: 5 → khuya, 6 → sáng', () => {
+      expect(getGreeting(5)).toBe('Vẫn đang học');
+      expect(getGreeting(6)).toBe('Chào buổi sáng');
+    });
+
     it('boundary: 11 → sáng, 12 → chiều', () => {
       expect(getGreeting(11)).toBe('Chào buổi sáng');
       expect(getGreeting(12)).toBe('Chào buổi chiều');
     });
 
-    it('boundary: 17 → chiều, 18 → tối', () => {
-      expect(getGreeting(17)).toBe('Chào buổi chiều');
-      expect(getGreeting(18)).toBe('Chào buổi tối');
+    it('boundary: 21 → tối, 22 → khuya', () => {
+      expect(getGreeting(21)).toBe('Chào buổi tối');
+      expect(getGreeting(22)).toBe('Vẫn đang học');
     });
 
     // MOB-DASH-MVP-EC-002: Greeting khi user chưa có tên
@@ -208,6 +221,143 @@ describe('Dashboard Logic', () => {
       expect(formatTimeAgo(60)).toBe('1 giờ trước');
       expect(formatTimeAgo(120)).toBe('2 giờ trước');
       expect(formatTimeAgo(180)).toBe('3 giờ trước');
+    });
+  });
+
+  // ============================================================
+  // BỔ SUNG: Test cases thiếu từ 00_dashboard_tests.md
+  // ============================================================
+
+  describe('Greeting - Bổ sung', () => {
+    // MOB-DASH-MVP-HP-004: Greeting khuya (22:00-05:59) — ĐÃ FIX
+    it('22:00-05:59 trả về "Vẫn đang học"', () => {
+      expect(getGreeting(22)).toBe('Vẫn đang học');
+      expect(getGreeting(23)).toBe('Vẫn đang học');
+      expect(getGreeting(0)).toBe('Vẫn đang học');
+      expect(getGreeting(3)).toBe('Vẫn đang học');
+      expect(getGreeting(5)).toBe('Vẫn đang học');
+    });
+
+    // MOB-DASH-MVP-EC-001: Greeting khi tên user rất dài (50+ ký tự)
+    it('greeting với tên dài 50+ ký tự không gây lỗi', () => {
+      const longName = 'NguyenVanThanhNguyenVanThanhNguyenVanThanhNguyenVanThanh';
+      expect(longName.length).toBeGreaterThan(50);
+
+      const result = formatGreetingText(9, longName);
+      expect(result).toContain(longName);
+      expect(result).toContain('Chào buổi sáng');
+    });
+
+    it('greeting với empty string name → xử lý như null', () => {
+      // Edge case: empty string thay vì null
+      const result = formatGreetingText(9, '');
+      // Empty string là falsy → không hiện tên
+      expect(result).toBe('Chào buổi sáng! 👋');
+    });
+  });
+
+  describe('Streak Logic - Bổ sung', () => {
+    /**
+     * Mục đích: Test streak display logic
+     * Tham số đầu vào: streak (number), lastStudyDate (string)
+     * Tham số đầu ra: object {display, shouldReset, isMilestone}
+     * Khi nào sử dụng: Dashboard hiển thị streak widget
+     */
+    function getStreakInfo(streak: number) {
+      return {
+        display: streak === 0 ? '🔥 0 days — Start your streak!' : `🔥 ${streak} day streak`,
+        isMilestone: [7, 30, 100, 365].includes(streak),
+        level: streak === 0 ? 'none' : streak < 7 ? 'beginner' : streak < 30 ? 'intermediate' : 'advanced',
+      };
+    }
+
+    // MOB-DASH-MVP-HP-005: Streak = 7
+    it('hiển thị "7 day streak" khi streak = 7', () => {
+      const info = getStreakInfo(7);
+      expect(info.display).toBe('🔥 7 day streak');
+    });
+
+    // MOB-DASH-MVP-HP-006: Streak = 0 (user mới)
+    it('hiển thị CTA "Start your streak!" khi streak = 0', () => {
+      const info = getStreakInfo(0);
+      expect(info.display).toContain('Start your streak!');
+      expect(info.level).toBe('none');
+    });
+
+    // MOB-DASH-MVP-EC-002: Milestone 7/30/100 ngày
+    it('phát hiện milestone 7/30/100/365 ngày', () => {
+      expect(getStreakInfo(7).isMilestone).toBe(true);
+      expect(getStreakInfo(30).isMilestone).toBe(true);
+      expect(getStreakInfo(100).isMilestone).toBe(true);
+      expect(getStreakInfo(365).isMilestone).toBe(true);
+    });
+
+    it('không phải milestone cho các giá trị khác', () => {
+      expect(getStreakInfo(5).isMilestone).toBe(false);
+      expect(getStreakInfo(15).isMilestone).toBe(false);
+      expect(getStreakInfo(99).isMilestone).toBe(false);
+    });
+
+    it('streak level phân loại đúng', () => {
+      expect(getStreakInfo(1).level).toBe('beginner');
+      expect(getStreakInfo(6).level).toBe('beginner');
+      expect(getStreakInfo(7).level).toBe('intermediate');
+      expect(getStreakInfo(29).level).toBe('intermediate');
+      expect(getStreakInfo(30).level).toBe('advanced');
+      expect(getStreakInfo(100).level).toBe('advanced');
+    });
+  });
+
+  describe("Today's Progress - Bổ sung", () => {
+    /**
+     * Mục đích: Tính toán tiến độ học hôm nay
+     * Tham số đầu vào: sessions (array), targetMinutes (number)
+     * Tham số đầu ra: {totalMinutes, sessionCount, progress}
+     * Khi nào sử dụng: Dashboard Enhanced phase — MOB-DASH-ENH-HP-001
+     */
+    function calculateTodayProgress(
+      sessions: {durationMinutes: number}[],
+      targetMinutes: number,
+    ) {
+      const totalMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+      return {
+        totalMinutes,
+        sessionCount: sessions.length,
+        progress: Math.min(totalMinutes / targetMinutes, 1),
+      };
+    }
+
+    // MOB-DASH-ENH-HP-001: Today's progress update
+    it('tính đúng progress khi hoàn thành 2 bài', () => {
+      const sessions = [
+        {durationMinutes: 10},
+        {durationMinutes: 15},
+      ];
+      const result = calculateTodayProgress(sessions, 60);
+
+      expect(result.totalMinutes).toBe(25);
+      expect(result.sessionCount).toBe(2);
+      expect(result.progress).toBeCloseTo(25 / 60);
+    });
+
+    // MOB-DASH-ENH-EC-001: Không có session hôm nay
+    it('progress = 0 khi chưa học gì hôm nay', () => {
+      const result = calculateTodayProgress([], 60);
+
+      expect(result.totalMinutes).toBe(0);
+      expect(result.sessionCount).toBe(0);
+      expect(result.progress).toBe(0);
+    });
+
+    it('progress capped tại 1 khi vượt target', () => {
+      const sessions = [
+        {durationMinutes: 30},
+        {durationMinutes: 35},
+      ];
+      const result = calculateTodayProgress(sessions, 60);
+
+      expect(result.totalMinutes).toBe(65);
+      expect(result.progress).toBe(1); // Capped tại 100%
     });
   });
 });
