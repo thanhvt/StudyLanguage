@@ -123,19 +123,19 @@ react-native-haptic-feedback // Tap feedback
 
 ## 6. Implementation Tasks
 
-### MVP Phase
+### Dashboard Layout
 - [ ] Dashboard screen layout (auth/guest views)
 - [ ] Greeting component (time-based)
 - [ ] Streak display (inline)
-
-- [ ] Quick Actions (3 skill cards)
 - [ ] Guest Dashboard hero + CTA
+
+### Quick Actions
+- [ ] Quick Actions (3 skill cards)
 - [ ] Navigate to skill pages
 
-### Enhanced Phase
-
-- [x] Pull-to-refresh stats
-- [x] Animated transitions
+### Animations & Polish
+- [ ] Pull-to-refresh stats
+- [ ] Animated transitions
 
 
 ---

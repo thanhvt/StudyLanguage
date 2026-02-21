@@ -105,25 +105,29 @@ interface SettingsState {
 
 ## 5. Implementation Tasks
 
-### MVP Phase
+### Profile
 - [ ] Profile screen with user info
 - [ ] Basic stats display
-- [ ] **Week activity chart component** (dots + minutes) (NEW ✨)
+- [ ] Week activity chart component (dots + minutes)
+- [ ] Avatar change (camera/gallery picker)
+- [ ] Speaking goal display (e.g. 8/10)
+
+### Appearance
 - [ ] Theme toggle (Light/Dark)
-- [ ] Logout functionality
-- [ ] About screen
-
-### Enhanced Phase
 - [ ] Full appearance settings
-- [ ] **Accent color picker** (6 colors) (NEW ✨)
-- [ ] **Avatar change** (camera/gallery picker) (NEW ✨)
-- [ ] **Speaking goal display** (e.g. 8/10) (NEW ✨)
+- [ ] Accent color picker (6 colors)
 
+### Audio
 - [ ] Audio settings (Music, SFX, Speed)
 - [ ] Auto-play & Hands-free logic
 
+### Privacy & Data
 - [ ] Privacy settings
 - [ ] Export/Delete data
+
+### Account
+- [ ] Logout functionality
+- [ ] About screen
 
 ---
 

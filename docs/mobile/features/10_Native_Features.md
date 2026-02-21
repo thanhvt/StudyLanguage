@@ -488,21 +488,31 @@ React Native Linking (built-in) // No extra lib needed
 
 ## 11. Implementation Tasks
 
-### Enhanced Phase
+### Gestures
 - [ ] Gesture system implementation
-- [ ] **Speaking gestures** (swipe-to-cancel, countdown haptic, tap-to-pronounce) (NEW ✨)
+- [ ] Speaking gestures (swipe-to-cancel, countdown haptic, tap-to-pronounce)
+
+### Voice Commands
 - [ ] Voice command recognition
-- [ ] **Android notification player** (foreground service MediaSession) (NEW ✨)
+- [ ] Voice wake word
+
+### Background Audio
 - [ ] Background audio player
-- [ ] **Background Music** (Lofi tracks, in-app controls, smart ducking, persist) (NEW ✨)
-- [ ] **Audio interruption handling** (ducking, pause/resume per source) (NEW ✨)
+- [ ] Android notification player (foreground service MediaSession)
+- [ ] Audio interruption handling (ducking, pause/resume per source)
+- [ ] Background Music (Lofi tracks, in-app controls, smart ducking, persist)
+
+### Haptic Feedback
 - [ ] Haptic feedback integration
 
-### Advanced Phase
+### Widgets
 - [ ] iOS widgets
 - [ ] Android widgets
-- [ ] Voice wake word
+
+### Deep Linking
 - [ ] Deep linking
+
+### Lock Screen
 - [ ] Lock screen controls
 
 ---

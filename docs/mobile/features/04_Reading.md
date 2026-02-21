@@ -155,22 +155,32 @@ paragraph.split(/(\s+)/).map(token => (
 
 ## 6. Implementation Tasks
 
-### MVP Phase
-- [x] Config screen (topic, level, length)
-- [x] Generate article via API
-- [x] Article display with scrolling
-- [x] Tap-to-translate popup
+### Config & Generation
+- [ ] Config screen (topic, level, length)
+- [ ] Generate article via API
 
-### Enhanced Phase
-- [x] Font size controls *(A+/A- done)*
-- [x] Save words to vocabulary *(in-memory store + DictionaryPopup)*
-- [x] Highlight new vocabulary *(amber badge khi từ đã lưu)*
-- [x] **Dictionary popup: save word + audio playback** *(reuse từ Listening, audio via Linking.openURL)*
-- [x] **Pinch-to-zoom text** *(usePinchZoom hook + GestureDetector)*
-- [x] **TTS auto-read article** *(useTtsReader hook, paragraph highlight + auto-scroll)*
-- [x] **Direct save reading articles** *(saveReadingSession → History API)*
-- [x] **Reading practice with AI analysis** *(PracticeScreen + useReadingPractice + STT + analyzePractice API)*
-- [x] **Focus Mode toggle** *(animated chrome hiding, status bar, hint label)*
+### Article Display
+- [ ] Article display with scrolling
+- [ ] Tap-to-translate popup
+- [ ] Dictionary popup: save word + audio playback (reuse từ Listening, audio via Linking.openURL)
+- [ ] Highlight new vocabulary (amber badge khi từ đã lưu)
+
+### Text Controls
+- [ ] Font size controls (A+/A-)
+- [ ] Pinch-to-zoom text (usePinchZoom hook + GestureDetector)
+
+### TTS Auto-Read
+- [ ] TTS auto-read article (useTtsReader hook, paragraph highlight + auto-scroll)
+
+### Reading Practice
+- [ ] Reading practice with AI analysis (PracticeScreen + useReadingPractice + STT + analyzePractice API)
+
+### Focus Mode
+- [ ] Focus Mode toggle (animated chrome hiding, status bar, hint label)
+
+### Save to History
+- [ ] Direct save reading articles (saveReadingSession → History API)
+- [ ] Save words to vocabulary (in-memory store + DictionaryPopup)
 
 ---
 

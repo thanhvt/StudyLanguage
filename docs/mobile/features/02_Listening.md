@@ -30,32 +30,37 @@ Cho phép user tạo và quản lý scenario riêng để luyện nghe theo ch�
 
 ### 1.3 Global Audio Player
 
-Audio player persistent, hoạt động xuyên suốt các trang.
+Audio player persistent, hoạt động xuyên suốt các trang. Chỉ có **2 chế độ**:
 
 | Mode | Description | Context |
 |------|-------------|---------|
-| **Full** | Full controls, transcript | Listening page |
-| **Compact** | Mini player với progress | Other pages |
-| **Minimized** | Floating pill | Tối thiểu hóa |
+| **Full** | Full controls (play/pause, seek, speed) + hiển thị transcript đầy đủ | Listening page detail (trang chính) |
+| **Minimized** | Floating panel nhỏ hiển thị khi user rời khỏi trang Listening page detail | Mọi trang khác trong app |
+
+**Chi tiết Minimized mode:**
+- **Trigger:** Tự động kích hoạt khi user navigate/rời khỏi trang Listening page detail
+- **Chiều rộng:** ~1/3 đến 1/4 chiều ngang màn hình
+- **Chiều cao:** Vừa phải, dạng border panel nhỏ (kiểu FAB mở rộng)
+- **Nội dung hiển thị:**
+  - Tên bài đang phát (dạng **marquee / chữ chạy** nếu quá dài)
+  - Thời gian thực tế / thời gian tổng (VD: `2:15 / 5:00`)
+  - Nút **Pause/Play**
+  - Nút **Thoát** (dừng phát và đóng panel)
+- **Vị trí:** Floating, không che khuất nội dung chính
 
 **Features:**
 - Persist playback across page navigation
 - Confirmation dialog khi đổi audio đang phát
-- Lưu user preferences (volume, speed, mute)
+- Lưu user preferences (speed, mute)
 - Session restoration: Resume từ player hoặc recent lessons
 
-### 1.4 Radio Mode Enhancements
-
-Cải tiến Radio Mode với nhiều tính năng mới:
+### 1.4 Radio Mode
 
 | Feature | Description |
 |---------|-------------|
 | **Duration Options** | 1, 5, 10, 15, 20, 30 phút |
 | **Progress Tracking** | Hiển thị progress khi đang generate playlist |
-| **Toast Notifications** | Thông báo feedback khi generate hoàn tất |
 | **Immediate Playback** | Phát ngay sau khi generate hoặc chọn existing playlist |
-
-
 
 ### 1.6 TTS Provider Settings
 
@@ -157,8 +162,6 @@ Yêu cầu âm thanh vẫn phát khi người dùng rời khỏi app (passive li
 | Control | Action | Gesture |
 |---------|--------|---------|
 | Play/Pause | Toggle playback | Tap center / Double tap |
-| Skip +15s | Forward 15 seconds | Tap right control |
-| Skip -15s | Back 15 seconds | Tap left control |
 | Seek | Jump to position | Drag progress bar |
 | Speed | Change playback rate | Tap speed button |
 
@@ -244,7 +247,7 @@ interface ListeningState {
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 5.4 Custom Scenarios State (NEW ✨)
+### 5.4 Custom Scenarios State
 
 ```typescript
 interface CustomScenario {
@@ -269,10 +272,10 @@ interface CustomScenariosHook {
 }
 ```
 
-### 5.5 Global Audio Player State (NEW ✨)
+### 5.5 Global Audio Player State
 
 ```typescript
-type PlayerMode = 'full' | 'compact' | 'minimized';
+type PlayerMode = 'full' | 'minimized';
 
 interface AudioPlayerState {
   // Audio data
@@ -299,8 +302,9 @@ interface AudioPlayerState {
 // Store: useAudioPlayerStore (Zustand with persist)
 // Persists: volume, speed, isMuted
 // Store: useAudioPlayerStore (Zustand with persist)
+```
 
-### 5.6 TTS Settings State (NEW ✨)
+### 5.6 TTS Settings State
 
 ```typescript
 interface TtsSettings {
@@ -322,7 +326,6 @@ interface TtsSettings {
   multiTalkerPairIndex?: number;
 }
 ```
-```
 
 ---
 
@@ -341,45 +344,57 @@ interface TtsSettings {
 
 ## 7. Implementation Tasks
 
-### MVP Phase
-- [x] Config screen with topic, duration, mode
-- [x] Basic audio player with play/pause/seek
-- [x] Transcript display with auto-scroll
-- [x] Speed control (0.5x - 2.0x)
-- [x] Generate conversation via API
+### Config & Generation
+- [ ] Config screen with topic, duration, mode
+- [ ] Generate conversation via API
 
-### Enhanced Phase
+### Audio Player
+- [ ] Basic audio player with play/pause/seek
+- [ ] Speed control (0.5x - 2.0x)
+- [ ] Waveform Visualizer — Animated bars khi đang phát, tích hợp trong progress bar
 
-- [x] Bookmark sentences
+### Transcript
+- [ ] Transcript display with auto-scroll
+- [ ] Translation toggle — Bật/tắt bản dịch tiếng Việt (🇻🇳 button)
+- [ ] Tappable Transcript — Tap từng từ trong transcript → DictionaryPopup tra nghĩa
 
-- [x] Background audio
-- [x] Lock screen controls
-- [x] **Custom Scenarios UI** (NEW ✨)
-- [x] **Global Audio Player - Compact mode** (NEW ✨)
-- [x] **Radio Mode: 1-min duration option** (NEW ✨)
-- [x] **Radio Mode: Progress tracking UI** (NEW ✨)
-- [x] **Session restoration from player** (NEW ✨)
-- [x] **Topic picker subcategory highlight** (NEW ✨)
-- [x] **TTS Provider Settings UI** (NEW ✨)
-- [x] **Azure TTS Integration** (NEW ✨)
-- [x] **Multi-talker logic** (NEW ✨)
-- [x] **Waveform Visualizer** — Animated bars khi đang phát, tích hợp trong progress bar
-- [x] **Translation toggle** — Bật/tắt bản dịch tiếng Việt (🇻🇳 button)
-- [x] **Tappable Transcript** — Tap từng từ trong transcript → DictionaryPopup tra nghĩa
-- [x] **Player Gestures** — Swipe L/R (skip), swipe down (minimize), double-tap (play/pause) + haptic feedback
-- [x] **Cross-tab CompactPlayer** — `useFocusEffect` tự chuyển compact mode khi screen blur (FIX ✨)
-- [x] **Swipe-down minimize** — Swipe down trên PlayerScreen → compact mode + goBack (FIX ✨)
-- [x] **TTS Prosody Controls** — Emotion, Pitch, Rate, Volume cho Azure TTS (AdvancedOptionsSheet)
+### Global Audio Player
+- [ ] Global Audio Player - Minimized mode (floating panel)
+- [ ] Cross-tab MinimizedPlayer — `useFocusEffect` tự chuyển minimized mode (floating panel) khi screen blur
+- [ ] Swipe-down minimize — Swipe down trên PlayerScreen → minimized mode (floating panel) + goBack
 
-- [x] Pocket mode with gestures
-- [x] Radio mode (playlists)
-- [x] **Custom Scenarios CRUD** (NEW ✨)
-- [x] **Global Audio Player - Minimized mode** (NEW ✨)
-- [x] **Audio change confirmation dialog** (NEW ✨) — ConfigScreen `handleGenerate()` kiểm tra audio đang phát
-- [x] **Saved Words viewer** — Tab "Từ vựng" trong History, persist qua MMKV (DONE ✨)
-- [x] **Sentence Bookmarks viewer** — Hiển thị trong VocabularyTab, API getAll()(DONE ✨)
-- [x] **Session restoration fix** — Persist conversation data để "Tiếp tục nghe" hoạt động sau reload (FIXED ✨)
-- [x] **Walkthrough Tour** — 5-step interactive tour cho first-time users (DONE ✨)
+### Bookmarks & Vocabulary
+- [ ] Bookmark sentences
+- [ ] Saved Words viewer — Tab "Từ vựng" trong History, persist qua MMKV
+- [ ] Sentence Bookmarks viewer — Hiển thị trong VocabularyTab, API getAll()
+
+### Custom Scenarios
+- [ ] Custom Scenarios UI
+- [ ] Custom Scenarios CRUD
+
+### Radio Mode
+- [ ] Radio mode (playlists)
+- [ ] Radio Mode: 1-min duration option
+- [ ] Radio Mode: Progress tracking UI
+
+### TTS Settings
+- [ ] TTS Provider Settings UI
+- [ ] Azure TTS Integration
+- [ ] Multi-talker logic
+- [ ] TTS Prosody Controls — Emotion, Pitch, Rate, Volume cho Azure TTS
+
+### Background Audio & Session
+- [ ] Background audio
+- [ ] Lock screen controls
+- [ ] Audio change confirmation dialog — ConfigScreen `handleGenerate()` kiểm tra audio đang phát
+- [ ] Session restoration from player
+- [ ] Session restoration fix — Persist conversation data để "Tiếp tục nghe" hoạt động sau reload
+- [ ] Topic picker subcategory highlight
+
+### Player Gestures & UX
+- [ ] Player Gestures — Swipe L/R (skip), swipe down (minimize), double-tap (play/pause) + haptic feedback
+- [ ] Pocket mode with gestures
+- [ ] Walkthrough Tour — 5-step interactive tour cho first-time users
 
 ---
 

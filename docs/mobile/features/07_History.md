@@ -257,43 +257,56 @@ react-native-mmkv                     // Fast key-value storage (settings, recen
 
 ## 6. Implementation Tasks
 
-### MVP Phase
+### History List
 - [ ] History list screen
-- [ ] Filter by skill type
 - [ ] Session detail view (Listening, Speaking, Reading)
+- [ ] Empty state UI
+- [ ] Skeleton loading
+- [ ] Pull-to-refresh
+
+### Filtering & Sorting
+- [ ] Filter by skill type
+- [ ] Date range filter
+- [ ] Sort order toggle
+
+### Search
+- [ ] Search functionality with debounce
+- [ ] Search suggestions & recent searches
+- [ ] Search result highlight
+
+### Quick Actions & Gestures
 - [ ] Replay functionality
 - [ ] Practice again action
-- [ ] **Empty state UI** (NEW ✨)
-- [ ] **Skeleton loading** (NEW ✨)
-- [ ] **Pull-to-refresh** (NEW ✨)
-
-### Enhanced Phase
-- [ ] Search functionality with debounce
-- [ ] **Search suggestions & recent searches** (NEW ✨)
-- [ ] **Search result highlight** (NEW ✨)
 - [ ] Favorites
 - [ ] Quick actions (long press bottom sheet)
-- [ ] **Swipe-to-action (delete/pin)** (NEW ✨)
+- [ ] Swipe-to-action (delete/pin)
+- [ ] Pinned sessions
+
+### Session Restoration
+- [ ] Session restoration from audio player
+- [ ] Persist audio URL in history
+- [ ] Navigate to skill page from player
+
+### Visual & Animations
+- [ ] Visual identity cards (accent colors)
+- [ ] Card press animation + haptic
+
+### Analytics
+- [ ] Stats cards implementation
+- [ ] AI Insight card (gradient + action)
+
+### Pagination
 - [ ] Infinite scroll pagination
 
-- [ ] **Session restoration from audio player**
-- [ ] **Persist audio URL in history**
-- [ ] **Navigate to skill page from player**
-- [ ] **Date range filter** (NEW ✨)
-- [ ] **Sort order toggle** (NEW ✨)
-- [ ] **Visual identity cards (accent colors)** (NEW ✨)
-- [ ] **Card press animation + haptic** (NEW ✨)
-- [ ] Stats cards implementation
-- [ ] Pinned sessions
-- [ ] **AI Insight card (gradient + action)** (NEW ✨)
+### Batch & Export
+- [ ] Batch actions (multi-select mode)
+- [ ] Export/Share session (image card, PDF)
 
-### Advanced Phase
-- [ ] **Batch actions (multi-select mode)** (NEW ✨)
-- [ ] **Export/Share session (image card, PDF)** (NEW ✨)
-- [ ] **Weekly activity heatmap** (NEW ✨)
-- [ ] **Progress chart (line chart)** (NEW ✨)
-- [ ] **Skill distribution chart** (NEW ✨)
-- [ ] **Detail view shared element transition** (NEW ✨)
+### Charts & Transitions
+- [ ] Weekly activity heatmap
+- [ ] Progress chart (line chart)
+- [ ] Skill distribution chart
+- [ ] Detail view shared element transition
 
 ---
 

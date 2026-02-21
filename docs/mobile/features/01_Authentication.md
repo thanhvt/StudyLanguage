@@ -130,17 +130,19 @@ interface AuthState {
 
 ## 7. Implementation Tasks
 
-### MVP Phase
+### Google OAuth
 - [ ] Setup @react-native-google-signin
 - [ ] Implement Google OAuth flow
-- [ ] Create auth screens (Splash, Onboarding, Login)
-- [ ] **Onboarding slides** (3 swipeable slides + Skip/Next/Get Started) (NEW ✨)
 - [ ] Token storage with SecureStore
 - [ ] Auto-relogin on app start
-- [ ] **Auto-relogin loading state** (token check UX) (NEW ✨)
-- [ ] **Error handling UI** (Toast cancelled, Alert + Retry network, Account not found) (NEW ✨)
+- [ ] Auto-relogin loading state (token check UX)
 
-### Enhanced Phase
+### Auth Screens
+- [ ] Create auth screens (Splash, Onboarding, Login)
+- [ ] Onboarding slides (3 swipeable slides + Skip/Next/Get Started)
+- [ ] Error handling UI (Toast cancelled, Alert + Retry network, Account not found)
+
+### Session Management
 - [ ] Session management UI
 
 ---

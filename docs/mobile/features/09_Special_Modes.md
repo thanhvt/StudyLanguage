@@ -319,19 +319,27 @@ interface SpecialModesState {
 
 ## 8. Implementation Tasks
 
-### Advanced Phase
+### Car Mode
 - [ ] Car mode UI
 - [ ] Car mode voice commands
 - [ ] Bluetooth detection
+
+### Bedtime Mode
 - [ ] Bedtime mode UI
 - [ ] Sleep timer functionality
-- [ ] **Ambient sounds** (rain/ocean/forest fade-in at end) (NEW ✨)
+- [ ] Ambient sounds (rain/ocean/forest fade-in at end)
+
+### Workout Mode
 - [ ] Workout mode UI
-- [ ] **Workout content playlists** (Quick Tips, Podcast Lite, Motivation) (NEW ✨)
+- [ ] Workout content playlists (Quick Tips, Podcast Lite, Motivation)
+
+### Pocket Mode
 - [ ] Pocket mode gestures
 - [ ] Motion detection
+
+### Mode Settings
 - [ ] Mode settings screen
-- [ ] **Quick Settings Panel UI** (toggle all modes) (NEW ✨)
+- [ ] Quick Settings Panel UI (toggle all modes)
 
 ---
 
