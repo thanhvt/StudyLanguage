@@ -2,7 +2,6 @@
 
 > **Module:** Authentication  
 > **Priority:** P0 (Core)  
-> **Phase:** MVP
 
 ---
 

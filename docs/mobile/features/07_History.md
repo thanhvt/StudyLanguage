@@ -2,7 +2,6 @@
 
 > **Module:** History  
 > **Priority:** P1 (Core)  
-> **Phase:** MVP
 
 ---
 

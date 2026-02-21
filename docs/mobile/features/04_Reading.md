@@ -2,7 +2,6 @@
 
 > **Module:** Reading  
 > **Priority:** P0 (Core)  
-> **Phase:** MVP → Enhanced
 
 ---
 

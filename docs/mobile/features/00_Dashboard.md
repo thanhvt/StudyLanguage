@@ -2,7 +2,6 @@
 
 > **Module:** Dashboard  
 > **Priority:** P0 (Core)  
-> **Phase:** MVP → Enhanced
 
 ---
 

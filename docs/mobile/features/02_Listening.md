@@ -2,7 +2,6 @@
 
 > **Module:** Listening  
 > **Priority:** P0 (Core)  
-> **Phase:** MVP → Enhanced → Advanced
 
 ---
 

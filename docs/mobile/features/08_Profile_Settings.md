@@ -2,7 +2,6 @@
 
 > **Module:** Profile & Settings  
 > **Priority:** P1 (Core)  
-> **Phase:** MVP
 
 ---
 
