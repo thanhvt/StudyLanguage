@@ -14,10 +14,10 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | **Practice Mode** | Đọc theo mẫu, AI chấm điểm | Luyện từng câu |
-| **Shadowing Mode** | Nhại theo AI đồng thời, so sánh real-time (NEW ✨) | Luyện ngữ điệu, nhịp nói |
+| **Shadowing Mode** | Nhại theo AI đồng thời, so sánh real-time | Luyện ngữ điệu, nhịp nói |
 | **Conversation Coach** | AI coach hội thoại realtime | Luyện giao tiếp tự nhiên |
 | **Roleplay Mode** | Đóng vai tình huống | Advanced practice |
-| **Tongue Twister Mode** | Luyện phát âm vui với câu nói lái (NEW ✨) | Luyện âm khó |
+| **Tongue Twister Mode** | Luyện phát âm vui với câu nói lái | Luyện âm khó |
 
 ### 1.2 AI Conversation Coach
 
@@ -30,15 +30,15 @@ Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc g
 | **Real-time Transcription** | STT via `/ai/transcribe` |
 | **AI Response** | AI tiếp tục hội thoại qua `/conversation-generator/continue-conversation` |
 | **Pronunciation Alert** | Inline feedback khi phát âm sai |
-| **Grammar Correction** | Sửa ngữ pháp inline (NEW ✨) |
-| **Suggested Responses** | 2-3 gợi ý câu trả lời cho beginner (NEW ✨) |
+| **Grammar Correction** | Sửa ngữ pháp inline |
+| **Suggested Responses** | 2-3 gợi ý câu trả lời cho beginner |
 | **Voice Visualizer** | Waveform animation khi đang ghi âm |
 | **Session Transcript** | Scrollable conversation history |
 | **Session Timer** | Countdown theo duration đã chọn, auto-end |
 | **Feedback Mode** | Beginner / Intermediate / Advanced |
 | **Save to History** | Tự động lưu khi kết thúc session |
 
-### 1.3 Shadowing Mode (NEW ✨)
+### 1.3 Shadowing Mode
 
 Technique luyện nói hiệu quả: nghe AI → nhại lại đồng thời → AI so sánh real-time.
 
@@ -50,7 +50,7 @@ Technique luyện nói hiệu quả: nghe AI → nhại lại đồng thời →
 | **Delay Control** | Chỉnh delay 0-2s giữa AI và user |
 | **Score Breakdown** | Điểm riêng cho rhythm, intonation, accuracy |
 
-### 1.4 Tongue Twister Mode (NEW ✨)
+### 1.4 Tongue Twister Mode
 
 Luyện phát âm vui vẻ với tongue twisters, phân loại theo âm cần luyện.
 
@@ -61,7 +61,7 @@ Luyện phát âm vui vẻ với tongue twisters, phân loại theo âm cần lu
 | **Leaderboard** | Bảng xếp hạng tốc độ + chính xác |
 | **Unlock System** | Hoàn thành level dễ → mở khóa level khó |
 
-### 1.5 Custom Speaking Scenarios (NEW ✨)
+### 1.5 Custom Speaking Scenarios
 
 Tương tự Listening Custom Scenarios, cho phép user tạo scenario riêng để luyện nói.
 
@@ -73,7 +73,7 @@ Tương tự Listening Custom Scenarios, cho phép user tạo scenario riêng đ
 | **Favorite** | Đánh dấu yêu thích |
 | **Delete** | Xóa scenario đã lưu |
 
-### 1.6 TTS Provider Settings (NEW ✨)
+### 1.6 TTS Provider Settings
 
 Cấu hình giọng AI mẫu khi phát âm sample (parity với Listening):
 
@@ -83,7 +83,7 @@ Cấu hình giọng AI mẫu khi phát âm sample (parity với Listening):
 | **Emotion Context** | AI mẫu nói với emotion phù hợp context câu |
 | **Voice Selection** | Chọn giọng mẫu hoặc random |
 
-### 1.7 Gamification & Progress (NEW ✨)
+### 1.7 Gamification & Progress
 
 Hệ thống gamification nâng cao cho Speaking:
 
@@ -96,7 +96,7 @@ Hệ thống gamification nâng cao cho Speaking:
 | **Weak Sounds Heatmap** | Hiển thị âm hay sai: `/θ/`, `/ð/`, `/ʃ/`... |
 | **Calendar Heatmap** | Ngày nào luyện, ngày nào không |
 
-### 1.8 Save & Share Results (NEW ✨)
+### 1.8 Save & Share Results
 
 | Feature | Description |
 |---------|-------------|
@@ -104,14 +104,14 @@ Hệ thống gamification nâng cao cho Speaking:
 | **Recording History** | Lưu recordings để nghe lại sự tiến bộ |
 | **Progress Timeline** | So sánh recording cũ vs mới cho cùng câu |
 
-### 1.9 Background Audio cho Coach (NEW ✨)
+### 1.9 Background Audio cho Coach
 
 | Feature | Description |
 |---------|-------------|
 | **AI Response Notification** | Notification khi AI response đến (nếu minimize app) |
 | **Session Persist** | Giữ session khi chuyển app, resume khi quay lại |
 
-### 1.10 AI Voice Clone Replay (NEW ✨)
+### 1.10 AI Voice Clone Replay
 
 | Feature | Description |
 |---------|-------------|
@@ -136,7 +136,7 @@ Hệ thống gamification nâng cao cho Speaking:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Conversation Coach Flow (NEW ✨)
+### 2.2 Conversation Coach Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -171,7 +171,7 @@ Hệ thống gamification nâng cao cho Speaking:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.4 Shadowing Flow (NEW ✨)
+### 2.4 Shadowing Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -189,7 +189,7 @@ Hệ thống gamification nâng cao cho Speaking:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.5 Tongue Twister Flow (NEW ✨)
+### 2.5 Tongue Twister Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -218,9 +218,9 @@ Hệ thống gamification nâng cao cho Speaking:
 | Visual feedback | Waveform animation khi đang ghi |
 | Haptic start | Medium impact khi bắt đầu |
 | Haptic end | Light impact khi thả |
-| **Countdown** (NEW ✨) | Animated 3→2→1→GO! trước khi ghi |
-| **Swipe-to-cancel** (NEW ✨) | Vuốt lên để hủy recording |
-| **Preview before submit** (NEW ✨) | Nghe lại bản ghi trước khi gửi |
+| **Countdown** | Animated 3→2→1→GO! trước khi ghi |
+| **Swipe-to-cancel** | Vuốt lên để hủy recording |
+| **Preview before submit** | Nghe lại bản ghi trước khi gửi |
 | Max duration | 15 giây default |
 
 ### 4.2 AI Feedback
@@ -230,11 +230,11 @@ Hệ thống gamification nâng cao cho Speaking:
 | Overall Score | 0-100 score with grade |
 | Word-by-word | Score cho từng word |
 | Phoneme breakdown | IPA transcription |
-| **Phoneme Heatmap** (NEW ✨) | Visual map âm cần cải thiện |
+| **Phoneme Heatmap** | Visual map âm cần cải thiện |
 | Tips | AI-generated suggestions |
 | Comparison | User vs AI waveform |
-| **AI Voice Clone** (NEW ✨) | Nghe giọng mình được AI sửa |
-| **Confetti** (NEW ✨) | Animation mừng khi ≥90 |
+| **AI Voice Clone** | Nghe giọng mình được AI sửa |
+| **Confetti** | Animation mừng khi ≥90 |
 
 ### 4.3 Progress Tracking
 
@@ -244,11 +244,11 @@ Hệ thống gamification nâng cao cho Speaking:
 | Streak | Liên tục câu đúng |
 | History | Tất cả attempts saved |
 | Improvement | Score trend theo thời gian |
-| **Radar Chart** (NEW ✨) | Pronunciation/Fluency/Vocab/Grammar |
-| **Calendar Heatmap** (NEW ✨) | Ngày luyện / không |
-| **Weak Sounds** (NEW ✨) | Âm hay sai cần cải thiện |
+| **Radar Chart** | Pronunciation/Fluency/Vocab/Grammar |
+| **Calendar Heatmap** | Ngày luyện / không |
+| **Weak Sounds** | Âm hay sai cần cải thiện |
 
-### 4.4 Gamification (NEW ✨)
+### 4.4 Gamification
 
 | Feature | Description |
 |---------|-------------|
@@ -257,7 +257,7 @@ Hệ thống gamification nâng cao cho Speaking:
 | Weekly Report | Trend + thống kê + weak sounds |
 | Leaderboard | Tongue Twister mode |
 
-### 4.5 Save & Share (NEW ✨)
+### 4.5 Save & Share
 
 | Feature | Description |
 |---------|-------------|
@@ -276,9 +276,9 @@ react-native-audio-recorder-player // Ghi âm và phát lại audio
 react-native-haptic-feedback       // Phản hồi rung
 react-native-reanimated            // Animation waveform, confetti
 @tanstack/react-query              // Caching AI feedback
-react-native-share                 // Chia sẻ kết quả (NEW ✨)
-react-native-view-shot             // Chụp result card (NEW ✨)
-lottie-react-native                // Animation confetti, countdown (NEW ✨)
+react-native-share                 // Chia sẻ kết quả
+react-native-view-shot             // Chụp result card
+lottie-react-native                // Animation confetti, countdown
 ```
 
 ### 5.2 State Structure
@@ -359,7 +359,7 @@ interface CustomScenario {
 }
 ```
 
-### 5.3 Conversation Coach State (NEW ✨)
+### 5.3 Conversation Coach State
 
 ```typescript
 interface ConversationCoachState {
@@ -401,7 +401,7 @@ interface PronunciationFeedback {
 }
 ```
 
-### 5.4 API Endpoints (NEW ✨)
+### 5.4 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -436,13 +436,13 @@ async function handleRecordStop() {
 |---------|---------|--------|
 | Mic button | Long press | Bắt đầu ghi âm |
 | Mic button | Release | Dừng ghi âm |
-| **Recording** | **Swipe up** (NEW ✨) | **Hủy recording** |
+| **Recording** | **Swipe up** | **Hủy recording** |
 | Feedback | Swipe right | Câu tiếp theo |
 | Feedback | Swipe left | Retry |
-| Word | Tap | Hiển IPA + audio (NEW ✨) |
-| **Weak sound** | **Tap** (NEW ✨) | **Navigate đến practice âm đó** |
-| **Preview** | **Tap play** (NEW ✨) | **Nghe lại bản ghi** |
-| **Share card** | **Tap share** (NEW ✨) | **Export result → social** |
+| Word | Tap | Hiển IPA + audio |
+| **Weak sound** | **Tap** | **Navigate đến practice âm đó** |
+| **Preview** | **Tap play** | **Nghe lại bản ghi** |
+| **Share card** | **Tap share** | **Export result → social** |
 
 ---
 

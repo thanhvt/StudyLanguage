@@ -68,6 +68,66 @@ export class HistoryService {
   }
 
   /**
+   * Tạo mới một bản ghi lịch sử học tập
+   *
+   * Mục đích: Lưu kết quả session học (reading/listening/speaking) vào DB
+   * @param userId - ID của user hiện tại
+   * @param data - Dữ liệu session cần lưu
+   * @returns Entry vừa tạo (đã transform) kèm message xác nhận
+   * Khi nào sử dụng: POST /history → Sau khi user hoàn thành 1 session học
+   *   - Reading: lưu bài đọc đã hoàn thành
+   *   - Listening: lưu bài nghe đã hoàn thành
+   *   - Speaking: lưu bài nói đã hoàn thành
+   */
+  async createEntry(
+    userId: string,
+    data: {
+      type: 'listening' | 'speaking' | 'reading';
+      topic: string;
+      content?: any;
+      durationMinutes?: number;
+      numSpeakers?: number;
+      keywords?: string;
+      mode?: string;
+      audioUrl?: string;
+      audioTimestamps?: { startTime: number; endTime: number }[];
+    },
+  ) {
+    const insertData: Record<string, any> = {
+      user_id: userId,
+      type: data.type,
+      topic: data.topic,
+      content: data.content || null,
+      duration_minutes: data.durationMinutes || null,
+      num_speakers: data.numSpeakers || null,
+      keywords: data.keywords || null,
+      mode: data.mode || null,
+      status: 'completed',
+      is_pinned: false,
+      is_favorite: false,
+      audio_url: data.audioUrl || null,
+      audio_timestamps: data.audioTimestamps || null,
+    };
+
+    const { data: created, error } = await this.supabase
+      .from('lessons')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      this.logger.error('[HistoryService] Lỗi tạo bản ghi lịch sử:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      entry: this.transformEntry(created),
+      message: 'Đã lưu bài học vào lịch sử',
+    };
+  }
+
+  /**
    * Lấy danh sách lịch sử với filters
    * 
    * @param userId - ID của user hiện tại

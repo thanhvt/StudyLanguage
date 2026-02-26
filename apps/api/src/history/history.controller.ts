@@ -12,6 +12,8 @@ import {
   Body,
   UseGuards,
   Req,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { HistoryService } from './history.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
@@ -20,7 +22,77 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsNotEmpty,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+// ==================== DTOs ====================
+
+/**
+ * DTO cho tạo mới bản ghi lịch sử
+ *
+ * Mục đích: Validate input POST /history
+ * Tham số: type (bắt buộc), topic (bắt buộc), content, durationMinutes, ...
+ * Khi nào sử dụng: Sau khi user hoàn thành 1 session learning
+ */
+class AudioTimestampDto {
+  @IsNumber()
+  startTime: number;
+
+  @IsNumber()
+  endTime: number;
+}
+
+class CreateHistoryEntryDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(['listening', 'speaking', 'reading'])
+  type: 'listening' | 'speaking' | 'reading';
+
+  @IsString()
+  @IsNotEmpty()
+  topic: string;
+
+  @IsOptional()
+  content?: any;
+
+  @IsNumber()
+  @IsOptional()
+  durationMinutes?: number;
+
+  @IsNumber()
+  @IsOptional()
+  numSpeakers?: number;
+
+  @IsString()
+  @IsOptional()
+  keywords?: string;
+
+  @IsString()
+  @IsOptional()
+  mode?: string;
+
+  @IsString()
+  @IsOptional()
+  audioUrl?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AudioTimestampDto)
+  @IsOptional()
+  audioTimestamps?: AudioTimestampDto[];
+}
+
+// ==================== Controller ====================
 
 /**
  * HistoryController - Controller quản lý lịch sử học tập
@@ -36,6 +108,26 @@ import {
 @UseGuards(SupabaseAuthGuard)
 export class HistoryController {
   constructor(private readonly historyService: HistoryService) {}
+
+  /**
+   * Tạo mới bản ghi lịch sử học tập
+   *
+   * Mục đích: Lưu 1 session learning mới vào lịch sử
+   * @param dto - Dữ liệu session (type, topic, content, ...)
+   * @returns Entry vừa tạo
+   * Khi nào sử dụng: POST /history → Sau khi user hoàn thành bài học
+   *   - Reading: saveReadingSession → History
+   *   - Listening: saveListeningSession → History
+   *   - Speaking: saveSpeakingSession → History
+   */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Tạo mới bản ghi lịch sử học tập' })
+  @ApiBody({ type: CreateHistoryEntryDto })
+  async createEntry(@Req() req: any, @Body() dto: CreateHistoryEntryDto) {
+    const userId = req.user.id;
+    return this.historyService.createEntry(userId, dto);
+  }
 
   /**
    * Lấy danh sách lịch sử học tập

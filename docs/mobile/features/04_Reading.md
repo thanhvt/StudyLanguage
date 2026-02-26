@@ -14,10 +14,10 @@ Module đọc hiểu với AI-generated articles, tối ưu cho màn hình nhỏ
 | Feature | Description |
 |---------|-------------|
 | **Tap-to-Translate** | Chạm từ để xem nghĩa |
-| **Focus Mode** | Ẩn UI, tập trung đọc bài (NEW ✨) |
-| **Reading Practice** | Luyện đọc với AI phân tích phát âm (NEW ✨) |
+| **Focus Mode** | Ẩn UI, tập trung đọc bài |
+| **Reading Practice** | Luyện đọc với AI phân tích phát âm |
 
-### 1.2 Reading Practice Mode (NEW ✨)
+### 1.2 Reading Practice Mode
 
 Chế độ luyện đọc với AI phản hồi:
 
@@ -364,6 +364,49 @@ paragraph.split(/(\s+)/).map(token => (
 
 ```json
 { "text": "Generated article content..." }
+```
+
+---
+
+### 7.5 History Module (`/api/history`)
+
+#### `POST /api/history`
+
+> Tạo mới bản ghi lịch sử học tập (save reading session)
+
+**Request Body:**
+
+| Field | Type | Required | Mô tả |
+|---|---|---|---|
+| `type` | string | ✅ | `listening` \| `speaking` \| `reading` |
+| `topic` | string | ✅ | Chủ đề bài học |
+| `content` | object | ❌ | Nội dung bài học (article data, transcript, ...) |
+| `durationMinutes` | number | ❌ | Thời gian luyện tập (phút) |
+| `numSpeakers` | number | ❌ | Số người nói (cho listening) |
+| `keywords` | string | ❌ | Từ khóa liên quan |
+| `mode` | string | ❌ | Chế độ luyện tập (`article` \| `practice`) |
+| `audioUrl` | string | ❌ | URL audio nếu có |
+| `audioTimestamps` | array | ❌ | Timestamps `[{ startTime, endTime }]` |
+
+**Response (201):**
+
+```json
+{
+  "success": true,
+  "entry": {
+    "id": "uuid",
+    "type": "reading",
+    "topic": "The Art of Travel",
+    "content": { "title": "...", "wordCount": 350 },
+    "durationMinutes": 15,
+    "mode": "article",
+    "status": "completed",
+    "isPinned": false,
+    "isFavorite": false,
+    "createdAt": "2026-02-26T08:30:00.000Z"
+  },
+  "message": "Đã lưu bài học vào lịch sử"
+}
 ```
 
 ---
