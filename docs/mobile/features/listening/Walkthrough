@@ -1,0 +1,261 @@
+# 🎧 Listening Feature — UI Mockups v2 (BA/QA/QC Analyzed)
+
+> **Design System:** ui-ux-pro-max generated  
+> **Style:** Dark OLED + Glassmorphism  
+> **Colors:** Primary Blue `#2563EB` · CTA Orange `#F97316`  
+> **Typography:** DM Sans (Premium Sans pairing)  
+> **Icons:** Lucide only — NO emojis  
+> **Screens:** 10 chính + 2 overlays = 12 total
+
+---
+
+## 🗺️ User Flow
+
+```mermaid
+flowchart TD
+    A["Dashboard"] --> B["Config Screen"]
+    B --> C{"Mode?"}
+    C -->|Podcast| D["Generating Screen"]
+    C -->|Radio| E["Radio Mode"]
+    D --> F["Player Full Mode"]
+    E --> F
+    F -->|Navigate away| G["Minimized Player"]
+    F -->|Tap word| H["Dictionary Popup"]
+    F -->|Gyroscope| I["Pocket Mode"]
+    F -->|Long press| J["Bookmark saved"]
+    B -->|Settings icon| K["TTS Settings Sheet"]
+    B -->|Custom icon| L["Custom Scenarios"]
+    B -->|Audio playing| M["Confirm Dialog"]
+    G -->|Tap| F
+    A -->|First time| N["Walkthrough Tour"]
+    J --> O["Bookmarks & Vocabulary"]
+```
+
+---
+
+## Screen Gallery
+
+### 1. Config Screen (Redesigned — Rich Topic Picker)
+
+![Config Screen — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_01_config_1771871955713.png)
+
+> [!NOTE]
+> **BA:** Topic section chiếm ~50% màn hình vì là primary action. Data từ `topic-data.ts` (140 scenarios, 3 categories). Flow: Category tab → Subcategory chip → Chọn scenario HOẶC nhập custom topic. Icons: Search, Heart (favorites), Plus (tạo mới) ở top-right topic label.  
+> **QA:** "Xem tất cả" link → mở Topic Picker Full Screen. Custom input có 2 option: "Dùng ngay" (không lưu) + "Lưu & Dùng". CTA disabled khi chưa chọn/nhập topic. Header: "Luyện Nghe" LEFT + gear icon RIGHT cùng hàng.  
+> **QC:** Selected scenario: blue left border 3px + blue bg tint. Favorite heart icon per card.
+
+---
+
+### 1b. Topic Picker Full Screen
+
+![Topic Picker — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_02_topic_1771872087868.png)
+
+> [!NOTE]
+> **BA:** Full-screen browser cho 140+ scenarios. Search filter realtime (`searchScenarios()`). Filter pills: "Tất cả" / "Yêu thích" / "Tự tạo". Browse by category + subcategory collapsible headers.  
+> **QA:** Create custom topic form ở bottom: tên + mô tả + "Dùng ngay" / "Lưu & Dùng". Favorited items show filled orange star. Search results grouped by subcategory.  
+> **QC:** Category + subcategory badges on each result — user knows where the scenario belongs.
+
+---
+
+### 2. Generating Screen (Redesigned — API-verified)
+
+![Generating Screen Concept C — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_03_generating_1771872346081.png)
+
+> [!IMPORTANT]
+> **API Verification:** SSE endpoint `generate-conversation-audio-sse` trả về `{ current: 3, total: 5, speaker: "Alex" }` → "Câu 3/5" và "Alex đang nói..." là **data thật từ API**. ~~Percentage~~ và ~~estimated seconds~~ đã bỏ vì API không cung cấp.
+
+> [!NOTE]
+> **BA:** Screen chia 2 phần: (1) Progress animation hero — waveform + speaker name + progress dots, (2) Config Summary card — user review lại những gì đã chọn (topic, level, mode, duration, speakers) + TTS settings (giọng, cảm xúc, random, pitch/rate).  
+> **QA:** Progress dots thay vì ring/bar — trực quan hơn cho discrete steps. Cancel button subtle. Config card read-only, không cho sửa ở đây.  
+> **QC:** Mỗi icon Lucide khớp với field tương ứng. TTS section dùng text nhỏ hơn — secondary info.
+
+#### 💡 Generating Screen — 3 Concepts khảo sát
+
+````carousel
+**Concept A — Cinematic Timeline**
+![A](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/gen_concept_a_1771780305963.png)
+<!-- slide -->
+**Concept B — Warm Card Stack**
+![B](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/gen_concept_b_1771780333007.png)
+<!-- slide -->
+**Concept C — Split Dashboard** ✅ selected
+![C](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/gen_concept_c_1771780379399.png)
+````
+
+---
+
+### 3. Player Full Mode (Final — Dual Switchable View)
+
+User can toggle between **Reading View** (full transcript list) and **Focus View** (karaoke center) via two icons in the title bar. Both share the **same compact controls bar**.
+
+````carousel
+**Reading View** — Transcript list, xem nhiều câu cùng lúc
+- Title: `← Du lịch Nhật Bản [≡ blue] [◎ gray] VI○ 🔖`
+- Transcript 80% scroll, active line = blue left bar + tint
+- Controls ~80px: waveform + seekbar + Speed/Prev/◀10/▶/10▶/Next/Loop
+
+![Reading View — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_04_player_reading_1771872526007.png)
+<!-- slide -->
+**Focus View** — Karaoke, tập trung 1 câu
+- Title: `← Du lịch Nhật Bản [≡ gray] [◎ blue] VI○ 🔖`
+- Câu hiện tại 22sp bold giữa, trước/sau mờ 30%
+- Word-by-word highlight, **cùng controls bar**
+
+![Focus View — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_05_player_focus_1771872753115.png)
+````
+
+> [!NOTE]
+> **BA:** 2 kiểu user: (1) thích đọc nhiều câu → Reading, (2) thích focus từng câu → Focus. Toggle instant, không mất state.  
+> **QA:** Controls bar **giống nhau** cả 2 view: Speed `1.0x` | ◀Prev | ◀10 | ▶Play 44px | 10▶ | Next▶ | Loop A/B. VI toggle + Bookmark trong title bar.  
+> **QC:** Toggle icons nhỏ gọn, không chiếm chỗ. User preference được lưu vào MMKV.
+
+#### 💡 5 Concepts đã khảo sát
+
+````carousel
+**A: Spotify Bottom-Heavy**
+![A](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/player_concept_a_1771781024330.png)
+<!-- slide -->
+**B: Top-Heavy Waveform**
+![B](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/player_concept_b_1771781051192.png)
+<!-- slide -->
+**C: Immersive Reading** ✅
+![C](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/player_concept_c_1771781076105.png)
+<!-- slide -->
+**D: Dual-Pane Chat**
+![D](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/player_concept_d_1771781137616.png)
+<!-- slide -->
+**E: Karaoke Focus** ✅
+![E](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/player_concept_e_1771781164427.png)
+````
+
+---
+
+### 4. Minimized Player
+
+![Minimized Player — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_06_minimized_1771872869549.png)
+
+> [!NOTE]
+> **BA:** Khi user rời Player, audio vẫn phát. Mini panel cung cấp: title (marquee), timer, play/pause, close. Vị trí bottom-right trên tab bar.  
+> **QA:** 130×56px — đủ info nhưng không che khuất content. Touch targets ≥44px (Apple HIG). Tap panel → quay lại Full Player.  
+> **QC:** Blue accent line 3px left edge — nhận diện nhanh "đang phát listening". Glassmorphism backdrop blur.
+
+---
+
+### 5. Radio Mode (Final — Tab B, không cần Topic)
+
+![Radio Tab — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_07_radio_1771873094084.png)
+
+> [!IMPORTANT]
+> **API Verified:** `POST /api/radio/generate` chỉ cần `duration` — **KHÔNG cần topic**. Radio tự generate random content.
+
+> [!NOTE]
+> **BA:** Tab `[Podcast] [Radio]` trên Config header. Radio tab chỉ cần: chọn duration (grid 2x3) → CTA "Tạo Radio playlist". Hiện danh sách playlists đã tạo + Now Playing.  
+> **QA:** Không có topic/level/speakers section → đơn giản hơn Podcast tab. Duration options: 1, 5, 10, 15, 20, 30 phút.  
+> **QC:** Tab active = blue underline 3px. CTA orange nhất quán.
+
+#### 💡 3 Options đã khảo sát
+
+````carousel
+**Option A — Gộp vào Config**
+![A](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/radio_option_a_1771782282474.png)
+<!-- slide -->
+**Option B — Tab song song** ✅ selected
+![B](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/radio_option_b_1771782306893.png)
+<!-- slide -->
+**Option C — Auto-fill separate**
+![C](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/radio_option_c_1771782334700.png)
+````
+
+---
+
+### 6. Custom Scenarios
+
+![Custom Scenarios — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_08_custom_1771873266909.png)
+
+> [!NOTE]
+> **BA:** CRUD scenarios. "Quick Use" (không lưu, dùng ngay) vs "Generate" (lưu + dùng) — hai nhu cầu rõ ràng.  
+> **QA:** Search bar for 10+ scenarios. Swipe-to-delete với red trash icon (discoverable). Bottom sheet cho tạo mới — giữ context, không full-screen.  
+> **QC:** Orange star cho favorites — nổi bật trong danh sách. "Dùng ngay" (blue outline) vs "Lưu và dùng" (orange filled) — visual hierarchy rõ.
+
+---
+
+### 7. TTS Settings
+
+![TTS Settings — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_09_tts_1771873435236.png)
+
+> [!NOTE]
+> **BA:** Advanced settings — 80% users dùng default. Tổ chức: Voice (most common) → Emotion → Toggles → Advanced (collapsed). Play preview button mỗi voice — nghe trước khi chọn.  
+> **QA:** "Azure TTS" badge — user biết provider. Multi-talker toggle + info text giải thích. Pitch/Rate sliders chỉ hiện khi expand Advanced.  
+> **QC:** Voice avatars với letter initials (J, G, A) + color coding — scan nhanh. Emotion chips horizontal scroll — compact.
+
+---
+
+### 8. Dictionary Popup
+
+![Dictionary Popup — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_10_dictionary_1771873548248.png)
+
+> [!NOTE]
+> **BA:** Tap word → popup appearances NEAR the tapped word (contextual, không fixed center). Essential info: word, phonetic, definition, Vietnamese, example. "Lưu từ vựng" one-tap.  
+> **QA:** Dismiss bằng tap outside. Blue glow underline trên tapped word — feedback rõ. Play pronunciation icon.  
+> **QC:** Popup has upward triangle pointing to word — spatial connection. Orange Vietnamese translation — đủ nổi bật để scan.
+
+---
+
+### 9. Pocket Mode
+
+![Pocket Mode — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_11_pocket_1771873671443.png)
+
+> [!NOTE]
+> **BA:** Activated by gyroscope (phone face-down/pocket). Screen 95% black — OLED battery saving. Gesture zones: top=bookmark, left=prev, right=next, center=play/pause, bottom=exit.  
+> **QA:** Touch targets = entire screen zones (không cần nhìn). Gesture hints chỉ hiện lần đầu, sau đó auto-hide.  
+> **QC:** Timer `2:15/5:00` ở brightness tối thiểu — vừa đủ đọc trong bóng tối.
+
+---
+
+### 10. Walkthrough Tour
+
+![Walkthrough Tour — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_12_walkthrough_1771873794810.png)
+
+> [!NOTE]
+> **BA:** 5-step interactive tour cho first-time users. Spotlight technique: dim everything, highlight target. Progressive disclosure.  
+> **QA:** "Bỏ qua hướng dẫn" luôn visible — respect user's time. Trước/Tiếp theo navigation. Dot indicators.  
+> **QC:** No info dump — each step 2 lines max. Blue border tooltip card với pointing triangle.
+
+---
+
+### 11. Confirm Dialog
+
+![Confirm Dialog — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_13_confirm_1771873888556.png)
+
+> [!NOTE]
+> **BA:** Normal flow, NOT error. Khi generate bài mới lúc đang phát audio. Show current track name bold. Equal-weight buttons.  
+> **QA:** "Hủy" (safe action) left, "Tiếp tục" (destructive relative) right. Orange icon — warning, not error. Compact dialog.
+
+---
+
+### 12. Bookmarks & Vocabulary
+
+![Bookmarks & Vocabulary — Hi-Fi](/Users/thanhvuqlud/.gemini/antigravity/brain/6da37ef3-86aa-4943-9b3a-fa4018461df3/hifi_14_bookmarks_1771874000770.png)
+
+> [!NOTE]
+> **BA:** Hai tab: "Từ vựng" (saved words) + "Câu bookmark" (saved sentences). Search + Sort A-Z/Recent. Each card: word, translation, part of speech, source lesson.  
+> **QA:** Play pronunciation per word. Delete per word. Cards ~72px height — comfortable scanning. Summary count bottom.
+
+---
+
+## Design System Summary
+
+| Token | Value |
+|-------|-------|
+| Primary | `#2563EB` (Blue) |
+| CTA | `#F97316` (Orange) |
+| Background | `#000000` (OLED Black) |
+| Surface | `#121212` |
+| Card | `rgba(255,255,255,0.05)` + blur |
+| Border | `rgba(255,255,255,0.08)` |
+| Text | `#FAFAFA` |
+| Secondary text | `#6E6E6E` |
+| Typography | DM Sans 400/500/700 |
+| Icons | Lucide React Native |
+| Radius | 16px cards, 24px sheets |
+| Accessibility | WCAG AAA on text |
