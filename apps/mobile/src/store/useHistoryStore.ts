@@ -126,13 +126,17 @@ export const useHistoryStore = create<HistoryState & HistoryActions>()(
     setEntries: (entries: HistoryEntry[]) => set({entries}),
 
     /**
-     * Mục đích: Nối thêm entries vào cuối danh sách (pagination)
+     * Mục đích: Nối thêm entries vào cuối danh sách (pagination) — EC-M08 fix: loại trùng lặp
      * Tham số đầu vào: entries - Mảng HistoryEntry
      * Tham số đầu ra: void
      * Khi nào sử dụng: loadMore() → appendEntries(nextPageEntries)
      */
     appendEntries: (newEntries: HistoryEntry[]) =>
-      set(state => ({entries: [...state.entries, ...newEntries]})),
+      set(state => {
+        const existingIds = new Set(state.entries.map(e => e.id));
+        const uniqueEntries = newEntries.filter(e => !existingIds.has(e.id));
+        return {entries: [...state.entries, ...uniqueEntries]};
+      }),
 
     /**
      * Mục đích: Xóa entry khỏi local state (optimistic delete)

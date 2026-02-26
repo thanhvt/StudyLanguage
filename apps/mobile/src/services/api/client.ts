@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Config from 'react-native-config';
 import {supabase} from '@/services/supabase/client';
+import {useAuthStore} from '@/store/useAuthStore';
 
 const API_URL = Config.API_URL ?? 'http://localhost:3001/api';
 
@@ -66,6 +67,10 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         console.error('Không thể refresh token:', refreshError);
       }
+
+      // EC-C04 fix: Refresh thất bại → reset auth state → chuyển về Login
+      console.warn('⚠️ [API] Token hết hạn, không thể refresh → đăng xuất');
+      useAuthStore.getState().reset();
     }
 
     return Promise.reject(error);

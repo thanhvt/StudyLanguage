@@ -216,8 +216,14 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
         recordingDuration: 0,
       })),
 
+    // EC-C05 fix: Clamp index để tránh truy cập ngoài biên → crash UI
     setCurrentIndex: index =>
-      set({currentIndex: index, feedback: null, audioUri: null, recordingDuration: 0}),
+      set(state => ({
+        currentIndex: Math.max(0, Math.min(index, Math.max(0, state.sentences.length - 1))),
+        feedback: null,
+        audioUri: null,
+        recordingDuration: 0,
+      })),
 
     startRecording: () =>
       set({isRecording: true, recordingDuration: 0, audioUri: null, feedback: null, error: null}),
@@ -314,9 +320,16 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
     resetCoach: () => set({coachSession: null}),
 
     // ===== TTS Settings =====
+    // EC-M10 fix: Clamp speed trong range hợp lệ cho cả OpenAI (0.25-4.0) và Azure
     setTtsSettings: (settings) =>
       set(state => ({
-        ttsSettings: {...state.ttsSettings, ...settings},
+        ttsSettings: {
+          ...state.ttsSettings,
+          ...settings,
+          speed: settings.speed !== undefined
+            ? Math.max(0.25, Math.min(4.0, settings.speed))
+            : state.ttsSettings.speed,
+        },
       })),
   }),
     {

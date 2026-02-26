@@ -1,4 +1,4 @@
-import {useCallback, useRef, useEffect} from 'react';
+import {useCallback, useRef, useEffect, useState} from 'react';
 import TrackPlayer, {
   Event,
   useTrackPlayerEvents,
@@ -19,6 +19,8 @@ import {useSpeakingStore} from '@/store/useSpeakingStore';
  */
 export function useCoachTrackPlayer() {
   const isPlayerReady = useRef(false);
+  // Dùng cả state (reactive cho UI) + ref (tránh stale closure trong event handler)
+  const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
   const {coachSession} = useSpeakingStore();
 
@@ -37,6 +39,7 @@ export function useCoachTrackPlayer() {
     return () => {
       TrackPlayer.reset().catch(() => {});
       isPlayingRef.current = false;
+      setIsPlaying(false);
       console.log('🎵 [CoachTrackPlayer] Đã cleanup TrackPlayer');
     };
   }, []);
@@ -48,10 +51,13 @@ export function useCoachTrackPlayer() {
       if (event.type === Event.PlaybackError) {
         console.error('❌ [CoachTrackPlayer] Lỗi playback:', event);
         isPlayingRef.current = false;
+        setIsPlaying(false);
       }
       if (event.type === Event.PlaybackState) {
         const state = await TrackPlayer.getPlaybackState();
-        isPlayingRef.current = state.state === State.Playing;
+        const playing = state.state === State.Playing;
+        isPlayingRef.current = playing;
+        setIsPlaying(playing);
       }
     },
   );
@@ -79,10 +85,12 @@ export function useCoachTrackPlayer() {
       });
       await TrackPlayer.play();
       isPlayingRef.current = true;
+      setIsPlaying(true);
       console.log('▶️ [CoachTrackPlayer] Đang phát audio Coach');
     } catch (err) {
       console.error('❌ [CoachTrackPlayer] Lỗi phát audio:', err);
       isPlayingRef.current = false;
+      setIsPlaying(false);
     }
   }, [coachSession?.setup.topic]);
 
@@ -96,6 +104,7 @@ export function useCoachTrackPlayer() {
     try {
       await TrackPlayer.pause();
       isPlayingRef.current = false;
+      setIsPlaying(false);
       console.log('⏸️ [CoachTrackPlayer] Đã tạm dừng');
     } catch (err) {
       console.error('❌ [CoachTrackPlayer] Lỗi pause:', err);
@@ -112,6 +121,7 @@ export function useCoachTrackPlayer() {
     try {
       await TrackPlayer.play();
       isPlayingRef.current = true;
+      setIsPlaying(true);
       console.log('▶️ [CoachTrackPlayer] Đã tiếp tục phát');
     } catch (err) {
       console.error('❌ [CoachTrackPlayer] Lỗi resume:', err);
@@ -128,6 +138,7 @@ export function useCoachTrackPlayer() {
     try {
       await TrackPlayer.reset();
       isPlayingRef.current = false;
+      setIsPlaying(false);
       console.log('⏹️ [CoachTrackPlayer] Đã dừng và reset');
     } catch (err) {
       console.error('❌ [CoachTrackPlayer] Lỗi stop:', err);
@@ -139,6 +150,6 @@ export function useCoachTrackPlayer() {
     pauseCoach,
     resumeCoach,
     stopCoach,
-    isPlaying: isPlayingRef.current,
+    isPlaying,
   };
 }

@@ -8,7 +8,8 @@
  *   - BUG-05 fix: Thống nhất logic, tránh duplicate
  */
 export function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) {
+  // EC-M05/EC-m11 fix: Xử lý NaN, Infinity, undefined, null, và số âm
+  if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds < 0) {
     return '0:00';
   }
   const mins = Math.floor(seconds / 60);

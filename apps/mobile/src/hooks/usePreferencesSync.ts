@@ -1,4 +1,4 @@
-import {useEffect, useCallback} from 'react';
+import {useEffect, useCallback, useRef} from 'react';
 import {useAuthStore} from '@/store/useAuthStore';
 import {useAppStore, AccentColorId, Theme} from '@/store/useAppStore';
 import {supabase} from '@/services/supabase/client';
@@ -105,9 +105,18 @@ export function usePreferencesSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Save preferences khi thay đổi (debounce 1s)
+  // EC-C06 fix: Dùng ref để skip lần mount đầu tiên, tránh save thừa
+  const isFirstRender = useRef(true);
+
+  // Save preferences khi thay đổi (debounce 1s) — bỏ qua lần mount đầu
   useEffect(() => {
     if (!user) return;
+
+    // Skip lần đầu tiên (mount) — chỉ save khi user thực sự thay đổi
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
 
     const timeoutId = setTimeout(() => {
       savePreferences();

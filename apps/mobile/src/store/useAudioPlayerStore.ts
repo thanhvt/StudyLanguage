@@ -110,7 +110,8 @@ export const useAudioPlayerStore = create<
 
       setPlayerMode: mode => set({playerMode: mode}),
 
-      setPlaybackSpeed: speed => set({playbackSpeed: speed}),
+      // EC-M04 fix: Clamp speed trong [0.25, 4.0]
+      setPlaybackSpeed: speed => set({playbackSpeed: Math.max(0.25, Math.min(4.0, speed))}),
 
       setVolume: volume => set({volume: Math.max(0, Math.min(1, volume))}),
 

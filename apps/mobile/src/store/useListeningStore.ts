@@ -201,7 +201,8 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setPlaying: value => set({isPlaying: value}),
     // BUG-04 fix: Clamp index để không bị âm
     setCurrentExchangeIndex: index => set({currentExchangeIndex: Math.max(0, index)}),
-    setPlaybackSpeed: speed => set({playbackSpeed: speed}),
+    // EC-M04 fix: Clamp speed trong [0.25, 4.0] để tránh giá trị 0 hoặc âm
+    setPlaybackSpeed: speed => set({playbackSpeed: Math.max(0.25, Math.min(4.0, speed))}),
 
     setSelectedTopic: (topic, categoryId, subCategoryId) =>
       set(state => ({

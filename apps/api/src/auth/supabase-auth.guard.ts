@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Injectable,
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -21,6 +18,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  */
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
+  private readonly logger = new Logger(SupabaseAuthGuard.name);
   private supabase: SupabaseClient;
 
   constructor(private configService: ConfigService) {
@@ -32,11 +30,8 @@ export class SupabaseAuthGuard implements CanActivate {
       'SUPABASE_SERVICE_ROLE_KEY',
     );
 
-    console.log('--- SupabaseAuthGuard Init ---');
-    console.log('URL:', supabaseUrl);
-
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.warn(
+      this.logger.warn(
         '⚠️ SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY chưa được cấu hình!',
       );
       // Tạo dummy client để tránh crash - sẽ reject tất cả auth
@@ -90,33 +85,10 @@ export class SupabaseAuthGuard implements CanActivate {
       // Gắn user info vào request để các handler khác có thể sử dụng
       request.user = user;
     } catch (error) {
-      // Debug logging to file
-      const fs = require('fs');
-      const path = require('path');
-      const logPath = path.join(process.cwd(), 'auth-debug.log');
-      const logData =
-        JSON.stringify(
-          {
-            timestamp: new Date().toISOString(),
-            message: error.message,
-            tokenPrefix: token ? token.substring(0, 10) : 'none',
-            errorStack: error.stack,
-            isAuthException: error instanceof UnauthorizedException,
-          },
-          null,
-          2,
-        ) + '\n---\n';
-
-      try {
-        fs.appendFileSync(logPath, logData);
-      } catch (e) {
-        // ignore
-      }
-
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      console.error('Lỗi xác thực:', error);
+      this.logger.error('Lỗi xác thực người dùng', error instanceof Error ? error.stack : error);
       throw new UnauthorizedException('Lỗi xác thực người dùng');
     }
 

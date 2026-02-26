@@ -19,6 +19,55 @@ import {
   ApiOperation,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+  IsBoolean,
+} from 'class-validator';
+
+// ==================== DTOs ====================
+
+/**
+ * DTO cho tạo custom scenario
+ *
+ * Mục đích: Validate input POST /custom-scenarios
+ * Tham số: name (bắt buộc), description, category (tùy chọn)
+ * Khi nào sử dụng: User tạo scenario mới
+ */
+class CreateCustomScenarioDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+}
+
+/**
+ * DTO cho cập nhật custom scenario
+ *
+ * Mục đích: Validate input PATCH /custom-scenarios/:id
+ * Khi nào sử dụng: User edit scenario
+ */
+class UpdateCustomScenarioDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isFavorite?: boolean;
+}
 
 /**
  * CustomScenariosController - Controller quản lý custom scenarios
@@ -52,7 +101,7 @@ export class CustomScenariosController {
   @ApiOperation({ summary: 'Tạo custom scenario mới' })
   async createCustomScenario(
     @Req() req: any,
-    @Body() body: { name: string; description?: string; category?: string },
+    @Body() body: CreateCustomScenarioDto,
   ) {
     const userId = req.user.id;
     return this.customScenariosService.createCustomScenario(userId, body);
@@ -66,7 +115,7 @@ export class CustomScenariosController {
   async updateCustomScenario(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() body: { name?: string; description?: string; isFavorite?: boolean },
+    @Body() body: UpdateCustomScenarioDto,
   ) {
     const userId = req.user.id;
     return this.customScenariosService.updateCustomScenario(userId, id, body);

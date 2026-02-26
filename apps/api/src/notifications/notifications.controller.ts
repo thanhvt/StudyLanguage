@@ -114,14 +114,27 @@ export class NotificationsController {
   /**
    * POST /api/notifications/send
    *
-   * Mục đích: Gửi push notification tới user (internal/admin)
+   * Mục đích: Gửi push notification tới user (chỉ cho phép gửi cho chính mình hoặc admin)
    * @param dto - { userId, title, body, data? }
    * @returns Kết quả gửi
-   * Khi nào sử dụng: Admin hoặc system trigger
+   * Khi nào sử dụng: System trigger hoặc self-notification
+   *
+   * ⚠️ Bảo mật: Kiểm tra quyền — user chỉ được gửi cho chính mình
    */
   @Post('send')
   @HttpCode(HttpStatus.OK)
-  async sendNotification(@Body() dto: SendNotificationDto) {
+  async sendNotification(
+    @Req() req: any,
+    @Body() dto: SendNotificationDto,
+  ) {
+    // Kiểm tra quyền: user chỉ được gửi notification cho chính mình
+    const currentUserId = req.user.id;
+    if (dto.userId !== currentUserId) {
+      throw new BadRequestException(
+        'Bạn chỉ có thể gửi notification cho chính mình',
+      );
+    }
+
     return this.notificationsService.sendNotification(dto.userId, {
       title: dto.title,
       body: dto.body,

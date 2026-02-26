@@ -134,10 +134,13 @@ export class LessonsController {
   @ApiOperation({ summary: 'Cập nhật audio cho bài học' })
   @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
   async updateAudio(
+    @Req() req: any,
     @Param('id') lessonId: string,
     @Body() dto: UpdateAudioRequestDto,
   ) {
+    const userId = req.user.id;
     return this.lessonsService.updateAudioData(
+      userId,
       lessonId,
       dto.audioUrl,
       dto.audioTimestamps,

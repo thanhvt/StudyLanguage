@@ -51,6 +51,23 @@ class ConversationHistoryItemDto {
 }
 
 /**
+ * DTO cho request sinh văn bản tùy ý
+ *
+ * Mục đích: Validate input POST /ai/generate-text
+ * Tham số: prompt (bắt buộc), systemPrompt (tùy chọn)
+ * Khi nào sử dụng: Khi cần sinh text từ AI (GPT/Groq)
+ */
+class GenerateTextDto {
+  @IsString()
+  @IsNotEmpty()
+  prompt: string;
+
+  @IsString()
+  @IsOptional()
+  systemPrompt?: string;
+}
+
+/**
  * DTO cho request sinh hội thoại
  */
 class GenerateConversationDto {
@@ -333,14 +350,7 @@ export class AiController {
    */
   @Post('generate-text')
   @HttpCode(HttpStatus.OK)
-  async generateText(@Body() dto: { prompt: string; systemPrompt?: string }) {
-    // Note: Inline DTO here needs validation too practically, but for now specific DTOs are prioritized.
-    // If strict whitelist is on, this might fail if not class-transformer validated or plain object.
-    // Assuming 'ValidationPipe' allows plain objects or we better define a class.
-    // Let's stick to existing scope, but be aware.
-    // Actually, 'generateText' wasn't failing previously because it wasn't tested in the suite properly or
-    // it was tested but whitelist: false saved it.
-    // Let's leave it as is for now as it uses inline type.
+  async generateText(@Body() dto: GenerateTextDto) {
     const text = await this.aiService.generateText(
       dto.prompt,
       dto.systemPrompt,

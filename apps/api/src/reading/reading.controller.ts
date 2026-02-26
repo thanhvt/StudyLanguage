@@ -146,10 +146,16 @@ export class ReadingController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
+    // M3: Validate pagination bounds
+    const parsedPage = parseInt(page || '1', 10);
+    const parsedLimit = parseInt(limit || '20', 10);
+    const safePage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+    const safeLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100);
+
     return this.readingService.getSavedWords(
       req.user.id,
-      parseInt(page || '1', 10),
-      parseInt(limit || '20', 10),
+      safePage,
+      safeLimit,
     );
   }
 

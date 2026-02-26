@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -30,6 +30,7 @@ export interface UpdateCustomScenarioDto {
  */
 @Injectable()
 export class CustomScenariosService {
+  private readonly logger = new Logger(CustomScenariosService.name);
   private supabase: SupabaseClient;
 
   constructor() {
@@ -54,7 +55,7 @@ export class CustomScenariosService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[CustomScenariosService] Lỗi lấy custom scenarios:', error);
+      this.logger.error('[CustomScenariosService] Lỗi lấy custom scenarios:', error);
       throw error;
     }
 
@@ -85,7 +86,7 @@ export class CustomScenariosService {
       .single();
 
     if (error) {
-      console.error('[CustomScenariosService] Lỗi tạo custom scenario:', error);
+      this.logger.error('[CustomScenariosService] Lỗi tạo custom scenario:', error);
       throw error;
     }
 
@@ -125,7 +126,7 @@ export class CustomScenariosService {
       .single();
 
     if (error) {
-      console.error('[CustomScenariosService] Lỗi cập nhật custom scenario:', error);
+      this.logger.error('[CustomScenariosService] Lỗi cập nhật custom scenario:', error);
       throw error;
     }
 
@@ -172,7 +173,7 @@ export class CustomScenariosService {
       .single();
 
     if (error) {
-      console.error('[CustomScenariosService] Lỗi toggle favorite:', error);
+      this.logger.error('[CustomScenariosService] Lỗi toggle favorite:', error);
       throw error;
     }
 
@@ -198,7 +199,7 @@ export class CustomScenariosService {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[CustomScenariosService] Lỗi xóa custom scenario:', error);
+      this.logger.error('[CustomScenariosService] Lỗi xóa custom scenario:', error);
       throw error;
     }
 

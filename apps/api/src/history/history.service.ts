@@ -168,9 +168,11 @@ export class HistoryService {
         break;
     }
 
-    // Search theo topic hoặc keywords
+    // Search theo topic hoặc keywords (đã sanitize wildcard)
     if (search) {
-      query = query.or(`topic.ilike.%${search}%,keywords.ilike.%${search}%`);
+      // Escape ký tự đặc biệt của PostgreSQL LIKE để tránh pattern injection
+      const sanitized = search.replace(/[%_\\]/g, '\\$&');
+      query = query.or(`topic.ilike.%${sanitized}%,keywords.ilike.%${sanitized}%`);
     }
 
     // Filter theo date range
@@ -187,7 +189,7 @@ export class HistoryService {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('[HistoryService] Lỗi lấy lịch sử:', error);
+      this.logger.error('[HistoryService] Lỗi lấy lịch sử:', error);
       throw error;
     }
 
@@ -240,7 +242,7 @@ export class HistoryService {
       .single();
 
     if (error) {
-      console.error('[HistoryService] Lỗi toggle pin:', error);
+      this.logger.error('[HistoryService] Lỗi toggle pin:', error);
       throw error;
     }
 
@@ -268,7 +270,7 @@ export class HistoryService {
       .single();
 
     if (error) {
-      console.error('[HistoryService] Lỗi toggle favorite:', error);
+      this.logger.error('[HistoryService] Lỗi toggle favorite:', error);
       throw error;
     }
 
@@ -293,7 +295,7 @@ export class HistoryService {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[HistoryService] Lỗi soft delete:', error);
+      this.logger.error('[HistoryService] Lỗi soft delete:', error);
       throw error;
     }
 
@@ -314,7 +316,7 @@ export class HistoryService {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[HistoryService] Lỗi restore:', error);
+      this.logger.error('[HistoryService] Lỗi restore:', error);
       throw error;
     }
 
@@ -338,7 +340,7 @@ export class HistoryService {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[HistoryService] Lỗi permanent delete:', error);
+      this.logger.error('[HistoryService] Lỗi permanent delete:', error);
       throw error;
     }
 
@@ -394,7 +396,7 @@ export class HistoryService {
       .single();
 
     if (error) {
-      console.error('[HistoryService] Lỗi cập nhật notes:', error);
+      this.logger.error('[HistoryService] Lỗi cập nhật notes:', error);
       throw error;
     }
 
@@ -429,7 +431,7 @@ export class HistoryService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[HistoryService] Lỗi lấy stats:', error);
+      this.logger.error('[HistoryService] Lỗi lấy stats:', error);
       throw error;
     }
 

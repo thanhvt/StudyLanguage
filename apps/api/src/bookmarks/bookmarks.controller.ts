@@ -20,6 +20,62 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
+
+// ==================== DTOs ====================
+
+/**
+ * DTO cho tạo bookmark mới
+ *
+ * Mục đích: Validate input POST /bookmarks
+ * Tham số: sentenceIndex (bắt buộc), speaker (bắt buộc), sentenceText (bắt buộc)
+ * Khi nào sử dụng: User long press câu trong transcript
+ */
+class CreateBookmarkDto {
+  @IsString()
+  @IsOptional()
+  historyEntryId?: string;
+
+  @IsNumber()
+  sentenceIndex: number;
+
+  @IsString()
+  @IsNotEmpty()
+  speaker: string;
+
+  @IsString()
+  @IsNotEmpty()
+  sentenceText: string;
+
+  @IsString()
+  @IsOptional()
+  sentenceTranslation?: string;
+
+  @IsString()
+  @IsOptional()
+  topic?: string;
+}
+
+/**
+ * DTO cho xóa bookmark theo index
+ *
+ * Mục đích: Validate input POST /bookmarks/remove-by-index
+ * Tham số: sentenceIndex (bắt buộc), historyEntryId (tùy chọn)
+ * Khi nào sử dụng: Toggle bookmark off trên PlayerScreen
+ */
+class RemoveBookmarkByIndexDto {
+  @IsString()
+  @IsOptional()
+  historyEntryId?: string;
+
+  @IsNumber()
+  sentenceIndex: number;
+}
 
 /**
  * BookmarksController - Controller quản lý sentence bookmarks
@@ -48,15 +104,7 @@ export class BookmarksController {
   @ApiOperation({ summary: 'Tạo bookmark câu mới' })
   async createBookmark(
     @Req() req: any,
-    @Body()
-    body: {
-      historyEntryId?: string;
-      sentenceIndex: number;
-      speaker: string;
-      sentenceText: string;
-      sentenceTranslation?: string;
-      topic?: string;
-    },
+    @Body() body: CreateBookmarkDto,
   ) {
     const userId = req.user.id;
     return this.bookmarksService.createBookmark(userId, body);
@@ -132,7 +180,7 @@ export class BookmarksController {
   @ApiOperation({ summary: 'Xóa bookmark theo sentence index' })
   async deleteBookmarkByIndex(
     @Req() req: any,
-    @Body() body: { historyEntryId?: string; sentenceIndex: number },
+    @Body() body: RemoveBookmarkByIndexDto,
   ) {
     const userId = req.user.id;
     return this.bookmarksService.deleteBookmarkByIndex(

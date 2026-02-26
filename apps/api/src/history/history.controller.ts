@@ -166,14 +166,26 @@ export class HistoryController {
     @Query('dateTo') dateTo?: string,
   ) {
     const userId = req.user.id;
+
+    // M1: Validate pagination bounds
+    const parsedPage = page ? parseInt(page, 10) : 1;
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    const safePage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+    const safeLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100);
+
+    // M10: Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const safeDateFrom = dateFrom && dateRegex.test(dateFrom) ? dateFrom : undefined;
+    const safeDateTo = dateTo && dateRegex.test(dateTo) ? dateTo : undefined;
+
     return this.historyService.getHistory(userId, {
       type: type as any,
       status: status as any,
       search,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
-      dateFrom,
-      dateTo,
+      page: safePage,
+      limit: safeLimit,
+      dateFrom: safeDateFrom,
+      dateTo: safeDateTo,
     });
   }
 
@@ -218,6 +230,13 @@ export class HistoryController {
     @Req() req: any,
     @Body() body: { ids: string[]; action: 'delete' | 'pin' | 'unpin' | 'favorite' | 'unfavorite' },
   ) {
+    // H4: Giới hạn số lượng IDs để tránh DoS
+    if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+      return { success: false, message: 'Vui lòng chọn ít nhất 1 bản ghi' };
+    }
+    if (body.ids.length > 100) {
+      return { success: false, message: 'Không thể thao tác quá 100 bản ghi cùng lúc' };
+    }
     const userId = req.user.id;
     return this.historyService.batchAction(userId, body.ids, body.action);
   }

@@ -30,6 +30,8 @@ jest.mock('react-native-tts', () => ({
     }
     return {remove: jest.fn()};
   }),
+  // EC fix: Thêm mock cho removeEventListener để cleanup không crash
+  removeEventListener: jest.fn(),
 }));
 
 const mockTts = Tts as jest.Mocked<typeof Tts>;

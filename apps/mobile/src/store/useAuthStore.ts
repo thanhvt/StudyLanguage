@@ -41,5 +41,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
   setSession: (session) => set({session}),
   setIsLoading: (isLoading) => set({isLoading}),
   setInitialized: () => set({isInitialized: true, isLoading: false}),
-  reset: () => set({user: null, session: null, isLoading: false}),
+  // EC-m09 fix: Reset cũng phải clear isInitialized để RootNavigator quay về AuthStack
+  reset: () => set({user: null, session: null, isLoading: false, isInitialized: false}),
 }));

@@ -67,7 +67,7 @@ async function bootstrap() {
   // Chạy trên port 3001 (Web chạy 3000)
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`🚀 API đang chạy tại http://localhost:${port}/api`);
-  console.log(`📚 Swagger UI: http://localhost:${port}/api/docs`);
+  logger.log(`🚀 API đang chạy tại http://localhost:${port}/api`);
+  logger.log(`📚 Swagger UI: http://localhost:${port}/api/docs`);
 }
 void bootstrap();

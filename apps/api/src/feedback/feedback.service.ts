@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -23,6 +23,7 @@ export interface CreateFeedbackDto {
  */
 @Injectable()
 export class FeedbackService {
+  private readonly logger = new Logger(FeedbackService.name);
   private supabase: SupabaseClient;
 
   constructor() {
@@ -73,7 +74,7 @@ export class FeedbackService {
       .single();
 
     if (error) {
-      console.error('[FeedbackService] Lỗi gửi feedback:', error);
+      this.logger.error('[FeedbackService] Lỗi gửi feedback:', error);
       throw error;
     }
 
@@ -103,7 +104,7 @@ export class FeedbackService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[FeedbackService] Lỗi lấy feedback:', error);
+      this.logger.error('[FeedbackService] Lỗi lấy feedback:', error);
       throw error;
     }
 

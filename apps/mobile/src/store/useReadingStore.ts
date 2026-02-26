@@ -82,7 +82,8 @@ export const useReadingStore = create<ReadingState & ReadingActions>(
     setArticle: result => set({article: result, error: null}),
     setGenerating: value => set({isGenerating: value}),
     setError: error => set({error}),
-    setFontSize: size => set({fontSize: size}),
+    // EC-M03 fix: Clamp fontSize trong [12, 28] — đồng bộ với usePinchZoom constants
+    setFontSize: size => set({fontSize: Math.max(12, Math.min(28, size))}),
 
     addSavedWord: word =>
       set(state => ({

@@ -235,6 +235,7 @@ export class UserController {
    * DELETE /api/user/delete-account
    *
    * Mục đích: Xóa account và toàn bộ data (KHÔNG THỂ hoàn tác)
+   * @param body - { confirmDelete: 'DELETE_MY_ACCOUNT' } bắt buộc xác nhận
    * @returns Kết quả xóa
    * Khi nào sử dụng: Profile settings → "Delete Account"
    *
@@ -242,7 +243,16 @@ export class UserController {
    */
   @Delete('delete-account')
   @HttpCode(HttpStatus.OK)
-  async deleteAccount(@Req() req: any) {
+  async deleteAccount(
+    @Req() req: any,
+    @Body() body: { confirmDelete?: string },
+  ) {
+    // Bắt buộc xác nhận trước khi xóa vĩnh viễn
+    if (body?.confirmDelete !== 'DELETE_MY_ACCOUNT') {
+      throw new BadRequestException(
+        'Vui lòng xác nhận bằng cách gửi { "confirmDelete": "DELETE_MY_ACCOUNT" }',
+      );
+    }
     return this.userService.deleteAccount(req.user.id);
   }
 }

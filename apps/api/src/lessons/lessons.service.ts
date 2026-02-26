@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -40,6 +40,7 @@ export interface LessonRow {
  */
 @Injectable()
 export class LessonsService {
+  private readonly logger = new Logger(LessonsService.name);
   private supabase: SupabaseClient;
 
   constructor() {
@@ -74,7 +75,7 @@ export class LessonsService {
       .single();
 
     if (error) {
-      console.error('[LessonsService] Lỗi tạo lesson:', error);
+      this.logger.error('[LessonsService] Lỗi tạo lesson:', error);
       throw error;
     }
 
@@ -96,16 +97,33 @@ export class LessonsService {
    *
    * Mục đích: Lưu audio URL sau khi sinh xong để không cần sinh lại
    * Tham số:
+   *   - userId: ID của user (để kiểm tra quyền sở hữu)
    *   - lessonId: ID của lesson
    *   - audioUrl: URL audio trên Supabase Storage
    *   - audioTimestamps: Timestamps của từng câu trong audio
    * Khi nào sử dụng: Sau khi frontend sinh audio xong và nhận được URL từ backend
    */
   async updateAudioData(
+    userId: string,
     lessonId: string,
     audioUrl: string,
     audioTimestamps?: { startTime: number; endTime: number }[],
   ) {
+    // Kiểm tra quyền sở hữu lesson
+    const { data: lesson, error: fetchError } = await this.supabase
+      .from('lessons')
+      .select('id, user_id')
+      .eq('id', lessonId)
+      .single();
+
+    if (fetchError || !lesson) {
+      throw new NotFoundException('Không tìm thấy bài học');
+    }
+
+    if (lesson.user_id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền cập nhật bài học này');
+    }
+
     const updateData: { audio_url: string; audio_timestamps?: object } = {
       audio_url: audioUrl,
     };
@@ -117,10 +135,11 @@ export class LessonsService {
     const { error } = await this.supabase
       .from('lessons')
       .update(updateData)
-      .eq('id', lessonId);
+      .eq('id', lessonId)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('[LessonsService] Lỗi cập nhật audio:', error);
+      this.logger.error('[LessonsService] Lỗi cập nhật audio:', error);
       throw error;
     }
 

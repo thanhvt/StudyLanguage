@@ -120,8 +120,15 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
    * Khi nào sử dụng: User nhấn nút 🎤 trong PracticeScreen
    */
   const startRecording = useCallback(async () => {
+    // Guard: Tránh double-tap gọi Voice.start() 2 lần → crash/behavior không xác định
+    if (isRecording) {
+      console.warn('⚠️ [Practice] Đang ghi âm rồi, bỏ qua lệnh startRecording trùng');
+      return;
+    }
+
     try {
       setTranscript('');
+      transcriptRef.current = '';
       setResult(null);
       setError(null);
       setPhase('recording');
@@ -135,7 +142,7 @@ export function useReadingPractice(originalText: string): UseReadingPracticeRetu
       setPhase('idle');
       setIsRecording(false);
     }
-  }, []);
+  }, [isRecording]);
 
   /**
    * Mục đích: Dừng ghi âm + gửi transcript cho AI phân tích

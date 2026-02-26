@@ -74,8 +74,20 @@ export function getAccentColor(type: SkillType) {
  */
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
+
+  // EC-M06 fix: Xử lý date string không hợp lệ
+  if (isNaN(date.getTime())) {
+    return 'Không xác định';
+  }
+
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+
+  // EC-M07 fix: Ngày trong tương lai
+  if (diffMs < 0) {
+    return 'Sắp tới';
+  }
+
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
