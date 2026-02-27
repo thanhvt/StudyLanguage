@@ -66,6 +66,38 @@ export interface AudioGenerationResult {
 }
 
 // =======================
+// Voice Types cho TTS Settings
+// =======================
+
+/** Thông tin 1 giọng đọc từ backend */
+export interface VoiceInfo {
+  /** Voice ID (ví dụ: 'en-US-JennyNeural') */
+  id: string;
+  /** Tên hiển thị (ví dụ: 'Jenny') */
+  name: string;
+  /** Giới tính */
+  gender: 'Male' | 'Female';
+  /** Mô tả ngắn (ví dụ: 'Nữ US, tự nhiên') */
+  description?: string;
+  /** Danh sách emotion styles hỗ trợ */
+  styles?: string[];
+}
+
+/** Cặp giọng multi-talker */
+export interface MultiTalkerPair {
+  /** Tên 2 speaker trong cặp */
+  pair: string[];
+  /** Index cặp (0, 1, ...) */
+  index: number;
+}
+
+/** Response từ GET /ai/voices */
+export interface VoicesResponse {
+  voices: VoiceInfo[];
+  multiTalker: MultiTalkerPair[];
+}
+
+// =======================
 // Backend Response Types (raw, chưa map)
 // =======================
 
@@ -258,6 +290,8 @@ export const listeningApi = {
       rate?: number;
       /** Volume 0-100 (%) */
       volume?: number;
+      /** Cảm xúc ngẫu nhiên — API tự random emotion */
+      randomEmotion?: boolean;
     },
   ): Promise<AudioGenerationResult> => {
     const payload: Record<string, unknown> = {
@@ -277,6 +311,7 @@ export const listeningApi = {
       ...(ttsOptions?.pitch !== undefined && ttsOptions.pitch !== 0 && {pitch: ttsOptions.pitch}),
       ...(ttsOptions?.rate !== undefined && ttsOptions.rate !== 0 && {rate: ttsOptions.rate}),
       ...(ttsOptions?.volume !== undefined && ttsOptions.volume !== 100 && {volume: ttsOptions.volume}),
+      ...(ttsOptions?.randomEmotion !== undefined && {randomEmotion: ttsOptions.randomEmotion}),
     };
 
     console.log(
@@ -294,6 +329,55 @@ export const listeningApi = {
 
     console.log('✅ [Listening] Nhận audio URL:', response.data.audioUrl);
     return response.data as AudioGenerationResult;
+  },
+
+  /**
+   * Mục đích: Lấy danh sách voices khả dụng để hiển thị trong TTS Settings
+   * Tham số đầu vào: provider ('azure' | 'openai', mặc định 'azure')
+   * Tham số đầu ra: Promise<VoicesResponse> — danh sách voices + multi-talker pairs
+   * Khi nào sử dụng: TtsSettingsSheet mở → fetch voices 1 lần, cache trong component
+   */
+  fetchVoices: async (
+    provider: 'azure' | 'openai' = 'azure',
+  ): Promise<VoicesResponse> => {
+    console.log('🔊 [Listening] Lấy danh sách giọng đọc, provider:', provider);
+    const response = await apiClient.get('/ai/voices', {
+      params: {provider},
+    });
+    console.log('✅ [Listening] Nhận', response.data.voices?.length ?? 0, 'giọng đọc');
+    return response.data as VoicesResponse;
+  },
+
+  /**
+   * Mục đích: Phát thử giọng đọc (preview 1 câu sample)
+   * Tham số đầu vào:
+   *   - text: Câu sample (ví dụ: "Hello, how are you today?")
+   *   - voice: Voice ID (ví dụ: 'en-US-JennyNeural')
+   *   - emotion: Emotion style (optional, ví dụ: 'cheerful')
+   * Tham số đầu ra: Promise<Blob> — audio data
+   * Khi nào sử dụng: User nhấn nút ▶ trên voice item trong TTS Settings
+   */
+  previewVoice: async (
+    text: string,
+    voice: string,
+    emotion?: string,
+  ): Promise<ArrayBuffer> => {
+    console.log('🔊 [Listening] Preview giọng:', voice, '| Emotion:', emotion ?? 'default');
+    const response = await apiClient.post(
+      '/ai/text-to-speech',
+      {
+        text,
+        provider: 'azure',
+        voice,
+        ...(emotion && emotion !== 'default' && {emotion}),
+      },
+      {
+        responseType: 'arraybuffer',
+        timeout: 15000, // 15s cho preview ngắn
+      },
+    );
+    console.log('✅ [Listening] Nhận audio preview, size:', response.data.byteLength, 'bytes');
+    return response.data;
   },
 };
 

@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useCallback, useMemo} from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -7,6 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
+  Pressable,
 } from 'react-native';
 import {AppButton, AppText, Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -17,27 +19,44 @@ import {useDialog} from '@/components/ui/DialogProvider';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
-import {getTotalScenarios} from '@/data/topic-data';
-
-// Components listening
+import {getTotalScenarios, CATEGORIES, type TopicScenario} from '@/data/topic-data';
 import {
-  CustomScenarioInput,
   DurationSelector,
   SpeakersSelector,
-  KeywordsInput,
-  AdvancedOptionsSheet,
   TopicPickerModal,
-  CollapsibleSection,
 } from '@/components/listening';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import TrackPlayer from 'react-native-track-player';
 
+// ========================
+// Màu sắc Listening-specific (Blue + Orange identity)
+// ========================
+const LISTENING_BLUE = '#2563EB';
+const LISTENING_ORANGE = '#F97316';
+
+// ========================
+// Level config data
+// ========================
+const LEVELS = [
+  {id: 'beginner' as const, label: 'Cơ bản', emoji: '🌱'},
+  {id: 'intermediate' as const, label: 'Trung bình', emoji: '🌿'},
+  {id: 'advanced' as const, label: 'Nâng cao', emoji: '🌳'},
+];
+
+// ========================
+// Mode config data
+// ========================
+const MODES = [
+  {id: 'podcast' as const, label: 'Podcast', icon: '🎙'},
+  {id: 'radio' as const, label: 'Radio', icon: '📻'},
+];
+
 /**
- * Mục đích: Màn hình cấu hình bài nghe — redesign v2 với UX tối ưu
+ * Mục đích: Màn hình cấu hình bài nghe — redesign v3 theo Obsidian Glass + Blue/Orange
  * Tham số đầu vào: navigation (React Navigation props)
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: ListeningStack → màn hình đầu tiên khi user chọn "Luyện Nghe"
- *   - Layout: TopicPicker modal, compact config, collapsible optional, sticky CTA
+ *   - Layout: Header → Topic Picker inline → Level/Mode → Duration/Speakers → Sticky CTA
  *   - Nhấn "Bắt đầu nghe" → gọi API → navigate đến PlayerScreen
  */
 export default function ListeningConfigScreen({
@@ -45,6 +64,9 @@ export default function ListeningConfigScreen({
 }: {
   navigation: any;
 }) {
+  // ========================
+  // Store selectors
+  // ========================
   const config = useListeningStore(state => state.config);
   const setConfig = useListeningStore(state => state.setConfig);
   const selectedTopic = useListeningStore(state => state.selectedTopic);
@@ -52,26 +74,28 @@ export default function ListeningConfigScreen({
   const setSelectedTopic = useListeningStore(state => state.setSelectedTopic);
   const isGenerating = useListeningStore(state => state.isGenerating);
   const setGenerating = useListeningStore(state => state.setGenerating);
-  const randomVoice = useListeningStore(state => state.randomVoice);
-  const setRandomVoice = useListeningStore(state => state.setRandomVoice);
-  const voicePerSpeaker = useListeningStore(state => state.voicePerSpeaker);
-  const setVoicePerSpeaker = useListeningStore(state => state.setVoicePerSpeaker);
-  const multiTalker = useListeningStore(state => state.multiTalker);
-  const setMultiTalker = useListeningStore(state => state.setMultiTalker);
-  const multiTalkerPairIndex = useListeningStore(state => state.multiTalkerPairIndex);
-  const setMultiTalkerPairIndex = useListeningStore(state => state.setMultiTalkerPairIndex);
+  const selectedCategory = useListeningStore(state => state.selectedCategory);
+  const setSelectedCategory = useListeningStore(state => state.setSelectedCategory);
+  const selectedSubCategory = useListeningStore(state => state.selectedSubCategory);
+  const setSelectedSubCategory = useListeningStore(state => state.setSelectedSubCategory);
+  const favoriteScenarioIds = useListeningStore(state => state.favoriteScenarioIds);
+  const toggleFavorite = useListeningStore(state => state.toggleFavorite);
 
-  // BUG-07 fix: Đọc lastSession qua hook thay vì getState() trong render
+  // Audio Player store — để kiểm tra có đang phát không
   const lastSession = useAudioPlayerStore(state => state.lastSession);
   const clearSession = useAudioPlayerStore(state => state.clearSession);
   const audioPlayerSetPlayerMode = useAudioPlayerStore(state => state.setPlayerMode);
 
+  // ========================
   // Local state
+  // ========================
   const [topicInput, setTopicInput] = useState('');
-  const [showCustomScenario, setShowCustomScenario] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
+  const [mode, setMode] = useState<'podcast' | 'radio'>('podcast');
 
+  // ========================
+  // Hooks
+  // ========================
   const {showError, showWarning} = useToast();
   const {showLoading, hideLoading, showConfirm} = useDialog();
   const colors = useColors();
@@ -79,8 +103,10 @@ export default function ListeningConfigScreen({
   const insets = useInsets();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Theo dõi trạng thái keyboard để ẩn sticky footer khi mở
-  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+  // ========================
+  // Keyboard tracking — ẩn sticky footer khi mở keyboard
+  // ========================
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   React.useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -96,22 +122,44 @@ export default function ListeningConfigScreen({
     };
   }, []);
 
+  // ========================
   // Tổng scenarios
+  // ========================
   const totalScenarios = getTotalScenarios();
 
-  // Sticky footer height: button(56) + padding(32) + safeBottom
+  // Sticky footer height tính toán
   const footerHeight = 56 + 32 + Math.max(insets.bottom, 16);
 
-  // Accent colors cho visual differentiation
-  const topicAccent = colors.skillListening; // Indigo
-  const ctaGlowColor = colors.primary;
+  // ========================
+  // Lấy scenarios theo category + subcategory hiện tại (hiện tối đa 3)
+  // ========================
+  const currentScenarios = useMemo(() => {
+    const category = CATEGORIES.find(c => c.id === selectedCategory);
+    if (!category) {return [];}
 
-  // Khi user chọn scenario từ TopicPicker → xóa topicInput để tránh conflict
+    let scenarios: TopicScenario[] = [];
+    if (selectedSubCategory) {
+      const sub = category.subCategories?.find(s => s.id === selectedSubCategory);
+      scenarios = sub?.scenarios ?? [];
+    } else {
+      // Lấy tất cả scenarios từ tất cả subcategories
+      category.subCategories?.forEach(sub => {
+        scenarios = [...scenarios, ...(sub.scenarios ?? [])];
+      });
+    }
+    return scenarios.slice(0, 3); // Hiện tối đa 3 cards
+  }, [selectedCategory, selectedSubCategory]);
+
+  // Khi user chọn scenario → xóa topicInput
   React.useEffect(() => {
     if (selectedTopic) {
       setTopicInput('');
     }
   }, [selectedTopic]);
+
+  // ========================
+  // Business Logic
+  // ========================
 
   /**
    * Mục đích: Lấy topic cuối cùng để gửi API (ưu tiên: selectedTopic > topicInput)
@@ -119,7 +167,7 @@ export default function ListeningConfigScreen({
    * Tham số đầu ra: string | null
    * Khi nào sử dụng: Trước khi generate, xác định topic
    */
-  const getFinalTopic = (): string | null => {
+  const getFinalTopic = useCallback((): string | null => {
     if (selectedTopic) {
       return `${selectedTopic.name}: ${selectedTopic.description}`;
     }
@@ -127,55 +175,16 @@ export default function ListeningConfigScreen({
       return topicInput.trim();
     }
     return null;
-  };
+  }, [selectedTopic, topicInput]);
 
   /**
-   * Mục đích: Tạo bài nghe từ config hiện tại
-   * Tham số đầu vào: không (dùng config từ store + topic)
-   * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn "Bắt đầu nghe"
-   */
-  const handleGenerate = async () => {
-    const topic = getFinalTopic();
-
-    if (!topic) {
-      showWarning(
-        'Chưa chọn chủ đề',
-        'Vui lòng chọn kịch bản hoặc nhập chủ đề hội thoại',
-      );
-      return;
-    }
-
-    // Kiểm tra có audio đang phát không — hỏi xác nhận trước khi tạo mới
-    const globalIsPlaying = useAudioPlayerStore.getState().isPlaying;
-    if (globalIsPlaying) {
-      showConfirm(
-        'Đang phát bài nghe',
-        'Bạn có muốn dừng bài hiện tại và tạo bài mới?',
-        async () => {
-          try {
-            await TrackPlayer.reset();
-          } catch {
-            // Ignore
-          }
-          useAudioPlayerStore.getState().setPlayerMode('hidden');
-          doGenerate(topic);
-        },
-      );
-      return;
-    }
-
-    doGenerate(topic);
-  };
-
-  /**
-   * Mục đích: Thực hiện generate conversation (sau các bước validation)
+   * Mục đích: Thực hiện generate conversation
    * Tham số đầu vào: topic (string)
    * Tham số đầu ra: void
-   * Khi nào sử dụng: handleGenerate gọi sau khi pass validation + network check + confirmation
+   * Khi nào sử dụng: handleGenerate gọi sau validation
    */
-  const doGenerate = async (topic: string) => {
-    // Kiểm tra kết nối mạng trước khi gọi API
+  const doGenerate = useCallback(async (topic: string) => {
+    // Kiểm tra mạng
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -188,16 +197,14 @@ export default function ListeningConfigScreen({
       haptic.error();
       showError(
         'Không có kết nối mạng',
-        'Vui lòng kiểm tra Wi-Fi hoặc dữ liệu di động và thử lại khi có mạng 📶',
+        'Vui lòng kiểm tra Wi-Fi hoặc dữ liệu di động 📶',
       );
-      console.log('📶 [Listening] Không có mạng — chặn generate');
       return;
     }
 
     try {
       setGenerating(true);
       haptic.medium();
-      // Hiện tóm tắt config trong loading để user biết đang generate gì
       const levelLabel = {beginner: 'Cơ bản', intermediate: 'Trung bình', advanced: 'Nâng cao'}[config.level] || config.level;
       const speakerCount = config.numSpeakers ?? 2;
       showLoading(
@@ -213,8 +220,6 @@ export default function ListeningConfigScreen({
       hideLoading();
       setConversation(result);
       haptic.success();
-      // Lưu ý: Không show success toast ở đây vì navigate ngay sẽ che mất
-      // Chuyển sang PlayerScreen là feedback rõ ràng nhất cho user
       navigation.navigate('Player');
     } catch (error: any) {
       hideLoading();
@@ -227,31 +232,56 @@ export default function ListeningConfigScreen({
     } finally {
       setGenerating(false);
     }
-  };
+  }, [config, haptic, showError, showLoading, hideLoading, setGenerating, setConversation, navigation]);
 
   /**
-   * Mục đích: Xử lý Quick Use từ CustomScenarioInput
-   * Tham số đầu vào: name, description (string)
+   * Mục đích: Xử lý nhấn "Bắt đầu nghe"
+   * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: CustomScenarioInput → "Sử dụng ngay"
+   * Khi nào sử dụng: User nhấn CTA button
    */
-  const handleCustomQuickUse = (name: string, description: string) => {
-    setShowCustomScenario(false);
-    setSelectedTopic(
-      {id: `custom-${Date.now()}`, name, description},
-      'custom',
-      '',
-    );
-  };
+  const handleGenerate = useCallback(async () => {
+    // Nếu Radio mode → navigate đến RadioScreen
+    if (mode === 'radio') {
+      haptic.light();
+      navigation.navigate('Radio');
+      return;
+    }
 
-  // Kiểm tra xem có đủ thông tin topic chưa
+    const topic = getFinalTopic();
+    if (!topic) {
+      showWarning('Chưa chọn chủ đề', 'Vui lòng chọn kịch bản hoặc nhập chủ đề');
+      return;
+    }
+
+    // Kiểm tra audio đang phát
+    const globalIsPlaying = useAudioPlayerStore.getState().isPlaying;
+    if (globalIsPlaying) {
+      showConfirm(
+        'Đang phát audio',
+        'Bạn đang nghe "' + (lastSession?.title ?? 'bài nghe') + '". Tạo bài mới sẽ dừng bài hiện tại.',
+        async () => {
+          try {
+            await TrackPlayer.reset();
+          } catch {
+            // Ignore
+          }
+          useAudioPlayerStore.getState().setPlayerMode('hidden');
+          doGenerate(topic);
+        },
+      );
+      return;
+    }
+
+    doGenerate(topic);
+  }, [mode, getFinalTopic, haptic, showWarning, showConfirm, lastSession, doGenerate, navigation]);
+
+  // Kiểm tra topic hợp lệ
   const hasValidTopic = !!selectedTopic || !!topicInput.trim();
+  const canStart = mode === 'radio' || hasValidTopic;
 
   return (
     <View className="flex-1 bg-background">
-      {/* ======================== */}
-      {/* KeyboardAvoidingView cho input không bị che */}
-      {/* ======================== */}
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -262,115 +292,247 @@ export default function ListeningConfigScreen({
           contentContainerStyle={{paddingBottom: footerHeight + 20}}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
+
           {/* ======================== */}
-          {/* Header với visual accent */}
+          {/* HEADER: "Luyện Nghe" + gear icon */}
           {/* ======================== */}
           <View className="px-6 pt-safe-offset-4 mb-5">
-            <View className="flex-row items-center">
-              <View
-                className="rounded-2xl p-2.5 mr-3"
-                style={{backgroundColor: `${topicAccent}20`}}>
-                <AppText className="text-2xl">🎧</AppText>
-              </View>
-              <View className="flex-1">
-                <AppText
-                  variant={'heading1'}
-                  className="text-2xl font-sans-bold text-foreground">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <AppText className="text-2xl font-sans-bold text-foreground">
                   Luyện Nghe
                 </AppText>
-                <AppText className="text-neutrals400 text-sm mt-0.5">
-                  {totalScenarios}+ kịch bản • AI-powered
+                <AppText className="text-neutrals400 text-xs mt-0.5">
+                  {totalScenarios}+ kịch bản có sẵn
                 </AppText>
               </View>
+              <TouchableOpacity
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                onPress={() => {
+                  haptic.light();
+                  // TODO: Mở TTS Settings Sheet
+                }}
+                accessibilityLabel="Cài đặt giọng đọc"
+                accessibilityRole="button">
+                <Icon name="Settings" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* ======================== */}
-          {/* Section 1: Chọn kịch bản — với accent indigo */}
+          {/* TOPIC SECTION: "Chủ đề" + inline picker */}
           {/* ======================== */}
           <View className="px-6 mb-4">
-            <SectionCard
-              accentColor={topicAccent}
-              shadowColor={topicAccent}>
-              {/* Section label với accent dot */}
-              <View className="flex-row items-center mb-3">
-                <View
-                  className="w-2 h-2 rounded-full mr-2"
-                  style={{backgroundColor: topicAccent}}
-                />
-                <AppText
-                  className="font-sans-semibold text-base"
-                  style={{color: topicAccent}}>
-                  Kịch bản hội thoại
+            <SectionCard accentColor={LISTENING_BLUE} shadowColor={LISTENING_BLUE}>
+              {/* Top Row: Label + action buttons */}
+              <View className="flex-row items-center justify-between mb-3">
+                <AppText className="text-foreground font-sans-semibold text-base">
+                  Chủ đề
                 </AppText>
+                <View className="flex-row items-center gap-2">
+                  <TouchableOpacity
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    onPress={() => {
+                      haptic.light();
+                      setShowTopicModal(true);
+                    }}
+                    accessibilityLabel="Tìm kiếm chủ đề"
+                    accessibilityRole="button">
+                    <Icon name="Search" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    onPress={() => {
+                      haptic.light();
+                      // TODO: Show favorites filter
+                    }}
+                    accessibilityLabel="Chủ đề yêu thích"
+                    accessibilityRole="button">
+                    <Icon name="Heart" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    onPress={() => {
+                      haptic.light();
+                      navigation.navigate('CustomScenarios');
+                    }}
+                    accessibilityLabel="Tạo chủ đề mới"
+                    accessibilityRole="button">
+                    <Icon name="Plus" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Nút mở TopicPicker Modal */}
+              {/* Category Tabs */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-2">
+                <View className="flex-row gap-2">
+                  {CATEGORIES.map(cat => {
+                    const isActive = selectedCategory === cat.id;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        className="flex-row items-center px-3 py-1.5 rounded-full border"
+                        style={{
+                          backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
+                          borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                        }}
+                        onPress={() => {
+                          haptic.light();
+                          setSelectedCategory(cat.id);
+                          setSelectedSubCategory('');
+                        }}
+                        accessibilityLabel={`Danh mục ${cat.name}${isActive ? ', đang chọn' : ''}`}
+                        accessibilityRole="button">
+                        {cat.icon && (
+                          <AppText className="text-xs mr-1">{cat.icon}</AppText>
+                        )}
+                        <AppText
+                          className="text-xs font-sans-medium"
+                          style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                          {cat.name}
+                        </AppText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+
+              {/* Subcategory Chips */}
+              {(() => {
+                const category = CATEGORIES.find(c => c.id === selectedCategory);
+                if (!category?.subCategories?.length) {return null;}
+                return (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="mb-3">
+                    <View className="flex-row gap-2">
+                      {category.subCategories.map(sub => {
+                        const isActive = selectedSubCategory === sub.id;
+                        return (
+                          <TouchableOpacity
+                            key={sub.id}
+                            className="px-3 py-1 rounded-lg border"
+                            style={{
+                              backgroundColor: isActive ? `${LISTENING_BLUE}15` : 'transparent',
+                              borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                            }}
+                            onPress={() => {
+                              haptic.light();
+                              setSelectedSubCategory(sub.id);
+                            }}
+                            accessibilityLabel={`${sub.name}${isActive ? ', đang chọn' : ''}`}
+                            accessibilityRole="button">
+                            <AppText
+                              className="text-xs"
+                              style={{color: isActive ? LISTENING_BLUE : colors.neutrals400}}>
+                              {sub.name}
+                            </AppText>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                );
+              })()}
+
+              {/* Scenario Cards (2-3 cards) */}
+              {currentScenarios.map(scenario => {
+                const isSelected = selectedTopic?.id === scenario.id;
+                const isFav = favoriteScenarioIds.includes(scenario.id);
+                return (
+                  <TouchableOpacity
+                    key={scenario.id}
+                    className="rounded-xl px-4 py-3 mb-2 border"
+                    style={{
+                      backgroundColor: isSelected
+                        ? `${LISTENING_ORANGE}15`
+                        : colors.neutrals900,
+                      borderColor: isSelected ? LISTENING_ORANGE : 'transparent',
+                    }}
+                    onPress={() => {
+                      haptic.light();
+                      setSelectedTopic(
+                        isSelected ? null : scenario,
+                        selectedCategory,
+                        selectedSubCategory,
+                      );
+                    }}
+                    accessibilityLabel={`${scenario.name}. ${scenario.description}${isSelected ? ', đang chọn' : ''}`}
+                    accessibilityRole="button">
+                    <View className="flex-row items-start justify-between">
+                      <View className="flex-1 mr-3">
+                        <AppText
+                          className="font-sans-bold text-sm"
+                          style={{color: isSelected ? LISTENING_ORANGE : colors.foreground}}>
+                          {scenario.name}
+                        </AppText>
+                        <AppText
+                          className="text-neutrals400 text-xs mt-0.5"
+                          numberOfLines={1}>
+                          {scenario.description}
+                        </AppText>
+                      </View>
+                      <TouchableOpacity
+                        className="pt-0.5"
+                        onPress={() => {
+                          haptic.light();
+                          toggleFavorite(scenario.id);
+                        }}
+                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                        accessibilityLabel={isFav ? 'Bỏ yêu thích' : 'Yêu thích'}
+                        accessibilityRole="button">
+                        <Icon
+                          name="Heart"
+                          className="w-4 h-4"
+                          style={{
+                            color: isFav ? LISTENING_ORANGE : colors.neutrals400,
+                          }}
+                          fill={isFav ? LISTENING_ORANGE : 'none'}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* "Xem tất cả" link */}
               <TouchableOpacity
-                className="flex-row items-center justify-between rounded-2xl px-4 py-3.5 border"
-                style={{
-                  borderColor: selectedTopic ? topicAccent : colors.neutrals800,
-                  backgroundColor: selectedTopic
-                    ? `${topicAccent}08`
-                    : colors.neutrals900,
-                }}
+                className="py-1"
                 onPress={() => {
                   haptic.light();
                   setShowTopicModal(true);
                 }}
-                disabled={isGenerating}
-                activeOpacity={0.7}
-                accessibilityLabel={
-                  selectedTopic
-                    ? `Đã chọn: ${selectedTopic.name}. Nhấn để đổi`
-                    : 'Chọn kịch bản hội thoại'
-                }
-                accessibilityRole="button">
-                <View className="flex-row items-center flex-1 mr-3">
-                  {selectedTopic ? (
-                    <View className="flex-1">
-                      <AppText
-                        className="font-sans-bold text-base"
-                        style={{color: topicAccent}}>
-                        {selectedTopic.name}
-                      </AppText>
-                      <AppText
-                        className="text-neutrals400 text-xs mt-0.5"
-                        numberOfLines={1}>
-                        {selectedTopic.description}
-                      </AppText>
-                    </View>
-                  ) : (
-                    <AppText className="text-neutrals400 text-base">
-                      Chọn từ {totalScenarios}+ kịch bản...
-                    </AppText>
-                  )}
-                </View>
-                <Icon
-                  name="ChevronRight"
-                  className="w-5 h-5 text-neutrals400"
-                />
+                accessibilityLabel={`Xem tất cả kịch bản`}
+                accessibilityRole="link">
+                <AppText className="text-xs" style={{color: LISTENING_BLUE}}>
+                  Xem tất cả {totalScenarios} kịch bản →
+                </AppText>
               </TouchableOpacity>
 
-              {/* Or-divider styled */}
+              {/* Divider "hoặc" */}
               <View className="flex-row items-center my-3">
                 <View className="flex-1 h-[1px] bg-border" />
-                <AppText className="text-neutrals400 text-xs mx-3">
-                  hoặc nhập chủ đề tự do
-                </AppText>
+                <AppText className="text-neutrals400 text-xs mx-3">hoặc</AppText>
                 <View className="flex-1 h-[1px] bg-border" />
               </View>
 
               {/* Free text input */}
               <TextInput
-                className="bg-neutrals900 rounded-xl px-4 py-3 text-base border border-neutrals800"
+                className="bg-neutrals900 rounded-xl px-4 py-3 text-sm border border-neutrals800"
                 style={{color: colors.foreground}}
-                placeholder="vd: ordering coffee, travel tips..."
+                placeholder="Nhập chủ đề riêng..."
                 placeholderTextColor={colors.neutrals500}
                 value={topicInput}
                 onChangeText={text => {
                   setTopicInput(text);
-                  // Nếu đang nhập, bỏ chọn scenario
                   if (text.trim() && selectedTopic) {
                     setSelectedTopic(null);
                   }
@@ -385,284 +547,154 @@ export default function ListeningConfigScreen({
           </View>
 
           {/* ======================== */}
-          {/* Section 2: Cấu hình cơ bản — compact inline rows */}
+          {/* LEVEL SECTION */}
           {/* ======================== */}
           <View className="px-6 mb-4">
             <SectionCard>
-              <View className="gap-4">
-                <DurationSelector
-                  value={config.durationMinutes}
-                  onChange={d => setConfig({durationMinutes: d})}
-                  disabled={isGenerating}
-                />
-                <SpeakersSelector
-                  value={config.numSpeakers ?? 2}
-                  onChange={n => setConfig({numSpeakers: n})}
-                  disabled={isGenerating}
-                />
+              <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+                Level
+              </AppText>
+              <View className="flex-row gap-2">
+                {LEVELS.map(level => {
+                  const isActive = config.level === level.id;
+                  return (
+                    <TouchableOpacity
+                      key={level.id}
+                      className="flex-1 py-2.5 rounded-xl items-center border"
+                      style={{
+                        backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
+                        borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                      }}
+                      onPress={() => {
+                        haptic.light();
+                        setConfig({level: level.id});
+                      }}
+                      disabled={isGenerating}
+                      accessibilityLabel={`Trình độ ${level.label}${isActive ? ', đang chọn' : ''}`}
+                      accessibilityRole="button">
+                      <AppText
+                        className="text-sm font-sans-medium"
+                        style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                        {level.label}
+                      </AppText>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </SectionCard>
           </View>
 
           {/* ======================== */}
-          {/* Section 3: Tuỳ chỉnh thêm (Collapsible) */}
+          {/* MODE SECTION: Podcast / Radio */}
           {/* ======================== */}
           <View className="px-6 mb-4">
             <SectionCard>
-              <CollapsibleSection
-                title="Thêm tuỳ chỉnh"
-                icon="🎛️"
-                defaultExpanded={false}>
-                {/* Từ khóa */}
-                <View className="mb-4">
-                  <AppText className="text-foreground font-sans-medium text-sm mb-2">
-                    🔑 Từ khóa{' '}
-                    <AppText className="text-neutrals400 text-xs">
-                      (tuỳ chọn)
-                    </AppText>
-                  </AppText>
-                  <KeywordsInput
-                    value={config.keywords ?? ''}
-                    onChange={text => setConfig({keywords: text})}
-                    disabled={isGenerating}
-                    onFocus={() => {
-                      // Cuộn xuống để input không bị keyboard che
-                      setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({animated: true});
-                      }, 300);
-                    }}
-                  />
-                </View>
-
-                {/* Tiếng Việt toggle */}
-                <View className="mb-4">
-                  <TouchableOpacity
-                    className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
-                    onPress={() => {
-                      haptic.light();
-                      setConfig({
-                        includeVietnamese: !config.includeVietnamese,
-                      });
-                    }}
-                    disabled={isGenerating}
-                    activeOpacity={0.7}
-                    accessibilityLabel={`Kèm bản dịch tiếng Việt, ${config.includeVietnamese ? 'bật' : 'tắt'}`}
-                    accessibilityRole="switch">
-                    <View className="flex-row items-center">
-                      <AppText className="mr-2">🇻🇳</AppText>
-                      <AppText className="text-foreground">
-                        Kèm bản dịch tiếng Việt
+              <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+                Mode
+              </AppText>
+              <View className="flex-row gap-2">
+                {MODES.map(m => {
+                  const isActive = mode === m.id;
+                  return (
+                    <TouchableOpacity
+                      key={m.id}
+                      className="flex-1 flex-row items-center justify-center py-2.5 rounded-xl border"
+                      style={{
+                        backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
+                        borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                      }}
+                      onPress={() => {
+                        haptic.light();
+                        setMode(m.id);
+                      }}
+                      disabled={isGenerating}
+                      accessibilityLabel={`Chế độ ${m.label}${isActive ? ', đang chọn' : ''}`}
+                      accessibilityRole="button">
+                      <AppText className="text-sm mr-1.5">{m.icon}</AppText>
+                      <AppText
+                        className="text-sm font-sans-medium"
+                        style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                        {m.label}
                       </AppText>
-                    </View>
-                    <Switch
-                      value={config.includeVietnamese ?? true}
-                      onValueChange={v => setConfig({includeVietnamese: v})}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </SectionCard>
+          </View>
+
+          {/* ======================== */}
+          {/* DURATION + SPEAKERS ROW */}
+          {/* ======================== */}
+          {mode === 'podcast' && (
+            <View className="px-6 mb-4">
+              <SectionCard>
+                <View className="flex-row gap-4">
+                  <View className="flex-1">
+                    <DurationSelector
+                      value={config.durationMinutes}
+                      onChange={d => setConfig({durationMinutes: d})}
                       disabled={isGenerating}
                     />
-                  </TouchableOpacity>
+                  </View>
+                  <View className="flex-1">
+                    <SpeakersSelector
+                      value={config.numSpeakers ?? 2}
+                      onChange={n => setConfig({numSpeakers: n})}
+                      disabled={isGenerating}
+                    />
+                  </View>
                 </View>
-
-                {/* Custom Scenario */}
-                {showCustomScenario ? (
-                  <CustomScenarioInput
-                    onQuickUse={handleCustomQuickUse}
-                    onClose={() => setShowCustomScenario(false)}
-                    disabled={isGenerating}
-                  />
-                ) : (
-                  <TouchableOpacity
-                    className="flex-row items-center justify-center bg-neutrals900 rounded-2xl px-4 py-3"
-                    onPress={() => {
-                      haptic.light();
-                      setShowCustomScenario(true);
-                    }}
-                    disabled={isGenerating}
-                    activeOpacity={0.7}
-                    accessibilityLabel="Tạo kịch bản tuỳ chỉnh"
-                    accessibilityRole="button">
-                    <Icon name="Plus" className="w-4 h-4 text-primary mr-2" />
-                    <AppText className="text-primary text-sm font-sans-medium">
-                      Tạo kịch bản tuỳ chỉnh
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-              </CollapsibleSection>
-            </SectionCard>
-          </View>
-
-          {/* ======================== */}
-          {/* Section 4: Tuỳ chọn nâng cao (bottom sheet) */}
-          {/* ======================== */}
-          <View className="px-6 mb-4">
-            <TouchableOpacity
-              className="flex-row items-center justify-between bg-surface-raised rounded-2xl px-4 py-3.5 border border-border"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 1},
-                shadowOpacity: 0.05,
-                shadowRadius: 3,
-                elevation: 1,
-              }}
-              onPress={() => {
-                haptic.light();
-                setShowAdvanced(true);
-              }}
-              disabled={isGenerating}
-              activeOpacity={0.7}
-              accessibilityLabel={`Tuỳ chọn nâng cao. Trình độ: ${config.level === 'beginner' ? 'Cơ bản' : config.level === 'intermediate' ? 'Trung cấp' : 'Nâng cao'}`}
-              accessibilityRole="button">
-              <View className="flex-row items-center">
-                <AppText className="mr-2">⚙️</AppText>
-                <View>
-                  <AppText className="text-foreground font-sans-medium">
-                    Tuỳ chọn nâng cao
-                  </AppText>
-                  <AppText className="text-neutrals400 text-xs mt-0.5">
-                    Trình độ:{' '}
-                    {config.level === 'beginner'
-                      ? '🌱 Cơ bản'
-                      : config.level === 'intermediate'
-                        ? '🌿 Trung cấp'
-                        : '🌳 Nâng cao'}
-                  </AppText>
-                </View>
-              </View>
-              <Icon name="ChevronRight" className="w-5 h-5 text-neutrals400" />
-            </TouchableOpacity>
-          </View>
+              </SectionCard>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
       {/* ======================== */}
-      {/* Sticky Footer — ẩn khi keyboard mở để không tạo vùng trắng */}
+      {/* STICKY FOOTER */}
+      {/* ======================== */}
       {!keyboardVisible && (
-      <View
-        className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
-        style={{paddingBottom: Math.max(insets.bottom, 16)}}>
-
-        {/* Banner tiếp tục nghe — hiện khi có session đã lưu VÀ có conversation data */}
-        {/* BUG-07 fix: Dùng hook lastSession thay vì getState() trong render */}
-        {lastSession?.conversationData && (
-          <TouchableOpacity
-            className="flex-row items-center bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 mb-3"
-            onPress={() => {
-              haptic.light();
-              if (!lastSession?.conversationData) {
-                // Session cũ không có data → xóa session stale
-                clearSession();
-                console.warn('⚠️ [ConfigScreen] Session cũ không có conversationData, đã xóa');
-                return;
-              }
-              // Restore conversation vào listening store trước khi navigate
-              const listeningStore = useListeningStore.getState();
-              listeningStore.setConversation(lastSession.conversationData);
-              listeningStore.setAudioUrl(lastSession.audioUrl);
-              listeningStore.setTimestamps(lastSession.timestamps);
-              console.log('✅ [ConfigScreen] Đã restore conversation data từ session');
-              audioPlayerSetPlayerMode('full');
-              navigation.navigate('Player');
-            }}
-            activeOpacity={0.7}
-            accessibilityLabel="Tiếp tục nghe bài trước"
-            accessibilityRole="button">
-            <AppText className="text-lg mr-2">▶️</AppText>
-            <View className="flex-1">
-              <AppText className="text-primary font-sans-medium text-sm" numberOfLines={1}>
-                Tiếp tục nghe
-              </AppText>
-              <AppText className="text-neutrals400 text-xs" numberOfLines={1}>
-                {lastSession?.title}
-              </AppText>
-            </View>
-            <Icon name="ChevronRight" className="w-4 h-4 text-primary" />
-          </TouchableOpacity>
-        )}
-
-        {/* Radio Mode — nghe thụ động */}
-        <TouchableOpacity
-          className="flex-row items-center bg-accent/10 border border-accent/20 rounded-2xl px-4 py-3 mb-3"
-          onPress={() => {
-            haptic.light();
-            navigation.navigate('Radio');
-          }}
-          activeOpacity={0.7}
-          accessibilityLabel="Chuyển sang Radio Mode"
-          accessibilityRole="button">
-          <AppText className="text-lg mr-2">📻</AppText>
-          <View className="flex-1">
-            <AppText className="text-accent font-sans-medium text-sm">
-              Radio Mode
-            </AppText>
-            <AppText className="text-neutrals400 text-xs">
-              Nghe thụ động playlist random AI
-            </AppText>
-          </View>
-          <Icon name="ChevronRight" className="w-4 h-4 text-accent" />
-        </TouchableOpacity>
-
         <View
-          style={
-            hasValidTopic
-              ? {
-                  shadowColor: ctaGlowColor,
-                  shadowOffset: {width: 0, height: 4},
-                  shadowOpacity: 0.35,
-                  shadowRadius: 12,
-                  elevation: 8,
-                }
-              : undefined
-          }>
-          <AppButton
-            variant="primary"
-            size="lg"
-            className="w-full rounded-2xl"
-            onPress={handleGenerate}
-            disabled={isGenerating || !hasValidTopic}
-            loading={isGenerating}
-            accessibilityLabel={
-              hasValidTopic
-                ? 'Bắt đầu nghe'
-                : 'Chưa chọn chủ đề, không thể bắt đầu'
+          className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
+          style={{paddingBottom: Math.max(insets.bottom, 16)}}>
+          <View
+            style={
+              canStart
+                ? {
+                    shadowColor: LISTENING_BLUE,
+                    shadowOffset: {width: 0, height: 4},
+                    shadowOpacity: 0.35,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }
+                : undefined
             }>
-            🎧 Bắt đầu nghe
-          </AppButton>
+            <AppButton
+              variant="primary"
+              size="lg"
+              className="w-full rounded-2xl"
+              style={{backgroundColor: canStart ? LISTENING_BLUE : colors.neutrals700}}
+              onPress={handleGenerate}
+              disabled={isGenerating || !canStart}
+              loading={isGenerating}
+              accessibilityLabel={
+                canStart
+                  ? 'Bắt đầu nghe'
+                  : 'Chưa chọn chủ đề, không thể bắt đầu'
+              }>
+              Bắt đầu nghe
+            </AppButton>
+          </View>
         </View>
-
-        {/* Hint */}
-        {!hasValidTopic && (
-          <AppText className="text-neutrals400 text-xs text-center mt-2">
-            Chọn kịch bản hoặc nhập chủ đề để bắt đầu
-          </AppText>
-        )}
-      </View>
       )}
 
       {/* ======================== */}
-      {/* TopicPicker Modal */}
+      {/* TopicPicker Full-screen Modal */}
       {/* ======================== */}
       <TopicPickerModal
         visible={showTopicModal}
         onClose={() => setShowTopicModal(false)}
-        disabled={isGenerating}
-      />
-
-      {/* ======================== */}
-      {/* Advanced Options Bottom Sheet */}
-      {/* ======================== */}
-      <AdvancedOptionsSheet
-        visible={showAdvanced}
-        onClose={() => setShowAdvanced(false)}
-        level={config.level}
-        onLevelChange={l => setConfig({level: l})}
-        numSpeakers={config.numSpeakers ?? 2}
-        randomVoice={randomVoice}
-        onRandomVoiceChange={setRandomVoice}
-        voicePerSpeaker={voicePerSpeaker}
-        onVoicePerSpeakerChange={setVoicePerSpeaker}
-        multiTalker={multiTalker}
-        onMultiTalkerChange={setMultiTalker}
-        multiTalkerPairIndex={multiTalkerPairIndex}
-        onMultiTalkerPairIndexChange={setMultiTalkerPairIndex}
         disabled={isGenerating}
       />
     </View>
@@ -670,12 +702,12 @@ export default function ListeningConfigScreen({
 }
 
 // ========================
-// SectionCard — card wrapper với shadow depth + optional accent
+// SectionCard — card wrapper theo Obsidian Glass style
 // ========================
 
 interface SectionCardProps {
   children: React.ReactNode;
-  /** Mau accent cho left border indicator */
+  /** Màu accent cho left border indicator */
   accentColor?: string;
   /** Màu shadow riêng cho card */
   shadowColor?: string;
@@ -685,7 +717,7 @@ interface SectionCardProps {
  * Mục đích: Card container cho mỗi config section, tạo visual depth
  * Tham số đầu vào: children, accentColor (optional), shadowColor (optional)
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ConfigScreen → wrap mỗi section (Topic, Duration/Speakers, Optional)
+ * Khi nào sử dụng: ConfigScreen → wrap mỗi section
  */
 function SectionCard({children, accentColor, shadowColor}: SectionCardProps) {
   return (

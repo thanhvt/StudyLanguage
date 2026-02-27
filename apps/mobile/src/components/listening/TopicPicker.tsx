@@ -28,6 +28,8 @@ import {
 } from '@/data/topic-data';
 import {useListeningStore} from '@/store/useListeningStore';
 
+const LISTENING_BLUE = '#2563EB';
+
 // ========================
 // Custom hook: useDebounce — tránh search mỗi keystroke
 // ========================
@@ -146,9 +148,12 @@ const ScenarioItem = React.memo(function ScenarioItem({
   return (
     <Animated.View style={{transform: [{scale: scaleAnim}]}}>
       <TouchableOpacity
-        className={`flex-row items-center justify-between px-4 py-3.5 rounded-2xl mb-2 ${
-          isSelected ? 'bg-primary/10 border border-primary' : 'bg-neutrals900'
-        }`}
+        className="flex-row items-center justify-between px-4 py-3.5 rounded-2xl mb-2"
+        style={{
+          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : undefined,
+          borderWidth: isSelected ? 1 : 0,
+          borderColor: isSelected ? LISTENING_BLUE : 'transparent',
+        }}
         onPress={() => onSelect(scenario)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -157,9 +162,8 @@ const ScenarioItem = React.memo(function ScenarioItem({
         accessibilityRole="button">
         <View className="flex-1 mr-3">
           <AppText
-            className={`text-sm font-sans-medium ${
-              isSelected ? 'text-primary' : 'text-foreground'
-            }`}>
+            className="text-sm font-sans-medium"
+            style={{color: isSelected ? LISTENING_BLUE : undefined}}>
             {scenario.name}
           </AppText>
           <AppText className="text-xs text-neutrals400 mt-0.5" numberOfLines={1}>
@@ -245,11 +249,12 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   return (
     <View className="mb-2">
       <TouchableOpacity
-        className={`flex-row items-center justify-between px-4 py-3 rounded-xl ${
-          hasSelectedScenario
-            ? 'bg-primary/10 border border-primary/30'
-            : 'bg-neutrals900/50'
-        }`}
+        className="flex-row items-center justify-between px-4 py-3 rounded-xl"
+        style={{
+          backgroundColor: hasSelectedScenario ? `${LISTENING_BLUE}10` : undefined,
+          borderWidth: hasSelectedScenario ? 1 : 0,  
+          borderColor: hasSelectedScenario ? `${LISTENING_BLUE}40` : 'transparent',
+        }}
         onPress={onToggle}
         activeOpacity={0.7}
         accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}${hasSelectedScenario ? ', chứa kịch bản đang chọn' : ''}`}
@@ -257,11 +262,10 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
         <View className="flex-row items-center flex-1">
           {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
           {hasSelectedScenario && (
-            <View className="w-2 h-2 rounded-full bg-primary mr-2" />
+            <View className="w-2 h-2 rounded-full mr-2" style={{backgroundColor: LISTENING_BLUE}} />
           )}
-          <AppText className={`font-sans-medium text-sm ${
-            hasSelectedScenario ? 'text-primary' : 'text-foreground'
-          }`}>
+          <AppText className="font-sans-medium text-sm"
+            style={{color: hasSelectedScenario ? LISTENING_BLUE : undefined}}>
             {subCategory.name}
           </AppText>
           <View className="bg-neutrals700 rounded-full px-2.5 py-1 ml-2">
@@ -522,11 +526,11 @@ export default function TopicPicker({
 
       return (
         <TouchableOpacity
-          className={`px-4 py-2.5 rounded-full mr-2 border ${
-            isActive
-              ? 'bg-primary/15 border-primary'
-              : 'bg-neutrals900 border-transparent'
-          }`}
+          className="px-4 py-2.5 rounded-full mr-2 border"
+          style={{
+            backgroundColor: isActive ? `${LISTENING_BLUE}15` : undefined,
+            borderColor: isActive ? LISTENING_BLUE : 'transparent',
+          }}
           onPress={() => {
             haptic.light();
             setSelectedCategory(item.id);
@@ -537,15 +541,14 @@ export default function TopicPicker({
           accessibilityRole="button">
           <View className="flex-row items-center">
             <AppText
-              className={`text-sm font-sans-medium ${
-                isActive ? 'text-primary' : 'text-foreground'
-              }`}>
+              className="text-sm font-sans-medium"
+              style={{color: isActive ? LISTENING_BLUE : undefined}}>
               {item.icon} {item.name}
             </AppText>
             {/* Badge count cho tab Yêu thích */}
             {badgeCount !== null && badgeCount > 0 && (
-              <View className="bg-primary/20 rounded-full px-1.5 py-0.5 ml-1.5">
-                <AppText className="text-primary text-[10px] font-sans-bold">
+              <View className="rounded-full px-1.5 py-0.5 ml-1.5" style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+                <AppText className="text-[10px] font-sans-bold" style={{color: LISTENING_BLUE}}>
                   {badgeCount}
                 </AppText>
               </View>
@@ -667,8 +670,8 @@ export default function TopicPicker({
 
       {/* Hiển thị topic đang chọn — sticky bottom indicator */}
       {selectedTopic && (
-        <View className="mt-3 bg-primary/10 rounded-2xl px-4 py-3 flex-row items-center">
-          <AppText className="text-primary text-sm flex-1">
+        <View className="mt-3 rounded-2xl px-4 py-3 flex-row items-center" style={{backgroundColor: `${LISTENING_BLUE}15`}}>
+          <AppText className="text-sm flex-1" style={{color: LISTENING_BLUE}}>
             ✅ Đã chọn: <AppText className="font-sans-bold">{selectedTopic.name}</AppText>
           </AppText>
           <TouchableOpacity
@@ -679,7 +682,7 @@ export default function TopicPicker({
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
             accessibilityLabel="Bỏ chọn kịch bản"
             accessibilityRole="button">
-            <Icon name="X" className="w-4 h-4 text-primary" />
+            <Icon name="X" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
           </TouchableOpacity>
         </View>
       )}

@@ -18,6 +18,8 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useDictionary} from '@/hooks/useDictionary';
 import type {DictionaryMeaning} from '@/hooks/useDictionary';
 
+const LISTENING_BLUE = '#2563EB';
+
 interface DictionaryPopupProps {
   /** Từ đang tra (null = đóng popup) */
   word: string | null;
@@ -190,20 +192,22 @@ export default function DictionaryPopup({
               {result?.audio && (
                 <TouchableOpacity
                   onPress={handlePlayAudio}
-                  className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center"
+                  className="w-10 h-10 rounded-full items-center justify-center"
+                  style={{backgroundColor: `${LISTENING_BLUE}20`}}
                   accessibilityLabel="Phát âm từ"
                   accessibilityRole="button">
-                  <Icon name="Volume2" className="w-5 h-5 text-primary" />
+                  <Icon name="Volume2" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                 </TouchableOpacity>
               )}
               {/* Nút lưu từ */}
               {result && onSaveWord && (
                 <TouchableOpacity
                   onPress={handleSaveWord}
-                  className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center"
+                  className="w-10 h-10 rounded-full items-center justify-center"
+                  style={{backgroundColor: `${LISTENING_BLUE}20`}}
                   accessibilityLabel="Lưu từ vào danh sách"
                   accessibilityRole="button">
-                  <Icon name="Bookmark" className="w-5 h-5 text-primary" />
+                  <Icon name="Bookmark" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                 </TouchableOpacity>
               )}
               {/* Nút Google fallback */}
@@ -223,7 +227,7 @@ export default function DictionaryPopup({
         {/* Loading State */}
         {isLoading && (
           <View className="px-5 py-8 items-center">
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={LISTENING_BLUE} />
             <AppText className="text-neutrals400 text-sm mt-3">
               Đang tra từ...
             </AppText>

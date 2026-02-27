@@ -20,6 +20,7 @@ import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 // =======================
 // Constants
 // =======================
+const LISTENING_BLUE = '#2563EB';
 
 /** Các option duration cho Radio */
 const DURATION_OPTIONS = [
@@ -182,11 +183,11 @@ export default function RadioScreen({navigation}: {navigation: any}) {
 
       return (
         <TouchableOpacity
-          className={`mx-4 mb-3 rounded-2xl border px-4 py-3.5 ${
-            isCurrent
-              ? 'bg-primary/10 border-primary/30'
-              : 'bg-card border-border'
-          }`}
+          className="mx-4 mb-3 rounded-2xl border px-4 py-3.5"
+          style={{
+            backgroundColor: isCurrent ? `${LISTENING_BLUE}15` : undefined,
+            borderColor: isCurrent ? `${LISTENING_BLUE}40` : undefined,
+          }}
           onPress={() => handlePlayTrack(item, index)}
           disabled={isGenerating}
           activeOpacity={0.7}
@@ -195,9 +196,8 @@ export default function RadioScreen({navigation}: {navigation: any}) {
           <View className="flex-row items-center">
             {/* Track number / Playing indicator */}
             <View
-              className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${
-                isCurrent ? 'bg-primary' : 'bg-neutrals800'
-              }`}>
+              className="w-8 h-8 rounded-full items-center justify-center mr-3"
+              style={{backgroundColor: isCurrent ? LISTENING_BLUE : undefined}}>
               {isGenerating ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : isCurrent ? (
@@ -279,11 +279,11 @@ export default function RadioScreen({navigation}: {navigation: any}) {
               return (
                 <TouchableOpacity
                   key={opt.value}
-                  className={`flex-row items-center rounded-2xl border px-4 py-4 ${
-                    isSelected
-                      ? 'bg-primary/10 border-primary/30'
-                      : 'bg-card border-border'
-                  }`}
+                  className="flex-row items-center rounded-2xl border px-4 py-4"
+                  style={{
+                    backgroundColor: isSelected ? `${LISTENING_BLUE}15` : undefined,
+                    borderColor: isSelected ? `${LISTENING_BLUE}40` : undefined,
+                  }}
                   onPress={() => {
                     haptic.light();
                     setSelectedDuration(opt.value);
@@ -295,9 +295,8 @@ export default function RadioScreen({navigation}: {navigation: any}) {
                   <AppText className="text-2xl mr-3">{opt.emoji}</AppText>
                   <View className="flex-1">
                     <AppText
-                      className={`font-sans-bold text-base ${
-                        isSelected ? 'text-primary' : 'text-foreground'
-                      }`}>
+                      className="font-sans-bold text-base"
+                      style={{color: isSelected ? LISTENING_BLUE : undefined}}>
                       {opt.label}
                     </AppText>
                     <AppText className="text-neutrals500 text-xs">
@@ -305,7 +304,7 @@ export default function RadioScreen({navigation}: {navigation: any}) {
                     </AppText>
                   </View>
                   {isSelected && (
-                    <Icon name="Check" className="w-5 h-5 text-primary" />
+                    <Icon name="Check" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                   )}
                 </TouchableOpacity>
               );
@@ -317,6 +316,7 @@ export default function RadioScreen({navigation}: {navigation: any}) {
             variant="primary"
             size="lg"
             className="w-full rounded-2xl"
+            style={{backgroundColor: LISTENING_BLUE}}
             onPress={handleGenerate}
             loading={radioState === 'generating'}
             disabled={radioState === 'generating'}

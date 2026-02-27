@@ -10,6 +10,8 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 import {getRandomScenario} from '@/data/topic-data';
 
+const LISTENING_BLUE = '#2563EB';
+
 interface TopicPickerModalProps {
   /** Modal có đang visible không */
   visible: boolean;
@@ -173,8 +175,8 @@ export default function TopicPickerModal({
             <TouchableOpacity
               className="rounded-2xl py-3.5 items-center"
               style={{
-                backgroundColor: colors.primary,
-                shadowColor: colors.primary,
+                backgroundColor: LISTENING_BLUE,
+                shadowColor: LISTENING_BLUE,
                 shadowOffset: {width: 0, height: 4},
                 shadowOpacity: 0.35,
                 shadowRadius: 12,
@@ -191,8 +193,11 @@ export default function TopicPickerModal({
           ) : (
             // Chưa chọn → nút Gợi ý ngẫu nhiên
             <TouchableOpacity
-              className="rounded-2xl py-3.5 items-center border border-primary"
-              style={{backgroundColor: `${colors.primary}15`}}
+              className="rounded-2xl py-3.5 items-center border"
+              style={{
+                borderColor: LISTENING_BLUE,
+                backgroundColor: `${LISTENING_BLUE}15`,
+              }}
               onPress={handleRandomScenario}
               activeOpacity={0.8}
               accessibilityLabel="Gợi ý kịch bản ngẫu nhiên"

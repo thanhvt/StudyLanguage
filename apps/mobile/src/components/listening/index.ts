@@ -18,3 +18,7 @@ export {default as CompactPlayer} from './CompactPlayer';
 export {default as MinimizedPlayer} from './MinimizedPlayer';
 export {default as PocketMode} from './PocketMode';
 export {TourTooltip, usePlayerTour} from './PlayerTour';
+// Các component mới từ redesign v3
+export {default as GeneratingScreen} from './GeneratingScreen';
+export {default as TtsSettingsSheet} from './TtsSettingsSheet';
+export {default as ConfirmDialog} from './ConfirmDialog';

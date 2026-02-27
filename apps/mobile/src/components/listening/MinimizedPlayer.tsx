@@ -15,6 +15,8 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 
+const LISTENING_BLUE = '#2563EB';
+
 /**
  * Mục đích: Floating pill nhỏ gọn — hiện khi user vuốt compact player xuống
  * Tham số đầu vào: không (đọc từ useAudioPlayerStore)
@@ -130,7 +132,7 @@ export default function MinimizedPlayer() {
             bottom: insets.bottom + 80,
             right: 16,
             borderRadius: 28,
-            shadowColor: '#10b981',
+            shadowColor: LISTENING_BLUE,
             shadowOffset: {width: 0, height: 4},
             shadowOpacity: 0.3,
             shadowRadius: 12,
@@ -139,10 +141,18 @@ export default function MinimizedPlayer() {
           animatedStyle,
         ]}>
         <View
-          className="bg-neutrals900 border border-primary/30 flex-row items-center px-3 py-2.5"
-          style={{borderRadius: 28, gap: 8}}>
+          className="bg-neutrals900 flex-row items-center px-3 py-2.5"
+          style={{
+            borderRadius: 28,
+            gap: 8,
+            borderWidth: 1,
+            borderColor: `${LISTENING_BLUE}30`,
+          }}>
           {/* Animated indicator */}
-          <View className={`w-2.5 h-2.5 rounded-full ${isPlaying ? 'bg-primary' : 'bg-neutrals600'}`} />
+          <View
+            className="w-2.5 h-2.5 rounded-full"
+            style={{backgroundColor: isPlaying ? LISTENING_BLUE : '#525252'}}
+          />
 
           {/* Label */}
           <AppText className="text-foreground text-xs font-sans-medium">
@@ -158,7 +168,8 @@ export default function MinimizedPlayer() {
             accessibilityRole="button">
             <Icon
               name={isTrackPlaying ? 'Pause' : 'Play'}
-              className="w-4 h-4 text-primary"
+              className="w-4 h-4"
+              style={{color: LISTENING_BLUE}}
             />
           </TouchableOpacity>
         </View>

@@ -78,6 +78,8 @@ interface ListeningState {
   ttsRate: number;
   /** Volume 0-100 (%) */
   ttsVolume: number;
+  /** Cảm xúc ngẫu nhiên — API tự chọn emotion, emotion chips dimmed */
+  randomEmotion: boolean;
 }
 
 interface ListeningActions {
@@ -139,6 +141,8 @@ interface ListeningActions {
   setTtsRate: (rate: number) => void;
   /** Set TTS volume (0-100) */
   setTtsVolume: (volume: number) => void;
+  /** Set random emotion on/off */
+  setRandomEmotion: (value: boolean) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -175,6 +179,7 @@ const initialState: ListeningState = {
   ttsPitch: 0,
   ttsRate: 0,
   ttsVolume: 100,
+  randomEmotion: false,
 };
 
 /**
@@ -264,6 +269,7 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setTtsPitch: pitch => set({ttsPitch: Math.max(-20, Math.min(20, pitch))}),
     setTtsRate: rate => set({ttsRate: Math.max(-20, Math.min(20, rate))}),
     setTtsVolume: volume => set({ttsVolume: Math.max(0, Math.min(100, volume))}),
+    setRandomEmotion: value => set({randomEmotion: value}),
 
     reset: () => set(initialState),
     }),

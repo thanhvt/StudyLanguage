@@ -19,6 +19,8 @@ import {useNavigation} from '@react-navigation/native';
 // BUG-05 fix: Dùng chung utility thay vì duplicate
 import {formatTime} from '@/utils/formatTime';
 
+const LISTENING_BLUE = '#2563EB';
+
 /**
  * Mục đích: Mini player cố định bottom — hiện khi user rời PlayerScreen mà audio vẫn phát
  * Tham số đầu vào: không (đọc từ useAudioPlayerStore)
@@ -148,8 +150,8 @@ export default function CompactPlayer() {
           {/* Progress bar mỏng ở trên cùng */}
           <View className="h-0.5 bg-neutrals800">
             <View
-              className="h-full bg-primary"
-              style={{width: `${progressPercent}%`}}
+              className="h-full"
+              style={{width: `${progressPercent}%`, backgroundColor: LISTENING_BLUE}}
             />
           </View>
 
@@ -180,7 +182,7 @@ export default function CompactPlayer() {
               activeOpacity={0.7}
               accessibilityLabel={isTrackPlaying ? 'Tạm dừng' : 'Phát'}
               accessibilityRole="button">
-              <View className="bg-primary rounded-full p-2">
+              <View className="rounded-full p-2" style={{backgroundColor: LISTENING_BLUE}}>
                 <Icon
                   name={isTrackPlaying ? 'Pause' : 'Play'}
                   className="w-4 h-4 text-primary-foreground"
