@@ -1,75 +1,31 @@
 import React from 'react';
-import {View} from 'react-native';
-import {SharedElement} from 'react-navigation-shared-element';
+import {View, ViewStyle} from 'react-native';
 
 /**
- * Mục đích: Wrapper component cho SharedElement transition giữa HistoryCard → HistoryDetailScreen
+ * Mục đích: Wrapper component cho transition animation giữa HistoryCard → HistoryDetailScreen
  * Tham số đầu vào:
  *   - id: string — unique ID cho shared element (thường là entry.id)
  *   - children: ReactNode — nội dung cần animate
  *   - style?: ViewStyle
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng:
- *   - HistoryCard → wrap card container với SharedTransition
- *   - HistoryDetailScreen → wrap header card với cùng id
+ *   - HistoryCard → wrap card icon với SharedTransition
+ *   - HistoryDetailScreen → wrap header card icon với cùng id
  *
- * Cách dùng:
- * ```tsx
- * // Trong HistoryCard
- * <SharedTransition id={`history-card-${entry.id}`}>
- *   <View className="...">...</View>
- * </SharedTransition>
- *
- * // Trong HistoryDetailScreen
- * <SharedTransition id={`history-card-${entry.id}`}>
- *   <View className="...">Header card...</View>
- * </SharedTransition>
- * ```
+ * Note: Đã chuyển từ react-native-shared-element (incompatible với RN 0.80)
+ * sang wrapper View đơn giản.
+ * Animation được xử lý bởi React Navigation native stack transition.
+ * Khi có lib compatible (react-native-reanimated shared element), có thể nâng cấp.
  */
 
 interface SharedTransitionProps {
   id: string;
   children: React.ReactNode;
-  style?: any;
+  style?: ViewStyle;
 }
 
-export function SharedTransition({id, children, style}: SharedTransitionProps) {
-  return (
-    <SharedElement id={id} style={style}>
-      <View>{children}</View>
-    </SharedElement>
-  );
+export function SharedTransition({children, style}: SharedTransitionProps) {
+  // Hiện tại chỉ là wrapper View — animation được xử lý bởi native stack transition
+  // Giữ API ổn định để dễ nâng cấp sau
+  return <View style={style}>{children}</View>;
 }
-
-/**
- * Mục đích: Hỗ trợ SharedElement config cho react-navigation
- * Tham số đầu vào: navigation, route
- * Tham số đầu ra: SharedElementConfig[]
- * Khi nào sử dụng: HistoryDetailScreen.sharedElements
- *
- * Cấu hình shared element transition animations:
- *   - Card container: scale + fade
- *   - Card icon: move + scale
- */
-export const historyDetailSharedElements = (
-  route: any,
-  _otherRoute: any,
-  _showing: boolean,
-) => {
-  const {entryId} = route.params || {};
-  if (!entryId) return [];
-
-  return [
-    {
-      id: `history-card-${entryId}`,
-      animation: 'move' as const,
-      resize: 'clip' as const,
-      align: 'auto' as const,
-    },
-    {
-      id: `history-icon-${entryId}`,
-      animation: 'move' as const,
-      resize: 'clip' as const,
-    },
-  ];
-};
