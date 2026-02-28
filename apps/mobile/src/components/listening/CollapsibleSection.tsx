@@ -48,6 +48,7 @@ export default function CollapsibleSection({
   const [expanded, setExpanded] = useState(defaultExpanded);
   const rotation = useSharedValue(defaultExpanded ? 1 : 0);
   const haptic = useHaptic();
+  const colors = useColors();
 
   /**
    * Mục đích: Toggle mở/đóng section

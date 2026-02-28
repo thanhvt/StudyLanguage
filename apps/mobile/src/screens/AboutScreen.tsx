@@ -94,7 +94,7 @@ export default function AboutScreen() {
         <AppText variant="label" className="text-neutrals400 mb-2 uppercase" raw>
           Thông tin
         </AppText>
-        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.neutrals900}}>
+        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.surface}}>
           <InfoRow
             icon="FileText"
             label="Điều khoản sử dụng"
@@ -126,7 +126,7 @@ export default function AboutScreen() {
         <AppText variant="label" className="text-neutrals400 mb-2 uppercase" raw>
           Liên hệ
         </AppText>
-        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.neutrals900}}>
+        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.surface}}>
           <InfoRow
             icon="Globe"
             label="Website"

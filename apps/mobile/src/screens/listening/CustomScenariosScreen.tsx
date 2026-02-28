@@ -127,7 +127,7 @@ export default function CustomScenariosScreen({
   }, [haptic, showSuccess]);
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
       {/* Header */}
       <View className="px-6 pt-safe-offset-4 pb-3 flex-row items-center justify-between">
         <TouchableOpacity
@@ -135,9 +135,9 @@ export default function CustomScenariosScreen({
           className="p-2 -ml-2"
           accessibilityLabel="Quay lại"
           accessibilityRole="button">
-          <Icon name="ArrowLeft" className="w-6 h-6 text-foreground" />
+          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
-        <AppText className="text-foreground font-sans-bold text-lg">
+        <AppText className="font-sans-bold text-lg" style={{color: colors.foreground}}>
           Kịch bản tùy chỉnh
         </AppText>
         <TouchableOpacity
@@ -154,8 +154,8 @@ export default function CustomScenariosScreen({
 
       {/* Search bar */}
       <View className="px-6 mb-4">
-        <View className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-2.5 border border-neutrals800">
-          <Icon name="Search" className="w-4 h-4 text-neutrals500 mr-2" />
+        <View className="flex-row items-center rounded-xl px-4 py-2.5" style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}>
+          <Icon name="Search" className="w-4 h-4 mr-2" style={{color: colors.neutrals500}} />
           <TextInput
             className="flex-1 text-sm"
             style={{color: colors.foreground}}
@@ -174,7 +174,7 @@ export default function CustomScenariosScreen({
         {filteredScenarios.length === 0 ? (
           <View className="items-center py-16">
             <AppText className="text-3xl mb-3">📝</AppText>
-            <AppText className="text-neutrals400 text-sm text-center">
+            <AppText className="text-sm text-center" style={{color: colors.neutrals400}}>
               {searchQuery ? 'Không tìm thấy kịch bản' : 'Chưa có kịch bản nào.\nNhấn + để tạo mới!'}
             </AppText>
           </View>
@@ -183,13 +183,14 @@ export default function CustomScenariosScreen({
             {filteredScenarios.map(scenario => (
               <View
                 key={scenario.id}
-                className="bg-surface-raised rounded-xl border border-border p-4">
+                className="rounded-xl p-4"
+                style={{backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border}}>
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 mr-3">
-                    <AppText className="text-foreground font-sans-bold text-sm">
+                    <AppText className="font-sans-bold text-sm" style={{color: colors.foreground}}>
                       {scenario.name}
                     </AppText>
-                    <AppText className="text-neutrals400 text-xs mt-0.5" numberOfLines={2}>
+                    <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={2}>
                       {scenario.description}
                     </AppText>
                   </View>
@@ -204,11 +205,12 @@ export default function CustomScenariosScreen({
                 {/* Action buttons */}
                 <View className="flex-row gap-2 mt-3">
                   <TouchableOpacity
-                    className="flex-1 py-2 rounded-lg items-center border border-neutrals700"
+                    className="flex-1 py-2 rounded-lg items-center"
+                    style={{borderWidth: 1, borderColor: colors.neutrals700}}
                     onPress={() => handleQuickUse(scenario)}
                     accessibilityLabel="Dùng ngay"
                     accessibilityRole="button">
-                    <AppText className="text-foreground text-xs font-sans-medium">
+                    <AppText className="text-xs font-sans-medium" style={{color: colors.foreground}}>
                       Dùng ngay
                     </AppText>
                   </TouchableOpacity>
@@ -223,14 +225,14 @@ export default function CustomScenariosScreen({
       {showCreate && (
         <View className="absolute inset-0 bg-black/50 justify-end">
           <View
-            className="bg-background rounded-t-3xl border-t border-border p-6"
-            style={{paddingBottom: Math.max(insets.bottom, 20)}}>
-            <AppText className="text-foreground font-sans-bold text-lg mb-4">
+            className="rounded-t-3xl p-6"
+            style={{paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
+            <AppText className="font-sans-bold text-lg mb-4" style={{color: colors.foreground}}>
               Tạo kịch bản mới
             </AppText>
             <TextInput
-              className="bg-neutrals900 rounded-xl px-4 py-3 text-sm border border-neutrals800 mb-3"
-              style={{color: colors.foreground}}
+              className="rounded-xl px-4 py-3 text-sm mb-3"
+              style={{color: colors.foreground, backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
               placeholder="Tên kịch bản..."
               placeholderTextColor={colors.neutrals500}
               value={newName}
@@ -238,8 +240,8 @@ export default function CustomScenariosScreen({
               autoFocus
             />
             <TextInput
-              className="bg-neutrals900 rounded-xl px-4 py-3 text-sm border border-neutrals800 mb-4"
-              style={{color: colors.foreground, minHeight: 80, textAlignVertical: 'top'}}
+              className="rounded-xl px-4 py-3 text-sm mb-4"
+              style={{color: colors.foreground, minHeight: 80, textAlignVertical: 'top', backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
               placeholder="Mô tả chi tiết (tuỳ chọn)..."
               placeholderTextColor={colors.neutrals500}
               value={newDesc}

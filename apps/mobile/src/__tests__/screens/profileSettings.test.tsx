@@ -261,7 +261,7 @@ describe('Profile & Settings — Screen Tests', () => {
 
     it('hiển thị "Smart Ducking"', () => {
       const {getByText} = render(<AudioSettingsScreen />);
-      expect(getByText('Smart Ducking')).toBeTruthy();
+      expect(getByText('Music Ducking')).toBeTruthy();
     });
 
     it('hiển thị "Hiệu ứng âm thanh"', () => {
@@ -308,7 +308,7 @@ describe('Profile & Settings — Screen Tests', () => {
 
     it('hiển thị nút "Xuất dữ liệu"', () => {
       const {getByText} = render(<PrivacySettingsScreen />);
-      expect(getByText('Xuất dữ liệu')).toBeTruthy();
+      expect(getByText('Xuất toàn bộ dữ liệu')).toBeTruthy();
     });
 
     it('KHÔNG hiển thị Auto-delete (đã loại bỏ)', () => {
@@ -442,7 +442,7 @@ describe('Profile & Settings — Screen Tests', () => {
       const shareSpy = jest.spyOn(Share, 'share').mockResolvedValue({action: 'sharedAction'} as any);
 
       const {getByText} = render(<PrivacySettingsScreen />);
-      fireEvent.press(getByText('Xuất dữ liệu'));
+      fireEvent.press(getByText('Xuất toàn bộ dữ liệu'));
 
       await waitFor(() => {
         expect(shareSpy).toHaveBeenCalled();
@@ -534,7 +534,7 @@ describe('Profile & Settings — Screen Tests', () => {
     it('Spec §3.2 Audio: Music, Ducking, SFX, Auto-play, AI Voice', () => {
       const {getAllByText, getByText} = render(<AudioSettingsScreen />);
       expect(getAllByText('Nhạc nền').length).toBeGreaterThanOrEqual(1);
-      expect(getByText('Smart Ducking')).toBeTruthy();
+      expect(getByText('Music Ducking')).toBeTruthy();
       expect(getByText('Hiệu ứng âm thanh')).toBeTruthy();
       expect(getByText('Tự động phát')).toBeTruthy();
       expect(getByText('Cấu hình giọng AI')).toBeTruthy();
@@ -548,7 +548,7 @@ describe('Profile & Settings — Screen Tests', () => {
 
     it('Spec §5 Tasks: Export data', () => {
       const {getByText} = render(<PrivacySettingsScreen />);
-      expect(getByText('Xuất dữ liệu')).toBeTruthy();
+      expect(getByText('Xuất toàn bộ dữ liệu')).toBeTruthy();
     });
 
     it('Spec §5 Tasks: About screen', () => {

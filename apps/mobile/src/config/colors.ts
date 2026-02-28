@@ -10,31 +10,31 @@
 
 // Bảng màu Dark Mode (mặc định) — Theo UI_Design_System.md
 export const AppColors = {
-  primary: '#4ade80',
-  secondary: '#007BFF',
+  primary: '#10b981',        // Obsidian Glass emerald
+  secondary: '#6366f1',      // Indigo accent
   primaryForeground: '#000000',
   secondaryForeground: '#FFFFFF',
-  foreground: '#fafafa',
-  background: '#000000', // OLED pure black
-  surface: '#0a0a0a',
-  surfaceRaised: '#171717',
-  success: '#4ade80',
+  foreground: '#f5f5f5',     // Hi-fi typography white
+  background: '#000000',     // OLED pure black
+  surface: '#141414',        // Hi-fi surface
+  surfaceRaised: '#1a1a1a',
+  success: '#10b981',        // Same as primary
   warning: '#fbbf24',
-  error: '#f87171',
-  border: '#262626',
-  neutrals100: '#949494',
-  neutrals200: '#858585',
-  neutrals300: '#7a7a7a',
-  neutrals400: '#6e6e6e',
-  neutrals500: '#5e5e5e',
-  neutrals600: '#4d4d4d',
-  neutrals700: '#414240',
-  neutrals800: '#1d1d1d',
-  neutrals900: '#1c1c1c',
-  neutrals1000: '#111111',
+  error: '#f43f5e',          // Hi-fi rose
+  border: '#1e1e1e',         // Hi-fi border
+  neutrals100: '#e5e5e5',
+  neutrals200: '#d4d4d4',
+  neutrals300: '#a3a3a3',
+  neutrals400: '#737373',    // Hi-fi secondary text
+  neutrals500: '#525252',
+  neutrals600: '#404040',
+  neutrals700: '#303030',
+  neutrals800: '#1e1e1e',    // Hi-fi dividers
+  neutrals900: '#141414',    // Hi-fi card bg
+  neutrals1000: '#0a0a0a',
   // Skill accent colors
-  skillListening: '#6366F1',
-  skillSpeaking: '#4ade80',
+  skillListening: '#6366f1',
+  skillSpeaking: '#10b981',
   skillReading: '#fbbf24',
 };
 

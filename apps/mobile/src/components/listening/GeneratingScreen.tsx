@@ -2,6 +2,7 @@ import React, {useEffect, useRef} from 'react';
 import {View, Animated, Easing} from 'react-native';
 import {AppText} from '@/components/ui';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useColors} from '@/hooks/useColors';
 
 // ========================
 // Màu sắc Listening-specific
@@ -39,6 +40,7 @@ export default function GeneratingScreen({
 }: GeneratingScreenProps) {
   const config = useListeningStore(state => state.config);
   const selectedTopic = useListeningStore(state => state.selectedTopic);
+  const colors = useColors();
 
   // Animation cho vòng tròn progress
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -93,7 +95,7 @@ export default function GeneratingScreen({
   }[config.level] || config.level;
 
   return (
-    <View className="flex-1 bg-background items-center justify-center px-8">
+    <View className="flex-1 items-center justify-center px-8" style={{backgroundColor: colors.background}}>
       {/* Vòng tròn progress */}
       <View className="w-40 h-40 items-center justify-center mb-8">
         {/* Ring xoay */}
@@ -110,14 +112,14 @@ export default function GeneratingScreen({
           <AppText className="text-3xl mb-1">
             {STEPS[currentStep]?.icon || '⏳'}
           </AppText>
-          <AppText className="text-foreground font-sans-bold text-lg">
+          <AppText className="font-sans-bold text-lg" style={{color: colors.foreground}}>
             {currentStep + 1}/{STEPS.length}
           </AppText>
         </View>
       </View>
 
       {/* Trạng thái hiện tại */}
-      <AppText className="text-foreground font-sans-bold text-xl mb-2 text-center">
+      <AppText className="font-sans-bold text-xl mb-2 text-center" style={{color: colors.foreground}}>
         {STEPS[currentStep]?.label || 'Đang xử lý...'}
       </AppText>
 
@@ -172,12 +174,13 @@ function ConfigChip({
   value: string;
   flex?: number;
 }) {
+  const colors = useColors();
   return (
     <View
-      className="bg-neutrals900 rounded-xl px-3 py-2.5 flex-row items-center"
-      style={{flex}}>
+      className="rounded-xl px-3 py-2.5 flex-row items-center"
+      style={{flex, backgroundColor: colors.neutrals900}}>
       <AppText className="text-sm mr-1.5">{label}</AppText>
-      <AppText className="text-foreground text-xs font-sans-medium" numberOfLines={1}>
+      <AppText className="text-xs font-sans-medium" style={{color: colors.foreground}} numberOfLines={1}>
         {value}
       </AppText>
     </View>

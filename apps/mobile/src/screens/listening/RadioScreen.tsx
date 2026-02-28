@@ -205,8 +205,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
               ) : (
                 <AppText
                   className={`text-sm font-sans-bold ${
-                    isCurrent ? 'text-primary-foreground' : 'text-neutrals400'
-                  }`}>
+                    isCurrent ? 'text-primary-foreground' : ''
+                  }`}
+                  style={!isCurrent ? {color: colors.neutrals400} : undefined}>
                   {index + 1}
                 </AppText>
               )}
@@ -216,12 +217,13 @@ export default function RadioScreen({navigation}: {navigation: any}) {
             <View className="flex-1">
               <AppText
                 className={`font-sans-medium ${
-                  isCurrent ? 'text-primary' : 'text-foreground'
-                }`}
+                  isCurrent ? 'text-primary' : ''
+                } font-sans-medium`}
+                style={!isCurrent ? {color: colors.foreground} : undefined}
                 numberOfLines={1}>
                 {item.topic}
               </AppText>
-              <AppText className="text-neutrals500 text-xs mt-0.5">
+              <AppText className="text-xs mt-0.5" style={{color: colors.neutrals500}}>
                 {item.conversation.length} câu • {item.numSpeakers} người •{' '}
                 {getCategoryLabel(item.category)}
               </AppText>
@@ -231,7 +233,8 @@ export default function RadioScreen({navigation}: {navigation: any}) {
             {!isGenerating && (
               <Icon
                 name={isCurrent ? 'Pause' : 'Play'}
-                className={`w-5 h-5 ${isCurrent ? 'text-primary' : 'text-neutrals500'}`}
+                className="w-5 h-5"
+                style={{color: isCurrent ? undefined : colors.neutrals500}}
               />
             )}
           </View>
@@ -242,7 +245,7 @@ export default function RadioScreen({navigation}: {navigation: any}) {
   );
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
       {/* Header */}
       <View className="px-6 pt-safe-offset-4 pb-3 flex-row items-center justify-between">
         <TouchableOpacity
@@ -250,9 +253,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
           className="p-2 -ml-2"
           accessibilityLabel="Quay lại"
           accessibilityRole="button">
-          <Icon name="ArrowLeft" className="w-6 h-6 text-foreground" />
+          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
-        <AppText className="text-foreground font-sans-bold text-lg flex-1 text-center">
+        <AppText className="font-sans-bold text-lg flex-1 text-center" style={{color: colors.foreground}}>
           📻 Radio Mode
         </AppText>
         <View className="w-10" />
@@ -265,10 +268,10 @@ export default function RadioScreen({navigation}: {navigation: any}) {
            ========================================== */
         <View className="flex-1 px-6 justify-center">
           {/* Tiêu đề */}
-          <AppText className="text-foreground font-sans-bold text-2xl text-center mb-2">
+          <AppText className="font-sans-bold text-2xl text-center mb-2" style={{color: colors.foreground}}>
             Nghe thụ động
           </AppText>
-          <AppText className="text-neutrals400 text-center mb-8">
+          <AppText className="text-center mb-8" style={{color: colors.neutrals400}}>
             Chọn thời lượng, AI sẽ tạo playlist random cho bạn 🎲
           </AppText>
 
@@ -299,7 +302,7 @@ export default function RadioScreen({navigation}: {navigation: any}) {
                       style={{color: isSelected ? LISTENING_BLUE : undefined}}>
                       {opt.label}
                     </AppText>
-                    <AppText className="text-neutrals500 text-xs">
+                    <AppText className="text-xs" style={{color: colors.neutrals500}}>
                       {opt.desc}
                     </AppText>
                   </View>
@@ -327,7 +330,7 @@ export default function RadioScreen({navigation}: {navigation: any}) {
           </AppButton>
 
           {radioState === 'generating' && (
-            <AppText className="text-neutrals400 text-xs text-center mt-3">
+            <AppText className="text-xs text-center mt-3" style={{color: colors.neutrals400}}>
               AI đang tạo hội thoại cho {selectedDuration} phút nghe...
             </AppText>
           )}
@@ -339,11 +342,11 @@ export default function RadioScreen({navigation}: {navigation: any}) {
         <>
           {/* Playlist header info */}
           {playlist && (
-            <View className="px-6 py-3 border-b border-border">
-              <AppText className="text-foreground font-sans-bold text-base">
+            <View className="px-6 py-3" style={{borderBottomWidth: 1, borderBottomColor: colors.border}}>
+              <AppText className="font-sans-bold text-base" style={{color: colors.foreground}}>
                 {playlist.playlist.name}
               </AppText>
-              <AppText className="text-neutrals400 text-xs mt-1">
+              <AppText className="text-xs mt-1" style={{color: colors.neutrals400}}>
                 {playlist.items.length} bài • {playlist.playlist.duration} phút •{' '}
                 {playlist.playlist.description}
               </AppText>
@@ -362,8 +365,8 @@ export default function RadioScreen({navigation}: {navigation: any}) {
 
           {/* Bottom controls */}
           <View
-            className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
-            style={{paddingBottom: Math.max(insets.bottom, 16)}}>
+            className="absolute bottom-0 left-0 right-0 px-6 pt-3"
+            style={{paddingBottom: Math.max(insets.bottom, 16), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
             <AppButton
               variant="outline"
               size="default"

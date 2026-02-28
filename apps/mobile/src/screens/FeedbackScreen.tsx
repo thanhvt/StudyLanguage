@@ -112,7 +112,7 @@ export default function FeedbackScreen() {
                   style={{
                     backgroundColor: isSelected
                       ? colors.primary + '20'
-                      : colors.neutrals900,
+                      : colors.surface,
                     borderWidth: isSelected ? 1 : 0,
                     borderColor: colors.primary + '50',
                   }}>
@@ -141,7 +141,7 @@ export default function FeedbackScreen() {
           </AppText>
           <View
             className="p-4 rounded-2xl"
-            style={{backgroundColor: colors.neutrals900}}>
+            style={{backgroundColor: colors.surface}}>
             <TextInput
               value={message}
               onChangeText={text => setMessage(text.slice(0, MAX_MESSAGE_LENGTH))}
@@ -174,7 +174,7 @@ export default function FeedbackScreen() {
           </AppText>
           <View
             className="flex-row items-center justify-center py-4 rounded-2xl gap-4"
-            style={{backgroundColor: colors.neutrals900}}>
+            style={{backgroundColor: colors.surface}}>
             {[1, 2, 3, 4, 5].map(star => (
               <Pressable
                 key={star}
@@ -199,7 +199,7 @@ export default function FeedbackScreen() {
           </AppText>
           <View
             className="p-4 rounded-2xl"
-            style={{backgroundColor: colors.neutrals900}}>
+            style={{backgroundColor: colors.surface}}>
             <TextInput
               value={email}
               onChangeText={setEmail}

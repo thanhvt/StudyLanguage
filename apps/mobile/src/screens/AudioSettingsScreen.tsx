@@ -12,6 +12,11 @@ import {useColors} from '@/hooks/useColors';
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Navigation từ ProfileScreen → "Âm thanh"
+ *
+ * Hi-fi ref: ps_audio — 3 grouped cards:
+ *   Card 1: Nhạc nền toggle + Volume slider + Music Ducking
+ *   Card 2: Hiệu ứng âm thanh + Tự động phát (section "Phát lại")
+ *   Card 3: Giọng AI link → ListeningConfig
  */
 export default function AudioSettingsScreen() {
   const audio = useSettingsStore(state => state.audio);
@@ -28,22 +33,22 @@ export default function AudioSettingsScreen() {
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{paddingBottom: 40}}>
-      {/* === Nhạc nền (Background Music) === */}
+      {/* ========================================
+       * Card 1: Nhạc nền — toggle + volume + ducking
+       * Hi-fi: "Nhạc nền" section, surface #141414
+       * ======================================== */}
       <View className="px-4 pt-4">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Nhạc nền
         </AppText>
         <View
           className="p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
+          style={{backgroundColor: colors.surface}}>
           {/* Bật/tắt nhạc nền */}
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between">
             <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
                 Nhạc nền
-              </AppText>
-              <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Phát nhạc nền nhẹ trong khi học
               </AppText>
             </View>
             <Switch
@@ -54,25 +59,35 @@ export default function AudioSettingsScreen() {
 
           {/* Âm lượng — chỉ hiện khi bật nhạc nền */}
           {audio.backgroundMusic.enabled && (
-            <Slider
-              label="Âm lượng"
-              value={audio.backgroundMusic.volume}
-              onValueChange={setMusicVolume}
-              minimumValue={0}
-              maximumValue={100}
-              step={5}
-              showValue
-            />
+            <View className="mt-4 pt-4" style={{borderTopWidth: 1, borderTopColor: colors.neutrals800}}>
+              <View className="flex-row items-center justify-between mb-2">
+                <AppText variant="body" className="text-foreground" raw>
+                  Volume
+                </AppText>
+                <AppText variant="body" style={{color: colors.primary}} raw>
+                  {audio.backgroundMusic.volume}%
+                </AppText>
+              </View>
+              <Slider
+                value={audio.backgroundMusic.volume}
+                onValueChange={setMusicVolume}
+                minimumValue={0}
+                maximumValue={100}
+                step={5}
+              />
+            </View>
           )}
 
-          {/* Smart Ducking */}
-          <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-neutrals800">
+          {/* Music Ducking — cùng card với divider */}
+          <View
+            className="flex-row items-center justify-between mt-4 pt-4"
+            style={{borderTopWidth: 1, borderTopColor: colors.neutrals800}}>
             <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
-                Smart Ducking
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
+                Music Ducking
               </AppText>
               <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Tự giảm nhạc khi phát bài học
+                Giảm nhạc khi có lời nói
               </AppText>
             </View>
             <Switch
@@ -83,21 +98,25 @@ export default function AudioSettingsScreen() {
         </View>
       </View>
 
-      {/* === Hiệu ứng âm thanh (Sound Effects) === */}
+      {/* ========================================
+       * Card 2: Phát lại — SFX + Auto-play (grouped)
+       * Hi-fi: "Phát lại" section
+       * ======================================== */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Hiệu ứng
+          Phát lại
         </AppText>
         <View
           className="p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
+          style={{backgroundColor: colors.surface}}>
+          {/* Hiệu ứng âm thanh */}
           <View className="flex-row items-center justify-between">
             <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
                 Hiệu ứng âm thanh
               </AppText>
               <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Âm thanh khi đúng/sai, hoàn thành bài
+                Âm thanh khi đúng/sai
               </AppText>
             </View>
             <Switch
@@ -105,24 +124,17 @@ export default function AudioSettingsScreen() {
               onValueChange={setSoundEffects}
             />
           </View>
-        </View>
-      </View>
 
-      {/* === Chế độ phát (Auto-play only) === */}
-      <View className="px-4 mt-6">
-        <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Chế độ phát
-        </AppText>
-        <View
-          className="p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
-          <View className="flex-row items-center justify-between">
+          {/* Tự động phát — cùng card với divider */}
+          <View
+            className="flex-row items-center justify-between mt-4 pt-4"
+            style={{borderTopWidth: 1, borderTopColor: colors.neutrals800}}>
             <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
                 Tự động phát
               </AppText>
               <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Phát câu tiếp theo sau khi hoàn thành
+                Tự động phát bài tiếp theo
               </AppText>
             </View>
             <Switch
@@ -133,22 +145,32 @@ export default function AudioSettingsScreen() {
         </View>
       </View>
 
-      {/* === Cấu hình giọng AI === */}
+      {/* ========================================
+       * Card 3: Giọng AI — link to ListeningConfig
+       * Hi-fi: "Giọng AI" section
+       * ======================================== */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Giọng nói AI
+          Giọng AI
         </AppText>
         <Pressable
           onPress={() => navigation.navigate('ListeningConfig' as any)}
           className="p-4 rounded-2xl flex-row items-center justify-between active:opacity-80"
-          style={{backgroundColor: colors.neutrals900}}>
-          <View className="flex-1 mr-3">
-            <AppText variant="body" className="text-foreground" raw>
-              Cấu hình giọng AI
-            </AppText>
-            <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-              Chọn giọng, tốc độ và cảm xúc cho TTS
-            </AppText>
+          style={{backgroundColor: colors.surface}}>
+          <View className="flex-row items-center flex-1 mr-3">
+            <View
+              className="w-9 h-9 rounded-full items-center justify-center mr-3"
+              style={{backgroundColor: colors.primary + '20'}}>
+              <Icon name="Mic" className="w-5 h-5" style={{color: colors.primary}} />
+            </View>
+            <View className="flex-1">
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
+                Cấu hình giọng AI
+              </AppText>
+              <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
+                Thay đổi trong cài đặt Listening
+              </AppText>
+            </View>
           </View>
           <Icon name="ChevronRight" className="w-5 h-5 text-neutrals400" />
         </Pressable>

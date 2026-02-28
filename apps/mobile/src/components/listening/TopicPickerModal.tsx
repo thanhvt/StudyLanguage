@@ -102,8 +102,8 @@ export default function TopicPickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <View
-        className="flex-1 bg-background"
-        style={{paddingTop: insets.top}}
+        className="flex-1"
+        style={{paddingTop: insets.top, backgroundColor: colors.background}}
         >
 
         {/* ======================== */}
@@ -117,11 +117,11 @@ export default function TopicPickerModal({
             accessibilityLabel="Đóng danh sách kịch bản"
             accessibilityRole="button"
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Icon name="X" className="w-6 h-6 text-neutrals400" />
+            <Icon name="X" className="w-6 h-6" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
 
           {/* Title — giữa */}
-          <AppText className="text-foreground font-sans-bold text-lg">
+          <AppText className="font-sans-bold text-lg" style={{color: colors.foreground}}>
             Chọn chủ đề
           </AppText>
 
@@ -186,7 +186,7 @@ export default function TopicPickerModal({
               activeOpacity={0.8}
               accessibilityLabel={`Xác nhận chọn ${selectedTopic.name}`}
               accessibilityRole="button">
-              <AppText className="text-primary-foreground font-sans-bold text-base">
+              <AppText className="font-sans-bold text-base" style={{color: colors.foreground}}>
                 ✅ Xác nhận: {selectedTopic.name}
               </AppText>
             </TouchableOpacity>

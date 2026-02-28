@@ -14,6 +14,7 @@ import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {WaveformVisualizer} from '@/components/listening';
 import TrackPlayer, {useProgress, usePlaybackState, State} from 'react-native-track-player';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useColors} from '@/hooks/useColors';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 // BUG-05 fix: Dùng chung utility thay vì duplicate
@@ -33,6 +34,7 @@ const LISTENING_BLUE = '#2563EB';
  */
 export default function CompactPlayer() {
   const haptic = useHaptic();
+  const colors = useColors();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
 
@@ -145,10 +147,10 @@ export default function CompactPlayer() {
         ]}>
         {/* Nền gradient-like */}
         <View
-          className="bg-neutrals900 border border-neutrals800"
-          style={{borderRadius: 16}}>
+          className="border"
+          style={{borderRadius: 16, borderColor: colors.neutrals800, backgroundColor: colors.neutrals900}}>
           {/* Progress bar mỏng ở trên cùng */}
-          <View className="h-0.5 bg-neutrals800">
+          <View className="h-0.5" style={{backgroundColor: colors.neutrals800}}>
             <View
               className="h-full"
               style={{width: `${progressPercent}%`, backgroundColor: LISTENING_BLUE}}
@@ -166,11 +168,12 @@ export default function CompactPlayer() {
               onPress={handleExpand}
               activeOpacity={0.7}>
               <AppText
-                className="text-foreground font-sans-medium text-sm"
+                className="font-sans-medium text-sm"
+                style={{color: colors.foreground}}
                 numberOfLines={1}>
                 {lastSession.title}
               </AppText>
-              <AppText className="text-neutrals500 text-xs" numberOfLines={1}>
+              <AppText className="text-xs" style={{color: colors.neutrals500}} numberOfLines={1}>
                 {formatTime(progress.position)} / {formatTime(progress.duration)}
               </AppText>
             </TouchableOpacity>
@@ -198,7 +201,7 @@ export default function CompactPlayer() {
               className="ml-2"
               accessibilityLabel="Đóng player"
               accessibilityRole="button">
-              <Icon name="X" className="w-4 h-4 text-neutrals500" />
+              <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals500}} />
             </TouchableOpacity>
           </View>
         </View>

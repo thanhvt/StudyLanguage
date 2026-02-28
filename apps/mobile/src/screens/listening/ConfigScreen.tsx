@@ -281,7 +281,7 @@ export default function ListeningConfigScreen({
   const canStart = mode === 'radio' || hasValidTopic;
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -299,10 +299,10 @@ export default function ListeningConfigScreen({
           <View className="px-6 pt-safe-offset-4 mb-5">
             <View className="flex-row items-center justify-between">
               <View>
-                <AppText className="text-2xl font-sans-bold text-foreground">
+                <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
                   Luyện Nghe
                 </AppText>
-                <AppText className="text-neutrals400 text-xs mt-0.5">
+                <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}}>
                   {totalScenarios}+ kịch bản có sẵn
                 </AppText>
               </View>
@@ -327,7 +327,7 @@ export default function ListeningConfigScreen({
             <SectionCard accentColor={LISTENING_BLUE} shadowColor={LISTENING_BLUE}>
               {/* Top Row: Label + action buttons */}
               <View className="flex-row items-center justify-between mb-3">
-                <AppText className="text-foreground font-sans-semibold text-base">
+                <AppText className="font-sans-semibold text-base" style={{color: colors.foreground}}>
                   Chủ đề
                 </AppText>
                 <View className="flex-row items-center gap-2">
@@ -450,12 +450,13 @@ export default function ListeningConfigScreen({
                 return (
                   <TouchableOpacity
                     key={scenario.id}
-                    className="rounded-xl px-4 py-3 mb-2 border"
+                    className="rounded-xl px-4 py-3 mb-2"
                     style={{
                       backgroundColor: isSelected
                         ? `${LISTENING_ORANGE}15`
                         : colors.neutrals900,
-                      borderColor: isSelected ? LISTENING_ORANGE : 'transparent',
+                      borderColor: isSelected ? LISTENING_ORANGE : colors.border,
+                      borderWidth: 1,
                     }}
                     onPress={() => {
                       haptic.light();
@@ -470,12 +471,12 @@ export default function ListeningConfigScreen({
                     <View className="flex-row items-start justify-between">
                       <View className="flex-1 mr-3">
                         <AppText
-                          className="font-sans-bold text-sm"
+                          className="font-sans-bold text-sm" 
                           style={{color: isSelected ? LISTENING_ORANGE : colors.foreground}}>
                           {scenario.name}
                         </AppText>
                         <AppText
-                          className="text-neutrals400 text-xs mt-0.5"
+                          className="text-xs mt-0.5" style={{color: colors.neutrals400}}
                           numberOfLines={1}>
                           {scenario.description}
                         </AppText>
@@ -519,15 +520,15 @@ export default function ListeningConfigScreen({
 
               {/* Divider "hoặc" */}
               <View className="flex-row items-center my-3">
-                <View className="flex-1 h-[1px] bg-border" />
-                <AppText className="text-neutrals400 text-xs mx-3">hoặc</AppText>
-                <View className="flex-1 h-[1px] bg-border" />
+                <View className="flex-1 h-[1px]" style={{backgroundColor: colors.border}} />
+                <AppText className="text-xs mx-3" style={{color: colors.neutrals400}}>hoặc</AppText>
+                <View className="flex-1 h-[1px]" style={{backgroundColor: colors.border}} />
               </View>
 
               {/* Free text input */}
               <TextInput
-                className="bg-neutrals900 rounded-xl px-4 py-3 text-sm border border-neutrals800"
-                style={{color: colors.foreground}}
+                className="rounded-xl px-4 py-3 text-sm"
+                style={{color: colors.foreground, backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
                 placeholder="Nhập chủ đề riêng..."
                 placeholderTextColor={colors.neutrals500}
                 value={topicInput}
@@ -551,7 +552,7 @@ export default function ListeningConfigScreen({
           {/* ======================== */}
           <View className="px-6 mb-4">
             <SectionCard>
-              <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+              <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
                 Level
               </AppText>
               <View className="flex-row gap-2">
@@ -589,7 +590,7 @@ export default function ListeningConfigScreen({
           {/* ======================== */}
           <View className="px-6 mb-4">
             <SectionCard>
-              <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+              <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
                 Mode
               </AppText>
               <View className="flex-row gap-2">
@@ -656,8 +657,8 @@ export default function ListeningConfigScreen({
       {/* ======================== */}
       {!keyboardVisible && (
         <View
-          className="absolute bottom-0 left-0 right-0 px-6 pt-3 border-t border-border bg-background/95"
-          style={{paddingBottom: Math.max(insets.bottom, 16)}}>
+          className="absolute bottom-0 left-0 right-0 px-6 pt-3"
+          style={{paddingBottom: Math.max(insets.bottom, 16), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
           <View
             style={
               canStart
@@ -720,10 +721,14 @@ interface SectionCardProps {
  * Khi nào sử dụng: ConfigScreen → wrap mỗi section
  */
 function SectionCard({children, accentColor, shadowColor}: SectionCardProps) {
+  const colors = useColors();
   return (
     <View
-      className="bg-surface-raised rounded-2xl p-4 border border-border overflow-hidden"
+      className="rounded-2xl p-4 overflow-hidden"
       style={{
+        backgroundColor: colors.surfaceRaised,
+        borderWidth: 1,
+        borderColor: colors.border,
         shadowColor: shadowColor || '#000',
         shadowOffset: {width: 0, height: 2},
         shadowOpacity: shadowColor ? 0.15 : 0.06,

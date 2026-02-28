@@ -169,17 +169,17 @@ export default function TtsSettingsSheet({
       onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
         <View
-          className="bg-background rounded-t-3xl border-t border-border max-h-[85%]"
-          style={{paddingBottom: Math.max(insets.bottom, 20)}}>
+          className="rounded-t-3xl max-h-[85%]"
+          style={{paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
 
           {/* Handle bar */}
           <View className="items-center pt-3 pb-4">
-            <View className="w-10 h-1 rounded-full bg-neutrals600" />
+            <View className="w-10 h-1 rounded-full" style={{backgroundColor: colors.neutrals600}} />
           </View>
 
           {/* Header */}
           <View className="flex-row items-center justify-between px-6 mb-4">
-            <AppText className="text-foreground font-sans-bold text-xl">
+            <AppText className="font-sans-bold text-xl" style={{color: colors.foreground}}>
               Cài đặt giọng đọc
             </AppText>
             <TouchableOpacity
@@ -187,7 +187,7 @@ export default function TtsSettingsSheet({
               className="p-2 -mr-2"
               accessibilityLabel="Đóng"
               accessibilityRole="button">
-              <Icon name="X" className="w-5 h-5 text-neutrals400" />
+              <Icon name="X" className="w-5 h-5" style={{color: colors.neutrals400}} />
             </TouchableOpacity>
           </View>
 
@@ -198,14 +198,14 @@ export default function TtsSettingsSheet({
             {/* ======================== */}
             {/* VOICE LIST */}
             {/* ======================== */}
-            <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+            <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
               Giọng đọc
             </AppText>
 
             {loading ? (
               <View className="items-center py-8">
                 <ActivityIndicator size="large" color={LISTENING_BLUE} />
-                <AppText className="text-neutrals400 text-sm mt-3">
+                <AppText className="text-sm mt-3" style={{color: colors.neutrals400}}>
                   Đang tải danh sách giọng...
                 </AppText>
               </View>
@@ -214,13 +214,14 @@ export default function TtsSettingsSheet({
                 {voices.map(voice => (
                   <View
                     key={voice.id}
-                    className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3">
+                    className="flex-row items-center rounded-xl px-4 py-3"
+                    style={{backgroundColor: colors.neutrals900}}>
                     {/* Voice info */}
                     <View className="flex-1">
-                      <AppText className="text-foreground text-sm font-sans-medium">
+                      <AppText className="text-sm font-sans-medium" style={{color: colors.foreground}}>
                         {voice.name}
                       </AppText>
-                      <AppText className="text-neutrals400 text-xs">
+                      <AppText className="text-xs" style={{color: colors.neutrals400}}>
                         {voice.gender === 'Female' ? '♀' : '♂'} {voice.description || voice.gender}
                       </AppText>
                     </View>
@@ -248,12 +249,12 @@ export default function TtsSettingsSheet({
             {/* ======================== */}
             {!randomVoice && (
               <View className="mb-6">
-                <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+                <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
                   Gán giọng cho Speaker
                 </AppText>
                 <View className="gap-2">
                   {speakerLabels.map(label => (
-                    <View key={label} className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3">
+                    <View key={label} className="flex-row items-center rounded-xl px-4 py-3" style={{backgroundColor: colors.neutrals900}}>
                       <View
                         className="w-8 h-8 rounded-full items-center justify-center mr-3"
                         style={{backgroundColor: `${LISTENING_BLUE}20`}}>
@@ -261,12 +262,13 @@ export default function TtsSettingsSheet({
                           {label}
                         </AppText>
                       </View>
-                      <AppText className="text-foreground text-sm flex-1">
+                      <AppText className="text-sm flex-1" style={{color: colors.foreground}}>
                         Speaker {label}
                       </AppText>
                       {/* Voice dropdown (simplified: show name or "Chọn") */}
                       <TouchableOpacity
-                        className="px-3 py-1.5 rounded-lg border border-neutrals700 min-w-[100]"
+                        className="px-3 py-1.5 rounded-lg min-w-[100]"
+                        style={{borderWidth: 1, borderColor: colors.neutrals700}}
                         onPress={() => {
                           // Cycle qua voices
                           const currentVoice = voicePerSpeaker[label];
@@ -278,7 +280,7 @@ export default function TtsSettingsSheet({
                         }}
                         accessibilityLabel={`Chọn giọng cho Speaker ${label}`}
                         accessibilityRole="button">
-                        <AppText className="text-foreground text-xs text-center" numberOfLines={1}>
+                        <AppText className="text-xs text-center" style={{color: colors.foreground}} numberOfLines={1}>
                           {voices.find(v => v.id === voicePerSpeaker[label])?.name || 'Chọn'}
                         </AppText>
                       </TouchableOpacity>
@@ -291,7 +293,7 @@ export default function TtsSettingsSheet({
             {/* ======================== */}
             {/* EMOTION CHIPS */}
             {/* ======================== */}
-            <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+            <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
               Cảm xúc giọng
             </AppText>
             <ScrollView
@@ -370,7 +372,7 @@ export default function TtsSettingsSheet({
             {/* Multi-talker pair picker */}
             {multiTalker && multiTalkerPairs.length > 0 && (
               <View className="mb-6">
-                <AppText className="text-neutrals400 text-xs font-sans-medium mb-2 uppercase tracking-wider">
+                <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
                   Cặp giọng Multi-talker
                 </AppText>
                 <View className="gap-2">
@@ -379,8 +381,9 @@ export default function TtsSettingsSheet({
                     return (
                       <TouchableOpacity
                         key={idx}
-                        className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3 border"
+                        className="flex-row items-center rounded-xl px-4 py-3 border"
                         style={{
+                          backgroundColor: colors.neutrals900,
                           borderColor: isActive ? LISTENING_BLUE : 'transparent',
                         }}
                         onPress={() => {
@@ -396,7 +399,7 @@ export default function TtsSettingsSheet({
                             <View className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: LISTENING_BLUE}} />
                           )}
                         </View>
-                        <AppText className="text-foreground text-sm">
+                        <AppText className="text-sm" style={{color: colors.foreground}}>
                           {pair.pair.join(' & ')}
                         </AppText>
                       </TouchableOpacity>
@@ -417,12 +420,13 @@ export default function TtsSettingsSheet({
               }}
               accessibilityLabel="Cài đặt nâng cao"
               accessibilityRole="button">
-              <AppText className="text-neutrals400 text-xs font-sans-medium uppercase tracking-wider">
+              <AppText className="text-xs font-sans-medium uppercase tracking-wider" style={{color: colors.neutrals400}}>
                 Nâng cao
               </AppText>
               <Icon
                 name={showAdvanced ? 'ChevronUp' : 'ChevronDown'}
-                className="w-4 h-4 text-neutrals400"
+                className="w-4 h-4"
+                style={{color: colors.neutrals400}}
               />
             </TouchableOpacity>
 
@@ -431,8 +435,8 @@ export default function TtsSettingsSheet({
                 {/* Pitch */}
                 <View>
                   <View className="flex-row justify-between mb-1">
-                    <AppText className="text-foreground text-sm">Pitch</AppText>
-                    <AppText className="text-neutrals400 text-xs">
+                    <AppText className="text-sm" style={{color: colors.foreground}}>Pitch</AppText>
+                    <AppText className="text-xs" style={{color: colors.neutrals400}}>
                       {ttsPitch > 0 ? '+' : ''}{ttsPitch}%
                     </AppText>
                   </View>
@@ -451,8 +455,8 @@ export default function TtsSettingsSheet({
                 {/* Rate */}
                 <View>
                   <View className="flex-row justify-between mb-1">
-                    <AppText className="text-foreground text-sm">Rate</AppText>
-                    <AppText className="text-neutrals400 text-xs">
+                    <AppText className="text-sm" style={{color: colors.foreground}}>Rate</AppText>
+                    <AppText className="text-xs" style={{color: colors.neutrals400}}>
                       {ttsRate > 0 ? '+' : ''}{ttsRate}%
                     </AppText>
                   </View>
@@ -470,7 +474,8 @@ export default function TtsSettingsSheet({
 
                 {/* Reset button */}
                 <TouchableOpacity
-                  className="self-center px-4 py-2 rounded-lg border border-neutrals700"
+                  className="self-center px-4 py-2 rounded-lg"
+                  style={{borderWidth: 1, borderColor: colors.neutrals700}}
                   onPress={() => {
                     setTtsPitch(0);
                     setTtsRate(0);
@@ -478,7 +483,7 @@ export default function TtsSettingsSheet({
                   }}
                   accessibilityLabel="Reset Pitch và Rate"
                   accessibilityRole="button">
-                  <AppText className="text-neutrals400 text-xs">Reset về mặc định</AppText>
+                  <AppText className="text-xs" style={{color: colors.neutrals400}}>Reset về mặc định</AppText>
                 </TouchableOpacity>
               </View>
             )}
@@ -510,18 +515,20 @@ interface SettingToggleProps {
  * Khi nào sử dụng: TtsSettingsSheet → toggles section
  */
 function SettingToggle({label, description, value, onValueChange}: SettingToggleProps) {
+  const colors = useColors();
   return (
     <TouchableOpacity
-      className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3"
+      className="flex-row items-center rounded-xl px-4 py-3"
+      style={{backgroundColor: colors.neutrals900}}
       onPress={() => onValueChange(!value)}
       activeOpacity={0.7}
       accessibilityLabel={`${label}, ${value ? 'bật' : 'tắt'}`}
       accessibilityRole="switch">
       <View className="flex-1 mr-3">
-        <AppText className="text-foreground text-sm font-sans-medium">
+        <AppText className="text-sm font-sans-medium" style={{color: colors.foreground}}>
           {label}
         </AppText>
-        <AppText className="text-neutrals400 text-xs">{description}</AppText>
+        <AppText className="text-xs" style={{color: colors.neutrals400}}>{description}</AppText>
       </View>
       <Switch value={value} onValueChange={onValueChange} />
     </TouchableOpacity>

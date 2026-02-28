@@ -139,8 +139,9 @@ export default function AdvancedOptionsSheet({
         onPress={onClose}
       />
       <View
-        className="bg-background rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
+        className="rounded-t-3xl px-6 pb-safe-offset-6 pt-4"
         style={{
+          backgroundColor: colors.background,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: -4},
           shadowOpacity: 0.15,
@@ -150,11 +151,11 @@ export default function AdvancedOptionsSheet({
           maxHeight: '85%',
         }}>
         {/* Thanh kéo */}
-        <View className="w-10 h-1 bg-neutrals600 rounded-full self-center mb-4" />
+        <View className="w-10 h-1 rounded-full self-center mb-4" style={{backgroundColor: colors.neutrals600}} />
 
         {/* Header */}
         <View className="flex-row items-center justify-between mb-5">
-          <AppText className="text-foreground font-sans-bold text-lg">
+          <AppText className="font-sans-bold text-lg" style={{color: colors.foreground}}>
             ⚙️ Tuỳ chọn nâng cao
           </AppText>
           <TouchableOpacity
@@ -162,7 +163,7 @@ export default function AdvancedOptionsSheet({
             activeOpacity={0.7}
             accessibilityLabel="Đóng tuỳ chọn nâng cao"
             accessibilityRole="button">
-            <Icon name="X" className="w-6 h-6 text-neutrals400" />
+            <Icon name="X" className="w-6 h-6" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
         </View>
 
@@ -171,7 +172,7 @@ export default function AdvancedOptionsSheet({
           {/* Section 1: Trình độ */}
           {/* ======================== */}
           <View className="mb-6">
-            <AppText className="text-foreground font-sans-semibold text-base mb-3">
+            <AppText className="font-sans-semibold text-base mb-3" style={{color: colors.foreground}}>
               🎯 Trình độ
             </AppText>
             <View className="flex-row gap-3">
@@ -201,13 +202,14 @@ export default function AdvancedOptionsSheet({
           {/* Section 2: Giọng đọc */}
           {/* ======================== */}
           <View className="mb-6">
-            <AppText className="text-foreground font-sans-semibold text-base mb-3">
+            <AppText className="font-sans-semibold text-base mb-3" style={{color: colors.foreground}}>
               🔊 Giọng đọc
             </AppText>
 
             {/* Toggle giọng ngẫu nhiên */}
             <TouchableOpacity
-              className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3 mb-3"
+              className="flex-row items-center justify-between rounded-2xl px-4 py-3 mb-3"
+              style={{backgroundColor: colors.neutrals900}}
               onPress={() => {
                 if (!forceRandom) {
                   haptic.light();
@@ -219,8 +221,8 @@ export default function AdvancedOptionsSheet({
               accessibilityLabel={`Giọng ngẫu nhiên, ${randomVoice || forceRandom ? 'bật' : 'tắt'}${forceRandom ? ', bắt buộc với 4 người nói' : ''}`}
               accessibilityRole="switch">
               <View className="flex-1 mr-3">
-                <AppText className="text-foreground">🎲 Giọng ngẫu nhiên</AppText>
-                <AppText className="text-neutrals400 text-xs mt-0.5">
+                <AppText style={{color: colors.foreground}}>🎲 Giọng ngẫu nhiên</AppText>
+                <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}}>
                   {forceRandom
                     ? 'Bắt buộc khi 4 người nói — AI tự phân giọng tối ưu'
                     : 'AI tự chọn giọng phù hợp cho từng speaker'}
@@ -256,7 +258,7 @@ export default function AdvancedOptionsSheet({
                   );
                 })}
 
-                <AppText className="text-neutrals500 text-xs mt-1 px-1">
+                <AppText className="text-xs mt-1 px-1" style={{color: colors.neutrals500}}>
                   ℹ️ 9 giọng Azure Neural Voice (5 nữ + 4 nam)
                 </AppText>
               </View>
@@ -268,11 +270,12 @@ export default function AdvancedOptionsSheet({
           {/* ======================== */}
           {canMultiTalker && (
             <View className="mb-4">
-              <AppText className="text-foreground font-sans-semibold text-base mb-3">
+              <AppText className="font-sans-semibold text-base mb-3" style={{color: colors.foreground}}>
                 🎭 Multi-talker (Azure)
               </AppText>
               <TouchableOpacity
-                className="flex-row items-center justify-between bg-neutrals900 rounded-2xl px-4 py-3"
+                className="flex-row items-center justify-between rounded-2xl px-4 py-3"
+                style={{backgroundColor: colors.neutrals900}}
                 onPress={() => {
                   haptic.light();
                   onMultiTalkerChange(!multiTalker);
@@ -282,10 +285,10 @@ export default function AdvancedOptionsSheet({
                 accessibilityLabel={`Đa giọng nói cùng lúc, ${multiTalker ? 'bật' : 'tắt'}`}
                 accessibilityRole="switch">
                 <View className="flex-1 mr-3">
-                  <AppText className="text-foreground">
+                  <AppText style={{color: colors.foreground}}>
                     Đa giọng nói cùng lúc
                   </AppText>
-                  <AppText className="text-neutrals400 text-xs mt-0.5">
+                  <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}}>
                     Gen 1 lần, giọng tự nhiên hơn với DragonHD
                   </AppText>
                 </View>
@@ -299,7 +302,7 @@ export default function AdvancedOptionsSheet({
               {/* Chọn cặp giọng multi-talker — chỉ hiện khi bật */}
               {multiTalker && (
                 <View className="mt-3 gap-2">
-                  <AppText className="text-neutrals400 text-xs px-1 mb-1">
+                  <AppText className="text-xs px-1 mb-1" style={{color: colors.neutrals400}}>
                     Chọn cặp giọng:
                   </AppText>
                   {MULTI_TALKER_PAIRS.map(pair => {
@@ -309,11 +312,11 @@ export default function AdvancedOptionsSheet({
                     return (
                       <TouchableOpacity
                         key={pair.index}
-                        className={`flex-row items-center rounded-2xl px-4 py-3 border ${
-                          isSelected
-                            ? 'bg-primary/10 border-primary/30'
-                            : 'bg-neutrals900 border-transparent'
-                        }`}
+                        className="flex-row items-center rounded-2xl px-4 py-3 border"
+                        style={{
+                          backgroundColor: isSelected ? `${accent}15` : colors.neutrals900,
+                          borderColor: isSelected ? `${accent}40` : 'transparent',
+                        }}
                         onPress={() => {
                           haptic.light();
                           onMultiTalkerPairIndexChange(pair.index);
@@ -325,8 +328,9 @@ export default function AdvancedOptionsSheet({
                         <AppText className="text-lg mr-3">{pair.emoji}</AppText>
                         <AppText
                           className={`flex-1 font-sans-medium ${
-                            isSelected ? 'text-primary' : 'text-foreground'
-                          }`}>
+                            isSelected ? 'text-primary' : ''
+                          }`}
+                          style={!isSelected ? {color: colors.foreground} : undefined}>
                           {pair.label}
                         </AppText>
                         {isSelected && (
@@ -424,18 +428,19 @@ function SpeakerVoicePicker({
         accessibilityRole="button">
         <View className="flex-row items-center flex-1">
           <AppText className="mr-2">{speakerEmoji}</AppText>
-          <AppText className="text-foreground font-sans-medium">
+          <AppText className="font-sans-medium" style={{color: colors.foreground}}>
             {speakerLabel}
           </AppText>
         </View>
         <View className="flex-row items-center">
           <AppText
-            className="text-neutrals300 text-sm mr-2"
+            className="text-sm mr-2"
+            style={{color: colors.neutrals300}}
             numberOfLines={1}>
             {displayText}
           </AppText>
           <Animated.View style={rotateStyle}>
-            <Icon name="ChevronDown" className="w-4 h-4 text-neutrals400" />
+            <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals400}} />
           </Animated.View>
         </View>
       </TouchableOpacity>
@@ -444,12 +449,12 @@ function SpeakerVoicePicker({
       {expanded && (
         <View className="px-3 pb-3 pt-1">
           {/* Gợi ý giới tính */}
-          <AppText className="text-neutrals500 text-xs mb-2 px-1">
+          <AppText className="text-xs mb-2 px-1" style={{color: colors.neutrals500}}>
             💡 Gợi ý: giọng {suggestedGender === 'female' ? 'nữ' : 'nam'} cho {speakerLabel}
           </AppText>
 
           {/* Nhóm Nữ */}
-          <AppText className="text-neutrals400 text-xs font-sans-semibold mb-1 px-1">
+          <AppText className="text-xs font-sans-semibold mb-1 px-1" style={{color: colors.neutrals400}}>
             Nữ
           </AppText>
           <View className="gap-1 mb-2">
@@ -466,7 +471,7 @@ function SpeakerVoicePicker({
           </View>
 
           {/* Nhóm Nam */}
-          <AppText className="text-neutrals400 text-xs font-sans-semibold mb-1 px-1">
+          <AppText className="text-xs font-sans-semibold mb-1 px-1" style={{color: colors.neutrals400}}>
             Nam
           </AppText>
           <View className="gap-1">
@@ -506,6 +511,7 @@ interface VoiceItemProps {
  * Khi nào sử dụng: SpeakerVoicePicker → expanded → mỗi voice option
  */
 function VoiceItem({voice, isSelected, isSuggested, onPress, disabled}: VoiceItemProps) {
+  const colors = useColors();
   return (
     <TouchableOpacity
       className={`flex-row items-center rounded-xl px-3 py-2.5 ${
@@ -522,11 +528,12 @@ function VoiceItem({voice, isSelected, isSuggested, onPress, disabled}: VoiceIte
       <View className="flex-1">
         <AppText
           className={`text-sm ${
-            isSelected ? 'text-primary font-sans-semibold' : 'text-foreground'
-          }`}>
+            isSelected ? 'text-primary font-sans-semibold' : ''
+          }`}
+          style={!isSelected ? {color: colors.foreground} : undefined}>
           {voice.label}
         </AppText>
-        <AppText className="text-neutrals400" style={{fontSize: 11}}>
+        <AppText style={{fontSize: 11, color: colors.neutrals400}}>
           {voice.desc}
         </AppText>
       </View>
@@ -598,9 +605,9 @@ function LevelChip({
         <AppText className="text-lg mb-1">{emoji}</AppText>
         <AppText
           className={`text-sm ${
-            selected ? 'font-sans-bold' : 'text-foreground'
+            selected ? 'font-sans-bold' : ''
           }`}
-          style={selected ? {color: accentColor} : undefined}>
+          style={{color: selected ? accentColor : colors.foreground}}>
           {label}
         </AppText>
       </Pressable>
@@ -646,13 +653,13 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
       {/* Tiêu đề */}
       <View className="flex-row items-center mb-4">
         <AppText className="text-lg mr-2">🎭</AppText>
-        <AppText className="text-foreground font-sans-bold text-base">
+        <AppText className="font-sans-bold text-base" style={{color: colors.foreground}}>
           Giọng nói & Biểu cảm
         </AppText>
       </View>
 
       {/* Emotion picker */}
-      <AppText className="text-neutrals400 text-xs mb-2 px-1">
+      <AppText className="text-xs mb-2 px-1" style={{color: colors.neutrals400}}>
         Phong cách đọc (Azure Neural):
       </AppText>
       <ScrollView
@@ -664,7 +671,11 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
           return (
             <TouchableOpacity
               key={em.value}
-              className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-primary/15 border-primary/30' : 'bg-neutrals900 border-transparent'}`}
+              className="px-4 py-2 rounded-full border"
+              style={{
+                backgroundColor: isSelected ? `${colors.primary}15` : colors.neutrals900,
+                borderColor: isSelected ? `${colors.primary}40` : 'transparent',
+              }}
               onPress={() => {
                 haptic.light();
                 setTtsEmotion(em.value);
@@ -673,7 +684,9 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
               activeOpacity={0.7}
               accessibilityLabel={`Phong cách ${em.label}${isSelected ? ', đang chọn' : ''}`}
               accessibilityRole="button">
-              <AppText className={`text-sm ${isSelected ? 'text-primary font-sans-medium' : 'text-foreground'}`}>
+              <AppText
+                className="text-sm"
+                style={{color: isSelected ? colors.primary : colors.foreground, fontWeight: isSelected ? '500' : undefined}}>
                 {em.emoji} {em.label}
               </AppText>
             </TouchableOpacity>
@@ -686,7 +699,7 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
         {/* Pitch */}
         <View>
           <View className="flex-row items-center justify-between mb-1">
-            <AppText className="text-neutrals400 text-xs">
+            <AppText className="text-xs" style={{color: colors.neutrals400}}>
               Cao độ (Pitch)
             </AppText>
             <TouchableOpacity onPress={() => { haptic.light(); setTtsPitch(0); }}>
@@ -711,7 +724,7 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
         {/* Rate */}
         <View>
           <View className="flex-row items-center justify-between mb-1">
-            <AppText className="text-neutrals400 text-xs">
+            <AppText className="text-xs" style={{color: colors.neutrals400}}>
               Tốc độ (Rate)
             </AppText>
             <TouchableOpacity onPress={() => { haptic.light(); setTtsRate(0); }}>
@@ -736,7 +749,7 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
         {/* Volume */}
         <View>
           <View className="flex-row items-center justify-between mb-1">
-            <AppText className="text-neutrals400 text-xs">
+            <AppText className="text-xs" style={{color: colors.neutrals400}}>
               Âm lượng (Volume)
             </AppText>
             <TouchableOpacity onPress={() => { haptic.light(); setTtsVolume(100); }}>

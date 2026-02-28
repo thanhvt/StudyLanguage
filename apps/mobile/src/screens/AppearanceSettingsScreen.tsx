@@ -7,14 +7,14 @@ import {LANGUAGES} from '@/config/i18n';
 import {useTranslation} from 'react-i18next';
 import {useColors} from '@/hooks/useColors';
 
-// 6 accent colors — đồng bộ với web-v1 themes.ts
+// 6 accent colors — khớp với hi-fi ps_appearance screen
 const ACCENT_COLORS: {id: AccentColorId; name: string; hex: string}[] = [
-  {id: 'ocean-scholar', name: 'Ocean Scholar', hex: '#0D9488'},
-  {id: 'sunset-focus', name: 'Sunset Focus', hex: '#EA580C'},
-  {id: 'royal-purple', name: 'Royal Purple', hex: '#7C3AED'},
-  {id: 'rose-focus', name: 'Rose Focus', hex: '#EC4899'},
-  {id: 'ocean-blue', name: 'Ocean Blue', hex: '#2563EB'},
-  {id: 'emerald-study', name: 'Emerald Study', hex: '#10B981'},
+  {id: 'ocean-scholar', name: 'Ocean Scholar', hex: '#10b981'},
+  {id: 'sunset-focus', name: 'Sunset Focus', hex: '#f97316'},
+  {id: 'royal-purple', name: 'Royal Purple', hex: '#6366f1'},
+  {id: 'rose-focus', name: 'Rose Focus', hex: '#f43f5e'},
+  {id: 'ocean-blue', name: 'Ocean Blue', hex: '#3b82f6'},
+  {id: 'emerald-study', name: 'Emerald Study', hex: '#10b981'},
 ];
 
 // Danh sách theme
@@ -65,7 +65,7 @@ export default function AppearanceSettingsScreen() {
         </AppText>
         <View
           className="flex-row flex-wrap gap-3 p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
+          style={{backgroundColor: colors.surface}}>
           {ACCENT_COLORS.map(color => {
             const isSelected = accentColor === color.id;
             return (

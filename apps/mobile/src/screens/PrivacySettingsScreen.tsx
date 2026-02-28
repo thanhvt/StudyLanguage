@@ -10,6 +10,10 @@ import {useColors} from '@/hooks/useColors';
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Navigation từ ProfileScreen → "Quyền riêng tư"
+ *
+ * Hi-fi ref: ps_privacy — 2 grouped cards:
+ *   Card 1: "Dữ liệu" — Lưu bản ghi âm + Đồng bộ dữ liệu (divider)
+ *   Card 2: "Quản lý dữ liệu" — Xuất toàn bộ dữ liệu button
  */
 export default function PrivacySettingsScreen() {
   const privacy = useSettingsStore(state => state.privacy);
@@ -30,7 +34,6 @@ export default function PrivacySettingsScreen() {
       console.log('📦 [Privacy] Đang xuất dữ liệu...');
 
       // TODO: Gọi API thực tế POST /api/user/export-data
-      // Tạm thời dùng mock data từ local stores
       const exportData = {
         exportDate: new Date().toISOString(),
         settings: {
@@ -39,7 +42,6 @@ export default function PrivacySettingsScreen() {
         },
       };
 
-      // Chia sẻ dữ liệu qua Share API
       const jsonString = JSON.stringify(exportData, null, 2);
       await Share.share({
         message: jsonString,
@@ -60,47 +62,54 @@ export default function PrivacySettingsScreen() {
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{paddingBottom: 40}}>
-      {/* === Bản ghi âm (Save Recordings) === */}
+      {/* ========================================
+       * Card 1: Dữ liệu — Save Recordings + Data Sync (grouped)
+       * Hi-fi: "Dữ liệu" section, 2 toggles in 1 card
+       * ======================================== */}
       <View className="px-4 pt-4">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Bản ghi âm
+          Dữ liệu
         </AppText>
         <View
           className="p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
+          style={{backgroundColor: colors.surface}}>
+          {/* Lưu bản ghi âm */}
           <View className="flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
-                Lưu bản ghi âm
-              </AppText>
-              <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Lưu lại các bản ghi khi luyện nói để nghe lại sau
-              </AppText>
+            <View className="flex-row items-center flex-1 mr-3">
+              <Icon name="CircleCheck" className="w-5 h-5 mr-3" style={{color: colors.primary}} />
+              <View className="flex-1">
+                <AppText variant="body" className="text-foreground font-sans-semibold" raw>
+                  Lưu bản ghi âm
+                </AppText>
+                <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
+                  Lưu bản ghi để ôn tập sau
+                </AppText>
+              </View>
             </View>
             <Switch
               value={privacy.saveRecordings}
               onValueChange={setSaveRecordings}
             />
           </View>
-        </View>
-      </View>
 
-      {/* === Đồng bộ dữ liệu (Data Sync) === */}
-      <View className="px-4 mt-6">
-        <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Đồng bộ
-        </AppText>
-        <View
-          className="p-4 rounded-2xl"
-          style={{backgroundColor: colors.neutrals900}}>
+          {/* Divider */}
+          <View
+            className="my-4"
+            style={{height: 1, backgroundColor: colors.neutrals800}}
+          />
+
+          {/* Đồng bộ dữ liệu — cùng card */}
           <View className="flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
-                Đồng bộ dữ liệu
-              </AppText>
-              <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Tự động đồng bộ tiến trình học giữa các thiết bị
-              </AppText>
+            <View className="flex-row items-center flex-1 mr-3">
+              <Icon name="RefreshCw" className="w-5 h-5 mr-3" style={{color: colors.primary}} />
+              <View className="flex-1">
+                <AppText variant="body" className="text-foreground font-sans-semibold" raw>
+                  Đồng bộ dữ liệu
+                </AppText>
+                <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
+                  Đồng bộ tiến trình qua các thiết bị
+                </AppText>
+              </View>
             </View>
             <Switch
               value={privacy.dataSync}
@@ -110,32 +119,40 @@ export default function PrivacySettingsScreen() {
         </View>
       </View>
 
-      {/* === Xuất dữ liệu (Export Data — GDPR) === */}
+      {/* ========================================
+       * Card 2: Quản lý dữ liệu — Export button
+       * Hi-fi: "Quản lý dữ liệu" section
+       * ======================================== */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Dữ liệu của bạn
+          Quản lý dữ liệu
         </AppText>
-        <Pressable
-          onPress={handleExportData}
-          disabled={isExporting}
-          className="p-4 rounded-2xl flex-row items-center justify-between active:opacity-80"
-          style={{
-            backgroundColor: colors.neutrals900,
-            opacity: isExporting ? 0.6 : 1,
-          }}>
-          <View className="flex-1 mr-3">
-            <AppText variant="body" className="text-foreground" raw>
-              {isExporting ? 'Đang xuất...' : 'Xuất dữ liệu'}
-            </AppText>
-            <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-              Tải xuống toàn bộ dữ liệu học tập của bạn (JSON)
-            </AppText>
-          </View>
-          <Icon
-            name={isExporting ? 'Loader' : 'Download'}
-            className="w-5 h-5 text-primary"
-          />
-        </Pressable>
+        <View
+          className="p-4 rounded-2xl"
+          style={{backgroundColor: colors.surface}}>
+          <Pressable
+            onPress={handleExportData}
+            disabled={isExporting}
+            className="items-center py-3 rounded-xl active:opacity-80"
+            style={{
+              backgroundColor: colors.neutrals800,
+              opacity: isExporting ? 0.6 : 1,
+            }}>
+            <View className="flex-row items-center">
+              <Icon
+                name={isExporting ? 'Loader' : 'Download'}
+                className="w-5 h-5 mr-2"
+                style={{color: colors.foreground}}
+              />
+              <AppText variant="body" className="text-foreground font-sans-semibold" raw>
+                {isExporting ? 'Đang xuất...' : 'Xuất toàn bộ dữ liệu'}
+              </AppText>
+            </View>
+          </Pressable>
+          <AppText variant="caption" className="text-neutrals400 mt-2 text-center" raw>
+            Tải xuống tất cả dữ liệu của bạn (GDPR)
+          </AppText>
+        </View>
       </View>
     </ScrollView>
   );

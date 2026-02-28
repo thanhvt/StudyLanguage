@@ -14,6 +14,7 @@ import TrackPlayer, {usePlaybackState, State} from 'react-native-track-player';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import { useColors } from '@/hooks/useColors';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -29,6 +30,7 @@ const LISTENING_BLUE = '#2563EB';
  */
 export default function MinimizedPlayer() {
   const haptic = useHaptic();
+  const colors = useColors();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
 

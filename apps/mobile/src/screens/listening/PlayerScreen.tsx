@@ -28,6 +28,7 @@ import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useColors} from '@/hooks/useColors';
 import {usePlayerGestures} from '@/hooks/usePlayerGestures';
 import {
   TappableTranscript,
@@ -123,6 +124,7 @@ export default function ListeningPlayerScreen({
   const {showError, showInfo, showSuccess} = useToast();
   const {showConfirm} = useDialog();
   const haptic = useHaptic();
+  const colors = useColors();
 
   const audioGenRequestedRef = useRef(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -259,12 +261,12 @@ export default function ListeningPlayerScreen({
   // ========================
   if (!conversation) {
     return (
-      <View className="flex-1 bg-background items-center justify-center px-8">
-        <Icon name="Headphones" className="w-16 h-16 text-neutrals300 mb-4" />
-        <AppText className="text-foreground font-sans-bold text-xl mb-2 text-center">
+      <View className="flex-1 items-center justify-center px-8" style={{backgroundColor: colors.background}}>
+        <Icon name="Headphones" className="w-16 h-16 mb-4" style={{color: colors.neutrals300}} />
+        <AppText className="font-sans-bold text-xl mb-2 text-center" style={{color: colors.foreground}}>
           Chưa có bài nghe
         </AppText>
-        <AppText className="text-neutrals400 text-center text-sm mb-6">
+        <AppText className="text-center text-sm mb-6" style={{color: colors.neutrals400}}>
           Quay lại cấu hình để tạo bài nghe mới
         </AppText>
         <TouchableOpacity
@@ -437,7 +439,7 @@ export default function ListeningPlayerScreen({
   const currentExchange = exchanges[currentExchangeIndex];
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
       {/* ======================== */}
       {/* HEADER */}
       {/* ======================== */}
@@ -455,12 +457,13 @@ export default function ListeningPlayerScreen({
           className="p-2 -ml-2"
           accessibilityLabel="Quay lại"
           accessibilityRole="button">
-          <Icon name="ArrowLeft" className="w-6 h-6 text-foreground" />
+          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
 
         {/* Title */}
         <AppText
-          className="text-foreground font-sans-bold text-base flex-1 text-center mx-3"
+          className="font-sans-bold text-base flex-1 text-center mx-3"
+          style={{color: colors.foreground}}
           numberOfLines={1}>
           {conversation.title || config.topic || 'Bài nghe'}
         </AppText>
@@ -489,7 +492,7 @@ export default function ListeningPlayerScreen({
             className="p-2"
             accessibilityLabel="Bookmarks & Từ vựng"
             accessibilityRole="button">
-            <Icon name="Bookmark" className="w-5 h-5 text-neutrals400" />
+            <Icon name="Bookmark" className="w-5 h-5" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
 
           {/* Pocket Mode */}
@@ -505,7 +508,7 @@ export default function ListeningPlayerScreen({
               className="p-2 -mr-2"
               accessibilityLabel="Bật Pocket Mode"
               accessibilityRole="button">
-              <Icon name="Smartphone" className="w-5 h-5 text-neutrals400" />
+              <Icon name="Smartphone" className="w-5 h-5" style={{color: colors.neutrals400}} />
             </TouchableOpacity>
           </TourTooltip>
         </View>
@@ -548,8 +551,8 @@ export default function ListeningPlayerScreen({
                 totalSteps={TOUR_TOTAL}>
                 <View>
                   {conversation.summary && (
-                    <View className="bg-neutrals900 rounded-2xl p-4 mb-4">
-                      <AppText className="text-neutrals400 text-sm">
+                    <View className="rounded-2xl p-4 mb-4" style={{backgroundColor: colors.neutrals900}}>
+                      <AppText className="text-sm" style={{color: colors.neutrals400}}>
                         {conversation.summary}
                       </AppText>
                     </View>
@@ -626,7 +629,7 @@ export default function ListeningPlayerScreen({
 
                       {/* Bản dịch tiếng Việt */}
                       {showTranslation && exchange.vietnamese && (
-                        <AppText className="text-neutrals500 text-sm mt-1 italic">
+                        <AppText className="text-sm mt-1 italic" style={{color: colors.neutrals500}}>
                           {exchange.vietnamese}
                         </AppText>
                       )}
@@ -638,13 +641,13 @@ export default function ListeningPlayerScreen({
               {/* Từ vựng */}
               {conversation.vocabulary && conversation.vocabulary.length > 0 && (
                 <View className="mt-6">
-                  <AppText className="text-foreground font-sans-bold text-base mb-3">
+                  <AppText className="font-sans-bold text-base mb-3" style={{color: colors.foreground}}>
                     📝 Từ vựng đáng chú ý
                   </AppText>
                   <View className="flex-row flex-wrap gap-2">
                     {conversation.vocabulary.map((word, i) => (
-                      <View key={i} className="bg-neutrals900 rounded-xl px-3 py-2">
-                        <AppText className="text-foreground text-sm">{word}</AppText>
+                      <View key={i} className="rounded-xl px-3 py-2" style={{backgroundColor: colors.neutrals900}}>
+                        <AppText className="text-sm" style={{color: colors.foreground}}>{word}</AppText>
                       </View>
                     ))}
                   </View>
@@ -682,19 +685,19 @@ export default function ListeningPlayerScreen({
                   </View>
 
                   {/* Câu tiếng Anh lớn */}
-                  <AppText className="text-foreground text-2xl font-sans-bold text-center leading-9 mb-4">
+                  <AppText className="text-2xl font-sans-bold text-center leading-9 mb-4" style={{color: colors.foreground}}>
                     {currentExchange.text}
                   </AppText>
 
                   {/* Bản dịch tiếng Việt */}
                   {showTranslation && currentExchange.vietnamese && (
-                    <AppText className="text-neutrals500 text-base text-center italic">
+                    <AppText className="text-base text-center italic" style={{color: colors.neutrals500}}>
                       {currentExchange.vietnamese}
                     </AppText>
                   )}
 
                   {/* Progress: câu hiện tại / tổng */}
-                  <AppText className="text-neutrals600 text-xs mt-6">
+                  <AppText className="text-xs mt-6" style={{color: colors.neutrals600}}>
                     {currentExchangeIndex + 1} / {exchanges.length}
                   </AppText>
                 </Animated.View>
@@ -707,13 +710,13 @@ export default function ListeningPlayerScreen({
       {/* ======================== */}
       {/* PLAYBACK CONTROLS — bottom fixed */}
       {/* ======================== */}
-      <View className="bg-background border-t border-neutrals900 px-6 pb-safe-offset-4 pt-3">
+      <View className="px-6 pb-safe-offset-4 pt-3" style={{backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.neutrals900}}>
         {/* Progress bar + waveform */}
         {(audioUrl || isTrackReady) && (
           <View className="mb-3">
             <View className="flex-row items-center gap-2">
               <WaveformVisualizer isPlaying={isTrackPlaying} height={20} />
-              <View className="flex-1 h-1 bg-neutrals800 rounded-full overflow-hidden">
+              <View className="flex-1 h-1 rounded-full overflow-hidden" style={{backgroundColor: colors.neutrals800}}>
                 <View
                   className="h-full rounded-full"
                   style={{width: `${progressPercent}%`, backgroundColor: LISTENING_BLUE}}
@@ -721,10 +724,10 @@ export default function ListeningPlayerScreen({
               </View>
             </View>
             <View className="flex-row justify-between mt-1">
-              <AppText className="text-neutrals500 text-xs">
+              <AppText className="text-xs" style={{color: colors.neutrals500}}>
                 {formatTime(progress.position)}
               </AppText>
-              <AppText className="text-neutrals500 text-xs">
+              <AppText className="text-xs" style={{color: colors.neutrals500}}>
                 {formatTime(progress.duration)}
               </AppText>
             </View>
@@ -742,9 +745,10 @@ export default function ListeningPlayerScreen({
             stepIndex={2}
             totalSteps={TOUR_TOTAL}>
             <TouchableOpacity
-              className="bg-neutrals900 rounded-full px-3 py-2"
+              className="rounded-full px-3 py-2"
+              style={{backgroundColor: colors.neutrals900}}
               onPress={cycleSpeed}>
-              <AppText className="text-foreground font-sans-bold text-sm">
+              <AppText className="font-sans-bold text-sm" style={{color: colors.foreground}}>
                 {playbackSpeed}x
               </AppText>
             </TouchableOpacity>
@@ -783,7 +787,7 @@ export default function ListeningPlayerScreen({
             totalSteps={TOUR_TOTAL}>
             <View className="flex-row items-center gap-5 mx-4">
               <TouchableOpacity onPress={handleSkipBack}>
-                <Icon name="SkipBack" className="w-6 h-6 text-neutrals300" />
+                <Icon name="SkipBack" className="w-6 h-6" style={{color: colors.neutrals300}} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -802,16 +806,17 @@ export default function ListeningPlayerScreen({
               </TouchableOpacity>
 
               <TouchableOpacity onPress={handleSkipForward}>
-                <Icon name="SkipForward" className="w-6 h-6 text-neutrals300" />
+                <Icon name="SkipForward" className="w-6 h-6" style={{color: colors.neutrals300}} />
               </TouchableOpacity>
             </View>
           </TourTooltip>
 
           {/* Nút bài mới */}
           <TouchableOpacity
-            className="bg-neutrals900 rounded-full px-3 py-2"
+            className="rounded-full px-3 py-2"
+            style={{backgroundColor: colors.neutrals900}}
             onPress={handleNewConversation}>
-            <Icon name="RefreshCw" className="w-4 h-4 text-neutrals300" />
+            <Icon name="RefreshCw" className="w-4 h-4" style={{color: colors.neutrals300}} />
           </TouchableOpacity>
         </View>
       </View>

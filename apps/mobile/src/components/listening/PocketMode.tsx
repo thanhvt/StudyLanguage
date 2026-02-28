@@ -35,6 +35,7 @@ const {height: SCREEN_HEIGHT} = Dimensions.get('window');
  */
 export default function PocketMode({onExit}: {onExit: () => void}) {
   const haptic = useHaptic();
+  const colors = useColors();
   const isPlaying = useAudioPlayerStore(s => s.isPlaying);
   const setGlobalPlaying = useAudioPlayerStore(s => s.setIsPlaying);
 
