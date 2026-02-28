@@ -97,6 +97,13 @@ const MoreScreen = () => {
             },
             {
               icon: () => (
+                <Icon name="MessageSquare" className="size-22 text-neutrals100" />
+              ),
+              title: 'Góp ý',
+              onPress: () => navigation.navigate('Feedback' as any),
+            },
+            {
+              icon: () => (
                 <Icon name="Info" className="size-22 text-neutrals100" />
               ),
               title: 'Về ứng dụng',

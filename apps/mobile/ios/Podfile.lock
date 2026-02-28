@@ -2726,7 +2726,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNSVG (15.15.1):
+  - RNShare (12.2.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2753,10 +2753,41 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNSVG/common (= 15.15.1)
     - SocketRocket
     - Yoga
-  - RNSVG/common (15.15.1):
+  - RNSharedElement (0.8.9):
+    - React-Core
+  - RNSVG (15.15.3):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNSVG/common (= 15.15.3)
+    - SocketRocket
+    - Yoga
+  - RNSVG/common (15.15.3):
     - boost
     - DoubleConversion
     - fast_float
@@ -2970,6 +3001,8 @@ DEPENDENCIES:
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNShare (from `../node_modules/react-native-share`)
+  - RNSharedElement (from `../node_modules/react-native-shared-element`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - SocketRocket (~> 0.7.1)
@@ -3166,6 +3199,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNShare:
+    :path: "../node_modules/react-native-share"
+  RNSharedElement:
+    :path: "../node_modules/react-native-shared-element"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
@@ -3271,7 +3308,9 @@ SPEC CHECKSUMS:
   RNReactNativeHapticFeedback: 7ab0232cc103ac7d928635410fa0df7b11c53ada
   RNReanimated: 7a5c057b1db27bfeaddd9a7cb60bd68266ecd22f
   RNScreens: bcdac59a65c0aa26853e1bb20061edec34d475f2
-  RNSVG: 2c6c05601a53297d217d3ac9c2846c9655e7c8ae
+  RNShare: 98b2bae60426c586b9bc41ca51d902b98cf5b177
+  RNSharedElement: 3fd05877bd6bc95f71b332801bf4356ca69ab7f6
+  RNSVG: 0db448811cdef22a9b08ead37a1eaae1bb7c5334
   RNWorklets: 967057cbb5986c9cc2b3ace3f2d856dc48487a55
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftAudioEx: f6aa653770f3a0d3851edaf8d834a30aee4a7646

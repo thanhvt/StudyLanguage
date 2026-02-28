@@ -8,6 +8,8 @@ type IconProps = {
   name: IconName
   className?: string
   style?: any
+  /** Màu tô đặc bên trong icon (VD: Heart filled) — mặc định 'none' */
+  fill?: string
   onPress?: () => void
 }
 
@@ -17,7 +19,7 @@ type IconProps = {
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Mọi nơi cần hiển thị icon trong app
  */
-const Icon: React.FC<IconProps> = memo(({ name, className, style, onPress }) => {
+const Icon: React.FC<IconProps> = memo(({ name, className, style, fill, onPress }) => {
   const CustomIcon = useMemo(() => {
     const LucideIcon = icons[name]
 
@@ -33,7 +35,7 @@ const Icon: React.FC<IconProps> = memo(({ name, className, style, onPress }) => 
     })
   }, [name])
 
-  const iconElement = <CustomIcon className={className} style={style} />
+  const iconElement = <CustomIcon className={className} style={style} fill={fill ?? 'none'} />
 
   // Nếu có onPress, bọc trong Pressable
   if (onPress) {

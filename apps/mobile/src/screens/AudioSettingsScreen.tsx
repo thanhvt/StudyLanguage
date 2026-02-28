@@ -1,18 +1,14 @@
 import React from 'react';
-import {ScrollView, View} from 'react-native';
-import {AppText} from '@/components/ui';
+import {ScrollView, View, Pressable} from 'react-native';
+import {AppText, Icon} from '@/components/ui';
 import Switch from '@/components/ui/Switch';
 import Slider from '@/components/ui/Slider';
-import SegmentedControl from '@/components/ui/SegmentedControl';
 import {useSettingsStore} from '@/store/useSettingsStore';
+import {useNavigation} from '@react-navigation/native';
 import {useColors} from '@/hooks/useColors';
 
-// Danh sách tốc độ phát
-const SPEED_OPTIONS = ['0.5', '0.8', '1.0', '1.2', '1.5', '2.0'];
-const SPEED_VALUES = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0];
-
 /**
- * Mục đích: Màn hình cài đặt âm thanh — Background Music, SFX, Speed, Auto-play, Hands-free
+ * Mục đích: Màn hình cài đặt âm thanh — Background Music, SFX, Auto-play, AI Voice link
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Navigation từ ProfileScreen → "Âm thanh"
@@ -23,20 +19,16 @@ export default function AudioSettingsScreen() {
   const setMusicVolume = useSettingsStore(state => state.setMusicVolume);
   const setMusicDucking = useSettingsStore(state => state.setMusicDucking);
   const setSoundEffects = useSettingsStore(state => state.setSoundEffects);
-  const setPlaybackSpeed = useSettingsStore(state => state.setPlaybackSpeed);
   const setAutoPlay = useSettingsStore(state => state.setAutoPlay);
-  const setHandsFree = useSettingsStore(state => state.setHandsFree);
   const colors = useColors();
-
-  // Tìm index tốc độ hiện tại
-  const speedIndex = SPEED_VALUES.indexOf(audio.playbackSpeed);
+  const navigation = useNavigation();
 
   return (
     <ScrollView
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{paddingBottom: 40}}>
-      {/* === Background Music === */}
+      {/* === Nhạc nền (Background Music) === */}
       <View className="px-4 pt-4">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Nhạc nền
@@ -60,7 +52,7 @@ export default function AudioSettingsScreen() {
             />
           </View>
 
-          {/* Âm lượng */}
+          {/* Âm lượng — chỉ hiện khi bật nhạc nền */}
           {audio.backgroundMusic.enabled && (
             <Slider
               label="Âm lượng"
@@ -91,7 +83,7 @@ export default function AudioSettingsScreen() {
         </View>
       </View>
 
-      {/* === Sound Effects === */}
+      {/* === Hiệu ứng âm thanh (Sound Effects) === */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Hiệu ứng
@@ -116,20 +108,7 @@ export default function AudioSettingsScreen() {
         </View>
       </View>
 
-      {/* === Playback Speed === */}
-      <View className="px-4 mt-6">
-        <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Tốc độ phát
-        </AppText>
-        <SegmentedControl
-          segments={SPEED_OPTIONS.map(s => `${s}x`)}
-          selectedIndex={speedIndex >= 0 ? speedIndex : 2}
-          onSelect={index => setPlaybackSpeed(SPEED_VALUES[index])}
-          size="sm"
-        />
-      </View>
-
-      {/* === Auto-play & Hands-free === */}
+      {/* === Chế độ phát (Auto-play only) === */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Chế độ phát
@@ -137,8 +116,7 @@ export default function AudioSettingsScreen() {
         <View
           className="p-4 rounded-2xl"
           style={{backgroundColor: colors.neutrals900}}>
-          {/* Auto-play */}
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between">
             <View className="flex-1 mr-3">
               <AppText variant="body" className="text-foreground" raw>
                 Tự động phát
@@ -152,23 +130,28 @@ export default function AudioSettingsScreen() {
               onValueChange={setAutoPlay}
             />
           </View>
-
-          {/* Hands-free */}
-          <View className="flex-row items-center justify-between pt-4 border-t border-neutrals800">
-            <View className="flex-1 mr-3">
-              <AppText variant="body" className="text-foreground" raw>
-                Rảnh tay
-              </AppText>
-              <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
-                Tự động nghe → nói → chấm điểm
-              </AppText>
-            </View>
-            <Switch
-              value={audio.handsFree}
-              onValueChange={setHandsFree}
-            />
-          </View>
         </View>
+      </View>
+
+      {/* === Cấu hình giọng AI === */}
+      <View className="px-4 mt-6">
+        <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
+          Giọng nói AI
+        </AppText>
+        <Pressable
+          onPress={() => navigation.navigate('ListeningConfig' as any)}
+          className="p-4 rounded-2xl flex-row items-center justify-between active:opacity-80"
+          style={{backgroundColor: colors.neutrals900}}>
+          <View className="flex-1 mr-3">
+            <AppText variant="body" className="text-foreground" raw>
+              Cấu hình giọng AI
+            </AppText>
+            <AppText variant="caption" className="text-neutrals400 mt-0.5" raw>
+              Chọn giọng, tốc độ và cảm xúc cho TTS
+            </AppText>
+          </View>
+          <Icon name="ChevronRight" className="w-5 h-5 text-neutrals400" />
+        </Pressable>
       </View>
     </ScrollView>
   );

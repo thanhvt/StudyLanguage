@@ -26,9 +26,7 @@ interface AudioSettings {
   backgroundMusic: {enabled: boolean; volume: number};
   musicDucking: boolean;
   soundEffects: boolean;
-  playbackSpeed: number; // 0.5 - 2.0
   autoPlay: boolean;
-  handsFree: boolean;
 }
 
 // ===========================
@@ -36,7 +34,6 @@ interface AudioSettings {
 // ===========================
 interface PrivacySettings {
   saveRecordings: boolean;
-  autoDeleteDays: 30 | 60 | 90;
   dataSync: boolean;
 }
 
@@ -53,13 +50,10 @@ interface SettingsState {
   setMusicVolume: (volume: number) => void;
   setMusicDucking: (enabled: boolean) => void;
   setSoundEffects: (enabled: boolean) => void;
-  setPlaybackSpeed: (speed: number) => void;
   setAutoPlay: (enabled: boolean) => void;
-  setHandsFree: (enabled: boolean) => void;
 
   // Privacy actions
   setSaveRecordings: (enabled: boolean) => void;
-  setAutoDeleteDays: (days: 30 | 60 | 90) => void;
   setDataSync: (enabled: boolean) => void;
 }
 
@@ -70,7 +64,7 @@ interface SettingsState {
  * Khi nào sử dụng:
  *   - AudioSettingsScreen: đọc/ghi cài đặt audio
  *   - PrivacySettingsScreen: đọc/ghi cài đặt privacy
- *   - Listening module: đọc playbackSpeed, autoPlay
+ *   - Listening module: đọc autoPlay
  *   - Speaking module: đọc saveRecordings
  */
 export const useSettingsStore = create<SettingsState>()(
@@ -81,15 +75,12 @@ export const useSettingsStore = create<SettingsState>()(
         backgroundMusic: {enabled: true, volume: 50},
         musicDucking: true,
         soundEffects: true,
-        playbackSpeed: 1.0,
         autoPlay: true,
-        handsFree: false,
       },
 
       // Giá trị mặc định privacy
       privacy: {
         saveRecordings: true,
-        autoDeleteDays: 60,
         dataSync: true,
       },
 
@@ -124,32 +115,15 @@ export const useSettingsStore = create<SettingsState>()(
       setSoundEffects: (soundEffects) =>
         set((state) => ({audio: {...state.audio, soundEffects}})),
 
-      // Đặt tốc độ phát mặc định (0.5 - 2.0) — clamp để không lưu giá trị ngoài biên
-      setPlaybackSpeed: (playbackSpeed) =>
-        set((state) => ({
-          audio: {
-            ...state.audio,
-            playbackSpeed: Math.max(0.5, Math.min(2.0, playbackSpeed)),
-          },
-        })),
-
       // Bật/tắt tự động phát câu tiếp theo
       setAutoPlay: (autoPlay) =>
         set((state) => ({audio: {...state.audio, autoPlay}})),
-
-      // Bật/tắt chế độ rảnh tay
-      setHandsFree: (handsFree) =>
-        set((state) => ({audio: {...state.audio, handsFree}})),
 
       // === Privacy actions ===
 
       // Bật/tắt lưu bản ghi âm
       setSaveRecordings: (saveRecordings) =>
         set((state) => ({privacy: {...state.privacy, saveRecordings}})),
-
-      // Đặt thời gian tự động xóa bản ghi (30/60/90 ngày)
-      setAutoDeleteDays: (autoDeleteDays) =>
-        set((state) => ({privacy: {...state.privacy, autoDeleteDays}})),
 
       // Bật/tắt đồng bộ dữ liệu
       setDataSync: (dataSync) =>

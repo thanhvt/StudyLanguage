@@ -21,19 +21,8 @@ const ACCENT_COLORS: {id: AccentColorId; name: string; hex: string}[] = [
 const THEMES = ['Sáng', 'Tối', 'Auto'];
 const THEME_MAP = ['light', 'dark', 'dark'] as const; // Auto → dark cho MVP
 
-// Font size
-const FONT_SIZES = ['Nhỏ', 'Vừa', 'Lớn'];
-const FONT_SIZE_MAP = ['small', 'medium', 'large'] as const;
-
-// Font size preview values
-const FONT_SIZE_PREVIEW: Record<string, number> = {
-  small: 14,
-  medium: 16,
-  large: 18,
-};
-
 /**
- * Mục đích: Màn hình cài đặt giao diện — Theme, Accent Color, Font Size, Language
+ * Mục đích: Màn hình cài đặt giao diện — Theme, Accent Color, Language
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Navigation từ ProfileScreen → "Giao diện"
@@ -41,18 +30,15 @@ const FONT_SIZE_PREVIEW: Record<string, number> = {
 export default function AppearanceSettingsScreen() {
   const theme = useAppStore(state => state.theme);
   const accentColor = useAppStore(state => state.accentColor);
-  const fontSize = useAppStore(state => state.fontSize);
   const language = useAppStore(state => state.language);
   const setTheme = useAppStore(state => state.setTheme);
   const setAccentColor = useAppStore(state => state.setAccentColor);
-  const setFontSize = useAppStore(state => state.setFontSize);
   const setLanguage = useAppStore(state => state.setLanguage);
   const colors = useColors();
   const {t} = useTranslation();
 
   // Tìm index hiện tại cho mỗi SegmentedControl
-  const themeIndex = theme === 'light' ? 0 : 1; // Auto = 2 nhưng map về dark
-  const fontSizeIndex = FONT_SIZE_MAP.indexOf(fontSize);
+  const themeIndex = theme === 'light' ? 0 : 1;
   const languageIndex = language === 'en' ? 0 : 1;
 
   return (
@@ -60,7 +46,7 @@ export default function AppearanceSettingsScreen() {
       className="flex-1 bg-background"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{paddingBottom: 40}}>
-      {/* === Theme === */}
+      {/* === Chủ đề (Theme) === */}
       <View className="px-4 pt-4">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Chủ đề
@@ -72,7 +58,7 @@ export default function AppearanceSettingsScreen() {
         />
       </View>
 
-      {/* === Accent Color === */}
+      {/* === Màu chủ đạo (Accent Color) === */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Màu chủ đạo
@@ -113,32 +99,7 @@ export default function AppearanceSettingsScreen() {
         </View>
       </View>
 
-      {/* === Font Size === */}
-      <View className="px-4 mt-6">
-        <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
-          Cỡ chữ
-        </AppText>
-        <SegmentedControl
-          segments={FONT_SIZES}
-          selectedIndex={fontSizeIndex}
-          onSelect={index => setFontSize(FONT_SIZE_MAP[index])}
-        />
-        {/* Preview text */}
-        <View
-          className="mt-3 p-4 rounded-xl"
-          style={{backgroundColor: colors.neutrals900}}>
-          <AppText
-            variant="body"
-            className="text-foreground"
-            style={{fontSize: FONT_SIZE_PREVIEW[fontSize]}}
-            raw>
-            Đây là văn bản mẫu để xem trước cỡ chữ. This is sample text to preview font
-            size.
-          </AppText>
-        </View>
-      </View>
-
-      {/* === Language === */}
+      {/* === Ngôn ngữ (Language) === */}
       <View className="px-4 mt-6">
         <AppText variant="label" className="text-neutrals400 mb-3 uppercase" raw>
           Ngôn ngữ

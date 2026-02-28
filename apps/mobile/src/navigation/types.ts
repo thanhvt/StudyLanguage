@@ -29,7 +29,10 @@ export type AppStackParamList = {
   AppearanceSettings: undefined;
   AudioSettings: undefined;
   PrivacySettings: undefined;
+  Feedback: undefined;
   About: undefined;
+  // History detail — xem chi tiết bản ghi lịch sử
+  HistoryDetail: {entryId: string};
   // Demo screens (giữ cho development)
   ComponentsDemo: undefined;
 };

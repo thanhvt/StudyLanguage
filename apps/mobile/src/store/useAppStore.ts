@@ -14,8 +14,6 @@ export type AccentColorId =
   | 'ocean-blue'
   | 'emerald-study';
 
-// Loại font size
-export type FontSize = 'small' | 'medium' | 'large';
 
 // Loại theme hỗ trợ
 export type Theme = 'light' | 'dark';
@@ -52,7 +50,6 @@ interface AppState {
   // Trạng thái
   theme: Theme;
   accentColor: AccentColorId;
-  fontSize: FontSize;
   language: LanguageCode;
   insets: Insets;
   isFirstLaunch: boolean;
@@ -61,7 +58,6 @@ interface AppState {
   // Hành động
   setTheme: (theme: Theme) => void;
   setAccentColor: (color: AccentColorId) => void;
-  setFontSize: (size: FontSize) => void;
   setLanguage: (language: LanguageCode) => void;
   setInsets: (insets: Insets) => void;
   setIsFirstLaunch: (value: boolean) => void;
@@ -86,7 +82,6 @@ export const useAppStore = create<AppState>()(
       // Giá trị mặc định
       theme: 'dark',
       accentColor: 'ocean-scholar',
-      fontSize: 'medium',
       language: getDeviceLanguage(),
       insets: {left: 0, top: 0, right: 0, bottom: 0},
       isFirstLaunch: true,
@@ -99,9 +94,6 @@ export const useAppStore = create<AppState>()(
 
       // Đặt accent color
       setAccentColor: (accentColor) => set({accentColor}),
-
-      // Đặt font size
-      setFontSize: (fontSize) => set({fontSize}),
 
       // Đặt ngôn ngữ
       setLanguage: (language) => set({language}),
@@ -129,7 +121,6 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         accentColor: state.accentColor,
-        fontSize: state.fontSize,
         language: state.language,
         isFirstLaunch: state.isFirstLaunch,
       }),

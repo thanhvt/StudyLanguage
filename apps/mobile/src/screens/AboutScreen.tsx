@@ -1,149 +1,157 @@
 import React from 'react';
 import {Linking, Pressable, ScrollView, View} from 'react-native';
-import {useTranslation} from 'react-i18next';
 import {AppText, Icon} from '@/components/ui';
+import {useColors} from '@/hooks/useColors';
 
-interface LinkItemProps {
+/**
+ * Mục đích: Component hiển thị 1 row thông tin có icon + nhãn + giá trị + link ngoài
+ * Tham số đầu vào: icon (string), label (string), value (string), url (string, tuỳ chọn)
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Trong AboutScreen để hiển thị các mục thông tin + liên hệ
+ */
+interface InfoRowProps {
   icon: string;
   label: string;
-  value: string;
+  value?: string;
   url?: string;
 }
 
-const LinkItem: React.FC<LinkItemProps> = ({icon, label, value, url}) => {
+const InfoRow: React.FC<InfoRowProps> = ({icon, label, value, url}) => {
+  const colors = useColors();
+
+  /**
+   * Mục đích: Mở URL bên ngoài khi nhấn vào row
+   * Tham số đầu vào: không có (dùng url từ props)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi user nhấn vào row có url
+   */
   const handlePress = () => {
     if (url) {
-      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+      Linking.openURL(url).catch(err =>
+        console.error('❌ [About] Không mở được URL:', err),
+      );
     }
   };
 
   return (
     <Pressable
       onPress={url ? handlePress : undefined}
-      className={`flex-row items-center py-4 px-4 pr-8 bg-neutrals1000 rounded-full mb-3 ${url ? 'active:bg-neutrals800' : ''}`}
-    >
-      <View className="w-16 h-16 bg-neutrals800 rounded-full items-center justify-center mr-4">
-        <Icon name={icon as any} className="w-5 h-5 text-primary" />
-      </View>
-      <View className="flex-1">
-        <AppText variant="caption" className="text-neutrals400 font-sans-medium mb-1">
-          {label}
-        </AppText>
-        <AppText variant="body" raw className="text-foreground">
+      disabled={!url}
+      className="flex-row items-center py-3.5 px-4 active:opacity-80"
+      style={{opacity: url ? 1 : 0.8}}>
+      <Icon name={icon as any} className="w-5 h-5 text-neutrals400 mr-3" />
+      <AppText variant="body" className="text-foreground flex-1" raw>
+        {label}
+      </AppText>
+      {value && (
+        <AppText variant="caption" className="text-neutrals500 mr-2" raw>
           {value}
         </AppText>
-      </View>
+      )}
       {url && (
-        <View>
-          <Icon name="ExternalLink" className="w-5 h-5 text-neutrals400" />
-        </View>
+        <Icon name="ChevronRight" className="w-4 h-4 text-neutrals600" />
       )}
     </Pressable>
   );
 };
 
+/**
+ * Mục đích: Màn hình "Giới thiệu" — hiển thị thông tin app, version, links, liên hệ
+ * Tham số đầu vào: không có
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Navigation từ ProfileScreen → "Về ứng dụng"
+ */
 export default function AboutScreen() {
-  const {t} = useTranslation();
-
-  const handleEmailPress = () => {
-    Linking.openURL('mailto:monokaijs@gmail.com').catch(err =>
-      console.error('Failed to open email:', err)
-    );
-  };
+  const colors = useColors();
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="p-6">
-        <View className="mb-8">
-          <AppText variant="heading2" className="mb-3">
-            ABOUT_TITLE
-          </AppText>
-          <AppText variant="body" color="muted">
-            ABOUT_INTRO
+    <ScrollView
+      className="flex-1 bg-background"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{paddingBottom: 40}}>
+      {/* === App Branding === */}
+      <View className="items-center pt-8 pb-6">
+        <View
+          className="w-16 h-16 rounded-2xl items-center justify-center mb-3"
+          style={{backgroundColor: colors.primary + '20'}}>
+          <AppText
+            variant="heading2"
+            style={{color: colors.primary}}
+            raw>
+            SL
           </AppText>
         </View>
+        <AppText variant="heading3" className="text-foreground" raw>
+          StudyLanguage
+        </AppText>
+        <AppText variant="caption" className="text-neutrals500 mt-1" raw>
+          Phiên bản 1.0.0 (Build 42)
+        </AppText>
+      </View>
 
-        <View className="mb-8">
-          <AppText variant="heading3" className="mb-4">
-            PROJECT_INFO
-          </AppText>
-
-          <LinkItem
-            icon="User"
-            label={t('PROJECT_BY')}
-            value="Edward Nguyen"
+      {/* === Thông tin (Info Links) === */}
+      <View className="px-4">
+        <AppText variant="label" className="text-neutrals400 mb-2 uppercase" raw>
+          Thông tin
+        </AppText>
+        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.neutrals900}}>
+          <InfoRow
+            icon="FileText"
+            label="Điều khoản sử dụng"
+            url="https://studylanguage.app/terms"
           />
-
-          <LinkItem
-            icon="Github"
-            label={t('GITHUB_REPO')}
-            value="rn-rapid-boilerplate"
-            url="https://github.com/monokaijs/rn-rapid-boilerplate"
+          <View className="mx-4" style={{height: 1, backgroundColor: colors.neutrals800}} />
+          <InfoRow
+            icon="Lock"
+            label="Chính sách bảo mật"
+            url="https://studylanguage.app/privacy"
+          />
+          <View className="mx-4" style={{height: 1, backgroundColor: colors.neutrals800}} />
+          <InfoRow
+            icon="BookOpen"
+            label="Giấy phép mã nguồn mở"
+            url="https://studylanguage.app/licenses"
+          />
+          <View className="mx-4" style={{height: 1, backgroundColor: colors.neutrals800}} />
+          <InfoRow
+            icon="Star"
+            label="Đánh giá trên App Store"
+            url="https://apps.apple.com/app/studylanguage"
           />
         </View>
+      </View>
 
-        <View className="mb-8">
-          <AppText variant="heading3" className="mb-4">
-            AUTHOR_CONTACT
-          </AppText>
-
-          <LinkItem
-            icon="Mail"
-            label={t('CONTACT_EMAIL')}
-            value="monokaijs@gmail.com"
-            url="mailto:monokaijs@gmail.com"
-          />
-
-          <LinkItem
+      {/* === Liên hệ (Contact) === */}
+      <View className="px-4 mt-6">
+        <AppText variant="label" className="text-neutrals400 mb-2 uppercase" raw>
+          Liên hệ
+        </AppText>
+        <View className="rounded-2xl overflow-hidden" style={{backgroundColor: colors.neutrals900}}>
+          <InfoRow
             icon="Globe"
-            label={t('AUTHOR_WEBSITE')}
-            value="monokaijs.com"
-            url="https://monokaijs.com"
+            label="Website"
+            value="studylanguage.app"
+            url="https://studylanguage.app"
           />
-
-          <LinkItem
-            icon="Github"
-            label={t('AUTHOR_GITHUB')}
-            value="github.com/monokaijs"
-            url="https://github.com/monokaijs"
-          />
-
-          <LinkItem
-            icon="Linkedin"
-            label={t('AUTHOR_LINKEDIN')}
-            value="linkedin.com/in/monokaijs"
-            url="https://www.linkedin.com/in/monokaijs/"
+          <View className="mx-4" style={{height: 1, backgroundColor: colors.neutrals800}} />
+          <InfoRow
+            icon="Mail"
+            label="Email hỗ trợ"
+            value="support@studylanguage.app"
+            url="mailto:support@studylanguage.app"
           />
         </View>
+      </View>
 
-        <View className="mb-8">
-          <View className="bg-primary/10 border border-primary/20 rounded-2xl p-6">
-            <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-4">
-                <Icon name="MessageCircle" className="w-6 h-6 text-primary" />
-              </View>
-              <AppText variant="heading4" className="flex-1">
-                CONTACT_ME
-              </AppText>
-            </View>
-
-            <AppText variant="body" className="text-primary mb-4">
-              CONTACT_ME_DESC
-            </AppText>
-
-            <Pressable
-              onPress={handleEmailPress}
-              className="bg-primary py-3 px-6 rounded-xl flex-row items-center justify-center active:bg-primary/90"
-            >
-              <Icon name="Mail" className="w-5 h-5 text-primary-foreground mr-2" />
-              <AppText variant="label" raw className="text-primary-foreground">
-                {t('SEND_EMAIL')}
-              </AppText>
-            </Pressable>
-          </View>
-        </View>
+      {/* === Credits === */}
+      <View className="items-center mt-8 px-4">
+        <AppText variant="caption" className="text-neutrals600" raw>
+          Phát triển bởi ThanhVT
+        </AppText>
+        <AppText variant="caption" className="text-neutrals600 mt-1" raw>
+          Made with ❤️ in Vietnam
+        </AppText>
       </View>
     </ScrollView>
   );
 }
-

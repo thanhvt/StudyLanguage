@@ -8,11 +8,13 @@ import AppearanceSettingsScreen from '@/screens/AppearanceSettingsScreen';
 import AudioSettingsScreen from '@/screens/AudioSettingsScreen';
 import PrivacySettingsScreen from '@/screens/PrivacySettingsScreen';
 import AboutScreen from '@/screens/AboutScreen';
+import FeedbackScreen from '@/screens/FeedbackScreen';
 import CustomTabBar from '@/navigation/components/CustomTabBar';
 import CustomScreenHeader from '@/navigation/components/ScreenHeader';
 import ListeningStack from '@/navigation/stacks/ListeningStack';
 import ReadingStack from '@/navigation/stacks/ReadingStack';
 import SpeakingStack from '@/navigation/stacks/SpeakingStack';
+import HistoryDetailScreen from '@/screens/history/HistoryDetailScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -100,9 +102,19 @@ export default function MainStack() {
         options={{title: 'Quyền riêng tư'}}
       />
       <Stack.Screen
+        name="Feedback"
+        component={FeedbackScreen}
+        options={{title: 'Góp ý'}}
+      />
+      <Stack.Screen
         name="About"
         component={AboutScreen}
         options={{title: 'Về ứng dụng'}}
+      />
+      <Stack.Screen
+        name="HistoryDetail"
+        component={HistoryDetailScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
