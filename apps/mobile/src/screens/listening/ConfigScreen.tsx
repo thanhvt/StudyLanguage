@@ -19,7 +19,7 @@ import {useDialog} from '@/components/ui/DialogProvider';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
-import {getTotalScenarios, CATEGORIES, type TopicScenario} from '@/data/topic-data';
+import {getTotalScenarios, TOPIC_CATEGORIES, type TopicScenario} from '@/data/topic-data';
 import {
   DurationSelector,
   SpeakersSelector,
@@ -134,7 +134,7 @@ export default function ListeningConfigScreen({
   // Lấy scenarios theo category + subcategory hiện tại (hiện tối đa 3)
   // ========================
   const currentScenarios = useMemo(() => {
-    const category = CATEGORIES.find(c => c.id === selectedCategory);
+    const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
     if (!category) {return [];}
 
     let scenarios: TopicScenario[] = [];
@@ -373,7 +373,7 @@ export default function ListeningConfigScreen({
                 showsHorizontalScrollIndicator={false}
                 className="mb-2">
                 <View className="flex-row gap-2">
-                  {CATEGORIES.map(cat => {
+                  {TOPIC_CATEGORIES.map(cat => {
                     const isActive = selectedCategory === cat.id;
                     return (
                       <TouchableOpacity
@@ -406,7 +406,7 @@ export default function ListeningConfigScreen({
 
               {/* Subcategory Chips */}
               {(() => {
-                const category = CATEGORIES.find(c => c.id === selectedCategory);
+                const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
                 if (!category?.subCategories?.length) {return null;}
                 return (
                   <ScrollView

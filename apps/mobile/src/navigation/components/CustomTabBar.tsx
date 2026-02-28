@@ -90,8 +90,9 @@ function GlassIconRing({
   size: number;
   children: React.ReactNode;
 }) {
-  // iOS 26+ → LiquidGlassView native
-  if (Platform.OS === 'ios') {
+  // iOS 26+ → LiquidGlassView native (chỉ dùng khi iOS version >= 26)
+  const iosVersion = Platform.OS === 'ios' ? parseInt(String(Platform.Version), 10) : 0;
+  if (Platform.OS === 'ios' && iosVersion >= 26) {
     return (
       <LiquidGlassView
         glassType="clear"
