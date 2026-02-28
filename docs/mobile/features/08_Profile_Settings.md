@@ -1,7 +1,6 @@
 # 👤 Profile & Settings Feature - Mobile
 
 > **Module:** Profile & Settings  
-> **Priority:** P1 (Core)  
 
 ---
 
@@ -29,7 +28,6 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 |---------|---------|---------|
 | Theme | Light / Dark / Auto | Auto |
 | Accent Color | 6 colors | Green |
-| Font Size | Small / Medium / Large | Medium |
 | Language | English / Vietnamese | Vietnamese |
 
 ### 3.2 Audio Options
@@ -39,9 +37,7 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 | Background Music | ON/OFF + Volume | ON, 50% |
 | Music Ducking | ON/OFF | ON |
 | Sound Effects | ON/OFF | ON |
-| Playback Speed | 0.5x - 2.0x | 1.0x |
 | Auto-play | ON/OFF | ON |
-| Hands-free | ON/OFF | OFF |
 | AI Voice | Config in Listening | - |
 
 ### 3.3 Privacy Options
@@ -49,7 +45,6 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 | Setting | Options | Default |
 |---------|---------|---------|
 | Save Recordings | ON/OFF | ON |
-| Auto-delete | 30/60/90 days | 60 days |
 | Data Sync | ON/OFF | ON |
 
 ---
@@ -63,7 +58,6 @@ Module quản lý hồ sơ người dùng và cài đặt ứng dụng.
 const SETTINGS_KEYS = {
   THEME: '@settings/theme',
   ACCENT_COLOR: '@settings/accentColor',
-  FONT_SIZE: '@settings/fontSize',
   LANGUAGE: '@settings/language',
 
   AUDIO: '@settings/audio',
@@ -78,24 +72,18 @@ interface SettingsState {
   appearance: {
     theme: 'light' | 'dark' | 'auto';
     accentColor: string;
-    fontSize: 'small' | 'medium' | 'large';
     language: 'en' | 'vi';
   };
-  
-
   
   audio: {
     backgroundMusic: { enabled: boolean; volume: number };
     musicDucking: boolean;
-    soundEffects: boolean; // NEW ✨
-    playbackSpeed: number; // 0.5 - 2.0
-    autoPlay: boolean; // NEW ✨
-    handsFree: boolean; // NEW ✨
+    soundEffects: boolean;
+    autoPlay: boolean;
   };
   
   privacy: {
     saveRecordings: boolean;
-    autoDeleteDays: 30 | 60 | 90;
     dataSync: boolean;
   };
 }
@@ -109,21 +97,19 @@ interface SettingsState {
 - [ ] Profile screen with user info
 - [ ] Basic stats display
 - [ ] Week activity chart component (dots + minutes)
-- [ ] Avatar change (camera/gallery picker)
 - [ ] Speaking goal display (e.g. 8/10)
 
 ### Appearance
-- [ ] Theme toggle (Light/Dark)
+- [ ] Theme toggle (Light/Dark/Auto)
 - [ ] Full appearance settings
 - [ ] Accent color picker (6 colors)
 
 ### Audio
-- [ ] Audio settings (Music, SFX, Speed)
-- [ ] Auto-play & Hands-free logic
+- [ ] Audio settings (Music, SFX, Auto-play)
 
 ### Privacy & Data
 - [ ] Privacy settings
-- [ ] Export/Delete data
+- [ ] Export data
 
 ### Account
 - [ ] Logout functionality
@@ -182,36 +168,6 @@ interface SettingsState {
 
 **Response:** Session object hoặc `null`
 
----
-
-#### `PATCH /api/user/profile`
-
-> Cập nhật thông tin profile
-
-**Request Body:**
-
-| Field | Type | Required | Mô tả |
-|---|---|---|---|
-| `displayName` | string | ❌ | Tên hiển thị mới |
-| `avatarUrl` | string | ❌ | URL avatar mới |
-
----
-
-#### `POST /api/user/avatar`
-
-> Upload ảnh avatar (multipart form-data)
-
-**Request:** `multipart/form-data`
-
-| Field | Type | Required | Mô tả |
-|---|---|---|---|
-| `avatar` | File | ✅ | File ảnh avatar |
-
-**Response:**
-
-```json
-{ "avatarUrl": "https://supabase-storage-url/avatars/user-id.jpg" }
-```
 
 ---
 
@@ -291,17 +247,6 @@ interface SettingsState {
 
 **Response:** JSON chứa tất cả data của user
 
----
-
-#### `DELETE /api/user/delete-account`
-
-> ⚠️ Xóa account và toàn bộ data (KHÔNG THỂ hoàn tác)
-
-**Response:**
-
-```json
-{ "success": true, "message": "Tài khoản đã được xóa vĩnh viễn" }
-```
 
 
 
