@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
@@ -27,6 +28,9 @@ import {
 } from '@/components/listening';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import TrackPlayer from 'react-native-track-player';
+import TtsSettingsSheet from '@/components/listening/TtsSettingsSheet';
+import GeneratingScreen from '@/components/listening/GeneratingScreen';
+import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
 
 // ========================
 // Màu sắc Listening-specific (Blue + Orange identity)
@@ -92,6 +96,9 @@ export default function ListeningConfigScreen({
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [mode, setMode] = useState<'podcast' | 'radio'>('podcast');
+  const [showTtsSettings, setShowTtsSettings] = useState(false);
+  const [generatingStep, setGeneratingStep] = useState(0);
+  const [activeSpeaker, setActiveSpeaker] = useState<string | undefined>();
 
   // ========================
   // Hooks
@@ -204,25 +211,19 @@ export default function ListeningConfigScreen({
 
     try {
       setGenerating(true);
+      setGeneratingStep(0);
+      setActiveSpeaker(undefined);
       haptic.medium();
-      const levelLabel = {beginner: 'Cơ bản', intermediate: 'Trung bình', advanced: 'Nâng cao'}[config.level] || config.level;
-      const speakerCount = config.numSpeakers ?? 2;
-      showLoading(
-        'Đang tạo bài nghe...',
-        `📝 ${topic}\n⏱ ${config.durationMinutes} phút · 👥 ${speakerCount} người · 🎯 ${levelLabel}`,
-      );
 
       const result = await listeningApi.generateConversation({
         ...config,
         topic,
       });
 
-      hideLoading();
       setConversation(result);
       haptic.success();
       navigation.navigate('Player');
     } catch (error: any) {
-      hideLoading();
       haptic.error();
       console.error('❌ [Listening] Lỗi tạo bài nghe:', error);
       showError(
@@ -296,7 +297,7 @@ export default function ListeningConfigScreen({
           {/* ======================== */}
           {/* HEADER: "Luyện Nghe" + gear icon */}
           {/* ======================== */}
-          <View className="px-6 pt-safe-offset-4 mb-5">
+          <View className="px-6 pt-safe-offset-4 mb-2">
             <View className="flex-row items-center justify-between">
               <View>
                 <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
@@ -311,7 +312,7 @@ export default function ListeningConfigScreen({
                 style={{backgroundColor: `${LISTENING_BLUE}15`}}
                 onPress={() => {
                   haptic.light();
-                  // TODO: Mở TTS Settings Sheet
+                  setShowTtsSettings(true);
                 }}
                 accessibilityLabel="Cài đặt giọng đọc"
                 accessibilityRole="button">
@@ -321,10 +322,44 @@ export default function ListeningConfigScreen({
           </View>
 
           {/* ======================== */}
-          {/* TOPIC SECTION: "Chủ đề" + inline picker */}
+          {/* TAB BAR: Podcast / Radio */}
           {/* ======================== */}
           <View className="px-6 mb-4">
-            <SectionCard accentColor={LISTENING_BLUE} shadowColor={LISTENING_BLUE}>
+            <View
+              className="flex-row rounded-xl overflow-hidden"
+              style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.border}}>
+              {MODES.map(m => {
+                const isActive = mode === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    className="flex-1 flex-row items-center justify-center py-3"
+                    style={{backgroundColor: isActive ? LISTENING_BLUE : 'transparent'}}
+                    onPress={() => {
+                      haptic.light();
+                      setMode(m.id);
+                    }}
+                    disabled={isGenerating}
+                    accessibilityLabel={`Chế độ ${m.label}${isActive ? ', đang chọn' : ''}`}
+                    accessibilityRole="button">
+                    <AppText className="text-sm mr-1.5">{m.icon}</AppText>
+                    <AppText
+                      className="text-sm font-sans-bold"
+                      style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                      {m.label}
+                    </AppText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* ======================== */}
+          {/* TOPIC SECTION: "Chủ đề" + inline picker (chỉ hiện khi Podcast) */}
+          {/* ======================== */}
+          {mode === 'podcast' && (
+          <View className="px-6 mb-4">
+            <SectionCard>
               {/* Top Row: Label + action buttons */}
               <View className="flex-row items-center justify-between mb-3">
                 <AppText className="font-sans-semibold text-base" style={{color: colors.foreground}}>
@@ -546,10 +581,12 @@ export default function ListeningConfigScreen({
               />
             </SectionCard>
           </View>
+          )}
 
           {/* ======================== */}
-          {/* LEVEL SECTION */}
+          {/* LEVEL SECTION (chỉ hiện khi Podcast) */}
           {/* ======================== */}
+          {mode === 'podcast' && (
           <View className="px-6 mb-4">
             <SectionCard>
               <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
@@ -584,69 +621,29 @@ export default function ListeningConfigScreen({
               </View>
             </SectionCard>
           </View>
+          )}
 
           {/* ======================== */}
-          {/* MODE SECTION: Podcast / Radio */}
-          {/* ======================== */}
-          <View className="px-6 mb-4">
-            <SectionCard>
-              <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
-                Mode
-              </AppText>
-              <View className="flex-row gap-2">
-                {MODES.map(m => {
-                  const isActive = mode === m.id;
-                  return (
-                    <TouchableOpacity
-                      key={m.id}
-                      className="flex-1 flex-row items-center justify-center py-2.5 rounded-xl border"
-                      style={{
-                        backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
-                        borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
-                      }}
-                      onPress={() => {
-                        haptic.light();
-                        setMode(m.id);
-                      }}
-                      disabled={isGenerating}
-                      accessibilityLabel={`Chế độ ${m.label}${isActive ? ', đang chọn' : ''}`}
-                      accessibilityRole="button">
-                      <AppText className="text-sm mr-1.5">{m.icon}</AppText>
-                      <AppText
-                        className="text-sm font-sans-medium"
-                        style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
-                        {m.label}
-                      </AppText>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </SectionCard>
-          </View>
-
-          {/* ======================== */}
-          {/* DURATION + SPEAKERS ROW */}
+          {/* DURATION + SPEAKERS ROW (chỉ hiện khi Podcast) */}
           {/* ======================== */}
           {mode === 'podcast' && (
             <View className="px-6 mb-4">
-              <SectionCard>
-                <View className="flex-row gap-4">
-                  <View className="flex-1">
-                    <DurationSelector
-                      value={config.durationMinutes}
-                      onChange={d => setConfig({durationMinutes: d})}
-                      disabled={isGenerating}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <SpeakersSelector
-                      value={config.numSpeakers ?? 2}
-                      onChange={n => setConfig({numSpeakers: n})}
-                      disabled={isGenerating}
-                    />
-                  </View>
+              <View className="flex-row gap-4">
+                <View className="flex-1">
+                  <DurationSelector
+                    value={config.durationMinutes}
+                    onChange={d => setConfig({durationMinutes: d})}
+                    disabled={isGenerating}
+                  />
                 </View>
-              </SectionCard>
+                <View className="flex-1">
+                  <SpeakersSelector
+                    value={config.numSpeakers ?? 2}
+                    onChange={n => setConfig({numSpeakers: n})}
+                    disabled={isGenerating}
+                  />
+                </View>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -698,30 +695,60 @@ export default function ListeningConfigScreen({
         onClose={() => setShowTopicModal(false)}
         disabled={isGenerating}
       />
+
+      {/* TTS Settings Sheet */}
+      <TtsSettingsSheet
+        visible={showTtsSettings}
+        onClose={() => setShowTtsSettings(false)}
+        numSpeakers={config.numSpeakers ?? 2}
+      />
+
+      {/* Generating Overlay — thay showLoading() */}
+      {isGenerating && (
+        <View style={[StyleSheet.absoluteFill, {zIndex: 100}]}>
+          <GeneratingScreen
+            currentStep={generatingStep}
+            activeSpeaker={activeSpeaker}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 // ========================
-// SectionCard — card wrapper theo Obsidian Glass style
+// SectionCard — card wrapper với Liquid Glass effect
 // ========================
 
 interface SectionCardProps {
   children: React.ReactNode;
-  /** Màu accent cho left border indicator */
-  accentColor?: string;
-  /** Màu shadow riêng cho card */
-  shadowColor?: string;
 }
 
 /**
- * Mục đích: Card container cho mỗi config section, tạo visual depth
- * Tham số đầu vào: children, accentColor (optional), shadowColor (optional)
+ * Mục đích: Card container cho mỗi config section — dùng LiquidGlassView trên iOS 26+
+ * Tham số đầu vào: children
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: ConfigScreen → wrap mỗi section
  */
-function SectionCard({children, accentColor, shadowColor}: SectionCardProps) {
+function SectionCard({children}: SectionCardProps) {
   const colors = useColors();
+
+  // iOS 26+ → Liquid Glass effect
+  if (isLiquidGlassSupported) {
+    return (
+      <LiquidGlassView
+        effect="clear"
+        colorScheme="dark"
+        style={{
+          borderRadius: 16,
+          padding: 16,
+        }}>
+        {children}
+      </LiquidGlassView>
+    );
+  }
+
+  // Fallback — View thường với surfaceRaised
   return (
     <View
       className="rounded-2xl p-4 overflow-hidden"
@@ -729,24 +756,14 @@ function SectionCard({children, accentColor, shadowColor}: SectionCardProps) {
         backgroundColor: colors.surfaceRaised,
         borderWidth: 1,
         borderColor: colors.border,
-        shadowColor: shadowColor || '#000',
+        shadowColor: '#000',
         shadowOffset: {width: 0, height: 2},
-        shadowOpacity: shadowColor ? 0.15 : 0.06,
-        shadowRadius: shadowColor ? 8 : 4,
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
         elevation: 2,
       }}>
-      {/* Left accent bar */}
-      {accentColor && (
-        <View
-          className="absolute left-0 top-3 bottom-3 rounded-r-full"
-          style={{
-            width: 3,
-            backgroundColor: accentColor,
-            opacity: 0.6,
-          }}
-        />
-      )}
       {children}
     </View>
   );
 }
+

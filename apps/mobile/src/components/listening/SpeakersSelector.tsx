@@ -1,20 +1,16 @@
-import React from 'react';
-import {Pressable, View} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import React, {useCallback} from 'react';
+import {TouchableOpacity, View} from 'react-native';
 import {AppText} from '@/components/ui';
+import Icon from '@/components/ui/Icon';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 
-/** Tuỳ chọn số lượng speakers */
-const SPEAKER_OPTIONS = [
-  {value: 2, label: 'Dialog'},
-  {value: 3, label: 'Nhóm'},
-  {value: 4, label: 'Team'},
-] as const;
+/** Màu LISTENING đặc trưng */
+const LISTENING_BLUE = '#2563EB';
+
+/** Giới hạn số speakers */
+const MIN_SPEAKERS = 2;
+const MAX_SPEAKERS = 4;
 
 interface SpeakersSelectorProps {
   value: number;
@@ -23,13 +19,13 @@ interface SpeakersSelectorProps {
 }
 
 /**
- * Mục đích: Component chọn số người nói — compact inline layout
+ * Mục đích: Component chọn số người nói — compact stepper (— 2 +) giống design mockup
  * Tham số đầu vào:
  *   - value: số speakers hiện tại (2/3/4)
  *   - onChange: callback khi đổi speakers
  *   - disabled: có disable không
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ConfigScreen → section "Cấu hình cơ bản" → row "Số người nói"
+ * Khi nào sử dụng: ConfigScreen → DURATION + SPEAKERS ROW → cột phải
  */
 export default function SpeakersSelector({
   value,
@@ -37,105 +33,99 @@ export default function SpeakersSelector({
   disabled = false,
 }: SpeakersSelectorProps) {
   const haptic = useHaptic();
-
-  return (
-    <View className="flex-row items-center justify-between">
-      <AppText className="text-foreground font-sans-medium text-sm">
-        Số người nói
-      </AppText>
-
-      <View className="flex-row items-center gap-2">
-        {SPEAKER_OPTIONS.map(opt => (
-          <SpeakerPill
-            key={opt.value}
-            number={opt.value}
-            label={opt.label}
-            selected={value === opt.value}
-            onPress={() => {
-              haptic.light();
-              onChange(opt.value);
-            }}
-            disabled={disabled}
-            accessibilityLabel={`${opt.value} người nói, ${opt.label}${value === opt.value ? ', đang chọn' : ''}`}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-// ========================
-// SpeakerPill — pill compact hiển thị số + label nhỏ
-// ========================
-
-interface SpeakerPillProps {
-  number: number;
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  disabled: boolean;
-  accessibilityLabel: string;
-}
-
-/**
- * Mục đích: Pill hiển thị số người nói + label nhỏ, có spring animation
- * Tham số đầu vào: number, label, selected, onPress, disabled, accessibilityLabel
- * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: SpeakersSelector → mỗi option (2/3/4 speakers)
- */
-function SpeakerPill({
-  number,
-  label,
-  selected,
-  onPress,
-  disabled,
-  accessibilityLabel,
-}: SpeakerPillProps) {
-  const scale = useSharedValue(1);
   const colors = useColors();
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{scale: scale.value}],
-  }));
+  /**
+   * Mục đích: Giảm số speakers
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn nút "—"
+   */
+  const handleDecrease = useCallback(() => {
+    if (value > MIN_SPEAKERS) {
+      haptic.light();
+      onChange(value - 1);
+    }
+  }, [value, haptic, onChange]);
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.92, {damping: 15, stiffness: 300});
-  };
+  /**
+   * Mục đích: Tăng số speakers
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn nút "+"
+   */
+  const handleIncrease = useCallback(() => {
+    if (value < MAX_SPEAKERS) {
+      haptic.light();
+      onChange(value + 1);
+    }
+  }, [value, haptic, onChange]);
 
-  const handlePressOut = () => {
-    scale.value = withSpring(1, {damping: 12, stiffness: 200});
-  };
+  const canDecrease = value > MIN_SPEAKERS;
+  const canIncrease = value < MAX_SPEAKERS;
 
   return (
-    <Animated.View style={animatedStyle}>
-      <Pressable
-        className="items-center justify-center rounded-xl"
+    <View>
+      {/* Label */}
+      <AppText
+        className="text-xs font-sans-medium mb-2 uppercase tracking-wider"
+        style={{color: colors.neutrals400}}>
+        Speakers
+      </AppText>
+
+      {/* Stepper: — [number] + */}
+      <View
+        className="flex-row items-center justify-between rounded-xl"
         style={{
-          width: 56,
-          height: 48,
-          backgroundColor: selected ? `${colors.primary}18` : colors.neutrals900,
+          backgroundColor: colors.neutrals900,
           borderWidth: 1,
-          borderColor: selected ? colors.primary : colors.neutrals800,
-        }}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button">
+          borderColor: colors.neutrals800,
+        }}>
+        {/* Nút giảm — */}
+        <TouchableOpacity
+          className="items-center justify-center"
+          style={{
+            width: 44,
+            height: 40,
+            opacity: canDecrease ? 1 : 0.3,
+          }}
+          onPress={handleDecrease}
+          disabled={disabled || !canDecrease}
+          accessibilityLabel="Giảm số người nói"
+          accessibilityRole="button">
+          <Icon
+            name="Minus"
+            className="w-4 h-4"
+            style={{color: canDecrease ? LISTENING_BLUE : colors.neutrals600}}
+          />
+        </TouchableOpacity>
+
+        {/* Số lượng hiện tại */}
         <AppText
-          className={`font-sans-bold text-base ${
-            selected ? 'text-primary' : 'text-foreground'
-          }`}>
-          {number}
+          className="text-base font-sans-bold"
+          style={{color: colors.foreground}}>
+          {value}
         </AppText>
-        <AppText
-          className={`text-[10px] mt-0.5 ${
-            selected ? 'text-primary' : 'text-neutrals400'
-          }`}>
-          {label}
-        </AppText>
-      </Pressable>
-    </Animated.View>
+
+        {/* Nút tăng + */}
+        <TouchableOpacity
+          className="items-center justify-center"
+          style={{
+            width: 44,
+            height: 40,
+            opacity: canIncrease ? 1 : 0.3,
+          }}
+          onPress={handleIncrease}
+          disabled={disabled || !canIncrease}
+          accessibilityLabel="Tăng số người nói"
+          accessibilityRole="button">
+          <Icon
+            name="Plus"
+            className="w-4 h-4"
+            style={{color: canIncrease ? LISTENING_BLUE : colors.neutrals600}}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }

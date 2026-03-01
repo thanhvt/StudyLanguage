@@ -16,7 +16,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
-import {BlurView, LiquidGlassView} from '@sbaiahmed1/react-native-blur';
+import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
 import {SKILL_COLORS} from '@/config/skillColors';
 
 // ============================================================
@@ -90,14 +90,13 @@ function GlassIconRing({
   size: number;
   children: React.ReactNode;
 }) {
-  // iOS 26+ → LiquidGlassView native (chỉ dùng khi iOS version >= 26)
-  const iosVersion = Platform.OS === 'ios' ? parseInt(String(Platform.Version), 10) : 0;
-  if (Platform.OS === 'ios' && iosVersion >= 26) {
+  // iOS 26+ → LiquidGlassView native
+  if (isLiquidGlassSupported) {
     return (
       <LiquidGlassView
-        glassType="clear"
-        glassTintColor={activeColor}
-        glassOpacity={0.6}
+        effect="clear"
+        tintColor={activeColor}
+        colorScheme="dark"
         style={{
           width: size,
           height: size,
@@ -110,7 +109,7 @@ function GlassIconRing({
     );
   }
 
-  // Android / fallback → BlurView circle + gradient border
+  // Android / iOS < 26 fallback → gradient border ring
   return (
     <View
       style={{
@@ -120,12 +119,8 @@ function GlassIconRing({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        backgroundColor: 'rgba(20,20,20,0.7)',
       }}>
-      <BlurView
-        blurType="dark"
-        blurAmount={12}
-        style={StyleSheet.absoluteFill}
-      />
       {/* Gradient border ring */}
       <LinearGradient
         colors={[`${activeColor}40`, `${activeColor}10`]}
@@ -289,13 +284,16 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Lớp 1: Native blur background — glass thật sự */}
-      <BlurView
-        blurType="dark"
-        blurAmount={20}
-        style={StyleSheet.absoluteFill}
-        reducedTransparencyFallbackColor="rgba(10,10,10,0.95)"
-      />
+      {/* Lớp 1: Native glass/blur background */}
+      {isLiquidGlassSupported ? (
+        <LiquidGlassView
+          effect="regular"
+          colorScheme="dark"
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(10,10,10,0.95)'}]} />
+      )}
 
       {/* Lớp 2: Gradient overlay — depth + ánh sáng phản chiếu ở đỉnh */}
       <LinearGradient

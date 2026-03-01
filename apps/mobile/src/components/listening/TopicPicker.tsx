@@ -103,6 +103,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
 }: ScenarioItemProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const haptic = useHaptic();
+  const colors = useColors();
 
   /**
    * Mục đích: Animation press in (scale 0.97)
@@ -166,14 +167,14 @@ const ScenarioItem = React.memo(function ScenarioItem({
             style={{color: isSelected ? LISTENING_BLUE : undefined}}>
             {scenario.name}
           </AppText>
-          <AppText className="text-xs text-neutrals400 mt-0.5" numberOfLines={1}>
+          <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={1}>
             {scenario.description}
           </AppText>
           {/* Category badge — chỉ hiện trong search results */}
           {categoryBadge && (
             <View className="flex-row mt-1.5">
-              <View className="bg-neutrals800 rounded-full px-2 py-0.5">
-                <AppText className="text-neutrals300 text-[10px]">
+              <View className="rounded-full px-2 py-0.5" style={{backgroundColor: colors.neutrals800}}>
+                <AppText className="text-[10px]" style={{color: colors.neutrals300}}>
                   {categoryBadge.icon} {categoryBadge.name}
                 </AppText>
               </View>
@@ -186,7 +187,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
           activeOpacity={0.6}
           accessibilityLabel={`${isFavorite ? 'Bỏ' : 'Đánh dấu'} yêu thích ${scenario.name}`}
           accessibilityRole="button">
-          <AppText className={isFavorite ? 'text-warning' : 'text-neutrals600'}>
+          <AppText style={{color: isFavorite ? '#FBBF24' : colors.neutrals600}}>
             {isFavorite ? '⭐' : '☆'}
           </AppText>
         </TouchableOpacity>
@@ -225,6 +226,7 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   onToggleFavorite,
 }: SubCategoryAccordionProps) {
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  const colors = useColors();
 
   // Kiểm tra subcategory này có chứa scenario đang chọn không
   const hasSelectedScenario = selectedTopicId
@@ -268,15 +270,15 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
             style={{color: hasSelectedScenario ? LISTENING_BLUE : undefined}}>
             {subCategory.name}
           </AppText>
-          <View className="bg-neutrals700 rounded-full px-2.5 py-1 ml-2">
-            <AppText className="text-neutrals300 text-xs font-sans-medium">
+          <View className="rounded-full px-2.5 py-1 ml-2" style={{backgroundColor: colors.neutrals700}}>
+            <AppText className="text-xs font-sans-medium" style={{color: colors.neutrals300}}>
               {subCategory.scenarios.length}
             </AppText>
           </View>
         </View>
         {/* Animated chevron thay vì text ▲/▼ */}
         <Animated.View style={{transform: [{rotate: rotateInterpolate}]}}>
-          <Icon name="ChevronDown" className="w-4 h-4 text-neutrals400" />
+          <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals400}} />
         </Animated.View>
       </TouchableOpacity>
 
@@ -321,6 +323,7 @@ const FavoritesTab = React.memo(function FavoritesTab({
   onSelectScenario,
   onToggleFavorite,
 }: FavoritesTabProps) {
+  const colors = useColors();
   // Tìm tất cả scenarios có trong favoriteIds
   const favoriteScenarios = useMemo(() => {
     const results: {scenario: TopicScenario; categoryIcon: string; categoryName: string}[] = [];
@@ -345,10 +348,10 @@ const FavoritesTab = React.memo(function FavoritesTab({
     return (
       <View className="items-center py-12 px-6">
         <AppText className="text-4xl mb-4">⭐</AppText>
-        <AppText className="text-foreground font-sans-semibold text-base mb-2">
+        <AppText className="font-sans-semibold text-base mb-2" style={{color: colors.foreground}}>
           Chưa có kịch bản yêu thích
         </AppText>
-        <AppText className="text-neutrals400 text-sm text-center leading-5">
+        <AppText className="text-sm text-center leading-5" style={{color: colors.neutrals400}}>
           Nhấn ⭐ trên bất kỳ kịch bản nào{'\n'}để lưu vào danh sách yêu thích
         </AppText>
       </View>
@@ -357,7 +360,7 @@ const FavoritesTab = React.memo(function FavoritesTab({
 
   return (
     <View>
-      <AppText className="text-neutrals400 text-xs mb-2">
+      <AppText className="text-xs mb-2" style={{color: colors.neutrals400}}>
         {favoriteScenarios.length} kịch bản yêu thích
       </AppText>
       {favoriteScenarios.map(({scenario, categoryIcon, categoryName}) => (
@@ -568,8 +571,8 @@ export default function TopicPicker({
   return (
     <View className="flex-1">
       {/* Search Bar với debounce */}
-      <View className="flex-row items-center bg-neutrals900 rounded-2xl px-4 py-2.5 mb-3">
-        <Icon name="Search" className="w-4 h-4 text-neutrals400 mr-2" />
+      <View className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3" style={{backgroundColor: colors.neutrals900}}>
+        <Icon name="Search" className="w-4 h-4 mr-2" style={{color: colors.neutrals400}} />
         <TextInput
           className="flex-1 text-base py-1"
           style={{color: colors.foreground}}
@@ -588,7 +591,7 @@ export default function TopicPicker({
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
             accessibilityLabel="Xóa tìm kiếm"
             accessibilityRole="button">
-            <Icon name="X" className="w-4 h-4 text-neutrals500" />
+            <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals500}} />
           </TouchableOpacity>
         )}
       </View>
@@ -608,16 +611,16 @@ export default function TopicPicker({
       {searchResults ? (
         // Kết quả tìm kiếm — với category badge
         <View>
-          <AppText className="text-neutrals300 text-xs mb-2">
+          <AppText className="text-xs mb-2" style={{color: colors.neutrals300}}>
             {searchResults.length} kết quả cho "{debouncedSearch}"
           </AppText>
           {searchResults.length === 0 ? (
             <View className="items-center py-8">
               <AppText className="text-2xl mb-2">🔍</AppText>
-              <AppText className="text-neutrals400 text-sm">
+              <AppText className="text-sm" style={{color: colors.neutrals400}}>
                 Không tìm thấy kịch bản nào
               </AppText>
-              <AppText className="text-neutrals500 text-xs mt-1">
+              <AppText className="text-xs mt-1" style={{color: colors.neutrals500}}>
                 Thử từ khóa khác hoặc chọn từ danh mục
               </AppText>
             </View>
