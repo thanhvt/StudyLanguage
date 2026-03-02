@@ -282,41 +282,94 @@ export default function ListeningConfigScreen({
   const hasValidTopic = !!selectedTopic || !!topicInput.trim();
   const canStart = mode === 'radio' || hasValidTopic;
 
+  // #8: Parallax scroll value cho floating blobs
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
-      {/* Gradient background — cho glass effect có nội dung để blur */}
+      {/* ======================== */}
+      {/* GLASSMORPHISM BACKGROUND — Aurora mesh + floating blobs */}
+      {/* Nguyên tắc P3: "Vibrant background — glass cần content đa sắc để blur" */}
+      {/* ======================== */}
       {isLiquidGlassSupported && (
-        <View style={StyleSheet.absoluteFill}>
-          {/* Lớp 1: Gradient xanh từ trên xuống */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {/* Lớp 1: Blue-to-indigo anchor gradient — opacity 70% */}
           <LinearGradient
-            colors={[
-              `${LISTENING_BLUE}40`,
-              `${LISTENING_BLUE}18`,
-              'transparent',
-              `${LISTENING_BLUE}10`,
-            ]}
-            locations={[0, 0.25, 0.55, 1]}
+            colors={['#1E3A8AB3', '#2563EB60', 'transparent', '#4338CA30']}
+            locations={[0, 0.18, 0.5, 1]}
             style={StyleSheet.absoluteFill}
           />
-          {/* Lớp 2: Điểm sáng ambient ở góc — tạo chiều sâu cho glass */}
+          {/* Lớp 2: Teal ambient glow — mạnh hơn (α=0.40) */}
           <LinearGradient
-            colors={['rgba(100,160,255,0.12)', 'transparent']}
-            start={{x: 0.5, y: 0}}
-            end={{x: 0.5, y: 0.4}}
-            style={[StyleSheet.absoluteFill, {height: '40%'}]}
+            colors={['transparent', '#0D948870', '#0F766E40', 'transparent']}
+            locations={[0.1, 0.35, 0.55, 0.85]}
+            start={{x: 0, y: 0.2}}
+            end={{x: 1, y: 0.8}}
+            style={StyleSheet.absoluteFill}
           />
+          {/* Lớp 3: Indigo spot — góc dưới phải */}
+          <LinearGradient
+            colors={['transparent', '#6366F150']}
+            start={{x: 0, y: 0.6}}
+            end={{x: 1, y: 1}}
+            style={[StyleSheet.absoluteFill, {top: '55%'}]}
+          />
+          {/* Lớp 4: White spotlight — top edge light */}
+          <LinearGradient
+            colors={['rgba(200,220,255,0.18)', 'transparent']}
+            start={{x: 0.5, y: 0}}
+            end={{x: 0.5, y: 0.3}}
+            style={[StyleSheet.absoluteFill, {height: '30%'}]}
+          />
+          {/* Floating blobs — đốm sáng tạo depth (P2: multi-layer) */}
+          {/* #8: Parallax — blobs di chuyển chậm hơn content */}
+          <Animated.View style={{
+            position: 'absolute', top: '12%', left: '10%',
+            width: 180, height: 180, borderRadius: 90,
+            backgroundColor: 'rgba(37,99,235,0.25)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -75],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <Animated.View style={{
+            position: 'absolute', top: '40%', right: '5%',
+            width: 140, height: 140, borderRadius: 70,
+            backgroundColor: 'rgba(13,148,136,0.20)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -50],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <Animated.View style={{
+            position: 'absolute', bottom: '20%', left: '20%',
+            width: 120, height: 120, borderRadius: 60,
+            backgroundColor: 'rgba(99,102,241,0.18)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -40],
+              extrapolate: 'clamp',
+            })}],
+          }} />
         </View>
       )}
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
-        <ScrollView
+        <Animated.ScrollView
           ref={scrollViewRef}
           className="flex-1"
           contentContainerStyle={{paddingBottom: footerHeight + 20}}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{nativeEvent: {contentOffset: {y: scrollY}}}],
+            {useNativeDriver: true},
+          )}
+          scrollEventThrottle={16}>
 
           {/* ======================== */}
           {/* HEADER: "Luyện Nghe" + gear icon */}
@@ -327,7 +380,7 @@ export default function ListeningConfigScreen({
                 <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
                   Luyện Nghe
                 </AppText>
-                <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}}>
+                <AppText className="text-[15px] mt-0.5" style={{color: colors.neutrals400}}>
                   {totalScenarios}+ kịch bản có sẵn
                 </AppText>
               </View>
@@ -368,7 +421,7 @@ export default function ListeningConfigScreen({
                     accessibilityRole="button">
                     <AppText className="text-sm mr-1.5">{m.icon}</AppText>
                     <AppText
-                      className="text-sm font-sans-bold"
+                      className="text-base font-sans-bold"
                       style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
                       {m.label}
                     </AppText>
@@ -382,7 +435,7 @@ export default function ListeningConfigScreen({
           {/* TOPIC SECTION: "Chủ đề" + inline picker (chỉ hiện khi Podcast) */}
           {/* ======================== */}
           {mode === 'podcast' && (
-          <View className="px-6 mb-4">
+          <View className="px-6 mb-6">
             <SectionCard>
               {/* Top Row: Label + action buttons */}
               <View className="flex-row items-center justify-between mb-3">
@@ -391,37 +444,40 @@ export default function ListeningConfigScreen({
                 </AppText>
                 <View className="flex-row items-center gap-2">
                   <TouchableOpacity
-                    className="w-8 h-8 rounded-full items-center justify-center"
+                    className="w-10 h-10 rounded-full items-center justify-center"
                     style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
                       setShowTopicModal(true);
                     }}
                     accessibilityLabel="Tìm kiếm chủ đề"
                     accessibilityRole="button">
-                    <Icon name="Search" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                    <Icon name="Search" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    className="w-8 h-8 rounded-full items-center justify-center"
+                    className="w-10 h-10 rounded-full items-center justify-center"
                     style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
                       // TODO: Show favorites filter
                     }}
                     accessibilityLabel="Chủ đề yêu thích"
                     accessibilityRole="button">
-                    <Icon name="Heart" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                    <Icon name="Heart" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    className="w-8 h-8 rounded-full items-center justify-center"
+                    className="w-10 h-10 rounded-full items-center justify-center"
                     style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
                       navigation.navigate('CustomScenarios');
                     }}
                     accessibilityLabel="Tạo chủ đề mới"
                     accessibilityRole="button">
-                    <Icon name="Plus" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+                    <Icon name="Plus" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -437,7 +493,7 @@ export default function ListeningConfigScreen({
                     return (
                       <TouchableOpacity
                         key={cat.id}
-                        className="flex-row items-center px-3 py-1.5 rounded-full border"
+                        className="flex-row items-center px-4 py-2.5 rounded-full border"
                         style={{
                           backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
                           borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
@@ -478,7 +534,7 @@ export default function ListeningConfigScreen({
                         return (
                           <TouchableOpacity
                             key={sub.id}
-                            className="px-3 py-1 rounded-lg border"
+                            className="px-3.5 py-2 rounded-lg border"
                             style={{
                               backgroundColor: isActive ? `${LISTENING_BLUE}15` : 'transparent',
                               borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
@@ -509,7 +565,7 @@ export default function ListeningConfigScreen({
                 return (
                   <TouchableOpacity
                     key={scenario.id}
-                    className="rounded-xl px-4 py-3 mb-2"
+                    className="rounded-xl px-4 py-3.5 mb-3"
                     style={{
                       backgroundColor: isSelected
                         ? `${LISTENING_ORANGE}15`
@@ -530,7 +586,7 @@ export default function ListeningConfigScreen({
                     <View className="flex-row items-start justify-between">
                       <View className="flex-1 mr-3">
                         <AppText
-                          className="font-sans-bold text-sm" 
+                          className="font-sans-bold text-[15px]" 
                           style={{color: isSelected ? LISTENING_ORANGE : colors.foreground}}>
                           {scenario.name}
                         </AppText>
@@ -611,7 +667,7 @@ export default function ListeningConfigScreen({
           {/* LEVEL SECTION (chỉ hiện khi Podcast) */}
           {/* ======================== */}
           {mode === 'podcast' && (
-          <View className="px-6 mb-4">
+          <View className="px-6 mb-6">
             <SectionCard>
               <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
                 Level
@@ -651,7 +707,7 @@ export default function ListeningConfigScreen({
           {/* DURATION + SPEAKERS ROW (chỉ hiện khi Podcast) */}
           {/* ======================== */}
           {mode === 'podcast' && (
-            <View className="px-6 mb-4">
+            <View className="px-6 mb-6">
               <View className="flex-row gap-4">
                 <View className="flex-1">
                   <DurationSelector
@@ -785,7 +841,7 @@ export default function ListeningConfigScreen({
             </>
           )}
 
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
 
       {/* ======================== */}
@@ -794,10 +850,22 @@ export default function ListeningConfigScreen({
       {!keyboardVisible && (
         <View
           className="absolute bottom-0 left-0 right-0 px-6 pt-3"
-          style={{paddingBottom: Math.max(insets.bottom, 16), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
+          style={{paddingBottom: Math.max(insets.bottom, 16)}}>
+          {/* #7: Footer gradient thay vì solid bg — glassmorphism nhất quán */}
+          <LinearGradient
+            colors={['transparent', `${colors.background}DD`, colors.background]}
+            locations={[0, 0.35, 1]}
+            style={{
+              position: 'absolute',
+              top: -20,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
           <View
             style={
-              canStart
+              canStart || (mode as string) === 'radio'
                 ? {
                     shadowColor: LISTENING_BLUE,
                     shadowOffset: {width: 0, height: 4},
@@ -811,12 +879,17 @@ export default function ListeningConfigScreen({
               variant="primary"
               size="lg"
               className="w-full rounded-2xl"
-              style={{backgroundColor: canStart ? LISTENING_BLUE : colors.neutrals700}}
+              style={{
+                backgroundColor: canStart || (mode as string) === 'radio' ? LISTENING_BLUE : colors.neutrals700,
+                // #6: CTA glass hint — subtle border cho premium feel
+                borderWidth: isLiquidGlassSupported ? 1 : 0,
+                borderColor: isLiquidGlassSupported ? 'rgba(255,255,255,0.15)' : 'transparent',
+              }}
               onPress={handleGenerate}
-              disabled={isGenerating || !canStart}
+              disabled={isGenerating || (!canStart && (mode as string) !== 'radio')}
               loading={isGenerating}
               accessibilityLabel={
-                mode === 'radio'
+                (mode as string) === 'radio'
                   ? 'Tạo Radio playlist'
                   : canStart
                     ? 'Bắt đầu nghe'
@@ -874,28 +947,56 @@ interface SectionCardProps {
 function SectionCard({children}: SectionCardProps) {
   const colors = useColors();
 
-  // iOS 26+ → Liquid Glass effect
+  // iOS 26+ → Liquid Glass effect với shadow, rim light, inner glow
   if (isLiquidGlassSupported) {
     return (
-      <LiquidGlassView
-        effect="regular"
-        tintColor={`${LISTENING_BLUE}60`}
-        style={{
-          borderRadius: 16,
-          padding: 16,
-          overflow: 'hidden',
-          borderWidth: 0.5,
-          borderColor: 'rgba(255,255,255,0.15)',
-        }}>
-        {children}
-      </LiquidGlassView>
+      <View style={{
+        // #2: Shadow cho chiều sâu (P5: borders, shadows, gradients)
+        shadowColor: 'rgba(0,0,0,0.6)',
+        shadowOffset: {width: 0, height: 8},
+        shadowOpacity: 0.35,
+        shadowRadius: 16,
+        elevation: 8,
+        borderRadius: 20,
+      }}>
+        <LiquidGlassView
+          effect="regular"
+          tintColor="rgba(255,255,255,0.06)"
+          style={{
+            borderRadius: 20,
+            padding: 16,
+            overflow: 'hidden',
+            // #4: Rim light — top border sáng hơn bottom (P5: light direction)
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.15)',
+            borderTopColor: 'rgba(255,255,255,0.25)',
+            borderBottomColor: 'rgba(255,255,255,0.06)',
+            // #3: Glass bg opacity tăng 3% → 8% (P4: opacity control)
+            backgroundColor: 'rgba(255,255,255,0.08)',
+          }}>
+          {/* #9: Inner glow — top edge highlight (P5: light refraction) */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.08)', 'transparent']}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 40,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+            }}
+          />
+          {children}
+        </LiquidGlassView>
+      </View>
     );
   }
 
   // Fallback — View thường với surfaceRaised
   return (
     <View
-      className="rounded-2xl p-4 overflow-hidden"
+      className="rounded-[20px] p-4 overflow-hidden"
       style={{
         backgroundColor: colors.surfaceRaised,
         borderWidth: 1,
