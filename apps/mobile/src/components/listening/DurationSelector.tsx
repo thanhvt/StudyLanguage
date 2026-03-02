@@ -103,7 +103,7 @@ export default function DurationSelector({
         accessibilityLabel={`Thời lượng: ${value} phút. Nhấn để thay đổi`}
         accessibilityRole="button">
         <AppText
-          className="text-sm font-sans-medium"
+          className="text-[15px] font-sans-medium"
           style={{color: colors.foreground}}>
           {value} phút
         </AppText>

@@ -14,6 +14,7 @@ import {
 import {AppButton, AppText, Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useAppStore} from '@/store/useAppStore';
 import {listeningApi} from '@/services/api/listening';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
@@ -284,6 +285,9 @@ export default function ListeningConfigScreen({
 
   // #8: Parallax scroll value cho floating blobs
   const scrollY = useRef(new Animated.Value(0)).current;
+  // Detect light/dark cho floating blobs opacity
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
 
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
@@ -326,7 +330,7 @@ export default function ListeningConfigScreen({
           <Animated.View style={{
             position: 'absolute', top: '12%', left: '10%',
             width: 180, height: 180, borderRadius: 90,
-            backgroundColor: 'rgba(37,99,235,0.25)',
+            backgroundColor: isDark ? 'rgba(37,99,235,0.25)' : 'rgba(37,99,235,0.12)',
             transform: [{translateY: scrollY.interpolate({
               inputRange: [0, 500],
               outputRange: [0, -75],
@@ -336,7 +340,7 @@ export default function ListeningConfigScreen({
           <Animated.View style={{
             position: 'absolute', top: '40%', right: '5%',
             width: 140, height: 140, borderRadius: 70,
-            backgroundColor: 'rgba(13,148,136,0.20)',
+            backgroundColor: isDark ? 'rgba(13,148,136,0.20)' : 'rgba(13,148,136,0.10)',
             transform: [{translateY: scrollY.interpolate({
               inputRange: [0, 500],
               outputRange: [0, -50],
@@ -346,7 +350,7 @@ export default function ListeningConfigScreen({
           <Animated.View style={{
             position: 'absolute', bottom: '20%', left: '20%',
             width: 120, height: 120, borderRadius: 60,
-            backgroundColor: 'rgba(99,102,241,0.18)',
+            backgroundColor: isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.10)',
             transform: [{translateY: scrollY.interpolate({
               inputRange: [0, 500],
               outputRange: [0, -40],
@@ -380,7 +384,7 @@ export default function ListeningConfigScreen({
                 <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
                   Luyện Nghe
                 </AppText>
-                <AppText className="text-[15px] mt-0.5" style={{color: colors.neutrals400}}>
+                <AppText className="text-[15px] mt-0.5" style={{color: isDark ? colors.neutrals400 : colors.neutrals200}}>
                   {totalScenarios}+ kịch bản có sẵn
                 </AppText>
               </View>
@@ -404,7 +408,11 @@ export default function ListeningConfigScreen({
           <View className="px-6 mb-4">
             <View
               className="flex-row rounded-xl overflow-hidden"
-              style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.border}}>
+              style={{
+                backgroundColor: isDark ? colors.neutrals900 : colors.neutrals900,
+                borderWidth: isDark ? 1 : 0,
+                borderColor: isDark ? colors.border : 'transparent',
+              }}>
               {MODES.map(m => {
                 const isActive = mode === m.id;
                 return (
@@ -445,7 +453,7 @@ export default function ListeningConfigScreen({
                 <View className="flex-row items-center gap-2">
                   <TouchableOpacity
                     className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
                     hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
@@ -457,7 +465,7 @@ export default function ListeningConfigScreen({
                   </TouchableOpacity>
                   <TouchableOpacity
                     className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
                     hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
@@ -469,7 +477,7 @@ export default function ListeningConfigScreen({
                   </TouchableOpacity>
                   <TouchableOpacity
                     className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
                     hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
@@ -506,10 +514,10 @@ export default function ListeningConfigScreen({
                         accessibilityLabel={`Danh mục ${cat.name}${isActive ? ', đang chọn' : ''}`}
                         accessibilityRole="button">
                         {cat.icon && (
-                          <AppText className="text-xs mr-1">{cat.icon}</AppText>
+                          <AppText className="text-[13px] mr-1">{cat.icon}</AppText>
                         )}
                         <AppText
-                          className="text-xs font-sans-medium"
+                          className="text-[13px] font-sans-medium"
                           style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
                           {cat.name}
                         </AppText>
@@ -534,10 +542,10 @@ export default function ListeningConfigScreen({
                         return (
                           <TouchableOpacity
                             key={sub.id}
-                            className="px-3.5 py-2 rounded-lg border"
+                            className="px-4 py-2.5 rounded-full border"
                             style={{
                               backgroundColor: isActive ? `${LISTENING_BLUE}15` : 'transparent',
-                              borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                              borderColor: isActive ? LISTENING_BLUE : colors.neutrals700,
                             }}
                             onPress={() => {
                               haptic.light();
@@ -546,8 +554,8 @@ export default function ListeningConfigScreen({
                             accessibilityLabel={`${sub.name}${isActive ? ', đang chọn' : ''}`}
                             accessibilityRole="button">
                             <AppText
-                              className="text-xs"
-                              style={{color: isActive ? LISTENING_BLUE : colors.neutrals400}}>
+                              className="text-[13px] font-sans-medium"
+                              style={{color: isActive ? LISTENING_BLUE : colors.neutrals300}}>
                               {sub.name}
                             </AppText>
                           </TouchableOpacity>
@@ -621,14 +629,14 @@ export default function ListeningConfigScreen({
 
               {/* "Xem tất cả" link */}
               <TouchableOpacity
-                className="py-1 items-center"
+                className="py-3 items-center"
                 onPress={() => {
                   haptic.light();
                   setShowTopicModal(true);
                 }}
                 accessibilityLabel={`Xem tất cả kịch bản`}
                 accessibilityRole="link">
-                <AppText className="text-xs text-center" style={{color: LISTENING_BLUE}}>
+                <AppText className="text-sm text-center" style={{color: LISTENING_BLUE}}>
                   Xem tất cả {totalScenarios} kịch bản →
                 </AppText>
               </TouchableOpacity>
@@ -641,11 +649,11 @@ export default function ListeningConfigScreen({
               </View>
 
               {/* Free text input */}
-              <TextInput
-                className="rounded-xl px-4 py-3 text-sm"
+                <TextInput
+                className="rounded-xl px-4 py-3 text-[15px]"
                 style={{color: colors.foreground, backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
                 placeholder="Nhập chủ đề riêng..."
-                placeholderTextColor={colors.neutrals500}
+                placeholderTextColor={colors.neutrals400}
                 value={topicInput}
                 onChangeText={text => {
                   setTopicInput(text);
@@ -691,7 +699,7 @@ export default function ListeningConfigScreen({
                       accessibilityLabel={`Trình độ ${level.label}${isActive ? ', đang chọn' : ''}`}
                       accessibilityRole="button">
                       <AppText
-                        className="text-sm font-sans-medium"
+                        className="text-[15px] font-sans-medium"
                         style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
                         {level.label}
                       </AppText>
@@ -708,22 +716,24 @@ export default function ListeningConfigScreen({
           {/* ======================== */}
           {mode === 'podcast' && (
             <View className="px-6 mb-6">
-              <View className="flex-row gap-4">
-                <View className="flex-1">
-                  <DurationSelector
-                    value={config.durationMinutes}
-                    onChange={d => setConfig({durationMinutes: d})}
-                    disabled={isGenerating}
-                  />
+              <SectionCard>
+                <View className="flex-row gap-4">
+                  <View className="flex-1">
+                    <DurationSelector
+                      value={config.durationMinutes}
+                      onChange={d => setConfig({durationMinutes: d})}
+                      disabled={isGenerating}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <SpeakersSelector
+                      value={config.numSpeakers ?? 2}
+                      onChange={n => setConfig({numSpeakers: n})}
+                      disabled={isGenerating}
+                    />
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <SpeakersSelector
-                    value={config.numSpeakers ?? 2}
-                    onChange={n => setConfig({numSpeakers: n})}
-                    disabled={isGenerating}
-                  />
-                </View>
-              </View>
+              </SectionCard>
             </View>
           )}
 
@@ -850,14 +860,14 @@ export default function ListeningConfigScreen({
       {!keyboardVisible && (
         <View
           className="absolute bottom-0 left-0 right-0 px-6 pt-3"
-          style={{paddingBottom: Math.max(insets.bottom, 16)}}>
-          {/* #7: Footer gradient thay vì solid bg — glassmorphism nhất quán */}
+          style={{paddingBottom: Math.max(insets.bottom, 8)}}>
+          {/* Footer gradient — mịn hơn, không bị chia 2 phần */}
           <LinearGradient
-            colors={['transparent', `${colors.background}DD`, colors.background]}
-            locations={[0, 0.35, 1]}
+            colors={['transparent', `${colors.background}80`, `${colors.background}CC`, colors.background]}
+            locations={[0, 0.25, 0.5, 1]}
             style={{
               position: 'absolute',
-              top: -20,
+              top: -30,
               left: 0,
               right: 0,
               bottom: 0,
@@ -879,11 +889,12 @@ export default function ListeningConfigScreen({
               variant="primary"
               size="lg"
               className="w-full rounded-2xl"
+              textClassname="font-sans-bold"
               style={{
                 backgroundColor: canStart || (mode as string) === 'radio' ? LISTENING_BLUE : colors.neutrals700,
-                // #6: CTA glass hint — subtle border cho premium feel
-                borderWidth: isLiquidGlassSupported ? 1 : 0,
-                borderColor: isLiquidGlassSupported ? 'rgba(255,255,255,0.15)' : 'transparent',
+                // Glass border — chỉ dark mode, light mode tạo vạch trắng
+                borderWidth: isLiquidGlassSupported && isDark ? 1 : 0,
+                borderColor: isLiquidGlassSupported && isDark ? 'rgba(255,255,255,0.15)' : 'transparent',
               }}
               onPress={handleGenerate}
               disabled={isGenerating || (!canStart && (mode as string) !== 'radio')}
@@ -946,47 +957,52 @@ interface SectionCardProps {
  */
 function SectionCard({children}: SectionCardProps) {
   const colors = useColors();
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
 
   // iOS 26+ → Liquid Glass effect với shadow, rim light, inner glow
+  // L1: Border adapt light/dark — L5: Inner glow adapt
   if (isLiquidGlassSupported) {
     return (
       <View style={{
-        // #2: Shadow cho chiều sâu (P5: borders, shadows, gradients)
-        shadowColor: 'rgba(0,0,0,0.6)',
-        shadowOffset: {width: 0, height: 8},
-        shadowOpacity: 0.35,
-        shadowRadius: 16,
-        elevation: 8,
+        // Shadow — nhẹ hơn trong light mode
+        shadowColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)',
+        shadowOffset: {width: 0, height: isDark ? 8 : 4},
+        shadowOpacity: isDark ? 0.35 : 0.2,
+        shadowRadius: isDark ? 16 : 12,
+        elevation: isDark ? 8 : 4,
         borderRadius: 20,
       }}>
         <LiquidGlassView
           effect="regular"
-          tintColor="rgba(255,255,255,0.06)"
+          tintColor={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)'}
           style={{
             borderRadius: 20,
             padding: 16,
             overflow: 'hidden',
-            // #4: Rim light — top border sáng hơn bottom (P5: light direction)
+            // L1: Rim light adaptive — dark = white tint, light = dark tint
             borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.15)',
-            borderTopColor: 'rgba(255,255,255,0.25)',
-            borderBottomColor: 'rgba(255,255,255,0.06)',
-            // #3: Glass bg opacity tăng 3% → 8% (P4: opacity control)
-            backgroundColor: 'rgba(255,255,255,0.08)',
+            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
+            borderTopColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.60)',
+            borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            // Glass bg — light mode dùng tint nhẹ hơn
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)',
           }}>
-          {/* #9: Inner glow — top edge highlight (P5: light refraction) */}
-          <LinearGradient
-            colors={['rgba(255,255,255,0.08)', 'transparent']}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 40,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-            }}
-          />
+          {/* Inner glow — chỉ hiện trong dark mode, light mode bị tạo vạch xám */}
+          {isDark && (
+            <LinearGradient
+              colors={['rgba(255,255,255,0.08)', 'transparent']}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 40,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+              }}
+            />
+          )}
           {children}
         </LiquidGlassView>
       </View>

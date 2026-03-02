@@ -87,7 +87,7 @@ export default function SpeakersSelector({
           style={{
             width: 44,
             height: 40,
-            opacity: canDecrease ? 1 : 0.3,
+            opacity: canDecrease ? 1 : 0.5,
           }}
           onPress={handleDecrease}
           disabled={disabled || !canDecrease}
@@ -95,8 +95,8 @@ export default function SpeakersSelector({
           accessibilityRole="button">
           <Icon
             name="Minus"
-            className="w-4 h-4"
-            style={{color: canDecrease ? LISTENING_BLUE : colors.neutrals600}}
+            className="w-5 h-5"
+            style={{color: canDecrease ? LISTENING_BLUE : colors.neutrals400}}
           />
         </TouchableOpacity>
 
@@ -113,7 +113,7 @@ export default function SpeakersSelector({
           style={{
             width: 44,
             height: 40,
-            opacity: canIncrease ? 1 : 0.3,
+            opacity: canIncrease ? 1 : 0.5,
           }}
           onPress={handleIncrease}
           disabled={disabled || !canIncrease}
@@ -121,8 +121,8 @@ export default function SpeakersSelector({
           accessibilityRole="button">
           <Icon
             name="Plus"
-            className="w-4 h-4"
-            style={{color: canIncrease ? LISTENING_BLUE : colors.neutrals600}}
+            className="w-5 h-5"
+            style={{color: canIncrease ? LISTENING_BLUE : colors.neutrals400}}
           />
         </TouchableOpacity>
       </View>

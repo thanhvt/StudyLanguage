@@ -170,7 +170,22 @@ export default function TtsSettingsSheet({
       <View className="flex-1 bg-black/50 justify-end">
         <View
           className="rounded-t-3xl max-h-[85%]"
-          style={{paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
+          style={{
+            paddingBottom: Math.max(insets.bottom, 20),
+            backgroundColor: colors.background,
+            // L6: Glass-style border — premium matching SectionCards
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(255,255,255,0.15)',
+            borderLeftWidth: 0.5,
+            borderRightWidth: 0.5,
+            borderLeftColor: 'rgba(255,255,255,0.08)',
+            borderRightColor: 'rgba(255,255,255,0.08)',
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: -8},
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 16,
+          }}>
 
           {/* Handle bar */}
           <View className="items-center pt-3 pb-4">
@@ -211,9 +226,9 @@ export default function TtsSettingsSheet({
               </View>
             ) : (
               <View className="gap-2 mb-6">
-                {voices.map(voice => (
+                {voices.map((voice, idx) => (
                   <View
-                    key={voice.id}
+                    key={`voice-${voice.id || idx}`}
                     className="flex-row items-center rounded-xl px-4 py-3"
                     style={{backgroundColor: colors.neutrals900}}>
                     {/* Voice info */}
@@ -474,8 +489,8 @@ export default function TtsSettingsSheet({
 
                 {/* Reset button */}
                 <TouchableOpacity
-                  className="self-center px-4 py-2 rounded-lg"
-                  style={{borderWidth: 1, borderColor: colors.neutrals700}}
+                  className="self-center px-5 py-2.5 rounded-xl"
+                  style={{borderWidth: 1, borderColor: colors.neutrals600}}
                   onPress={() => {
                     setTtsPitch(0);
                     setTtsRate(0);
@@ -483,7 +498,7 @@ export default function TtsSettingsSheet({
                   }}
                   accessibilityLabel="Reset Pitch và Rate"
                   accessibilityRole="button">
-                  <AppText className="text-xs" style={{color: colors.neutrals400}}>Reset về mặc định</AppText>
+                  <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals300}}>Reset về mặc định</AppText>
                 </TouchableOpacity>
               </View>
             )}
