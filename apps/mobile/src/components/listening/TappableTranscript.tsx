@@ -1,6 +1,7 @@
 import React, {useCallback} from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import {AppText} from '@/components/ui';
+import {useColors} from '@/hooks/useColors';
 
 interface TappableTranscriptProps {
   /** Nội dung text cần render */
@@ -25,6 +26,7 @@ const TappableTranscript = React.memo(function TappableTranscript({
   onWordPress,
   isActive = false,
 }: TappableTranscriptProps) {
+  const colors = useColors();
   /**
    * Mục đích: Tách text thành mảng các từ, giữ khoảng trắng
    * Tham số đầu vào: text (string)
@@ -56,7 +58,7 @@ const TappableTranscript = React.memo(function TappableTranscript({
         // Khoảng trắng → render trực tiếp
         if (/^\s+$/.test(word)) {
           return (
-            <AppText key={`s-${index}`} className="text-foreground text-base">
+            <AppText key={`s-${index}`} className="text-base" style={{color: colors.foreground}}>
               {' '}
             </AppText>
           );
@@ -72,11 +74,8 @@ const TappableTranscript = React.memo(function TappableTranscript({
             accessibilityRole="button"
             style={{minHeight: 28}}>
             <AppText
-              className={`text-base leading-6 ${
-                isActive
-                  ? 'text-foreground underline decoration-primary/30 underline-offset-2'
-                  : 'text-foreground'
-              }`}>
+              className="text-base leading-6"
+              style={{color: colors.foreground, textDecorationLine: isActive ? 'underline' : 'none'}}>
               {word}
             </AppText>
           </TouchableOpacity>

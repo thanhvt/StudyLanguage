@@ -95,22 +95,23 @@ export function TourTooltip({
       content={
         <View>
           {/* Tiêu đề */}
-          <AppText className="text-foreground font-sans-bold text-sm mb-1">
+          <AppText className="font-sans-bold text-sm mb-1" style={{color: colors.foreground}}>
             {step.title}
           </AppText>
           {/* Nội dung hướng dẫn */}
-          <AppText className="text-neutrals400 text-xs leading-4 mb-2">
+          <AppText className="text-xs leading-4 mb-2" style={{color: colors.neutrals400}}>
             {step.body}
           </AppText>
           {/* Bước hiện tại / tổng */}
           <View className="flex-row items-center justify-between">
-            <AppText className="text-neutrals500 text-xs">
+            <AppText className="text-xs" style={{color: colors.neutrals500}}>
               {stepIndex + 1}/{totalSteps}
             </AppText>
             <View className="flex-row gap-3">
               {/* Nút bỏ qua */}
               <AppText
-                className="text-neutrals500 text-xs"
+                className="text-xs"
+                style={{color: colors.neutrals500}}
                 onPress={onSkip}>
                 Bỏ qua
               </AppText>

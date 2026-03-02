@@ -541,14 +541,14 @@ export default function ListeningConfigScreen({
 
               {/* "Xem tất cả" link */}
               <TouchableOpacity
-                className="py-1"
+                className="py-1 items-center"
                 onPress={() => {
                   haptic.light();
                   setShowTopicModal(true);
                 }}
                 accessibilityLabel={`Xem tất cả kịch bản`}
                 accessibilityRole="link">
-                <AppText className="text-xs" style={{color: LISTENING_BLUE}}>
+                <AppText className="text-xs text-center" style={{color: LISTENING_BLUE}}>
                   Xem tất cả {totalScenarios} kịch bản →
                 </AppText>
               </TouchableOpacity>

@@ -164,7 +164,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
         <View className="flex-1 mr-3">
           <AppText
             className="text-sm font-sans-medium"
-            style={{color: isSelected ? LISTENING_BLUE : undefined}}>
+            style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
             {scenario.name}
           </AppText>
           <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={1}>
@@ -267,7 +267,7 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
             <View className="w-2 h-2 rounded-full mr-2" style={{backgroundColor: LISTENING_BLUE}} />
           )}
           <AppText className="font-sans-medium text-sm"
-            style={{color: hasSelectedScenario ? LISTENING_BLUE : undefined}}>
+            style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.foreground}}>
             {subCategory.name}
           </AppText>
           <View className="rounded-full px-2.5 py-1 ml-2" style={{backgroundColor: colors.neutrals700}}>
@@ -545,7 +545,7 @@ export default function TopicPicker({
           <View className="flex-row items-center">
             <AppText
               className="text-sm font-sans-medium"
-              style={{color: isActive ? LISTENING_BLUE : undefined}}>
+              style={{color: isActive ? LISTENING_BLUE : colors.foreground}}>
               {item.icon} {item.name}
             </AppText>
             {/* Badge count cho tab Yêu thích */}

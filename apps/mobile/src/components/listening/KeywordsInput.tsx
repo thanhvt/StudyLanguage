@@ -30,10 +30,10 @@ export default function KeywordsInput({
   const colors = useColors();
 
   return (
-    <View className="bg-neutrals900 rounded-2xl px-4 py-3">
+    <View className="rounded-2xl px-4 py-3" style={{backgroundColor: colors.neutrals900}}>
       <TextInput
         className="text-base min-h-[52px]"
-        style={{color: '#1a1a1a', textAlignVertical: 'top'}}
+        style={{color: colors.foreground, textAlignVertical: 'top'}}
         placeholder="vd: coffee, reservation, check-in..."
         placeholderTextColor={colors.neutrals500}
         value={value}
@@ -47,15 +47,16 @@ export default function KeywordsInput({
         onFocus={onFocus}
       />
       <View className="flex-row justify-between items-center mt-1">
-        <AppText className="text-neutrals400 text-xs">
+        <AppText className="text-xs" style={{color: colors.neutrals400}}>
           Gợi ý nội dung xoay quanh các từ khóa này
         </AppText>
         <AppText
           className={`text-xs ${
             value.length > MAX_LENGTH * 0.9
               ? 'text-destructive'
-              : 'text-neutrals400'
-          }`}>
+              : ''
+          }`}
+          style={value.length <= MAX_LENGTH * 0.9 ? {color: colors.neutrals400} : undefined}>
           {value.length}/{MAX_LENGTH}
         </AppText>
       </View>

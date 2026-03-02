@@ -153,7 +153,7 @@ export default function DictionaryPopup({
       case 'adverb':
         return {bg: 'bg-orange-500/20', text: 'text-orange-400'};
       default:
-        return {bg: 'bg-neutrals700', text: 'text-neutrals300'};
+        return {bg: colors.neutrals700, text: colors.neutrals300};
     }
   };
 
@@ -175,12 +175,12 @@ export default function DictionaryPopup({
           <View className="flex-row items-start justify-between">
             <View className="flex-1">
               {word && (
-                <AppText className="text-foreground font-sans-bold text-2xl capitalize">
+                <AppText className="font-sans-bold text-2xl capitalize" style={{color: colors.foreground}}>
                   {isLoading ? word : result?.word || word}
                 </AppText>
               )}
               {result?.ipa && (
-                <AppText className="text-neutrals400 text-sm font-mono mt-1">
+                <AppText className="text-sm font-mono mt-1" style={{color: colors.neutrals400}}>
                   {result.ipa}
                 </AppText>
               )}
@@ -214,10 +214,11 @@ export default function DictionaryPopup({
               {result && (
                 <TouchableOpacity
                   onPress={handleGoogleFallback}
-                  className="w-10 h-10 rounded-full bg-neutrals800 items-center justify-center"
+                  className="w-10 h-10 rounded-full items-center justify-center"
+                  style={{backgroundColor: colors.neutrals800}}
                   accessibilityLabel="Xem thêm trên Google"
                   accessibilityRole="link">
-                  <Icon name="ExternalLink" className="w-5 h-5 text-neutrals400" />
+                  <Icon name="ExternalLink" className="w-5 h-5" style={{color: colors.neutrals400}} />
                 </TouchableOpacity>
               )}
             </View>
@@ -228,7 +229,7 @@ export default function DictionaryPopup({
         {isLoading && (
           <View className="px-5 py-8 items-center">
             <ActivityIndicator size="small" color={LISTENING_BLUE} />
-            <AppText className="text-neutrals400 text-sm mt-3">
+            <AppText className="text-sm mt-3" style={{color: colors.neutrals400}}>
               Đang tra từ...
             </AppText>
           </View>
@@ -246,13 +247,15 @@ export default function DictionaryPopup({
               </View>
               <TouchableOpacity
                 onPress={handleGoogleFallback}
-                className="flex-row items-center justify-center bg-neutrals800 rounded-lg py-2.5 mt-2">
-                <AppText className="text-foreground text-sm mr-1">
+                className="flex-row items-center justify-center rounded-lg py-2.5 mt-2"
+                style={{backgroundColor: colors.neutrals800}}>
+                <AppText className="text-sm mr-1" style={{color: colors.foreground}}>
                   Tìm trên Google
                 </AppText>
                 <Icon
                   name="ExternalLink"
-                  className="w-3.5 h-3.5 text-neutrals400"
+                  className="w-3.5 h-3.5"
+                  style={{color: colors.neutrals400}}
                 />
               </TouchableOpacity>
             </View>
@@ -277,12 +280,13 @@ export default function DictionaryPopup({
                 {meaning.definitions.map((def, defIdx) => (
                   <View
                     key={defIdx}
-                    className="ml-1 pl-3 border-l-2 border-neutrals700 mb-2.5">
-                    <AppText className="text-foreground text-sm leading-5">
+                    className="ml-1 pl-3 mb-2.5"
+                    style={{borderLeftWidth: 2, borderLeftColor: colors.neutrals700}}>
+                    <AppText className="text-sm leading-5" style={{color: colors.foreground}}>
                       {def.definition}
                     </AppText>
                     {def.example && (
-                      <AppText className="text-neutrals500 text-xs italic mt-1">
+                      <AppText className="text-xs italic mt-1" style={{color: colors.neutrals500}}>
                         "{def.example}"
                       </AppText>
                     )}

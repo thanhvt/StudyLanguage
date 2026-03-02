@@ -162,30 +162,32 @@ export default function CustomScenarioInput({
       {isLoading ? (
         <View className="items-center py-4">
           <ActivityIndicator size="small" />
-          <AppText className="text-neutrals400 text-xs mt-2">
+          <AppText className="text-xs mt-2" style={{color: colors.neutrals400}}>
             Đang tải kịch bản...
           </AppText>
         </View>
       ) : savedScenarios.length > 0 ? (
         <View className="mb-4">
-          <AppText className="text-neutrals400 text-xs mb-2">
+          <AppText className="text-xs mb-2" style={{color: colors.neutrals400}}>
             Đã lưu ({savedScenarios.length})
           </AppText>
           {savedScenarios.map(scenario => (
             <TouchableOpacity
               key={scenario.id}
-              className="flex-row items-center bg-neutrals900 rounded-xl px-4 py-3 mb-1.5"
+              className="flex-row items-center rounded-xl px-4 py-3 mb-1.5"
+              style={{backgroundColor: colors.neutrals900}}
               onPress={() =>
                 onQuickUse(scenario.name, scenario.description)
               }
               activeOpacity={0.7}>
               <View className="flex-1 mr-3">
-                <AppText className="text-foreground text-sm font-sans-medium">
+                <AppText className="text-sm font-sans-medium" style={{color: colors.foreground}}>
                   {scenario.name}
                 </AppText>
                 {scenario.description ? (
                   <AppText
-                    className="text-neutrals400 text-xs mt-0.5"
+                    className="text-xs mt-0.5"
+                    style={{color: colors.neutrals400}}
                     numberOfLines={1}>
                     {scenario.description}
                   </AppText>
@@ -199,8 +201,9 @@ export default function CustomScenarioInput({
                 className="mr-2">
                 <AppText
                   className={
-                    scenario.isFavorite ? 'text-warning' : 'text-neutrals600'
-                  }>
+                    scenario.isFavorite ? 'text-warning' : ''
+                  }
+                  style={!scenario.isFavorite ? {color: colors.neutrals600} : undefined}>
                   {scenario.isFavorite ? '⭐' : '☆'}
                 </AppText>
               </TouchableOpacity>
@@ -217,10 +220,10 @@ export default function CustomScenarioInput({
       ) : null}
 
       {/* Form tạo mới — hiển thị sau */}
-      <View className="bg-neutrals900 rounded-2xl p-4">
+      <View className="rounded-2xl p-4" style={{backgroundColor: colors.neutrals900}}>
         {/* Header có nút đóng */}
         <View className="flex-row items-center justify-between mb-3">
-          <AppText className="text-foreground font-sans-semibold text-sm">
+          <AppText className="font-sans-semibold text-sm" style={{color: colors.foreground}}>
             ✨ Tạo kịch bản mới
           </AppText>
           {onClose && (
@@ -229,15 +232,16 @@ export default function CustomScenarioInput({
               hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
               accessibilityLabel="Đóng panel tạo kịch bản"
               accessibilityRole="button"
-              className="p-1.5 rounded-full bg-neutrals800">
-              <Icon name="X" className="w-4 h-4 text-neutrals400" />
+              className="p-1.5 rounded-full"
+              style={{backgroundColor: colors.neutrals800}}>
+              <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals400}} />
             </TouchableOpacity>
           )}
         </View>
 
         <TextInput
-          className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: colors.foreground}}
+          className="rounded-xl px-4 py-2.5 text-base mb-2"
+          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.neutrals700}}
           placeholder="Tên kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={name}
@@ -248,8 +252,8 @@ export default function CustomScenarioInput({
         />
 
         <TextInput
-          className="border border-neutrals700 rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: colors.foreground, textAlignVertical: 'top'}}
+          className="rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
+          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.neutrals700}}
           placeholder="Mô tả chi tiết kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={description}

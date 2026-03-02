@@ -159,6 +159,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@callstack/liquid-glass':
+        specifier: ^0.7.0
+        version: 0.7.0(react-native@0.80.3)(react@19.1.0)
       '@gorhom/bottom-sheet':
         specifier: ^5.2.6
         version: 5.2.8(@types/react-native@0.73.0)(@types/react@19.1.17)(react-native-gesture-handler@2.30.0)(react-native-reanimated@4.2.1)(react-native@0.80.3)(react@19.1.0)
@@ -183,9 +186,6 @@ importers:
       '@react-navigation/native-stack':
         specifier: ^7.3.26
         version: 7.11.0(@react-navigation/native@7.1.28)(react-native-safe-area-context@5.4.0)(react-native-screens@4.20.0)(react-native@0.80.3)(react@19.1.0)
-      '@sbaiahmed1/react-native-blur':
-        specifier: ^4.5.5
-        version: 4.5.6(react-native@0.80.3)(react@19.1.0)
       '@supabase/supabase-js':
         specifier: ^2.95.3
         version: 2.95.3
@@ -2548,6 +2548,16 @@ packages:
 
   /@borewit/text-codec@0.2.1:
     resolution: {integrity: sha512-k7vvKPbf7J2fZ5klGRD9AeKfUvojuZIQ3BT5u7Jfv+puwXkUBUT5PVyMDfJZpy30CBDXGMgw7fguK/lpOMBvgw==}
+
+  /@callstack/liquid-glass@0.7.0(react-native@0.80.3)(react@19.1.0):
+    resolution: {integrity: sha512-ztPuQnXG3z9kPWT0srf+yIbVZih/aifbynzormDzsFMWR6IQk3e0h8DEYic3sgW7PUa7A/GyaBBCpq10ZZvboA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      react: 19.1.0
+      react-native: 0.80.3(@babel/core@7.28.5)(@react-native-community/cli@19.0.0)(@types/react@19.1.17)(react@19.1.0)
+    dev: false
 
   /@colors/colors@1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -6336,16 +6346,6 @@ packages:
   /@rtsao/scc@1.1.0:
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
     dev: true
-
-  /@sbaiahmed1/react-native-blur@4.5.6(react-native@0.80.3)(react@19.1.0):
-    resolution: {integrity: sha512-MOhlJ0/Ischmgds5qUAdc8Xyk0k9AeZ1bR40vneMHeSM7JBcTQtRETUYryv7FszSbXkdq24c3lka7Qc/cg7Oqg==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      react: 19.1.0
-      react-native: 0.80.3(@babel/core@7.28.5)(@react-native-community/cli@19.0.0)(@types/react@19.1.17)(react@19.1.0)
-    dev: false
 
   /@scarf/scarf@1.4.0:
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}

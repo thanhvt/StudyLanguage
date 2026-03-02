@@ -143,12 +143,13 @@ export default function MinimizedPlayer() {
           animatedStyle,
         ]}>
         <View
-          className="bg-neutrals900 flex-row items-center px-3 py-2.5"
+          className="flex-row items-center px-3 py-2.5"
           style={{
             borderRadius: 28,
             gap: 8,
             borderWidth: 1,
             borderColor: `${LISTENING_BLUE}30`,
+            backgroundColor: colors.neutrals900,
           }}>
           {/* Animated indicator */}
           <View
@@ -157,7 +158,7 @@ export default function MinimizedPlayer() {
           />
 
           {/* Label */}
-          <AppText className="text-foreground text-xs font-sans-medium">
+          <AppText className="text-xs font-sans-medium" style={{color: colors.foreground}}>
             🎧
           </AppText>
 

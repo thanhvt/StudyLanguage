@@ -2,6 +2,7 @@ import React from 'react';
 import {View, TouchableOpacity, Modal} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
+import {useColors} from '@/hooks/useColors';
 
 // ========================
 // Màu sắc
@@ -44,6 +45,7 @@ export default function ConfirmDialog({
   cancelText = 'Hủy',
   confirmText = 'Tiếp tục',
 }: ConfirmDialogProps) {
+  const colors = useColors();
   return (
     <Modal
       visible={visible}
@@ -51,7 +53,7 @@ export default function ConfirmDialog({
       animationType="fade"
       statusBarTranslucent>
       <View className="flex-1 bg-black/60 items-center justify-center px-8">
-        <View className="bg-surface-raised rounded-3xl p-6 w-full max-w-sm border border-border">
+        <View className="rounded-3xl p-6 w-full max-w-sm" style={{backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border}}>
           {/* Warning icon */}
           <View className="items-center mb-4">
             <View
@@ -62,24 +64,25 @@ export default function ConfirmDialog({
           </View>
 
           {/* Title */}
-          <AppText className="text-foreground font-sans-bold text-xl text-center mb-2">
+          <AppText className="font-sans-bold text-xl text-center mb-2" style={{color: colors.foreground}}>
             {title}
           </AppText>
 
           {/* Description */}
-          <AppText className="text-neutrals400 text-sm text-center mb-6 leading-5">
+          <AppText className="text-sm text-center mb-6 leading-5" style={{color: colors.neutrals400}}>
             {description}
           </AppText>
 
           {/* Actions */}
           <View className="flex-row gap-3">
             <TouchableOpacity
-              className="flex-1 py-3 rounded-xl items-center border border-neutrals700"
+              className="flex-1 py-3 rounded-xl items-center"
+              style={{borderWidth: 1, borderColor: colors.neutrals700}}
               onPress={onCancel}
               activeOpacity={0.7}
               accessibilityLabel={cancelText}
               accessibilityRole="button">
-              <AppText className="text-foreground font-sans-medium text-sm">
+              <AppText className="font-sans-medium text-sm" style={{color: colors.foreground}}>
                 {cancelText}
               </AppText>
             </TouchableOpacity>

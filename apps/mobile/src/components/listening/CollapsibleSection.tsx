@@ -8,6 +8,7 @@ import Animated, {
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useColors} from '@/hooks/useColors';
 
 // Bật LayoutAnimation cho Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -83,12 +84,12 @@ export default function CollapsibleSection({
         accessibilityRole="button">
         <View className="flex-row items-center">
           {icon && <AppText className="mr-2 text-base">{icon}</AppText>}
-          <AppText className="text-foreground font-sans-semibold text-base">
+          <AppText className="font-sans-semibold text-base" style={{color: colors.foreground}}>
             {title}
           </AppText>
         </View>
         <Animated.View style={chevronStyle}>
-          <Icon name="ChevronDown" className="w-5 h-5 text-neutrals400" />
+          <Icon name="ChevronDown" className="w-5 h-5" style={{color: colors.neutrals400}} />
         </Animated.View>
       </TouchableOpacity>
 
