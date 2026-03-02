@@ -28,6 +28,7 @@ import {
 } from '@/components/listening';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import TrackPlayer from 'react-native-track-player';
+import LinearGradient from 'react-native-linear-gradient';
 import TtsSettingsSheet from '@/components/listening/TtsSettingsSheet';
 import GeneratingScreen from '@/components/listening/GeneratingScreen';
 import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
@@ -283,6 +284,29 @@ export default function ListeningConfigScreen({
 
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
+      {/* Gradient background — cho glass effect có nội dung để blur */}
+      {isLiquidGlassSupported && (
+        <View style={StyleSheet.absoluteFill}>
+          {/* Lớp 1: Gradient xanh từ trên xuống */}
+          <LinearGradient
+            colors={[
+              `${LISTENING_BLUE}40`,
+              `${LISTENING_BLUE}18`,
+              'transparent',
+              `${LISTENING_BLUE}10`,
+            ]}
+            locations={[0, 0.25, 0.55, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Lớp 2: Điểm sáng ambient ở góc — tạo chiều sâu cho glass */}
+          <LinearGradient
+            colors={['rgba(100,160,255,0.12)', 'transparent']}
+            start={{x: 0.5, y: 0}}
+            end={{x: 0.5, y: 0.4}}
+            style={[StyleSheet.absoluteFill, {height: '40%'}]}
+          />
+        </View>
+      )}
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -646,6 +670,121 @@ export default function ListeningConfigScreen({
               </View>
             </View>
           )}
+
+          {/* ======================== */}
+          {/* RADIO MODE CONTENT */}
+          {/* ======================== */}
+          {mode === 'radio' && (
+            <>
+              {/* Radio Duration — preset pills */}
+              <View className="px-6 mb-4">
+                <SectionCard>
+                  <AppText
+                    className="text-xs font-sans-medium mb-1 uppercase tracking-wider"
+                    style={{color: colors.neutrals400}}>
+                    Duration
+                  </AppText>
+                  <View className="flex-row items-center mb-3">
+                    <AppText
+                      className="font-sans-semibold text-base"
+                      style={{color: colors.foreground}}>
+                      Chọn thời lượng
+                    </AppText>
+                    <Icon
+                      name="Clock"
+                      className="w-4 h-4 ml-2"
+                      style={{color: colors.neutrals400}}
+                    />
+                  </View>
+                  <View className="flex-row flex-wrap gap-2">
+                    {[1, 5, 10, 15, 20, 30].map(min => {
+                      const isActive = config.durationMinutes === min;
+                      return (
+                        <TouchableOpacity
+                          key={min}
+                          className="items-center justify-center rounded-xl border"
+                          style={{
+                            width: '30%',
+                            flexGrow: 1,
+                            paddingVertical: 10,
+                            backgroundColor: isActive
+                              ? LISTENING_BLUE
+                              : 'transparent',
+                            borderColor: isActive
+                              ? LISTENING_BLUE
+                              : colors.neutrals800,
+                          }}
+                          onPress={() => {
+                            haptic.light();
+                            setConfig({durationMinutes: min});
+                          }}
+                          disabled={isGenerating}>
+                          <AppText
+                            className="text-sm font-sans-bold"
+                            style={{
+                              color: isActive ? '#FFFFFF' : colors.foreground,
+                            }}>
+                            {min}'
+                          </AppText>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </SectionCard>
+              </View>
+
+              {/* Your Playlists */}
+              <View className="px-6 mb-4">
+                <SectionCard>
+                  <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center">
+                      <AppText
+                        className="text-xs font-sans-medium uppercase tracking-wider"
+                        style={{color: colors.neutrals400}}>
+                        Your playlists
+                      </AppText>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        haptic.light();
+                        // TODO: Navigate to all playlists
+                      }}>
+                      <AppText
+                        className="text-xs"
+                        style={{color: LISTENING_BLUE}}>
+                        Xem tất cả
+                      </AppText>
+                    </TouchableOpacity>
+                  </View>
+                  <View className="flex-row items-center mb-3">
+                    <AppText
+                      className="font-sans-semibold text-base"
+                      style={{color: colors.foreground}}>
+                      Playlist của bạn
+                    </AppText>
+                    <View
+                      className="rounded-full px-2 py-0.5 ml-2"
+                      style={{backgroundColor: LISTENING_BLUE}}>
+                      <AppText className="text-xs font-sans-bold text-white">
+                        0
+                      </AppText>
+                    </View>
+                  </View>
+
+                  {/* Empty state */}
+                  <View className="items-center py-8">
+                    <AppText className="text-3xl mb-2">📻</AppText>
+                    <AppText
+                      className="text-sm text-center"
+                      style={{color: colors.neutrals400}}>
+                      Chưa có playlist nào.{'\n'}Nhấn "Tạo Radio playlist" để bắt đầu!
+                    </AppText>
+                  </View>
+                </SectionCard>
+              </View>
+            </>
+          )}
+
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -677,11 +816,13 @@ export default function ListeningConfigScreen({
               disabled={isGenerating || !canStart}
               loading={isGenerating}
               accessibilityLabel={
-                canStart
-                  ? 'Bắt đầu nghe'
-                  : 'Chưa chọn chủ đề, không thể bắt đầu'
+                mode === 'radio'
+                  ? 'Tạo Radio playlist'
+                  : canStart
+                    ? 'Bắt đầu nghe'
+                    : 'Chưa chọn chủ đề, không thể bắt đầu'
               }>
-              Bắt đầu nghe
+              {mode === 'radio' ? 'Tạo Radio playlist' : 'Bắt đầu nghe'}
             </AppButton>
           </View>
         </View>
@@ -737,11 +878,14 @@ function SectionCard({children}: SectionCardProps) {
   if (isLiquidGlassSupported) {
     return (
       <LiquidGlassView
-        effect="clear"
-        colorScheme="dark"
+        effect="regular"
+        tintColor={`${LISTENING_BLUE}60`}
         style={{
           borderRadius: 16,
           padding: 16,
+          overflow: 'hidden',
+          borderWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.15)',
         }}>
         {children}
       </LiquidGlassView>

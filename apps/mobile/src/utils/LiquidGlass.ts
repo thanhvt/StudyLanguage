@@ -10,24 +10,30 @@
  *   CustomTabBar.tsx, ConfigScreen.tsx, hoặc bất kỳ nơi nào cần glass effect
  */
 
-import {View, type ViewProps} from 'react-native';
+import {Platform, View, type ViewProps} from 'react-native';
 
 // Biến lưu kết quả check — chỉ chạy 1 lần
 let _isSupported = false;
 let _LiquidGlassView: React.ComponentType<any> = View;
 
-try {
-  // Import động — nếu TurboModule không tồn tại sẽ throw
-  const liquidGlass = require('@callstack/liquid-glass');
-  _isSupported = liquidGlass.isLiquidGlassSupported ?? false;
-  if (liquidGlass.LiquidGlassView) {
-    _LiquidGlassView = liquidGlass.LiquidGlassView;
+// Chỉ thử import trên iOS — Android không có native module
+if (Platform.OS === 'ios') {
+  try {
+    // Import động — nếu TurboModule không tồn tại sẽ throw
+    const liquidGlass = require('@callstack/liquid-glass');
+    _isSupported = liquidGlass.isLiquidGlassSupported ?? false;
+    if (liquidGlass.LiquidGlassView) {
+      _LiquidGlassView = liquidGlass.LiquidGlassView;
+    }
+    console.log(`🔍 [LiquidGlass] Import thành công — isSupported: ${_isSupported}`);
+  } catch (e: any) {
+    // iOS < 26: TurboModule không tồn tại → fallback
+    console.log(`ℹ️ [LiquidGlass] Không hỗ trợ — lỗi: ${e?.message || e}`);
+    _isSupported = false;
+    _LiquidGlassView = View;
   }
-} catch (e) {
-  // iOS < 26 hoặc Android: TurboModule không tồn tại → fallback
-  console.log('ℹ️ [LiquidGlass] Không hỗ trợ trên thiết bị này — dùng View fallback');
-  _isSupported = false;
-  _LiquidGlassView = View;
+} else {
+  console.log('ℹ️ [LiquidGlass] Không phải iOS — dùng View fallback');
 }
 
 /**

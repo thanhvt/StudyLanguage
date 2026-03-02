@@ -254,6 +254,8 @@ export default function CustomScenariosScreen({
                 variant="outline"
                 size="default"
                 className="flex-1"
+                style={{borderColor: colors.neutrals600}}
+                textClassname="text-white"
                 onPress={() => setShowCreate(false)}>
                 Hủy
               </AppButton>
