@@ -859,20 +859,29 @@ export default function ListeningConfigScreen({
       {/* ======================== */}
       {!keyboardVisible && (
         <View
-          className="absolute bottom-0 left-0 right-0 px-6 pt-3"
-          style={{paddingBottom: Math.max(insets.bottom, 8)}}>
-          {/* Footer gradient — mịn hơn, không bị chia 2 phần */}
-          <LinearGradient
-            colors={['transparent', `${colors.background}80`, `${colors.background}CC`, colors.background]}
-            locations={[0, 0.25, 0.5, 1]}
-            style={{
-              position: 'absolute',
-              top: -30,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          />
+          className="absolute bottom-0 left-0 right-0 px-6 pt-0"
+          style={{paddingBottom: 8}}>
+          {/* Footer gradient — chỉ dark mode, light mode tạo vạch xám */}
+          {isDark && (
+            <LinearGradient
+              colors={[
+                'transparent',
+                `${colors.background}20`,
+                `${colors.background}50`,
+                `${colors.background}90`,
+                `${colors.background}CC`,
+                colors.background,
+              ]}
+              locations={[0, 0.15, 0.3, 0.5, 0.7, 1]}
+              style={{
+                position: 'absolute',
+                top: -100,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          )}
           <View
             style={
               canStart || (mode as string) === 'radio'
