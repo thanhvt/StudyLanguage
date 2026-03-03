@@ -171,8 +171,8 @@ const ScenarioItem = React.memo(function ScenarioItem({
         {/* ✓ Check icon khi selected */}
         {isSelected && (
           <View
-            className="w-5 h-5 items-center justify-center rounded-full mr-2.5"
-            style={{backgroundColor: LISTENING_BLUE}}>
+            className="w-5 h-5 items-center justify-center rounded-full"
+            style={{backgroundColor: LISTENING_BLUE, marginRight: 14}}>
             <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
           </View>
         )}
