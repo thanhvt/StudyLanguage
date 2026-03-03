@@ -270,8 +270,12 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
         style={{
           borderBottomWidth: 1,
           borderBottomColor: 'rgba(255,255,255,0.04)',
-          backgroundColor: hasSelectedScenario ? `${LISTENING_BLUE}10` : undefined,
-          borderWidth: hasSelectedScenario ? 1 : 0,  
+          backgroundColor: hasSelectedScenario
+            ? `${LISTENING_BLUE}10`
+            : isExpanded
+              ? 'rgba(255,255,255,0.03)'
+              : undefined,
+          borderWidth: hasSelectedScenario ? 1 : 0,
           borderColor: hasSelectedScenario ? `${LISTENING_BLUE}40` : 'transparent',
         }}
         onPress={onToggle}
@@ -546,10 +550,19 @@ export default function TopicPicker({
 
       return (
         <TouchableOpacity
-          className="px-4 py-2.5 rounded-full mr-2 border"
+          className="px-4 py-2.5 rounded-full mr-2"
           style={{
-            backgroundColor: isActive ? `${LISTENING_BLUE}15` : undefined,
-            borderColor: isActive ? LISTENING_BLUE : 'rgba(255,255,255,0.06)',
+            backgroundColor: isActive ? `${LISTENING_BLUE}12` : 'rgba(255,255,255,0.04)',
+            borderWidth: 1,
+            borderColor: isActive ? LISTENING_BLUE : 'rgba(255,255,255,0.08)',
+            // Glassmorphism: subtle glow khi active
+            ...(isActive && {
+              shadowColor: LISTENING_BLUE,
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 3,
+            }),
           }}
           onPress={() => {
             haptic.light();
@@ -561,7 +574,7 @@ export default function TopicPicker({
           accessibilityRole="button">
           <View className="flex-row items-center">
             <AppText
-              className="text-sm font-sans-medium"
+              className={`text-sm ${isActive ? 'font-sans-bold' : 'font-sans-medium'}`}
               style={{color: isActive ? LISTENING_BLUE : colors.foreground}}>
               {item.icon} {item.name}
             </AppText>
@@ -588,7 +601,20 @@ export default function TopicPicker({
   return (
     <View className="flex-1">
       {/* Search Bar với debounce */}
-      <View className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3" style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)'}}>
+      {/* Search Bar — Glassmorphism panel */}
+      <View
+        className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.04)',
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.08)',
+          // Glass elevation nhẹ
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          elevation: 4,
+        }}>
         <Icon name="Search" className="w-4 h-4 mr-2" style={{color: colors.neutrals400}} />
         <TextInput
           className="flex-1 text-base py-1"
