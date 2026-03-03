@@ -81,17 +81,17 @@ export interface AzureConversationAudioResult {
 /** Giọng tiếng Anh (en-US) hỗ trợ emotion styles */
 const AZURE_VOICES = {
   female: [
-    { name: 'en-US-AriaNeural', displayName: 'Aria', styles: ['angry', 'chat', 'cheerful', 'customerservice', 'empathetic', 'excited', 'friendly', 'hopeful', 'narration-professional', 'newscast-casual', 'newscast-formal', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-JennyNeural', displayName: 'Jenny', styles: ['angry', 'assistant', 'chat', 'cheerful', 'customerservice', 'excited', 'friendly', 'hopeful', 'newscast', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-SaraNeural', displayName: 'Sara', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-JaneNeural', displayName: 'Jane', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-NancyNeural', displayName: 'Nancy', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-AriaNeural', displayName: 'Aria', description: 'Đa năng, biểu cảm cao', styles: ['angry', 'chat', 'cheerful', 'customerservice', 'empathetic', 'excited', 'friendly', 'hopeful', 'narration-professional', 'newscast-casual', 'newscast-formal', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-JennyNeural', displayName: 'Jenny', description: 'Tự nhiên, thân thiện', styles: ['angry', 'assistant', 'chat', 'cheerful', 'customerservice', 'excited', 'friendly', 'hopeful', 'newscast', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-SaraNeural', displayName: 'Sara', description: 'Trẻ trung, năng động', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-JaneNeural', displayName: 'Jane', description: 'Chuyên nghiệp, rõ ràng', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-NancyNeural', displayName: 'Nancy', description: 'Ấm áp, truyền cảm', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
   ],
   male: [
-    { name: 'en-US-GuyNeural', displayName: 'Guy', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'newscast', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-DavisNeural', displayName: 'Davis', styles: ['angry', 'chat', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-TonyNeural', displayName: 'Tony', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
-    { name: 'en-US-JasonNeural', displayName: 'Jason', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-GuyNeural', displayName: 'Guy', description: 'Phóng viên, tin tức', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'newscast', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-DavisNeural', displayName: 'Davis', description: 'Trò chuyện, gần gũi', styles: ['angry', 'chat', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-TonyNeural', displayName: 'Tony', description: 'Trầm ấm, tự tin', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
+    { name: 'en-US-JasonNeural', displayName: 'Jason', description: 'Trẻ, nhiệt huyết', styles: ['angry', 'cheerful', 'excited', 'friendly', 'hopeful', 'sad', 'shouting', 'terrified', 'unfriendly', 'whispering'] },
   ],
 };
 
@@ -793,10 +793,10 @@ export class AzureTtsService {
    *
    * Mục đích: Frontend hiển thị dropdown chọn voice
    * Tham số đầu vào: Không
-   * Tham số đầu ra: Array { name, displayName, gender, styles }
+   * Tham số đầu ra: Array { name, displayName, description, gender, styles }
    * Khi nào sử dụng: API endpoint /ai/azure-voices
    */
-  getAvailableVoices(): { name: string; displayName: string; gender: string; styles: string[] }[] {
+  getAvailableVoices(): { name: string; displayName: string; description: string; gender: string; styles: string[] }[] {
     return [
       ...AZURE_VOICES.female.map((v) => ({ ...v, gender: 'female' })),
       ...AZURE_VOICES.male.map((v) => ({ ...v, gender: 'male' })),

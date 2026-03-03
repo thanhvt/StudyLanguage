@@ -151,9 +151,9 @@ const ScenarioItem = React.memo(function ScenarioItem({
       <TouchableOpacity
         className="flex-row items-center justify-between px-4 py-3.5 rounded-2xl mb-2"
         style={{
-          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : undefined,
-          borderWidth: isSelected ? 1 : 0,
-          borderColor: isSelected ? LISTENING_BLUE : 'transparent',
+          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : colors.neutrals900,
+          borderWidth: 1,
+          borderColor: isSelected ? LISTENING_BLUE : 'rgba(255,255,255,0.06)',
           ...(isSelected && {
             shadowColor: LISTENING_BLUE,
             shadowOffset: {width: 0, height: 2},
@@ -168,13 +168,21 @@ const ScenarioItem = React.memo(function ScenarioItem({
         activeOpacity={0.8}
         accessibilityLabel={`Kịch bản: ${scenario.name}${isSelected ? ', đang chọn' : ''}`}
         accessibilityRole="button">
+        {/* ✓ Check icon khi selected */}
+        {isSelected && (
+          <View
+            className="w-5 h-5 items-center justify-center rounded-full mr-2.5"
+            style={{backgroundColor: LISTENING_BLUE}}>
+            <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
+          </View>
+        )}
         <View className="flex-1 mr-3">
           <AppText
-            className="text-sm font-sans-medium"
+            className={`text-sm ${isSelected ? 'font-sans-bold' : 'font-sans-medium'}`}
             style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
             {scenario.name}
           </AppText>
-          <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={1}>
+          <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={2}>
             {scenario.description}
           </AppText>
           {/* Category badge — chỉ hiện trong search results */}
@@ -194,7 +202,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
           activeOpacity={0.6}
           accessibilityLabel={`${isFavorite ? 'Bỏ' : 'Đánh dấu'} yêu thích ${scenario.name}`}
           accessibilityRole="button">
-          <AppText style={{color: isFavorite ? '#FBBF24' : colors.neutrals600}}>
+          <AppText style={{color: isFavorite ? '#FBBF24' : colors.neutrals400}}>
             {isFavorite ? '⭐' : '☆'}
           </AppText>
         </TouchableOpacity>

@@ -282,6 +282,7 @@ export default function TtsSettingsSheet({
                           </AppText>
                           <AppText className="text-[10px]" style={{color: colors.neutrals400}}>
                             {voice.gender === 'Female' ? '♀ nữ' : '♂ nam'}
+                            {voice.description ? ` · ${voice.description}` : ''}
                             {isAssigned ? ` · ${assignedSpeaker}` : ''}
                           </AppText>
                         </View>
