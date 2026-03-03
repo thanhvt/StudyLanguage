@@ -1,10 +1,11 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   TouchableOpacity,
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -13,31 +14,21 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
 import {useListeningStore} from '@/store/useListeningStore';
 import {useToast} from '@/components/ui/ToastProvider';
+import {customScenarioApi, CustomScenario} from '@/services/api/customScenarios';
 
 // ========================
 // Màu sắc
 // ========================
 const LISTENING_BLUE = '#2563EB';
-const LISTENING_ORANGE = '#F97316';
-
-// ========================
-// Types
-// ========================
-interface CustomScenario {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-}
 
 /**
- * Mục đích: Màn hình quản lý Custom Scenarios — tạo/xem/xóa kịch bản tùy chỉnh
+ * Mục đích: Màn hình quản lý Custom Scenarios — tạo/xem/xóa kịch bản tùy chỉnh (sync backend)
  * Tham số đầu vào: navigation (React Navigation props)
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: ConfigScreen → nhấn nút "+" → navigate tới đây
- *   - CRUD kịch bản tùy chỉnh
+ *   - Load danh sách từ API khi mount
+ *   - CRUD sync realtime với Supabase backend
  *   - Quick Use → set topic + navigate back
- *   - Swipe to delete (simulated with icon button)
  */
 export default function CustomScenariosScreen({
   navigation,
@@ -45,6 +36,8 @@ export default function CustomScenariosScreen({
   navigation: any;
 }) {
   const [scenarios, setScenarios] = useState<CustomScenario[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
@@ -57,33 +50,65 @@ export default function CustomScenariosScreen({
   const insets = useInsets();
   const {showSuccess, showError} = useToast();
 
+  /**
+   * Mục đích: Load danh sách custom scenarios từ backend API
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Component mount + sau mỗi CRUD operation
+   */
+  const loadScenarios = useCallback(async () => {
+    try {
+      const data = await customScenarioApi.list();
+      setScenarios(data);
+    } catch (error) {
+      console.log('⚠️ [CustomScenariosScreen] Lỗi load:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadScenarios();
+  }, [loadScenarios]);
+
   // Lọc theo search query
   const filteredScenarios = scenarios.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.description.toLowerCase().includes(searchQuery.toLowerCase()),
+    (s.description || '').toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   /**
-   * Mục đích: Tạo scenario mới
+   * Mục đích: Tạo scenario mới qua backend API
    * Tham số đầu vào: không (dùng local state newName, newDesc)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User submit form "Tạo scenario mới"
    */
-  const handleCreate = useCallback(() => {
+  const handleCreate = useCallback(async () => {
     if (!newName.trim()) {return;}
-    const newScenario: CustomScenario = {
-      id: `custom-${Date.now()}`,
-      name: newName.trim(),
-      description: newDesc.trim() || 'Kịch bản tùy chỉnh',
-      createdAt: new Date().toISOString(),
-    };
-    setScenarios(prev => [newScenario, ...prev]);
-    setNewName('');
-    setNewDesc('');
-    setShowCreate(false);
-    haptic.success();
-    showSuccess('Đã tạo kịch bản', newScenario.name);
-  }, [newName, newDesc, haptic, showSuccess]);
+    try {
+      setIsSaving(true);
+      const created = await customScenarioApi.create({
+        name: newName.trim(),
+        description: newDesc.trim(),
+      });
+      // Validate response rồi thêm vào list
+      if (created && created.id) {
+        setScenarios(prev => [created, ...prev]);
+      } else {
+        await loadScenarios();
+      }
+      setNewName('');
+      setNewDesc('');
+      setShowCreate(false);
+      haptic.success();
+      showSuccess('Đã tạo kịch bản', newName.trim());
+    } catch (error) {
+      console.error('❌ [CustomScenariosScreen] Lỗi tạo:', error);
+      showError('Lỗi tạo kịch bản', 'Vui lòng thử lại sau');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [newName, newDesc, haptic, showSuccess, showError, loadScenarios]);
 
   /**
    * Mục đích: Quick Use — chọn scenario và quay lại ConfigScreen
@@ -102,29 +127,36 @@ export default function CustomScenariosScreen({
   }, [setSelectedTopic, haptic, navigation]);
 
   /**
-   * Mục đích: Xóa scenario
+   * Mục đích: Xóa scenario qua backend API
    * Tham số đầu vào: id (string)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn nút xóa trên 1 scenario
    */
   const handleDelete = useCallback((id: string) => {
+    const scenario = scenarios.find(s => s.id === id);
     Alert.alert(
       'Xóa kịch bản?',
-      'Hành động này không thể hoàn tác.',
+      `Bạn có chắc muốn xoá "${scenario?.name || 'kịch bản này'}"?`,
       [
         {text: 'Hủy', style: 'cancel'},
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: () => {
-            setScenarios(prev => prev.filter(s => s.id !== id));
-            haptic.medium();
-            showSuccess('Đã xóa kịch bản');
+          onPress: async () => {
+            try {
+              await customScenarioApi.delete(id);
+              setScenarios(prev => prev.filter(s => s.id !== id));
+              haptic.medium();
+              showSuccess('Đã xóa kịch bản');
+            } catch (error) {
+              console.error('❌ [CustomScenariosScreen] Lỗi xoá:', error);
+              showError('Lỗi xoá kịch bản', 'Vui lòng thử lại');
+            }
           },
         },
       ],
     );
-  }, [haptic, showSuccess]);
+  }, [scenarios, haptic, showSuccess, showError]);
 
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
@@ -171,7 +203,14 @@ export default function CustomScenariosScreen({
 
       {/* Scenario list */}
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-        {filteredScenarios.length === 0 ? (
+        {isLoading ? (
+          <View className="items-center py-16">
+            <ActivityIndicator size="small" />
+            <AppText className="text-xs mt-2" style={{color: colors.neutrals400}}>
+              Đang tải kịch bản...
+            </AppText>
+          </View>
+        ) : filteredScenarios.length === 0 ? (
           <View className="items-center py-16">
             <AppText className="text-3xl mb-3">📝</AppText>
             <AppText className="text-sm text-center" style={{color: colors.neutrals400}}>
@@ -190,16 +229,18 @@ export default function CustomScenariosScreen({
                     <AppText className="font-sans-bold text-sm" style={{color: colors.foreground}}>
                       {scenario.name}
                     </AppText>
-                    <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={2}>
-                      {scenario.description}
-                    </AppText>
+                    {scenario.description ? (
+                      <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={2}>
+                        {scenario.description}
+                      </AppText>
+                    ) : null}
                   </View>
                   <TouchableOpacity
                     onPress={() => handleDelete(scenario.id)}
                     hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                     accessibilityLabel="Xóa kịch bản"
                     accessibilityRole="button">
-                    <Icon name="Trash2" className="w-4 h-4 text-red-400" />
+                    <Icon name="Trash2" className="w-4 h-4" style={{color: '#EF4444'}} />
                   </TouchableOpacity>
                 </View>
                 {/* Action buttons */}
@@ -251,11 +292,9 @@ export default function CustomScenariosScreen({
             />
             <View className="flex-row gap-3">
               <AppButton
-                variant="outline"
+                variant="secondary"
                 size="default"
                 className="flex-1"
-                style={{borderColor: colors.neutrals600}}
-                textClassname="text-white"
                 onPress={() => setShowCreate(false)}>
                 Hủy
               </AppButton>
@@ -265,7 +304,8 @@ export default function CustomScenariosScreen({
                 className="flex-1"
                 style={{backgroundColor: LISTENING_BLUE}}
                 onPress={handleCreate}
-                disabled={!newName.trim()}>
+                disabled={!newName.trim() || isSaving}
+                loading={isSaving}>
                 Tạo
               </AppButton>
             </View>
