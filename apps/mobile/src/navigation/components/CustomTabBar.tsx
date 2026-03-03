@@ -270,10 +270,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
         style={[
           styles.pillContainer,
           {
-            // Dark mode: cùng màu với outer → không thấy viền
+            width: '100%',
             backgroundColor: isDark ? '#191919' : '#FFFFFF',
             ...(isDark
-              ? {} // Không cần border khi đồng màu
+              ? {}
               : {
                   shadowColor: '#000',
                   shadowOffset: {width: 0, height: 4},
@@ -326,6 +326,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 const styles = StyleSheet.create({
   outerContainer: {
     paddingHorizontal: 16,
+    alignItems: 'center',
   },
   pillContainer: {
     borderRadius: 28,
