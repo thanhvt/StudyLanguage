@@ -658,12 +658,15 @@ export default function ListeningPlayerScreen({
             // ========================
             // FOCUS VIEW — Large current sentence only
             // ========================
-            <View className="flex-1 items-center justify-center px-8">
+            <ScrollView
+              className="flex-1 px-8"
+              contentContainerStyle={{flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 32}}
+              showsVerticalScrollIndicator={false}>
               {currentExchange && (
                 <Animated.View
                   key={currentExchangeIndex}
                   entering={SlideInRight.duration(300)}
-                  className="items-center">
+                  className="items-center w-full">
                   {/* Speaker badge */}
                   <View
                     className="flex-row items-center px-4 py-1.5 rounded-full mb-6"
@@ -702,7 +705,7 @@ export default function ListeningPlayerScreen({
                   </AppText>
                 </Animated.View>
               )}
-            </View>
+            </ScrollView>
           )}
         </Animated.View>
       </GestureDetector>
