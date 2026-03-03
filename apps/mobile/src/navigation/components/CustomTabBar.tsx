@@ -241,18 +241,27 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
     <View
       style={[
         styles.outerContainer,
-        {paddingBottom: Math.max(insets.bottom, 8)},
+        {
+          paddingBottom: Math.max(insets.bottom, 8),
+          // Dark mode: nền ngoài đồng nhất với pill → liền mạch
+          backgroundColor: isDark ? '#191919' : 'transparent',
+        },
       ]}>
+      {/* Đường kẻ phân cách phía trên — chỉ dark mode */}
+      {isDark && (
+        <View style={{height: 0.5, backgroundColor: 'rgba(255,255,255,0.06)'}} />
+      )}
       <View
         style={[
           styles.pillContainer,
           {
-            backgroundColor: isDark ? 'rgba(25,25,25,0.92)' : '#FFFFFF',
+            // Dark mode: cùng màu với outer → không thấy viền
+            backgroundColor: isDark ? '#191919' : '#FFFFFF',
             ...(isDark
-              ? {borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)'}
+              ? {} // Không cần border khi đồng màu
               : {
                   shadowColor: '#000',
-                  shadowOffset: {x: 0, y: 4},
+                  shadowOffset: {width: 0, height: 4},
                   shadowOpacity: 0.08,
                   shadowRadius: 20,
                   elevation: 8,
@@ -344,7 +353,6 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: 'center',
-    whiteSpace: 'nowrap',
   },
 });
 
