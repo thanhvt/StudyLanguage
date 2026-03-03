@@ -255,37 +255,55 @@ export default function TtsSettingsSheet({
                 </AppText>
               </View>
             ) : (
-              <View className="gap-2 mb-6">
-                {voices.map((voice, idx) => (
-                  <View
-                    key={`voice-${voice.id || idx}`}
-                    className="flex-row items-center rounded-xl px-4 py-3"
-                    style={{backgroundColor: colors.neutrals900}}>
-                    {/* Voice info */}
-                    <View className="flex-1">
-                      <AppText className="text-sm font-sans-medium" style={{color: colors.foreground}}>
-                        {voice.name}
-                      </AppText>
-                      <AppText className="text-xs" style={{color: colors.neutrals400}}>
-                        {voice.gender === 'Female' ? '♀' : '♂'} {voice.description || voice.gender}
-                      </AppText>
+              <View className="flex-row flex-wrap" style={{gap: 8, marginBottom: 24}}>
+                {voices.map((voice, idx) => {
+                  // Kiểm tra giọng này có đang được gán cho speaker nào không
+                  const assignedSpeaker = Object.entries(voicePerSpeaker).find(
+                    ([, vid]) => vid === voice.id,
+                  )?.[0];
+                  const isAssigned = !!assignedSpeaker;
+                  return (
+                    <View
+                      key={`voice-${voice.id || idx}`}
+                      className="rounded-xl px-3 py-2.5"
+                      style={{
+                        width: '48.5%',
+                        backgroundColor: isAssigned ? `${LISTENING_BLUE}12` : colors.neutrals900,
+                        borderWidth: 1,
+                        borderColor: isAssigned ? `${LISTENING_BLUE}40` : 'rgba(255,255,255,0.06)',
+                      }}>
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1 mr-1">
+                          <AppText
+                            className="text-[13px] font-sans-medium"
+                            style={{color: isAssigned ? LISTENING_BLUE : colors.foreground}}
+                            numberOfLines={1}>
+                            {voice.name.replace('en-US-', '').replace('Neural', '')}
+                          </AppText>
+                          <AppText className="text-[10px]" style={{color: colors.neutrals400}}>
+                            {voice.gender === 'Female' ? '♀ nữ' : '♂ nam'}
+                            {isAssigned ? ` · ${assignedSpeaker}` : ''}
+                          </AppText>
+                        </View>
+                        {/* Preview button */}
+                        <TouchableOpacity
+                          onPress={() => handlePreview(voice.id)}
+                          className="w-7 h-7 rounded-full items-center justify-center"
+                          style={{backgroundColor: `${LISTENING_BLUE}15`}}
+                          disabled={!!previewingVoice}
+                          hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
+                          accessibilityLabel={`Nghe thử giọng ${voice.name}`}
+                          accessibilityRole="button">
+                          {previewingVoice === voice.id ? (
+                            <ActivityIndicator size="small" color={LISTENING_BLUE} />
+                          ) : (
+                            <Icon name="Play" className="w-3 h-3" style={{color: LISTENING_BLUE}} />
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                    {/* Preview button */}
-                    <TouchableOpacity
-                      onPress={() => handlePreview(voice.id)}
-                      className="w-8 h-8 rounded-full items-center justify-center"
-                      style={{backgroundColor: `${LISTENING_BLUE}15`}}
-                      disabled={!!previewingVoice}
-                      accessibilityLabel={`Nghe thử giọng ${voice.name}`}
-                      accessibilityRole="button">
-                      {previewingVoice === voice.id ? (
-                        <ActivityIndicator size="small" color={LISTENING_BLUE} />
-                      ) : (
-                        <Icon name="Play" className="w-3.5 h-3.5" style={{color: LISTENING_BLUE}} />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             )}
 
