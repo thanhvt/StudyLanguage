@@ -276,7 +276,7 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
               ? 'rgba(255,255,255,0.03)'
               : undefined,
           borderWidth: 0,
-          borderRightWidth: hasSelectedScenario ? 3 : 0,
+          borderLeftWidth: hasSelectedScenario ? 3 : 0,
           borderColor: hasSelectedScenario ? LISTENING_BLUE : 'transparent',
         }}
         onPress={onToggle}
