@@ -103,7 +103,7 @@ export default function TopicPickerModal({
       onRequestClose={onClose}>
       <View
         className="flex-1"
-        style={{paddingTop: insets.top, backgroundColor: colors.background}}
+        style={{paddingTop: 8, backgroundColor: colors.background}}
         >
 
         {/* ======================== */}

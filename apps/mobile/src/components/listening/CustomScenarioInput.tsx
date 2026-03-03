@@ -152,10 +152,9 @@ export default function CustomScenarioInput({
    */
   const handleToggleFavorite = async (id: string) => {
     try {
-      const updated = await customScenarioApi.toggleFavorite(id);
-      setSavedScenarios(prev =>
-        prev.map(s => (s.id === id ? updated : s)),
-      );
+      await customScenarioApi.toggleFavorite(id);
+      // Backend trả {success, isFavorite} chứ không phải scenario đầy đủ → reload list
+      await loadScenarios();
     } catch (error) {
       console.error('❌ [CustomScenario] Lỗi toggle favorite:', error);
     }

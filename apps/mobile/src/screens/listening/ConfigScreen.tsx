@@ -491,6 +491,29 @@ export default function ListeningConfigScreen({
                 </View>
               </View>
 
+              {/* Hiển thị topic đang chọn — để user biết đang chọn gì */}
+              {selectedTopic && (
+                <View className="flex-row items-center rounded-xl px-3 py-2 mb-3"
+                  style={{backgroundColor: `${LISTENING_BLUE}10`, borderWidth: 1, borderColor: `${LISTENING_BLUE}25`}}>
+                  <Icon name="Check" className="w-3.5 h-3.5 mr-2" style={{color: LISTENING_BLUE}} />
+                  <AppText className="text-[13px] flex-1" style={{color: colors.foreground}} numberOfLines={1}>
+                    <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
+                      {selectedTopic.name}
+                    </AppText>
+                  </AppText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic.light();
+                      setSelectedTopic(null);
+                    }}
+                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                    accessibilityLabel="Bỏ chọn chủ đề"
+                    accessibilityRole="button">
+                    <Icon name="X" className="w-3.5 h-3.5" style={{color: colors.neutrals400}} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* Category Tabs */}
               <ScrollView
                 horizontal

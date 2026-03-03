@@ -40,7 +40,9 @@ export const customScenarioApi = {
   list: async (): Promise<CustomScenario[]> => {
     console.log('📝 [CustomScenario] Lấy danh sách...');
     const response = await apiClient.get('/custom-scenarios');
-    return response.data as CustomScenario[];
+    // Backend trả { success, scenarios, count } → cần lấy .scenarios
+    const data = response.data as any;
+    return (data?.scenarios ?? data ?? []) as CustomScenario[];
   },
 
   /**
@@ -56,7 +58,9 @@ export const customScenarioApi = {
   }): Promise<CustomScenario> => {
     console.log('📝 [CustomScenario] Tạo mới:', data.name);
     const response = await apiClient.post('/custom-scenarios', data);
-    return response.data as CustomScenario;
+    // Backend trả { success, scenario } → lấy .scenario
+    const result = response.data as any;
+    return (result?.scenario ?? result) as CustomScenario;
   },
 
   /**
@@ -68,7 +72,10 @@ export const customScenarioApi = {
   toggleFavorite: async (id: string): Promise<CustomScenario> => {
     console.log('📝 [CustomScenario] Toggle favorite:', id);
     const response = await apiClient.patch(`/custom-scenarios/${id}/favorite`);
-    return response.data as CustomScenario;
+    // Backend trả { success, isFavorite, message } → không phải scenario đầy đủ
+    // Cần trả về scenario data từ response hoặc refetch
+    const result = response.data as any;
+    return result as CustomScenario;
   },
 
   /**
