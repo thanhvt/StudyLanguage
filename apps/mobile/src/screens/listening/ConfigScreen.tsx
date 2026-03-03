@@ -1065,6 +1065,10 @@ export default function ListeningConfigScreen({
           <GeneratingScreen
             currentStep={generatingStep}
             activeSpeaker={activeSpeaker}
+            onCancel={() => {
+              setGenerating(false);
+              haptic.error();
+            }}
           />
         </View>
       )}
