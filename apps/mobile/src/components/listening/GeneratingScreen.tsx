@@ -135,7 +135,7 @@ export default function GeneratingScreen({
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
       {/* Phần trên — Progress ring + status */}
-      <View className="flex-1 items-center justify-center px-8">
+      <View className="flex-1 items-center px-8" style={{paddingTop: 60, justifyContent: 'flex-start'}}>
         {/* Thick Progress Ring */}
         <View style={{width: ringSize, height: ringSize, marginBottom: 24}}>
           {/* Track ring (nền) */}
@@ -247,7 +247,6 @@ export default function GeneratingScreen({
               icon="💬"
               label="Chủ đề"
               value={selectedTopic?.name || config.topic || 'Tuỳ chỉnh'}
-              flex={2}
             />
             <ConfigChip
               icon="🎯"
