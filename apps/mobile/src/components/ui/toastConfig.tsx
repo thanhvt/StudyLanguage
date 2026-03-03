@@ -42,26 +42,38 @@ const getTypeColors = (type: string, colors: typeof AppColors) => {
   switch (type) {
     case 'success':
       return {
-        iconColor: colors.success,
-        bgTint: `${colors.success}15`,
-        borderTint: `${colors.success}40`,
+        iconColor: '#FFFFFF',
+        textColor: '#FFFFFF',
+        subtextColor: 'rgba(255,255,255,0.8)',
+        closeColor: 'rgba(255,255,255,0.6)',
+        bgTint: colors.success,
+        borderTint: `${colors.success}CC`,
       };
     case 'error':
       return {
-        iconColor: colors.error,
-        bgTint: `${colors.error}15`,
-        borderTint: `${colors.error}40`,
+        iconColor: '#FFFFFF',
+        textColor: '#FFFFFF',
+        subtextColor: 'rgba(255,255,255,0.8)',
+        closeColor: 'rgba(255,255,255,0.6)',
+        bgTint: colors.error,
+        borderTint: `${colors.error}CC`,
       };
     case 'warning':
       return {
-        iconColor: colors.warning,
-        bgTint: `${colors.warning}15`,
-        borderTint: `${colors.warning}40`,
+        iconColor: '#FFFFFF',
+        textColor: '#FFFFFF',
+        subtextColor: 'rgba(255,255,255,0.85)',
+        closeColor: 'rgba(255,255,255,0.6)',
+        bgTint: colors.warning,
+        borderTint: `${colors.warning}CC`,
       };
     case 'info':
     default:
       return {
-        iconColor: colors.primary,
+        iconColor: '#FFFFFF',
+        textColor: '#FFFFFF',
+        subtextColor: 'rgba(255,255,255,0.8)',
+        closeColor: 'rgba(255,255,255,0.6)',
         bgTint: colors.neutrals1000,
         borderTint: colors.neutrals800,
       };
@@ -114,7 +126,7 @@ const CustomToast = ({
           {text1 ? (
             <Animated.Text
               entering={FadeIn.delay(50).duration(200)}
-              style={[styles.title, {color: colors.foreground}]}
+              style={[styles.title, {color: typeColors.textColor}]}
               numberOfLines={2}>
               {text1}
             </Animated.Text>
@@ -122,7 +134,7 @@ const CustomToast = ({
           {text2 ? (
             <Animated.Text
               entering={FadeIn.delay(100).duration(200)}
-              style={[styles.message, {color: colors.neutrals300}]}
+              style={[styles.message, {color: typeColors.subtextColor}]}
               numberOfLines={3}>
               {text2}
             </Animated.Text>
@@ -134,7 +146,7 @@ const CustomToast = ({
           onPress={() => hide()}
           style={styles.closeButton}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <icons.X size={16} color={colors.neutrals400} />
+          <icons.X size={16} color={typeColors.closeColor} />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>

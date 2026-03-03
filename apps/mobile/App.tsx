@@ -63,7 +63,7 @@ const AppContent: React.FC = () => {
             </SafeAreaProvider>
           </BottomSheetModalProvider>
         </NavigationContainer>
-        <ToastMessage config={toastConfig} topOffset={60} />
+        <ToastMessage config={toastConfig} topOffset={90} />
       </View>
     </GestureHandlerRootView>
   );
