@@ -285,7 +285,7 @@ export default function CustomScenarioInput({
             ⚡ Sử dụng ngay
           </AppButton>
           <AppButton
-            variant="outline"
+            variant="secondary"
             className="flex-1 rounded-xl"
             onPress={handleSave}
             disabled={disabled || !name.trim() || isSaving}
