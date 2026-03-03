@@ -285,13 +285,13 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
         <View className="flex-row items-center flex-1">
           {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
           {hasSelectedScenario && (
-            <View className="w-2 h-2 rounded-full mr-2" style={{backgroundColor: LISTENING_BLUE}} />
+            <View className="w-2 h-2 rounded-full" style={{backgroundColor: LISTENING_BLUE, marginRight: 8}} />
           )}
           <AppText className="font-sans-medium text-xs uppercase tracking-wider"
             style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.neutrals300}}>
             {subCategory.name}
           </AppText>
-          <View className="rounded-full px-2.5 py-1 ml-2" style={{backgroundColor: colors.neutrals700}}>
+          <View className="rounded-full px-2.5 py-1" style={{backgroundColor: colors.neutrals700, marginLeft: 8}}>
             <AppText className="text-xs font-sans-medium" style={{color: colors.neutrals300}}>
               {subCategory.scenarios.length}
             </AppText>
@@ -580,7 +580,7 @@ export default function TopicPicker({
             </AppText>
             {/* Badge count cho tab Yêu thích */}
             {badgeCount !== null && badgeCount > 0 && (
-              <View className="rounded-full px-1.5 py-0.5 ml-1.5" style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+              <View className="rounded-full px-1.5 py-0.5" style={{backgroundColor: `${LISTENING_BLUE}20`, marginLeft: 6}}>
                 <AppText className="text-[10px] font-sans-bold" style={{color: LISTENING_BLUE}}>
                   {badgeCount}
                 </AppText>
@@ -726,7 +726,7 @@ export default function TopicPicker({
       {/* Hiển thị topic đang chọn — sticky bottom indicator */}
       {selectedTopic && (
         <View className="mt-3 rounded-2xl px-4 py-2.5 flex-row items-center" style={{backgroundColor: `${LISTENING_BLUE}15`, borderWidth: 1, borderColor: `${LISTENING_BLUE}30`}}>
-          <Icon name="Check" className="w-4 h-4 mr-2" style={{color: LISTENING_BLUE}} />
+          <Icon name="Check" className="w-4 h-4" style={{color: LISTENING_BLUE, marginRight: 8}} />
           <AppText className="text-sm flex-1" style={{color: colors.foreground}}>
             Đã chọn: <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>{selectedTopic.name}</AppText>
           </AppText>

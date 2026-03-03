@@ -467,6 +467,7 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 | Block the main thread with heavy computation | Janky UI |
 | Use more than 2 action icons in header | Cluttered |
 | Import `@callstack/liquid-glass` directly | Crash iOS < 26 → dùng `@/utils/LiquidGlass` |
+| Use `className="mr-*"` on View/Icon that also has inline `style={{}}` | NativeWind margin bị nuốt trong flex-row → chuyển margin vào inline style |
 
 ---
 

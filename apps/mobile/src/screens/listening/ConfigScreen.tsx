@@ -495,7 +495,7 @@ export default function ListeningConfigScreen({
               {selectedTopic && (
                 <View className="flex-row items-center rounded-xl px-3 py-2 mb-3"
                   style={{backgroundColor: `${LISTENING_BLUE}10`, borderWidth: 1, borderColor: `${LISTENING_BLUE}25`}}>
-                  <Icon name="Check" className="w-3.5 h-3.5 mr-2" style={{color: LISTENING_BLUE}} />
+                  <Icon name="Check" className="w-3.5 h-3.5" style={{color: LISTENING_BLUE, marginRight: 8}} />
                   <AppText className="text-[13px] flex-1" style={{color: colors.foreground}} numberOfLines={1}>
                     <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
                       {selectedTopic.name}

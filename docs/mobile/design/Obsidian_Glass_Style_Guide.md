@@ -1108,6 +1108,7 @@ Khi áp dụng style này vào bất kỳ màn hình nào, check:
 - [ ] Spring animation cho press states (scale 0.92)
 - [ ] Haptic feedback cho mọi interaction
 - [ ] Glass borders: `rgba(255,255,255,0.06)` cho search bar, tabs, accordion
+- [ ] NativeWind margin: nếu View/Icon có cả `className="mr-*"` VÀ inline `style={{}}` → chuyển margin vào inline style
 
 ### Layout
 - [ ] Consistent spacing (bội số 4px)
