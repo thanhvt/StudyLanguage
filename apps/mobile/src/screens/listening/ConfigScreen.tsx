@@ -672,51 +672,47 @@ export default function ListeningConfigScreen({
           )}
 
           {/* ======================== */}
-          {/* LEVEL SECTION (chỉ hiện khi Podcast) */}
-          {/* ======================== */}
-          {mode === 'podcast' && (
-          <View className="px-6 mb-6">
-            <SectionCard>
-              <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
-                Level
-              </AppText>
-              <View className="flex-row gap-2">
-                {LEVELS.map(level => {
-                  const isActive = config.level === level.id;
-                  return (
-                    <TouchableOpacity
-                      key={level.id}
-                      className="flex-1 py-2.5 rounded-xl items-center border"
-                      style={{
-                        backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
-                        borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
-                      }}
-                      onPress={() => {
-                        haptic.light();
-                        setConfig({level: level.id});
-                      }}
-                      disabled={isGenerating}
-                      accessibilityLabel={`Trình độ ${level.label}${isActive ? ', đang chọn' : ''}`}
-                      accessibilityRole="button">
-                      <AppText
-                        className="text-[15px] font-sans-medium"
-                        style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
-                        {level.label}
-                      </AppText>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </SectionCard>
-          </View>
-          )}
-
-          {/* ======================== */}
-          {/* DURATION + SPEAKERS ROW (chỉ hiện khi Podcast) */}
+          {/* LEVEL + DURATION + SPEAKERS (merged — Option B) */}
           {/* ======================== */}
           {mode === 'podcast' && (
             <View className="px-6 mb-6">
               <SectionCard>
+                {/* Level */}
+                <AppText className="text-xs font-sans-medium mb-2 uppercase tracking-wider" style={{color: colors.neutrals400}}>
+                  Level
+                </AppText>
+                <View className="flex-row gap-2 mb-4">
+                  {LEVELS.map(level => {
+                    const isActive = config.level === level.id;
+                    return (
+                      <TouchableOpacity
+                        key={level.id}
+                        className="flex-1 py-2.5 rounded-xl items-center border"
+                        style={{
+                          backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
+                          borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                        }}
+                        onPress={() => {
+                          haptic.light();
+                          setConfig({level: level.id});
+                        }}
+                        disabled={isGenerating}
+                        accessibilityLabel={`Trình độ ${level.label}${isActive ? ', đang chọn' : ''}`}
+                        accessibilityRole="button">
+                        <AppText
+                          className="text-[15px] font-sans-medium"
+                          style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                          {level.label}
+                        </AppText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Separator */}
+                <View className="h-[1px] mb-4" style={{backgroundColor: colors.border}} />
+
+                {/* Duration + Speakers */}
                 <View className="flex-row gap-4">
                   <View className="flex-1">
                     <DurationSelector
