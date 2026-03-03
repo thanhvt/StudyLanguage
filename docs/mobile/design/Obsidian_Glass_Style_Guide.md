@@ -851,21 +851,275 @@ function ToggleRow({ emoji, title, subtitle, value, onValueChange, disabled }) {
 
 ---
 
-## 15. Checklist cho Designer / Developer
+## 15. iOS 26+ LiquidGlass vs Obsidian Glass Fallback
+
+### 15.1 Chiến lược phân nhánh
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ios >= 26 (WWDC 2025)         │  ios < 26 / Android       │
+├────────────────────────────────┼───────────────────────────┤
+│  @callstack/liquid-glass       │  Obsidian Glass fallback   │
+│  LiquidGlassView native       │  View + rgba borders       │
+│  effect: 'clear' | 'regular'  │  backgroundColor + border  │
+│  tintColor, colorScheme        │  Manual color tokens       │
+│  Blur + vibrancy tự động       │  rgba(255,255,255,0.06)   │
+└────────────────────────────────┴───────────────────────────┘
+```
+
+### 15.2 Import pattern (bắt buộc)
+
+```typescript
+// ❌ KHÔNG BAO GIỜ import trực tiếp — crash trên iOS < 26
+import { LiquidGlassView } from '@callstack/liquid-glass';
+
+// ✅ LUÔN dùng wrapper an toàn
+import { LiquidGlassView, isLiquidGlassSupported } from '@/utils/LiquidGlass';
+
+// ✅ Trong component:
+{isLiquidGlassSupported ? (
+  <LiquidGlassView effect="clear" tintColor={accent} />
+) : (
+  <View style={{
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  }} />
+)}
+```
+
+### 15.3 LiquidGlass wrapper (`utils/LiquidGlass.ts`)
+
+| Export | Mô tả |
+|--------|--------|
+| `isLiquidGlassSupported` | `boolean` — `true` trên iOS 26+, `false` mọi nơi khác |
+| `LiquidGlassView` | Component — native glass iOS 26+, fallback `View` trên iOS <26/Android |
+
+> [!CAUTION]
+> `@callstack/liquid-glass` sử dụng TurboModules. Trên iOS < 26, `TurboModuleRegistry.getEnforcing()` sẽ **crash app** nếu import trực tiếp. Luôn dùng `@/utils/LiquidGlass`.
+
+---
+
+## 16. Dark Mode — Bẫy thường gặp (Lessons Learned)
+
+> [!IMPORTANT]
+> Các quy tắc dưới đây được rút ra từ các bug thực tế đã fix. **Bắt buộc** tuân thủ cho tất cả features.
+
+### 16.1 Màu sắc bị "nuốt" trên nền đen
+
+| ❌ Sai | ✅ Đúng | Lý do |
+|--------|---------|-------|
+| `text-destructive` cho icon xoá | `style={{color: '#EF4444'}}` | `destructive` token quá tối trên OLED black |
+| `variant="outline"` cho button phụ | `variant="secondary"` | Outline border gần như vô hình trên dark bg |
+| `neutrals400` cho "đã chọn" text | `colors.foreground` + accent name | Người dùng không nhận ra đã chọn gì |
+| `colors.neutrals700` cho viền input | `colors.neutrals800` | Consistency với theme tokens |
+
+### 16.2 Minimum contrast cho Dark Mode
+
+```
+Element                  Minimum    Dark Mode Implementation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Primary text             #fafafa    Luôn dùng colors.foreground
+Selected indicator       #FFFFFF    Text trắng + accent color cho tên
+Icon hành động (xoá)     #EF4444    Explicit hex, KHÔNG dùng token
+Badge/tag active         #fff bg    Icon ✓ + viền accent + text trắng
+Placeholder text         #5e5e5e    neutrals500 (AA Large pass)
+Disabled text            #4d4d4d    neutrals600 (decorative only)
+```
+
+### 16.3 Button variants và Dark Mode
+
+```
+Trường hợp                        Variant nên dùng
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CTA chính (1 per screen)          primary
+Hành động phụ cạnh primary        secondary (KHÔNG outline)
+Huỷ / Cancel                      secondary
+Link-style, xem thêm              ghost
+Xoá / Destructive                 primary + error color
+Nút trong bottom sheet form       secondary (Huỷ) + primary (Submit)
+```
+
+> [!WARNING]
+> `variant="outline"` **gần như vô hình** trên dark mode OLED. Chỉ dùng khi nền sáng hơn `#262626` (ví dụ light mode).
+
+---
+
+## 17. Glassmorphism — Nguyên tắc áp dụng
+
+### 17.1 Subtle glass borders (Obsidian Glass)
+
+```css
+/* Border glass nhẹ — tạo hiệu ứng light reflection trên dark bg */
+borderWidth: 1
+borderColor: rgba(255, 255, 255, 0.06)    /* glass edge */
+
+/* CÓ THỂ dùng cho: */
+✅ Search bar
+✅ Category tabs (inactive state)
+✅ Accordion section headers
+✅ Card containers
+
+/* KHÔNG dùng cho: */
+❌ Text elements
+❌ Icon buttons nhỏ
+❌ Dividers (dùng colors.border thay)
+```
+
+### 17.2 Selected state glow
+
+```typescript
+// Selected item cần 3 thuộc tính:
+{
+  backgroundColor: `${accentColor}15`,     // ~8% tint
+  borderWidth: 1,
+  borderColor: accentColor,                 // Solid accent
+  // Tuỳ chọn: shadow glow
+  shadowColor: accentColor,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+}
+```
+
+### 17.3 Selected indicator badge pattern
+
+```
+❌ Cũ (khó nhìn):
+  "Đã chọn" text nhỏ, neutrals400 → gần như vô hình
+
+✅ Mới (rõ ràng):
+  ┌─ ✓ icon + foreground text + accent topic name ─┐
+  │  ✓ Tên topic đang chọn                     X   │
+  └──────────────────────────────────────────────────┘
+  - Icon ✓ màu accent (border viền + icon)
+  - Text tên topic: font-sans-bold + accent color
+  - Nút X để bỏ chọn nhanh
+  - Background: accent/10 + border accent/25
+```
+
+### 17.4 Typography hierarchy trong Glass panels
+
+```
+Cấp 1 — Section header:    text-xs, uppercase, tracking-wider, neutrals400
+Cấp 2 — Item name:         text-[15px], font-sans-bold, foreground
+Cấp 3 — Item description:  text-xs, neutrals400, numberOfLines={1}
+Cấp 4 — Badge/tag:         text-[10px], uppercase, accent color
+```
+
+---
+
+## 18. Modal & Alert — Layering Rules
+
+### 18.1 PageSheet Modal padding
+
+```
+❌ Sai:  paddingTop: insets.top     → thừa ~59px trên notch iPhone
+✅ Đúng: paddingTop: 8             → pageSheet đã có offset built-in
+
+Lý do: RN Modal presentationStyle="pageSheet" tạo sheet cách top ~20px.
+Thêm insets.top sẽ double-count safe area → header "Chọn chủ đề" cách top quá xa.
+```
+
+### 18.2 Confirm dialog trong Modal
+
+```
+❌ Sai:  showConfirm() / custom Dialog
+  → DialogProvider render ở app root
+  → RN Modal tạo native layer mới
+  → Dialog hiển thị DƯỚI modal → user không thấy
+
+✅ Đúng: Alert.alert() (native iOS/Android)
+  → Native alert LUÔN render trên mọi Modal layer
+  → Style theo system theme (không bị dark custom dialog)
+  → Có style: 'destructive' cho nút xoá (iOS đỏ tự động)
+```
+
+```typescript
+// Pattern chuẩn cho xoá item bên trong Modal:
+Alert.alert(
+  'Xoá kịch bản?',
+  `Bạn có chắc muốn xoá "${name}"?`,
+  [
+    { text: 'Huỷ', style: 'cancel' },
+    {
+      text: 'Xoá',
+      style: 'destructive',
+      onPress: async () => { /* delete logic */ },
+    },
+  ],
+);
+```
+
+### 18.3 Khi nào dùng gì?
+
+| Ngữ cảnh | Component | Lý do |
+|-----------|-----------|-------|
+| Confirm trong **Modal/Sheet** | `Alert.alert()` | Native, luôn trên top layer |
+| Confirm ở **root screen** | `showConfirm()` hoặc `Alert.alert()` | Cả hai đều OK |
+| Form phức tạp | `Bottom Sheet` | UX tốt hơn Alert |
+| Thông báo nhanh | `Toast` (showSuccess/showError) | Auto-dismiss, không block |
+
+---
+
+## 19. API Data Shape — Quy tắc Frontend ↔ Backend
+
+> [!WARNING]
+> API trả wrapper object, KHÔNG phải raw data. Luôn extract đúng field.
+
+```typescript
+// ❌ Sai — backend trả { success, scenarios, count }
+const response = await apiClient.get('/custom-scenarios');
+return response.data as CustomScenario[];  // response.data = wrapper!
+
+// ✅ Đúng — extract .scenarios
+const response = await apiClient.get('/custom-scenarios');
+const data = response.data as any;
+return (data?.scenarios ?? data ?? []) as CustomScenario[];
+
+// ✅ Cho create — extract .scenario (singular)
+const result = response.data as any;
+return (result?.scenario ?? result) as CustomScenario;
+```
+
+---
+
+## 20. Checklist cho Designer / Developer (Updated)
 
 Khi áp dụng style này vào bất kỳ màn hình nào, check:
 
+### Nền tảng
 - [ ] Background = `#000000` (OLED black), không phải dark gray
 - [ ] Cards dùng `surface-raised` (#171717), có 1px border `#262626`
+- [ ] Import `LiquidGlassView` từ `@/utils/LiquidGlass` (KHÔNG trực tiếp)
+- [ ] Kiểm tra `isLiquidGlassSupported` trước khi dùng glass effect
+
+### Typography & Colors
 - [ ] Tất cả text dùng system font (SF Pro / Roboto)
 - [ ] Primary text ≥ 4.5:1 contrast ratio
-- [ ] Interactive elements ≥ 44pt touch target
+- [ ] Selected text dùng `foreground` + `accent` cho tên (KHÔNG neutrals400)
+- [ ] Icon destructive dùng `#EF4444` explicit (KHÔNG `text-destructive` token)
 - [ ] Accent colors dùng muted variants (400 shade, không 500+)
+- [ ] No purple/violet — dùng indigo thay thế
+
+### Components
+- [ ] Button phụ: `secondary` (KHÔNG `outline` trên dark mode)
+- [ ] Interactive elements ≥ 44pt touch target
 - [ ] Spring animation cho press states (scale 0.92)
 - [ ] Haptic feedback cho mọi interaction
-- [ ] Emoji prefix cho section labels
+- [ ] Glass borders: `rgba(255,255,255,0.06)` cho search bar, tabs, accordion
+
+### Layout
 - [ ] Consistent spacing (bội số 4px)
-- [ ] Bottom sheets: rounded-t-3xl + handle bar
+- [ ] PageSheet Modal: `paddingTop: 8` (KHÔNG `insets.top`)
+- [ ] Bottom sheets: `rounded-t-3xl` + handle bar
 - [ ] Selected states: 10% accent tint + accent border
+
+### UX
+- [ ] Confirm dialog trong Modal → dùng `Alert.alert()` (native)
+- [ ] Emoji prefix cho section labels
 - [ ] Disabled states: đổi màu, KHÔNG dùng opacity
-- [ ] No purple/violet — dùng indigo thay thế
+- [ ] Empty state cho mọi list/grid
+- [ ] Auto-select sau khi tạo mới (topic, scenario, etc.)
+- [ ] Selected badge hiển thị rõ: ✓ icon + accent name + nút X
+

@@ -222,7 +222,11 @@ Border Radius: 22px (circle)
 - **Ghost:** Tertiary actions, links, or "View All →" navigation
 - **Icon:** Toolbar/header actions (⚙️, 🔔, ⋮). Always 44×44 minimum
 - **Destructive variant:** Use Primary style with Error color for delete/logout
+- **Outline variant ⚠️:** Nearly **invisible on dark mode OLED** — avoid on dark backgrounds, use `secondary` instead
 - See [Style_Convention.md §1.2](Style_Convention.md#12-button-variants-reference) for full decision matrix
+
+> [!WARNING]
+> **Dark Mode đặc biệt:** `variant="outline"` cực kỳ khó nhìn trên nền #000000. Luôn dùng `variant="secondary"` cho button phụ trên dark mode.
 
 ### 6.2 Cards
 
@@ -482,8 +486,13 @@ const duration = reduceMotion ? 0 : 300;
 - ✅ Use pure black (#000000) for OLED
 - ✅ Reduce contrast slightly (not pure white text)
 - ✅ Use colored shadows cautiously
+- ✅ Use `#EF4444` explicit hex for destructive icons (KHOÂNG `text-destructive`)
+- ✅ Use `variant="secondary"` cho button phụ (KHÔNG `outline`)
+- ✅ Selected badge: ✓ icon + `foreground` text + `accent` name (KHÔNG `neutrals400`)
 - ❌ Don't invert images
 - ❌ Don't use dark shadows on dark surfaces
+- ❌ Don't use `variant="outline"` buttons (invisible on OLED)
+- ❌ Don't use `text-destructive` token for icons (too dim)
 
 ---
 
@@ -508,6 +517,29 @@ const duration = reduceMotion ? 0 : 300;
 | Action sheet | Bottom sheet dialog |
 | Picker | Dropdown/Dialog |
 | Switch | Material switch |
+
+### 11.3 iOS 26+ (LiquidGlass)
+
+| Feature | iOS 26+ | iOS < 26 / Android |
+|---------|---------|--------------------|
+| Glass effect | `LiquidGlassView` native (blur + vibrancy) | `View` + glassmorphism fallback |
+| Import | `@/utils/LiquidGlass` wrapper (BẮt buộc) | Same wrapper (fallback tự động) |
+| Border glass | Tự động từ native | `rgba(255,255,255,0.06)` border |
+
+> [!CAUTION]
+> **KHOÂNG BAO GIờ** import trực tiếp `@callstack/liquid-glass` — sẽ **crash** trên iOS < 26 do TurboModule không tồn tại. Luôn dùng `@/utils/LiquidGlass`.
+
+### 11.4 Modal & Alert Layering
+
+| Pattern | Khi dùng | Ghi chú |
+|---------|----------|--------|
+| `Alert.alert()` native | Confirm/Delete **bên trong Modal/Sheet** | Luôn render trên mọi native layer |
+| `showConfirm()` (DialogProvider) | Confirm ở **root screen** | Render ở app root — không dùng trong Modal |
+| Bottom Sheet | Form phức tạp | UX tốt hơn Alert |
+| Toast | Feedback nhanh | Auto-dismiss, không block |
+
+> [!WARNING]
+> **PageSheet Modal padding:** Dùng `paddingTop: 8` thay vì `insets.top`. `presentationStyle="pageSheet"` đã có built-in top offset — `insets.top` sẽ double-count (~59px thừa).
 
 ---
 

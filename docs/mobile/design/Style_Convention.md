@@ -81,8 +81,12 @@ Need overlay/modal?
 |-----------|-------------|---------|
 | **Bottom Sheet** | Options, settings, multi-action menus | Advanced options, Quick actions, Speed control |
 | **Alert Dialog** | Confirmations requiring explicit decision | Delete confirmation, Logout, Discard changes |
+| **Alert.alert() (native)** | Confirmations **inside Modal/Sheet** | Delete inside TopicPicker, any action in bottom sheet |
 | **Popup/Tooltip** | Quick contextual info, non-blocking | Dictionary popup, Pronunciation tip |
 | **Toast/Snackbar** | Transient feedback, auto-dismiss | "Saved!", "Downloaded", "Error occurred" |
+
+> [!CAUTION]
+> **Alert.alert() vs showConfirm():** Custom `showConfirm()` (DialogProvider) renders ở app root. React Native `<Modal>` tạo native layer mới → custom Dialog hiển thị **DƯỚI** modal → user không thấy. Dùng `Alert.alert()` trong modal/sheet.
 
 ---
 
@@ -449,6 +453,10 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 | Hardcode colors, sizes, or spacing values | Use tokens instead |
 | Create new components when similar exists in `ui/` | Avoid duplication |
 | Use `Alert.alert()` for complex UI — use Bottom Sheet | Better UX |
+| Use `showConfirm()` inside RN `<Modal>` | Dialog renders behind Modal → invisible. Dùng `Alert.alert()` |
+| Use `variant="outline"` buttons on dark mode | Nearly invisible on OLED black → dùng `secondary` |
+| Use `text-destructive` token for delete icons | Too dark → dùng explicit `#EF4444` |
+| Use `paddingTop: insets.top` in pageSheet Modal | Double-counts safe area → dùng `paddingTop: 8` |
 | Place more than 1 Primary Button visible at once | Confusing hierarchy |
 | Skip empty/error/loading states | Looks broken |
 | Use inline styles for recurring patterns | Maintainability |
@@ -458,6 +466,7 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 | Show raw error messages to users | Poor UX |
 | Block the main thread with heavy computation | Janky UI |
 | Use more than 2 action icons in header | Cluttered |
+| Import `@callstack/liquid-glass` directly | Crash iOS < 26 → dùng `@/utils/LiquidGlass` |
 
 ---
 
@@ -502,3 +511,56 @@ Every interactive screen **MUST** handle all 4 states. No exceptions.
 - [UI_Design_System.md](UI_Design_System.md) — Design tokens (colors, typography, components)
 - [00_Mobile_Overview.md](../00_Mobile_Overview.md) — Project overview
 - [Architecture.md](../technical/Architecture.md) — Technical architecture
+
+---
+
+## 9. iOS Version-Specific Rules
+
+### 9.1 iOS 26+ (LiquidGlass)
+
+| Feature | iOS 26+ | iOS < 26 / Android |
+|---------|---------|--------------------|
+| Glass effect | `LiquidGlassView` native | `View` + `rgba(255,255,255,0.06)` borders |
+| Import | `@/utils/LiquidGlass` (wrapper) | Same wrapper (fallback tự động) |
+| Tab bar | Transparent glass | Solid `surfaceRaised` |
+| Modal backdrop | System blur | `rgba(0,0,0,0.5)` overlay |
+
+### 9.2 Platform-specific decisions
+
+| Decision | iOS | Android |
+|----------|-----|--------|
+| Confirm trong Modal | `Alert.alert()` (native, luôn on top) | `Alert.alert()` (same) |
+| Bottom sheet | `@gorhom/bottom-sheet` | Same |
+| Haptic | `react-native-haptic-feedback` | Vibration API fallback |
+| Status bar style | `light-content` always | Same |
+
+> [!IMPORTANT]
+> **Luôn** dùng `@/utils/LiquidGlass` wrapper thay vì import trực tiếp `@callstack/liquid-glass`. Import trực tiếp sẽ **crash** trên iOS < 26.
+
+---
+
+## 10. Dark Mode Visibility Rules
+
+> Rút ra từ bug fixes thực tế. **Bắt buộc** cho tất cả features.
+
+### 10.1 Minimum visibility trên OLED Black
+
+| Element | ❌ Quá tối | ✅ Đúng |
+|---------|-----------|--------|
+| Delete icon | `text-destructive` | `style={{color: '#EF4444'}}` |
+| Secondary button | `variant="outline"` | `variant="secondary"` |
+| "Đã chọn" badge | `neutrals400` text | `foreground` + ✓ icon + accent name |
+| Input border | `neutrals700` | `neutrals800` (consistency) |
+| Cancel button | `variant="outline"` | `variant="secondary"` |
+
+### 10.2 Selected state indicator pattern
+
+```
+✅ Chuẩn:
+  ┌──────────────────────────────────────┐
+  │  ✓   Topic Name đang chọn        X  │
+  └──────────────────────────────────────┘
+  Background: accent/10  |  Border: accent/25
+  Icon ✓: accent color   |  Name: font-bold accent
+  Nút X: neutrals400     |  Dismiss action
+```
