@@ -153,7 +153,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
         style={{
           backgroundColor: isSelected ? `${LISTENING_BLUE}15` : colors.neutrals900,
           borderWidth: 1,
-          borderColor: isSelected ? LISTENING_BLUE : 'rgba(255,255,255,0.06)',
+          borderColor: isSelected ? LISTENING_BLUE : colors.glassBorder,
           ...(isSelected && {
             shadowColor: LISTENING_BLUE,
             shadowOffset: {width: 0, height: 2},
@@ -269,11 +269,11 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
         className="flex-row items-center justify-between px-4 py-3 rounded-xl"
         style={{
           borderBottomWidth: 1,
-          borderBottomColor: 'rgba(255,255,255,0.04)',
+          borderBottomColor: colors.glassDivider,
           backgroundColor: hasSelectedScenario
             ? `${LISTENING_BLUE}10`
             : isExpanded
-              ? 'rgba(255,255,255,0.03)'
+              ? colors.glassHover
               : undefined,
           borderWidth: 0,
           borderLeftWidth: hasSelectedScenario ? 3 : 0,
@@ -553,9 +553,9 @@ export default function TopicPicker({
         <TouchableOpacity
           className="px-4 py-2.5 rounded-full mr-2"
           style={{
-            backgroundColor: isActive ? `${LISTENING_BLUE}12` : 'rgba(255,255,255,0.04)',
+            backgroundColor: isActive ? `${LISTENING_BLUE}12` : colors.glassBg,
             borderWidth: 1,
-            borderColor: isActive ? LISTENING_BLUE : 'rgba(255,255,255,0.08)',
+            borderColor: isActive ? LISTENING_BLUE : colors.glassBorderStrong,
             // Glassmorphism: subtle glow khi active
             ...(isActive && {
               shadowColor: LISTENING_BLUE,
@@ -606,9 +606,9 @@ export default function TopicPicker({
       <View
         className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3"
         style={{
-          backgroundColor: 'rgba(255,255,255,0.04)',
+          backgroundColor: colors.glassBg,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.08)',
+          borderColor: colors.glassBorderStrong,
           // Glass elevation nhẹ
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 4},

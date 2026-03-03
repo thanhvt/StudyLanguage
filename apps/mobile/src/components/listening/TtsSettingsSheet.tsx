@@ -205,11 +205,11 @@ export default function TtsSettingsSheet({
             backgroundColor: colors.background,
             // L6: Glass-style border — premium matching SectionCards
             borderTopWidth: 1,
-            borderTopColor: 'rgba(255,255,255,0.15)',
+            borderTopColor: colors.glassBorderStrong,
             borderLeftWidth: 0.5,
             borderRightWidth: 0.5,
-            borderLeftColor: 'rgba(255,255,255,0.08)',
-            borderRightColor: 'rgba(255,255,255,0.08)',
+            borderLeftColor: colors.glassBorderStrong,
+            borderRightColor: colors.glassBorderStrong,
             shadowColor: '#000',
             shadowOffset: {width: 0, height: -8},
             shadowOpacity: 0.25,
@@ -270,7 +270,7 @@ export default function TtsSettingsSheet({
                         width: '48.5%',
                         backgroundColor: isAssigned ? `${LISTENING_BLUE}12` : colors.neutrals900,
                         borderWidth: 1,
-                        borderColor: isAssigned ? `${LISTENING_BLUE}40` : 'rgba(255,255,255,0.06)',
+                        borderColor: isAssigned ? `${LISTENING_BLUE}40` : colors.glassBorder,
                       }}>
                       <View className="flex-row items-center justify-between">
                         <View className="flex-1 mr-1">

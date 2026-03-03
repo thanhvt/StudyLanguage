@@ -580,7 +580,7 @@ export default function ListeningPlayerScreen({
                           ? `${LISTENING_BLUE}15`
                           : isBookmarked
                             ? `${LISTENING_ORANGE}08`
-                            : 'rgba(255,255,255,0.03)',
+                            : colors.glassHover,
                         borderColor: isActive
                           ? `${LISTENING_BLUE}40`
                           : isBookmarked
@@ -764,7 +764,7 @@ export default function ListeningPlayerScreen({
             totalSteps={TOUR_TOTAL}>
             <TouchableOpacity
               className="rounded-full px-3 py-2 ml-2"
-              style={{backgroundColor: showTranslation ? `${LISTENING_BLUE}20` : 'rgba(255,255,255,0.05)'}}
+              style={{backgroundColor: showTranslation ? `${LISTENING_BLUE}20` : colors.glassBg}}
               onPress={() => {
                 toggleTranslation();
                 haptic.light();

@@ -32,6 +32,12 @@ export const AppColors = {
   neutrals800: '#1e1e1e',    // Hi-fi dividers
   neutrals900: '#141414',    // Hi-fi card bg
   neutrals1000: '#0a0a0a',
+  // Glassmorphism tokens — dùng thay vì hardcode rgba
+  glassBg: 'rgba(255,255,255,0.04)',         // Nền glass nhẹ
+  glassBorder: 'rgba(255,255,255,0.06)',     // Border glass chuẩn
+  glassBorderStrong: 'rgba(255,255,255,0.08)', // Border glass đậm hơn
+  glassHover: 'rgba(255,255,255,0.03)',      // Hover/expanded state
+  glassDivider: 'rgba(255,255,255,0.04)',    // Divider trong glass panel
   // Skill accent colors
   skillListening: '#6366f1',
   skillSpeaking: '#10b981',
@@ -52,18 +58,25 @@ export const AppColorsLight: typeof AppColors = {
   warning: '#f59e0b',
   error: '#ef4444',
   border: '#e5e5e5',
-  neutrals100: '#6c6c6c',
-  neutrals200: '#808080',
-  neutrals300: '#9e9e9e',
-  neutrals400: '#b4b4b4',
-  neutrals500: '#c1c1c1',
-  neutrals600: '#d3d3d3',
-  neutrals700: '#d9d9d9',
-  neutrals800: '#dddddd',
-  neutrals900: '#f2f2f2',
-  neutrals1000: '#f5f5f5',
+  neutrals100: '#525252',    // Tối hơn — text chính trên nền trắng (7.5:1)
+  neutrals200: '#6b7280',    // gray-500 — text phụ (4.6:1)
+  neutrals300: '#6b7280',    // gray-500 — subcategory headers (4.6:1) ← was #9e9e9e (2.8:1 FAIL)
+  neutrals400: '#9ca3af',    // gray-400 — icons, muted text (2.9:1) ← was #b4b4b4 (1.9:1 FAIL)
+  neutrals500: '#6b7280',    // gray-500 — placeholder (4.6:1) ← was #c1c1c1 (1.6:1 FAIL)
+  neutrals600: '#d1d5db',    // gray-300 — divider lines
+  neutrals700: '#e5e7eb',    // gray-200 — badge bg
+  neutrals800: '#f3f4f6',    // gray-100 — divider bg
+  neutrals900: '#f9fafb',    // gray-50  — card bg
+  neutrals1000: '#f3f4f6',
+  // Glassmorphism tokens — light mode dùng rgba đen
+  glassBg: 'rgba(0,0,0,0.03)',
+  glassBorder: 'rgba(0,0,0,0.08)',
+  glassBorderStrong: 'rgba(0,0,0,0.12)',
+  glassHover: 'rgba(0,0,0,0.04)',
+  glassDivider: 'rgba(0,0,0,0.06)',
   // Skill accent colors
   skillListening: '#4F46E5',
   skillSpeaking: '#16A34A',
   skillReading: '#D97706',
 };
+
