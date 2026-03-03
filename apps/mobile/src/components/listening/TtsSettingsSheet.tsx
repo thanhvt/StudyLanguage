@@ -454,7 +454,7 @@ export default function TtsSettingsSheet({
                           setMultiTalkerPairIndex(idx);
                           haptic.light();
                         }}
-                        accessibilityLabel={`Cặp ${pair.pair.join(' & ')}${isActive ? ', đang chọn' : ''}`}
+                        accessibilityLabel={`Cặp ${(pair.pair || pair.speakers || []).join(' & ')}${isActive ? ', đang chọn' : ''}`}
                         accessibilityRole="button">
                         <View
                           className="w-5 h-5 rounded-full border-2 items-center justify-center mr-3"
@@ -464,7 +464,7 @@ export default function TtsSettingsSheet({
                           )}
                         </View>
                         <AppText className="text-sm" style={{color: colors.foreground}}>
-                          {pair.pair.join(' & ')}
+                          {(pair.pair || pair.speakers || []).join(' & ')}
                         </AppText>
                       </TouchableOpacity>
                     );

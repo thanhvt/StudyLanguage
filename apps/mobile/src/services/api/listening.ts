@@ -85,10 +85,14 @@ export interface VoiceInfo {
 
 /** Cặp giọng multi-talker */
 export interface MultiTalkerPair {
-  /** Tên 2 speaker trong cặp */
-  pair: string[];
+  /** Tên 2 speaker trong cặp (legacy field name) */
+  pair?: string[];
+  /** Tên 2 speaker trong cặp (backend field name) */
+  speakers?: string[];
+  /** Tên voice model */
+  name?: string;
   /** Index cặp (0, 1, ...) */
-  index: number;
+  index?: number;
 }
 
 /** Response từ GET /ai/voices */
