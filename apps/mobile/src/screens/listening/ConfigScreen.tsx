@@ -1,4 +1,4 @@
-import React, {useRef, useState, useCallback, useMemo} from 'react';
+import React, {useRef, useState, useCallback, useMemo, useEffect} from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
