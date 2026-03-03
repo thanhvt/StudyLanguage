@@ -13,7 +13,8 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {LanguageHelper} from '@/components/helpers/LanguageHelper';
 import {DialogProvider} from '@/components/ui/DialogProvider';
-import {ToastProvider} from '@/components/ui/ToastProvider';
+import ToastMessage from 'react-native-toast-message';
+import {toastConfig} from '@/components/ui/toastConfig';
 
 // Cấu hình QueryClient cho TanStack Query
 const queryClient = new QueryClient({
@@ -55,15 +56,14 @@ const AppContent: React.FC = () => {
           <BottomSheetModalProvider>
             <SafeAreaProvider>
               <DialogProvider>
-                <ToastProvider>
                   <InsetsHelper />
                   <LanguageHelper />
                   <RootNavigator />
-                </ToastProvider>
               </DialogProvider>
             </SafeAreaProvider>
           </BottomSheetModalProvider>
         </NavigationContainer>
+        <ToastMessage config={toastConfig} topOffset={60} />
       </View>
     </GestureHandlerRootView>
   );

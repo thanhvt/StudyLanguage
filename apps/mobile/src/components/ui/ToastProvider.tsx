@@ -1,132 +1,103 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { View } from 'react-native';
-import Toast, { ToastProps, ToastType } from './Toast';
+/**
+ * Mục đích: Wrapper hook cho react-native-toast-message — giữ nguyên API cũ
+ * để 9 consumer files không cần thay đổi code
+ * Tham số đầu vào: không
+ * Tham số đầu ra: { showSuccess, showError, showWarning, showInfo, dismissAll }
+ * Khi nào sử dụng: Mọi component cần hiển thị toast notification
+ *   → import { useToast } from '@/components/ui/ToastProvider'
+ */
+import Toast from 'react-native-toast-message';
 
-interface ToastOptions {
-  title: string;
-  message?: string;
+interface ToastExtraOptions {
   duration?: number;
   position?: 'top' | 'bottom';
-  closable?: boolean;
   onPress?: () => void;
 }
 
-interface ToastContextType {
-  showToast: (options: Omit<ToastProps, 'id' | 'onDismiss'>) => string;
-  showSuccess: (title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => string;
-  showError: (title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => string;
-  showWarning: (title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => string;
-  showInfo: (title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => string;
-  updateToast: (id: string, updates: { title?: string; message?: string }) => void;
-  dismissToast: (id: string) => void;
-  dismissAll: () => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
-
-interface ToastProviderProps {
-  children: React.ReactNode;
-  maxToasts?: number;
-  defaultPosition?: 'top' | 'bottom';
-}
-
-export const ToastProvider: React.FC<ToastProviderProps> = ({
-  children,
-  maxToasts = 3,
-  defaultPosition = 'top'
-}) => {
-  const [toasts, setToasts] = useState<ToastProps[]>([]);
-
-  const generateId = () => `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
-
-  const showToast = useCallback((options: Omit<ToastProps, 'id' | 'onDismiss'>) => {
-    const id = generateId();
-    const newToast: ToastProps = {
-      position: defaultPosition,
-      ...options,
-      id,
-      onDismiss: dismissToast,
-    };
-
-    setToasts(prev => {
-      const updated = [newToast, ...prev];
-      // Keep only the latest maxToasts
-      return updated.slice(0, maxToasts);
+/**
+ * Mục đích: Hook wrapper giữ backward-compatible API với hệ thống toast cũ
+ * Tham số đầu vào: không
+ * Tham số đầu ra: Object chứa các hàm showSuccess, showError, showWarning, showInfo, dismissAll
+ * Khi nào sử dụng: Bất kỳ component nào cần hiển thị toast
+ *   → const { showSuccess, showError } = useToast();
+ *   → showSuccess('Tiêu đề', 'Nội dung chi tiết');
+ */
+export const useToast = () => ({
+  /**
+   * Mục đích: Hiển thị toast thành công (màu xanh emerald)
+   * Tham số đầu vào: title (tiêu đề), message (nội dung phụ, optional), options (tùy chọn thêm)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi hành động hoàn thành thành công (lưu bookmark, tạo kịch bản...)
+   */
+  showSuccess: (title: string, message?: string, options?: ToastExtraOptions) => {
+    Toast.show({
+      type: 'success',
+      text1: title,
+      text2: message,
+      position: options?.position || 'top',
+      visibilityTime: options?.duration || 4000,
+      onPress: options?.onPress,
     });
+  },
 
-    return id;
-  }, [dismissToast, maxToasts, defaultPosition]);
+  /**
+   * Mục đích: Hiển thị toast lỗi (màu đỏ rose)
+   * Tham số đầu vào: title (tiêu đề lỗi), message (chi tiết lỗi, optional), options
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi có lỗi xảy ra (API fail, audio error...)
+   */
+  showError: (title: string, message?: string, options?: ToastExtraOptions) => {
+    Toast.show({
+      type: 'error',
+      text1: title,
+      text2: message,
+      position: options?.position || 'top',
+      visibilityTime: options?.duration || 5000,
+      onPress: options?.onPress,
+    });
+  },
 
-  const updateToast = useCallback((id: string, updates: { title?: string; message?: string }) => {
-    setToasts(prev => prev.map(toast =>
-      toast.id === id
-        ? { ...toast, ...updates }
-        : toast
-    ));
-  }, []);
+  /**
+   * Mục đích: Hiển thị toast cảnh báo (màu vàng amber)
+   * Tham số đầu vào: title (tiêu đề cảnh báo), message (chi tiết), options
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi cần cảnh báo người dùng (chưa chọn topic, thiếu input...)
+   */
+  showWarning: (title: string, message?: string, options?: ToastExtraOptions) => {
+    Toast.show({
+      type: 'warning',
+      text1: title,
+      text2: message,
+      position: options?.position || 'top',
+      visibilityTime: options?.duration || 4000,
+      onPress: options?.onPress,
+    });
+  },
 
-  const showSuccess = useCallback((title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => {
-    return showToast({ type: 'success', title, message, ...options });
-  }, [showToast]);
+  /**
+   * Mục đích: Hiển thị toast thông tin (màu primary)
+   * Tham số đầu vào: title (tiêu đề), message (chi tiết), options
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi cần thông báo trạng thái (đang chuẩn bị audio, bỏ bookmark...)
+   */
+  showInfo: (title: string, message?: string, options?: ToastExtraOptions) => {
+    Toast.show({
+      type: 'info',
+      text1: title,
+      text2: message,
+      position: options?.position || 'top',
+      visibilityTime: options?.duration || 3000,
+      onPress: options?.onPress,
+    });
+  },
 
-  const showError = useCallback((title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => {
-    return showToast({ type: 'error', title, message, ...options });
-  }, [showToast]);
-
-  const showWarning = useCallback((title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => {
-    return showToast({ type: 'warning', title, message, ...options });
-  }, [showToast]);
-
-  const showInfo = useCallback((title: string, message?: string, options?: Omit<ToastOptions, 'title' | 'message'>) => {
-    return showToast({ type: 'info', title, message, ...options });
-  }, [showToast]);
-
-  const dismissAll = useCallback(() => {
-    setToasts([]);
-  }, []);
-
-  const contextValue: ToastContextType = {
-    showToast,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    updateToast,
-    dismissToast,
-    dismissAll,
-  };
-
-  return (
-    <ToastContext.Provider value={contextValue}>
-      {children}
-      {/* Toast Container */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="box-none">
-        {toasts.map((toast) => {
-          // Calculate index within the same position group
-          const samePositionToasts = toasts.filter(t => t.position === toast.position);
-          const index = samePositionToasts.findIndex(t => t.id === toast.id);
-
-          return (
-            <Toast
-              key={toast.id}
-              {...toast}
-              index={index}
-            />
-          );
-        })}
-      </View>
-    </ToastContext.Provider>
-  );
-};
+  /**
+   * Mục đích: Ẩn tất cả toast đang hiển thị
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi cần xóa sạch toast (navigate sang screen khác...)
+   */
+  dismissAll: () => {
+    Toast.hide();
+  },
+});

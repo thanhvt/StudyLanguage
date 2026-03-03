@@ -14,6 +14,7 @@ export type AuthStackParamList = {
 // ===========================
 export type MainTabParamList = {
   Home: undefined;
+  History: undefined;
   Listening: undefined;
   Speaking: undefined;
   Reading: undefined;

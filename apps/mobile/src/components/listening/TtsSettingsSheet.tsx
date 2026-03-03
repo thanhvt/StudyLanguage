@@ -127,7 +127,8 @@ export default function TtsSettingsSheet({
       }
     };
     fetchData();
-  }, [visible, showError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   /**
    * Mục đích: Preview 1 giọng đọc

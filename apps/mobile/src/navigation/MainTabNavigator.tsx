@@ -14,21 +14,23 @@ import CustomScreenHeader from '@/navigation/components/ScreenHeader';
 import ListeningStack from '@/navigation/stacks/ListeningStack';
 import ReadingStack from '@/navigation/stacks/ReadingStack';
 import SpeakingStack from '@/navigation/stacks/SpeakingStack';
+import HistoryScreen from '@/screens/tabs/HistoryScreen';
 import HistoryDetailScreen from '@/screens/history/HistoryDetailScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
 /**
- * Mục đích: Bottom tab navigator chính — 5 tabs (redesigned)
+ * Mục đích: Bottom tab navigator chính — 6 tabs (redesigned)
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: Được render bên trong MainStack, hiển thị 5 tabs:
+ * Khi nào sử dụng: Được render bên trong MainStack, hiển thị 6 tabs:
  *   - Trang chủ (Home) → Dashboard
+ *   - Lịch sử (History) → HistoryScreen
  *   - Nghe (Listening) → ListeningStack
  *   - Nói (Speaking) → SpeakingStack
  *   - Đọc (Reading) → ReadingStack
- *   - Hồ sơ (Profile) → ProfileScreen
+ *   - Hồ sơ (Profile) → MoreScreen
  */
 function MainTabNavigator() {
   return (
@@ -41,6 +43,11 @@ function MainTabNavigator() {
         name="Home"
         component={HomeScreen}
         options={{title: 'Trang chủ'}}
+      />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{title: 'Lịch sử'}}
       />
       <Tab.Screen
         name="Listening"

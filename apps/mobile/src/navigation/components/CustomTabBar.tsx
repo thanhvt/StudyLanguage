@@ -1,8 +1,16 @@
 import React from 'react';
-import {TouchableOpacity, View, StyleSheet, Platform, useWindowDimensions} from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+  useColorScheme,
+} from 'react-native';
 import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {
   Home,
+  Clock,
   Headphones,
   MessageCircle,
   BookOpen,
@@ -16,11 +24,14 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
+import {useHaptic} from '@/hooks/useHaptic';
 import {SKILL_COLORS} from '@/config/skillColors';
 
 // ============================================================
 // Cấu hình tab: tên hiển thị, icon Lucide, màu đặc trưng
+// Fix #3: Home dùng orange (#f97316) thay vì green trùng Speaking
 // ============================================================
 const TAB_CONFIG: Record<
   string,
@@ -28,38 +39,37 @@ const TAB_CONFIG: Record<
     label: string;
     icon: React.ComponentType<{size: number; color: string; strokeWidth?: number}>;
     activeColor: string;
-    inactiveColor: string;
   }
 > = {
   Home: {
     label: 'Trang chủ',
     icon: Home,
-    activeColor: '#4ade80',
-    inactiveColor: 'rgba(74, 222, 128, 0.35)',
+    activeColor: '#f97316', // Fix #3: Orange — distinct identity, warm welcoming
+  },
+  History: {
+    label: 'Lịch sử',
+    icon: Clock,
+    activeColor: '#14b8a6', // Teal — distinct, history/timeline feel
   },
   Listening: {
     label: 'Nghe',
     icon: Headphones,
     activeColor: SKILL_COLORS.listening.dark,
-    inactiveColor: 'rgba(99, 102, 241, 0.35)',
   },
   Speaking: {
     label: 'Nói',
     icon: MessageCircle,
     activeColor: SKILL_COLORS.speaking.dark,
-    inactiveColor: 'rgba(74, 222, 128, 0.35)',
   },
   Reading: {
     label: 'Đọc',
     icon: BookOpen,
     activeColor: SKILL_COLORS.reading.dark,
-    inactiveColor: 'rgba(251, 191, 36, 0.35)',
   },
   More: {
     label: 'Thêm',
     icon: Menu,
     activeColor: '#a3a3a3',
-    inactiveColor: 'rgba(163, 163, 163, 0.35)',
   },
 };
 
@@ -68,35 +78,39 @@ const TAB_CONFIG: Record<
  * Tham số đầu vào: không có (dùng useWindowDimensions)
  * Tham số đầu ra: boolean
  * Khi nào sử dụng: Scale icon size cho iPad cho nét hơn
+ * Fix #10: Threshold >= 744 để bắt iPad Mini portrait (744px)
  */
 function useIsTablet() {
   const {width} = useWindowDimensions();
-  return width >= 768;
+  return width >= 744; // Fix #10: iPad Mini portrait = 744px
 }
 
 /**
  * Mục đích: Glassmorphism focus ring — dùng LiquidGlassView trên iOS 26+,
- *           fallback BlurView circle trên iOS cũ / Android
- * Tham số đầu vào: activeColor, size, children (icon)
+ *           fallback gradient circle trên iOS cũ / Android
+ * Tham số đầu vào: activeColor, size, isDark, children (icon)
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Bao quanh icon khi tab đang focused
  */
 function GlassIconRing({
   activeColor,
   size,
+  isDark,
   children,
 }: {
   activeColor: string;
   size: number;
+  isDark: boolean;
   children: React.ReactNode;
 }) {
   // iOS 26+ → LiquidGlassView native
+  // Fix #1: Dynamic colorScheme thay vì hardcode "dark"
   if (isLiquidGlassSupported) {
     return (
       <LiquidGlassView
         effect="clear"
         tintColor={activeColor}
-        colorScheme="dark"
+        colorScheme={isDark ? 'dark' : 'light'}
         style={{
           width: size,
           height: size,
@@ -110,6 +124,7 @@ function GlassIconRing({
   }
 
   // Android / iOS < 26 fallback → gradient border ring
+  // Fix #11: Dùng theme-aware background thay vì solid dark
   return (
     <View
       style={{
@@ -119,7 +134,7 @@ function GlassIconRing({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        backgroundColor: 'rgba(20,20,20,0.7)',
+        backgroundColor: isDark ? 'rgba(20,20,20,0.7)' : 'rgba(255,255,255,0.7)',
       }}>
       {/* Gradient border ring */}
       <LinearGradient
@@ -137,13 +152,14 @@ function GlassIconRing({
 /**
  * Mục đích: Animated tab item — 3 trạng thái (unfocus, focus, press)
  *           Focus state dùng GlassIconRing (LiquidGlass / BlurView)
- * Tham số đầu vào: routeName, isFocused, onPress, onLongPress
+ * Tham số đầu vào: routeName, isFocused, isDark, onPress, onLongPress
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Render mỗi tab item trong CustomTabBar
  */
 function AnimatedTabItem({
   routeName,
   isFocused,
+  isDark,
   onPress,
   onLongPress,
   accessibilityLabel,
@@ -151,6 +167,7 @@ function AnimatedTabItem({
 }: {
   routeName: string;
   isFocused: boolean;
+  isDark: boolean;
   onPress: () => void;
   onLongPress: () => void;
   accessibilityLabel?: string;
@@ -159,10 +176,14 @@ function AnimatedTabItem({
   const config = TAB_CONFIG[routeName] || TAB_CONFIG.Home;
   const IconComponent = config.icon;
   const isTablet = useIsTablet();
+  const haptic = useHaptic(); // Fix #6: Haptic feedback
 
-  // Kích thước responsive: iPad lớn hơn, nét hơn
-  const iconSize = isTablet ? 28 : 22;
-  const glowSize = isTablet ? 52 : 42;
+  // Fix A: Pixel-aligned sizes — tránh sub-pixel rendering gây blur
+  // Dùng số chẵn để stroke SVG khớp pixel grid
+  const iconSizeBase = isTablet ? 36 : 24;
+  // Fix B: Focused icon to hơn ở native resolution thay vì scale transform
+  const iconSize = isFocused ? iconSizeBase + (isTablet ? 4 : 2) : iconSizeBase;
+  const glowSize = isTablet ? 64 : 44;
 
   // Animated values
   const focusProgress = useSharedValue(isFocused ? 1 : 0);
@@ -184,9 +205,10 @@ function AnimatedTabItem({
     transform: [{scale: 0.7 + focusProgress.value * 0.3}],
   }));
 
-  // Scale icon khi focus
+  // Fix B: Không dùng animated scale cho icon — tránh blur do rasterization
+  // Icon size thay đổi trực tiếp (native resolution) khi focus/unfocus
   const iconContainerStyle = useAnimatedStyle(() => ({
-    transform: [{scale: 1 + focusProgress.value * 0.1}],
+    opacity: 0.85 + focusProgress.value * 0.15, // Subtle brightness boost khi focused
   }));
 
   // Dot indicator animation
@@ -208,8 +230,31 @@ function AnimatedTabItem({
     pressScale.value = withSpring(1, {damping: 12, stiffness: 200});
   };
 
-  const iconColor = isFocused ? config.activeColor : config.inactiveColor;
-  const labelColor = isFocused ? config.activeColor : '#5e5e5e';
+  /**
+   * Mục đích: Xử lý nhấn tab — gọi onPress + haptic feedback
+   * Tham số đầu vào: không có
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Khi user nhấn vào tab item
+   * Fix #6: Thêm haptic feedback khi chuyển tab
+   */
+  const handlePress = () => {
+    haptic.light(); // Fix #6: Haptic feedback nhẹ khi chuyển tab
+    onPress();
+  };
+
+  // Fix #5: Inactive icon dùng neutral gray thay vì opacity-based color
+  const inactiveIconColor = isDark ? '#6b7280' : '#9ca3af';
+  const iconColor = isFocused ? config.activeColor : inactiveIconColor;
+
+  // Fix #5: Label inactive cũng neutral gray, tăng contrast
+  const inactiveLabelColor = isDark ? '#6b7280' : '#9ca3af';
+  const labelColor = isFocused ? config.activeColor : inactiveLabelColor;
+
+  // Fix A: Stroke width pixel-aligned — dùng số nguyên hoặc .5 để khớp pixel grid
+  // Số lẻ (1.8, 2.2) gây anti-aliasing blur trên SVG
+  const strokeWidth = isTablet
+    ? (isFocused ? 3 : 2.5)
+    : (isFocused ? 2.5 : 2);
 
   return (
     <Animated.View style={[styles.tabItem, containerStyle]}>
@@ -219,7 +264,7 @@ function AnimatedTabItem({
         accessibilityState={isFocused ? {selected: true} : {}}
         accessibilityLabel={accessibilityLabel}
         testID={testID}
-        onPress={onPress}
+        onPress={handlePress}
         onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -236,30 +281,43 @@ function AnimatedTabItem({
               },
               glowStyle,
             ]}>
-            <GlassIconRing activeColor={config.activeColor} size={glowSize}>
+            <GlassIconRing activeColor={config.activeColor} size={glowSize} isDark={isDark}>
               {/* Trống — icon render bên ngoài ring để luôn sắc nét */}
               <View />
             </GlassIconRing>
           </Animated.View>
 
-          {/* Icon — luôn render trên layer cao nhất */}
-          <Animated.View style={iconContainerStyle}>
+          {/* Icon — render trên layer cao nhất, không dùng scale transform */}
+          {/* Fix B: collapsable={false} tránh layer merging gây mất nét */}
+          <Animated.View
+            style={iconContainerStyle}
+            collapsable={false}
+            renderToHardwareTextureAndroid={true}>
             <IconComponent
               size={iconSize}
               color={iconColor}
-              strokeWidth={isFocused ? 2.5 : 1.8}
+              strokeWidth={strokeWidth}
             />
           </Animated.View>
         </View>
 
-        {/* Label */}
+        {/* Label — Fix #7: Active bold 700 vs Inactive 500 */}
         <AppText
-          style={[styles.label, {color: labelColor, fontSize: isTablet ? 12 : 10}]}
+          style={[
+            styles.label,
+            {
+              color: labelColor,
+              fontWeight: isFocused ? '700' : '500',
+              fontSize: isTablet
+                ? (isFocused ? 14 : 13)
+                : (isFocused ? 11 : 10),
+            },
+          ]}
           numberOfLines={1}>
           {config.label}
         </AppText>
 
-        {/* Dot indicator */}
+        {/* Dot indicator — Fix #9: Tăng 4px → 5px */}
         <Animated.View
           style={[styles.dot, {backgroundColor: config.activeColor}, dotStyle]}
         />
@@ -273,42 +331,67 @@ function AnimatedTabItem({
  * Tham số đầu vào: BottomTabBarProps (state, descriptors, navigation)
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Được truyền vào Tab.Navigator qua tabBar prop
- *   - Background: BlurView native + LinearGradient overlay
- *   - Focus ring: LiquidGlassView (iOS 26+) / BlurView (fallback)
- *   - 5 tabs: Trang chủ, Nghe, Nói, Đọc, Thêm
+ *   - Background: LiquidGlassView (iOS 26+) / Gradient blur fallback
+ *   - Focus ring: LiquidGlassView (iOS 26+) / Gradient border (fallback)
+ *   - 6 tabs: Trang chủ, Lịch sử, Nghe, Nói, Đọc, Thêm
  */
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,
   descriptors,
   navigation,
 }) => {
+  // Fix #8: Dùng useSafeAreaInsets thay hardcode paddingBottom
+  const insets = useSafeAreaInsets();
+  // Fix #1 + #2: Detect dark/light mode
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Fix #11: Background gradient colors theo theme
+  const fallbackBgColor = isDark
+    ? 'rgba(10,10,10,0.95)'
+    : 'rgba(245,245,245,0.92)';
+
+  // Fix #11: Top gradient overlay theo theme
+  const gradientOverlayColors = isDark
+    ? ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.01)', 'transparent']
+    : ['rgba(0,0,0,0.04)', 'rgba(0,0,0,0.01)', 'transparent'];
+
+  // Fix #11: Top border colors theo theme
+  const topBorderColors = isDark
+    ? ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.03)', 'transparent']
+    : ['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.02)', 'transparent'];
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        // Fix #8: Dynamic paddingBottom dựa trên safe area
+        {paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 8 : 8)},
+      ]}>
       {/* Lớp 1: Native glass/blur background */}
+      {/* Fix #1: Dynamic colorScheme | Fix #2 + #11: Theme-aware fallback */}
       {isLiquidGlassSupported ? (
         <LiquidGlassView
           effect="regular"
-          colorScheme="dark"
+          colorScheme={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
       ) : (
-        <View style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(10,10,10,0.95)'}]} />
+        <View style={[StyleSheet.absoluteFill, {backgroundColor: fallbackBgColor}]} />
       )}
 
       {/* Lớp 2: Gradient overlay — depth + ánh sáng phản chiếu ở đỉnh */}
+      {/* Fix #11: Gradient colors dynamic theo theme */}
       <LinearGradient
-        colors={[
-          'rgba(255,255,255,0.06)',
-          'rgba(255,255,255,0.01)',
-          'transparent',
-        ]}
+        colors={gradientOverlayColors}
         locations={[0, 0.15, 1]}
         style={[StyleSheet.absoluteFill, {height: 20}]}
       />
 
       {/* Top border sáng — mô phỏng edge light */}
+      {/* Fix #11: Border colors dynamic theo theme */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.03)', 'transparent']}
+        colors={topBorderColors}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 0}}
         style={styles.topBorder}
@@ -340,6 +423,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
               key={route.key}
               routeName={route.name}
               isFocused={isFocused}
+              isDark={isDark}
               onPress={onPress}
               onLongPress={onLongPress}
               accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -354,8 +438,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 
 const styles = StyleSheet.create({
   // Full-width, không bo tròn, overflow hidden cho blur layers
+  // Fix #8: paddingBottom được set dynamic inline thay vì hardcode
   container: {
-    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
     overflow: 'hidden',
   },
   topBorder: {
@@ -382,14 +466,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   label: {
-    fontWeight: '600',
     marginTop: 2,
     textAlign: 'center',
   },
+  // Fix #9: Dot indicator tăng 4px → 5px
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     marginTop: 2,
   },
 });
