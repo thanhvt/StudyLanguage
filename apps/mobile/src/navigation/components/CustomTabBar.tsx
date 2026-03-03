@@ -250,7 +250,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   const isTablet = useIsTablet();
 
   // iPad: rộng hơn, centered
-  const maxWidth = isTablet ? 640 : undefined;
+  const maxWidth = isTablet ? 750 : undefined;
 
   return (
     <View
