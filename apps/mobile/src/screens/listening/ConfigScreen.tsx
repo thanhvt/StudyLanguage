@@ -22,6 +22,7 @@ import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
 import {getTotalScenarios, TOPIC_CATEGORIES, type TopicScenario} from '@/data/topic-data';
+import {customScenarioApi, type CustomScenario} from '@/services/api/customScenarios';
 import {
   DurationSelector,
   SpeakersSelector,
@@ -158,6 +159,14 @@ export default function ListeningConfigScreen({
     }
     return scenarios.slice(0, 3); // Hiện tối đa 3 cards
   }, [selectedCategory, selectedSubCategory]);
+
+  // Custom scenarios — lấy từ API khi chọn tab Tuỳ chỉnh
+  const [customScenarios, setCustomScenarios] = useState<CustomScenario[]>([]);
+  useEffect(() => {
+    if (selectedCategory === 'custom') {
+      customScenarioApi.list().then(setCustomScenarios).catch(() => {});
+    }
+  }, [selectedCategory]);
 
   // Khi user chọn scenario → xóa topicInput
   React.useEffect(() => {
@@ -548,11 +557,37 @@ export default function ListeningConfigScreen({
                       </TouchableOpacity>
                     );
                   })}
+                  {/* Tab Tuỳ chỉnh */}
+                  {(() => {
+                    const isActive = selectedCategory === 'custom';
+                    return (
+                      <TouchableOpacity
+                        className="flex-row items-center px-4 py-2.5 rounded-full border"
+                        style={{
+                          backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
+                          borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
+                        }}
+                        onPress={() => {
+                          haptic.light();
+                          setSelectedCategory('custom');
+                          setSelectedSubCategory('');
+                        }}
+                        accessibilityLabel={`Tuỳ chỉnh${isActive ? ', đang chọn' : ''}`}
+                        accessibilityRole="button">
+                        <AppText className="text-[13px] mr-1">✨</AppText>
+                        <AppText
+                          className="text-[13px] font-sans-medium"
+                          style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                          Tuỳ chỉnh
+                        </AppText>
+                      </TouchableOpacity>
+                    );
+                  })()}
                 </View>
               </ScrollView>
 
-              {/* Subcategory Chips */}
-              {(() => {
+              {/* Subcategory Chips — ẩn khi tab Tuỳ chỉnh */}
+              {selectedCategory !== 'custom' && (() => {
                 const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
                 if (!category?.subCategories?.length) {return null;}
                 return (
@@ -590,8 +625,75 @@ export default function ListeningConfigScreen({
                 );
               })()}
 
-              {/* Scenario Cards (2-3 cards) */}
-              {currentScenarios.map(scenario => {
+              {/* Custom Scenarios — hiện khi tab Tuỳ chỉnh */}
+              {selectedCategory === 'custom' ? (
+                customScenarios.length === 0 ? (
+                  <View className="items-center py-6">
+                    <AppText className="text-2xl mb-2">✨</AppText>
+                    <AppText className="text-sm" style={{color: colors.neutrals300}}>
+                      Chưa có kịch bản tuỳ chỉnh
+                    </AppText>
+                    <AppText className="text-xs mt-1" style={{color: colors.neutrals300}}>
+                      Mở Chọn chủ đề → Tuỳ chỉnh để tạo
+                    </AppText>
+                  </View>
+                ) : (
+                  customScenarios.slice(0, 3).map(cs => {
+                    const isSelected = selectedTopic?.name === cs.name;
+                    return (
+                      <TouchableOpacity
+                        key={cs.id}
+                        className="rounded-xl px-4 py-3.5 mb-3"
+                        style={{
+                          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : colors.neutrals900,
+                          borderColor: isSelected ? LISTENING_BLUE : colors.border,
+                          borderWidth: 1,
+                        }}
+                        onPress={() => {
+                          haptic.light();
+                          if (isSelected) {
+                            setSelectedTopic(null);
+                          } else {
+                            setSelectedTopic(
+                              {id: cs.id, name: cs.name, description: cs.description || ''},
+                              'custom',
+                              '',
+                            );
+                          }
+                        }}
+                        accessibilityLabel={`${cs.name}${isSelected ? ', đang chọn' : ''}`}
+                        accessibilityRole="button">
+                        <View className="flex-row items-start justify-between">
+                          <View className="flex-1 mr-3">
+                            <AppText
+                              className="font-sans-bold text-[15px]"
+                              style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
+                              {cs.name}
+                            </AppText>
+                            {cs.description ? (
+                              <AppText
+                                className="text-xs mt-0.5" style={{color: colors.neutrals300}}
+                                numberOfLines={1}>
+                                {cs.description}
+                              </AppText>
+                            ) : null}
+                          </View>
+                          {isSelected && (
+                            <View
+                              className="w-5 h-5 items-center justify-center rounded-full"
+                              style={{backgroundColor: LISTENING_BLUE}}>
+                              <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                )
+              ) : null}
+
+              {/* Scenario Cards (2-3 cards) — ẩn khi tab Tuỳ chỉnh */}
+              {selectedCategory !== 'custom' && currentScenarios.map(scenario => {
                 const isSelected = selectedTopic?.id === scenario.id;
                 const isFav = favoriteScenarioIds.includes(scenario.id);
                 return (
