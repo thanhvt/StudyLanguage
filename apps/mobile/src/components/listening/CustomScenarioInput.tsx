@@ -1,10 +1,9 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {TextInput, TouchableOpacity, View, ActivityIndicator} from 'react-native';
+import {TextInput, TouchableOpacity, View, ActivityIndicator, Alert} from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
-import {useDialog} from '@/components/ui/DialogProvider';
 import {customScenarioApi, CustomScenario} from '@/services/api/customScenarios';
 
 interface CustomScenarioInputProps {
@@ -33,7 +32,6 @@ export default function CustomScenarioInput({
 }: CustomScenarioInputProps) {
   const colors = useColors();
   const {showSuccess, showWarning, showError} = useToast();
-  const {showConfirm} = useDialog();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -128,19 +126,27 @@ export default function CustomScenarioInput({
    */
   const handleDelete = (id: string) => {
     const scenario = savedScenarios.find(s => s.id === id);
-    showConfirm(
+    // Dùng Alert.alert() native thay vì showConfirm → luôn hiển thị trên mọi Modal
+    Alert.alert(
       'Xoá kịch bản?',
       `Bạn có chắc muốn xoá "${scenario?.name || 'kịch bản này'}"?`,
-      async () => {
-        try {
-          await customScenarioApi.delete(id);
-          setSavedScenarios(prev => prev.filter(s => s.id !== id));
-          showSuccess('Đã xoá', 'Kịch bản đã được xoá');
-        } catch (error) {
-          console.error('❌ [CustomScenario] Lỗi xoá:', error);
-          showError('Lỗi xoá kịch bản', 'Vui lòng thử lại');
-        }
-      },
+      [
+        {text: 'Huỷ', style: 'cancel'},
+        {
+          text: 'Xoá',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await customScenarioApi.delete(id);
+              setSavedScenarios(prev => prev.filter(s => s.id !== id));
+              showSuccess('Đã xoá', 'Kịch bản đã được xoá');
+            } catch (error) {
+              console.error('❌ [CustomScenario] Lỗi xoá:', error);
+              showError('Lỗi xoá kịch bản', 'Vui lòng thử lại');
+            }
+          },
+        },
+      ],
     );
   };
 
@@ -216,7 +222,7 @@ export default function CustomScenarioInput({
               <TouchableOpacity
                 onPress={() => handleDelete(scenario.id)}
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <Icon name="Trash2" className="w-4 h-4 text-destructive" />
+                <Icon name="Trash2" className="w-4 h-4" style={{color: '#EF4444'}} />
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
