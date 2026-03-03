@@ -144,7 +144,7 @@ export default function TopicPickerModal({
         {/* Content — TopicPicker hoặc CustomScenarioInput */}
         {/* ======================== */}
         <ScrollView
-          className="flex-1 px-6 pt-4"
+          className="flex-1 px-6 pt-2"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{paddingBottom: 100}}>
@@ -187,7 +187,7 @@ export default function TopicPickerModal({
               accessibilityLabel={`Xác nhận chọn ${selectedTopic.name}`}
               accessibilityRole="button">
               <AppText className="font-sans-bold text-base" style={{color: colors.foreground}}>
-                ✅ Xác nhận: {selectedTopic.name}
+                ✅ Xác nhận: {selectedTopic.name.length > 25 ? selectedTopic.name.slice(0, 25) + '...' : selectedTopic.name}
               </AppText>
             </TouchableOpacity>
           ) : (

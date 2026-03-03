@@ -15,6 +15,17 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useInsets} from '@/hooks/useInsets';
+import TrackPlayer from 'react-native-track-player';
+import {Platform} from 'react-native';
+import {Buffer} from 'buffer';
+
+// Dynamic import RNFS (giống pattern Speaking screens)
+let RNFSModule: any;
+try {
+  RNFSModule = require('react-native-fs');
+} catch {
+  console.warn('⚠️ [TtsSettings] react-native-fs chưa install');
+}
 
 // ========================
 // Màu sắc
@@ -129,19 +140,38 @@ export default function TtsSettingsSheet({
     setPreviewingVoice(voiceId);
     haptic.light();
     try {
-      await listeningApi.previewVoice(
+      // Gọi API lấy audio data (ArrayBuffer)
+      const audioData = await listeningApi.previewVoice(
         PREVIEW_TEXT,
         voiceId,
         ttsEmotion !== 'default' ? ttsEmotion : undefined,
       );
-      // Audio playback sẽ được xử lý riêng bằng audio player
-      console.log('✅ [TtsSettings] Preview giọng:', voiceId);
+
+      // Chuyển ArrayBuffer → base64 string (Buffer polyfill trong RN)
+      const base64Audio = Buffer.from(audioData).toString('base64');
+
+      // Ghi file tạm vào cache
+      const tempPath = `${RNFSModule?.CachesDirectoryPath || '/tmp'}/tts_preview_${voiceId}.mp3`;
+      await RNFSModule?.writeFile(tempPath, base64Audio, 'base64');
+
+      // Phát audio qua TrackPlayer
+      await TrackPlayer.reset();
+      await TrackPlayer.add({
+        id: `preview-${voiceId}`,
+        url: Platform.OS === 'ios' ? `file://${tempPath}` : tempPath,
+        title: `Preview: ${voiceId}`,
+        artist: 'TTS Preview',
+      });
+      await TrackPlayer.play();
+
+      console.log('✅ [TtsSettings] Đang phát preview giọng:', voiceId);
     } catch (err) {
       console.error('❌ [TtsSettings] Lỗi preview:', err);
+      showError('Lỗi phát thử', 'Không thể phát thử giọng đọc này');
     } finally {
       setPreviewingVoice(null);
     }
-  }, [previewingVoice, ttsEmotion, haptic]);
+  }, [previewingVoice, ttsEmotion, haptic, showError]);
 
   /**
    * Mục đích: Gán voice cho 1 speaker cụ thể

@@ -154,6 +154,13 @@ const ScenarioItem = React.memo(function ScenarioItem({
           backgroundColor: isSelected ? `${LISTENING_BLUE}15` : undefined,
           borderWidth: isSelected ? 1 : 0,
           borderColor: isSelected ? LISTENING_BLUE : 'transparent',
+          ...(isSelected && {
+            shadowColor: LISTENING_BLUE,
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 2,
+          }),
         }}
         onPress={() => onSelect(scenario)}
         onPressIn={handlePressIn}
@@ -249,10 +256,12 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   });
 
   return (
-    <View className="mb-2">
+    <View className="mb-1">
       <TouchableOpacity
         className="flex-row items-center justify-between px-4 py-3 rounded-xl"
         style={{
+          borderBottomWidth: 1,
+          borderBottomColor: 'rgba(255,255,255,0.04)',
           backgroundColor: hasSelectedScenario ? `${LISTENING_BLUE}10` : undefined,
           borderWidth: hasSelectedScenario ? 1 : 0,  
           borderColor: hasSelectedScenario ? `${LISTENING_BLUE}40` : 'transparent',
@@ -266,8 +275,8 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
           {hasSelectedScenario && (
             <View className="w-2 h-2 rounded-full mr-2" style={{backgroundColor: LISTENING_BLUE}} />
           )}
-          <AppText className="font-sans-medium text-sm"
-            style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.foreground}}>
+          <AppText className="font-sans-medium text-xs uppercase tracking-wider"
+            style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.neutrals300}}>
             {subCategory.name}
           </AppText>
           <View className="rounded-full px-2.5 py-1 ml-2" style={{backgroundColor: colors.neutrals700}}>
@@ -532,7 +541,7 @@ export default function TopicPicker({
           className="px-4 py-2.5 rounded-full mr-2 border"
           style={{
             backgroundColor: isActive ? `${LISTENING_BLUE}15` : undefined,
-            borderColor: isActive ? LISTENING_BLUE : 'transparent',
+            borderColor: isActive ? LISTENING_BLUE : 'rgba(255,255,255,0.06)',
           }}
           onPress={() => {
             haptic.light();
@@ -571,7 +580,7 @@ export default function TopicPicker({
   return (
     <View className="flex-1">
       {/* Search Bar với debounce */}
-      <View className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3" style={{backgroundColor: colors.neutrals900}}>
+      <View className="flex-row items-center rounded-2xl px-4 py-2.5 mb-3" style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)'}}>
         <Icon name="Search" className="w-4 h-4 mr-2" style={{color: colors.neutrals400}} />
         <TextInput
           className="flex-1 text-base py-1"
@@ -603,7 +612,7 @@ export default function TopicPicker({
         keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="mb-3"
+        className="mb-4"
         contentContainerStyle={{paddingRight: 16}}
       />
 
@@ -656,26 +665,36 @@ export default function TopicPicker({
       ) : activeCategory ? (
         // Danh sách SubCategories + Scenarios
         <View>
-          {activeCategory.subCategories.map(sub => (
-            <SubCategoryAccordion
-              key={sub.id}
-              subCategory={sub}
-              isExpanded={selectedSubCategory === sub.id}
-              onToggle={() => handleToggleSubCategory(sub.id)}
-              selectedTopicId={selectedTopic?.id ?? null}
-              favoriteIds={favoriteIds}
-              onSelectScenario={handleSelectScenario}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          ))}
+          {activeCategory.subCategories.length === 0 ? (
+            <View className="items-center py-8">
+              <AppText className="text-2xl mb-2">📂</AppText>
+              <AppText className="text-sm" style={{color: colors.neutrals400}}>
+                Chưa có kịch bản nào trong danh mục này
+              </AppText>
+            </View>
+          ) : (
+            activeCategory.subCategories.map(sub => (
+              <SubCategoryAccordion
+                key={sub.id}
+                subCategory={sub}
+                isExpanded={selectedSubCategory === sub.id}
+                onToggle={() => handleToggleSubCategory(sub.id)}
+                selectedTopicId={selectedTopic?.id ?? null}
+                favoriteIds={favoriteIds}
+                onSelectScenario={handleSelectScenario}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            ))
+          )}
         </View>
       ) : null}
 
       {/* Hiển thị topic đang chọn — sticky bottom indicator */}
       {selectedTopic && (
-        <View className="mt-3 rounded-2xl px-4 py-3 flex-row items-center" style={{backgroundColor: `${LISTENING_BLUE}15`}}>
-          <AppText className="text-sm flex-1" style={{color: LISTENING_BLUE}}>
-            ✅ Đã chọn: <AppText className="font-sans-bold">{selectedTopic.name}</AppText>
+        <View className="mt-3 rounded-2xl px-4 py-2.5 flex-row items-center" style={{backgroundColor: `${LISTENING_BLUE}15`, borderWidth: 1, borderColor: `${LISTENING_BLUE}30`}}>
+          <Icon name="Check" className="w-4 h-4 mr-2" style={{color: LISTENING_BLUE}} />
+          <AppText className="text-sm flex-1" style={{color: colors.foreground}}>
+            Đã chọn: <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>{selectedTopic.name}</AppText>
           </AppText>
           <TouchableOpacity
             onPress={() => {
@@ -685,7 +704,7 @@ export default function TopicPicker({
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
             accessibilityLabel="Bỏ chọn kịch bản"
             accessibilityRole="button">
-            <Icon name="X" className="w-4 h-4" style={{color: LISTENING_BLUE}} />
+            <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
         </View>
       )}

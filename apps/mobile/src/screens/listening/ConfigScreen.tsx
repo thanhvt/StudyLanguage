@@ -469,7 +469,8 @@ export default function ListeningConfigScreen({
                     hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
                     onPress={() => {
                       haptic.light();
-                      // TODO: Show favorites filter
+                      setSelectedCategory('favorites');
+                      setShowTopicModal(true);
                     }}
                     accessibilityLabel="Chủ đề yêu thích"
                     accessibilityRole="button">

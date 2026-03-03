@@ -105,8 +105,13 @@ export default function CustomScenarioInput({
         await loadScenarios();
       }
       showSuccess('Đã lưu kịch bản', `"${name.trim()}" đã được thêm vào bộ sưu tập`);
+      // U1: Auto-select scenario vừa lưu → đóng modal ngay
+      const savedName = name.trim();
+      const savedDesc = description.trim();
       setName('');
       setDescription('');
+      // Gọi onQuickUse để tự động chọn + đóng modal
+      onQuickUse(savedName, savedDesc);
     } catch (error) {
       console.error('❌ [CustomScenario] Lỗi lưu:', error);
       showError('Lỗi lưu kịch bản', 'Vui lòng thử lại sau');
@@ -241,7 +246,7 @@ export default function CustomScenarioInput({
 
         <TextInput
           className="rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.neutrals700}}
+          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.neutrals800}}
           placeholder="Tên kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={name}
@@ -253,7 +258,7 @@ export default function CustomScenarioInput({
 
         <TextInput
           className="rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.neutrals700}}
+          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.neutrals800}}
           placeholder="Mô tả chi tiết kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={description}
