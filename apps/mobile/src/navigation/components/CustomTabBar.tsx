@@ -112,8 +112,8 @@ function AnimatedTabItem({
   const isTablet = useIsTablet();
   const haptic = useHaptic();
 
-  // Pixel-aligned sizes
-  const iconSize = isTablet ? 26 : 22;
+  // Pixel-aligned sizes — iPad lớn hơn đáng kể
+  const iconSize = isTablet ? 28 : 22;
 
   // Animated values
   const pressScale = useSharedValue(1);
@@ -126,8 +126,8 @@ function AnimatedTabItem({
   // Press scale
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{scale: pressScale.value}],
-    // Active tab chiếm flex lớn hơn (expand effect)
-    flex: interpolate(focusProgress.value, [0, 1], [1, 1.8]),
+    // Active tab chiếm flex lớn hơn (expand effect) — iPad rộng hơn
+    flex: interpolate(focusProgress.value, [0, 1], [1, isTablet ? 2.2 : 1.8]),
   }));
 
   // Pill tinted background - opacity animation
@@ -136,12 +136,23 @@ function AnimatedTabItem({
     transform: [{scale: 0.8 + focusProgress.value * 0.2}],
   }));
 
-  // Label opacity + translate
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: focusProgress.value,
-    maxWidth: interpolate(focusProgress.value, [0, 1], [0, 100]),
-    marginLeft: interpolate(focusProgress.value, [0, 1], [0, 6]),
-  }));
+  // Label opacity + translate — iPad luôn hiện label inactive
+  const labelStyle = useAnimatedStyle(() => {
+    if (isTablet) {
+      // iPad: label luôn visible, chỉ bold/opacity thay đổi
+      return {
+        opacity: 0.5 + focusProgress.value * 0.5,
+        maxWidth: 100,
+        marginLeft: 8,
+      };
+    }
+    // iPhone: label expand từ 0
+    return {
+      opacity: focusProgress.value,
+      maxWidth: interpolate(focusProgress.value, [0, 1], [0, 100]),
+      marginLeft: interpolate(focusProgress.value, [0, 1], [0, 6]),
+    };
+  });
 
   const handlePressIn = () => {
     pressScale.value = withSpring(0.9, {damping: 15, stiffness: 300});
@@ -162,8 +173,11 @@ function AnimatedTabItem({
 
   // Pill tinted bg — màu skill rất nhẹ
   const pillBgColor = isDark
-    ? `${config.activeColor}25` // 15% opacity trên dark
-    : `${config.activeColor}18`; // 10% opacity trên light
+    ? `${config.activeColor}25`
+    : `${config.activeColor}18`;
+
+  // iPad: label dùng màu khác cho active vs inactive
+  const labelColor = isFocused ? config.activeColor : inactiveColor;
 
   return (
     <Animated.View style={[styles.tabItem, containerStyle]}>
@@ -196,15 +210,15 @@ function AnimatedTabItem({
             strokeWidth={strokeWidth}
           />
 
-          {/* Label — expand từ 0 width khi active */}
+          {/* Label — iPhone: expand khi active / iPad: luôn hiện */}
           <Animated.View style={[styles.labelContainer, labelStyle]}>
             <AppText
               style={[
                 styles.label,
                 {
-                  color: config.activeColor,
-                  fontSize: isTablet ? 13 : 11,
-                  fontWeight: '700',
+                  color: labelColor,
+                  fontSize: isTablet ? 14 : 11,
+                  fontWeight: isFocused ? '700' : '500',
                 },
               ]}
               numberOfLines={1}>
@@ -235,7 +249,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   const isDark = colorScheme === 'dark';
   const isTablet = useIsTablet();
 
-  const maxWidth = isTablet ? 520 : undefined;
+  // iPad: rộng hơn, centered
+  const maxWidth = isTablet ? 640 : undefined;
 
   return (
     <View
@@ -338,8 +353,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
   // Tinted pill background — absolute, bo tròn
   pillBg: {
