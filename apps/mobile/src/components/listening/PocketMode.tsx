@@ -20,6 +20,7 @@ import {AppText} from '@/components/ui';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import TrackPlayer from 'react-native-track-player';
+import { useColors } from '@/hooks/useColors';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 

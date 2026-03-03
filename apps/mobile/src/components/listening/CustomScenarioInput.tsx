@@ -6,6 +6,8 @@ import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
 import {customScenarioApi, CustomScenario} from '@/services/api/customScenarios';
 
+const LISTENING_BLUE = '#2563EB';
+
 interface CustomScenarioInputProps {
   /** Callback khi user muốn dùng ngay 1 scenario */
   onQuickUse: (name: string, description: string) => void;
@@ -244,14 +246,14 @@ export default function CustomScenarioInput({
               accessibilityRole="button"
               className="p-1.5 rounded-full"
               style={{backgroundColor: colors.neutrals800}}>
-              <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals400}} />
+              <Icon name="X" className="w-4 h-4" style={{color: colors.neutrals300}} />
             </TouchableOpacity>
           )}
         </View>
 
         <TextInput
           className="rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.neutrals800}}
+          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.glassBorderStrong, backgroundColor: colors.neutrals900}}
           placeholder="Tên kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={name}
@@ -263,7 +265,7 @@ export default function CustomScenarioInput({
 
         <TextInput
           className="rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.neutrals800}}
+          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.glassBorderStrong, backgroundColor: colors.neutrals900}}
           placeholder="Mô tả chi tiết kịch bản..."
           placeholderTextColor={colors.neutrals500}
           value={description}
@@ -276,23 +278,28 @@ export default function CustomScenarioInput({
         />
 
         <View className="flex-row gap-2">
-          <AppButton
-            variant="primary"
-            className="flex-1 rounded-xl"
+          <TouchableOpacity
+            className="flex-1 rounded-xl py-3 items-center justify-center"
+            style={{backgroundColor: LISTENING_BLUE}}
             onPress={handleQuickUse}
             disabled={disabled || !name.trim() || isSaving}
+            activeOpacity={0.8}
             accessibilityLabel="Sử dụng kịch bản ngay mà không lưu">
-            ⚡ Sử dụng ngay
-          </AppButton>
-          <AppButton
-            variant="secondary"
-            className="flex-1 rounded-xl"
+            <AppText className="text-sm font-sans-bold" style={{color: '#FFFFFF'}}>
+              ⚡ Sử dụng ngay
+            </AppText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="flex-1 rounded-xl py-3 items-center justify-center"
+            style={{backgroundColor: `${LISTENING_BLUE}12`, borderWidth: 1, borderColor: LISTENING_BLUE}}
             onPress={handleSave}
             disabled={disabled || !name.trim() || isSaving}
-            loading={isSaving}
+            activeOpacity={0.8}
             accessibilityLabel="Lưu kịch bản vào bộ sưu tập">
-            💾 Lưu lại
-          </AppButton>
+            <AppText className="text-sm font-sans-bold" style={{color: LISTENING_BLUE}}>
+              💾 Lưu lại
+            </AppText>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

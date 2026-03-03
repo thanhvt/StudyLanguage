@@ -202,7 +202,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
           activeOpacity={0.6}
           accessibilityLabel={`${isFavorite ? 'Bỏ' : 'Đánh dấu'} yêu thích ${scenario.name}`}
           accessibilityRole="button">
-          <AppText style={{color: isFavorite ? '#FBBF24' : colors.neutrals400}}>
+          <AppText style={{color: isFavorite ? '#FBBF24' : colors.neutrals300}}>
             {isFavorite ? '⭐' : '☆'}
           </AppText>
         </TouchableOpacity>
@@ -300,7 +300,7 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
         </View>
         {/* Animated chevron thay vì text ▲/▼ */}
         <Animated.View style={{transform: [{rotate: rotateInterpolate}]}}>
-          <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals400}} />
+          <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals300}} />
         </Animated.View>
       </TouchableOpacity>
 
