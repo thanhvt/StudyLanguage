@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Platform,
   useWindowDimensions,
-  useColorScheme,
 } from 'react-native';
 import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {
@@ -26,6 +25,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useColors} from '@/hooks/useColors';
+import {useAppStore} from '@/store/useAppStore';
 import {SKILL_COLORS} from '@/config/skillColors';
 
 // ============================================================
@@ -245,8 +246,9 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
+  const colors = useColors();
   const isTablet = useIsTablet();
 
   // iPad: rộng hơn, centered
@@ -258,20 +260,20 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
         styles.outerContainer,
         {
           paddingBottom: Math.max(insets.bottom, 8),
-          // Dark mode: nền ngoài đồng nhất với pill → liền mạch
-          backgroundColor: isDark ? '#191919' : 'transparent',
+          // Dùng colors.surface thay vì hardcode #191919 — đảm bảo sync với app theme
+          backgroundColor: isDark ? colors.surface : 'transparent',
         },
       ]}>
-      {/* Đường kẻ phân cách phía trên — chỉ dark mode */}
+      {/* Đường kẻ phân cách phía trên — glassBorder */}
       {isDark && (
-        <View style={{height: 0.5, backgroundColor: 'rgba(255,255,255,0.06)'}} />
+        <View style={{height: 0.5, backgroundColor: colors.glassBorder}} />
       )}
       <View
         style={[
           styles.pillContainer,
           {
             width: '100%',
-            backgroundColor: isDark ? '#191919' : '#FFFFFF',
+            backgroundColor: isDark ? colors.surface : '#FFFFFF',
             ...(isDark
               ? {}
               : {

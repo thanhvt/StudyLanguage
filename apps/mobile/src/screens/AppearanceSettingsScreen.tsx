@@ -1,10 +1,11 @@
-import React, {useRef, useCallback} from 'react';
-import {ScrollView, View, Pressable, StyleSheet, Animated} from 'react-native';
+import React, {useRef, useCallback, useEffect} from 'react';
+import {ScrollView, View, Pressable, StyleSheet, Animated, Platform} from 'react-native';
 import {AppText, Icon} from '@/components/ui';
 import {useAppStore, AccentColorId} from '@/store/useAppStore';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import LinearGradient from 'react-native-linear-gradient';
+import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
 
 /**
  * Mục đích: Config 6 accent colors — khớp với hi-fi ps_appearance screen
@@ -157,7 +158,9 @@ export default function AppearanceSettingsScreen() {
         </View>
 
         {/* ========================================
-         * Section 2: Màu nhấn — circle swatches + glow ring
+         * Section 2: Màu nhấn — compact single row + animated swatches
+         * Bỏ hex labels, compact 6 circle 1 hàng
+         * Selected: glow shadow + ring + scale animation
          * ======================================== */}
         <View className="px-4 mt-4">
           <View
@@ -185,63 +188,36 @@ export default function AppearanceSettingsScreen() {
             <AppText
               variant="label"
               style={{color: colors.foreground}}
-              className="font-sans-semibold mb-5"
+              className="font-sans-semibold mb-4"
               raw>
               Màu nhấn
             </AppText>
 
-            <View className="flex-row flex-wrap justify-between">
-              {ACCENT_COLORS.map(color => {
-                const isSelected = accentColor === color.id;
+            {/* 6 circles — 1 hàng ngang, đều nhau */}
+            <View className="flex-row justify-between px-1">
+              {ACCENT_COLORS.map(color => (
+                <AnimatedColorSwatch
+                  key={color.id}
+                  color={color}
+                  isSelected={accentColor === color.id}
+                  isDark={isDark}
+                  onPress={() => {
+                    haptic.medium();
+                    setAccentColor(color.id);
+                  }}
+                />
+              ))}
+            </View>
 
-                return (
-                  <Pressable
-                    key={color.id}
-                    onPress={() => {
-                      haptic.light();
-                      setAccentColor(color.id);
-                    }}
-                    className="items-center mb-5"
-                    style={{width: '30%'}}
-                    accessibilityLabel={`Màu ${color.name}${isSelected ? ', đang chọn' : ''}`}
-                    accessibilityRole="button">
-                    {/* Glow ring cho selected — shadow hào quang */}
-                    <View
-                      className="w-14 h-14 rounded-full items-center justify-center"
-                      style={{
-                        backgroundColor: color.hex,
-                        // Glow effect khi selected
-                        shadowColor: isSelected ? color.hex : 'transparent',
-                        shadowOffset: {width: 0, height: 0},
-                        shadowOpacity: isSelected ? 0.6 : 0,
-                        shadowRadius: isSelected ? 10 : 0,
-                        elevation: isSelected ? 8 : 0,
-                        // Ring border
-                        borderWidth: isSelected ? 3 : 0,
-                        borderColor: isDark ? '#ffffff' : '#000000',
-                      }}>
-                      {isSelected && (
-                        <Icon
-                          name="Check"
-                          className="w-5 h-5"
-                          style={{color: '#ffffff'}}
-                        />
-                      )}
-                    </View>
-                    <AppText
-                      variant="caption"
-                      style={{
-                        color: isSelected
-                          ? color.hex
-                          : colors.neutrals400,
-                      }}
-                      className="mt-2 font-sans-medium"
-                      raw>
-                      {color.hex}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
+            {/* Tên màu selected — hiển thị bên dưới */}
+            <View className="items-center mt-3">
+              <AppText
+                variant="caption"
+                style={{color: currentAccentHex}}
+                className="font-sans-semibold"
+                raw>
+                {ACCENT_COLORS.find(c => c.id === accentColor)?.name || 'Emerald'}
+              </AppText>
             </View>
           </View>
         </View>
@@ -325,7 +301,9 @@ export default function AppearanceSettingsScreen() {
         </View>
 
         {/* ========================================
-         * Section 4: Live Preview — demo accent color realtime
+         * Section 4: Live Preview — Liquid Glass button
+         * iOS 26+: native LiquidGlassView effect
+         * Fallback: simulated glassmorphism (gradient + shadow)
          * ======================================== */}
         <View className="px-4 mt-4">
           <View
@@ -353,13 +331,14 @@ export default function AppearanceSettingsScreen() {
             <AppText
               variant="label"
               style={{color: colors.foreground}}
-              className="font-sans-semibold mb-3"
+              className="font-sans-semibold mb-4"
               raw>
               Live Preview
             </AppText>
 
+            {/* Nội dung preview — text + nút glass */}
             <View
-              className="rounded-2xl p-4 flex-row items-center justify-between"
+              className="rounded-2xl p-5"
               style={{
                 backgroundColor: isDark ? colors.neutrals900 : colors.neutrals700,
                 borderWidth: 1,
@@ -368,29 +347,17 @@ export default function AppearanceSettingsScreen() {
               <AppText
                 variant="body"
                 style={{color: colors.foreground}}
-                className="flex-1 mr-3"
+                className="mb-4"
                 raw>
                 Xin chào! Đây là bản xem trước.
               </AppText>
-              <View
-                className="px-5 py-2.5 rounded-xl"
-                style={{
-                  backgroundColor: currentAccentHex,
-                  // Nút glow effect
-                  shadowColor: currentAccentHex,
-                  shadowOffset: {width: 0, height: 2},
-                  shadowOpacity: 0.4,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }}>
-                <AppText
-                  variant="body"
-                  className="font-sans-bold"
-                  style={{color: '#000000'}}
-                  raw>
-                  Bắt đầu
-                </AppText>
-              </View>
+
+              {/* === NÚT LIQUID GLASS === */}
+              <GlassPreviewButton
+                accentHex={currentAccentHex}
+                isDark={isDark}
+                colors={colors}
+              />
             </View>
           </View>
         </View>
@@ -493,3 +460,321 @@ function ThemeCard({icon, label, isSelected, isDark, colors, onPress}: ThemeCard
     </Animated.View>
   );
 }
+
+// ========================================
+// AnimatedColorSwatch — animated accent color circle
+// ========================================
+
+interface AnimatedColorSwatchProps {
+  color: {id: AccentColorId; hex: string; name: string};
+  isSelected: boolean;
+  isDark: boolean;
+  onPress: () => void;
+}
+
+/**
+ * Mục đích: Circle màu accent với spring animations (RN Animated)
+ * Tham số đầu vào: color, isSelected, isDark, onPress
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Section "Màu nhấn" trong AppearanceSettingsScreen
+ *
+ * Animation: selected → bounce scale 1.2→1.0 + glow shadow
+ * Press → squish 0.85 → spring back
+ */
+function AnimatedColorSwatch({color, isSelected, isDark, onPress}: AnimatedColorSwatchProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+  const ringAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+  const isFirstMount = useRef(true);
+
+  // Sync selected state với spring animations — skip mount
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    if (isSelected) {
+      // Bounce: 1 → 1.2 → 1.0
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.2,
+          useNativeDriver: false,
+          speed: 40,
+          bounciness: 12,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.0,
+          useNativeDriver: false,
+          speed: 20,
+          bounciness: 8,
+        }),
+      ]).start();
+      // Glow + ring fade in
+      Animated.spring(glowAnim, {toValue: 1, useNativeDriver: false, speed: 12}).start();
+      Animated.spring(ringAnim, {toValue: 1, useNativeDriver: false, speed: 14}).start();
+    } else {
+      // Fade out
+      Animated.timing(scaleAnim, {toValue: 1, useNativeDriver: false, duration: 200}).start();
+      Animated.spring(glowAnim, {toValue: 0, useNativeDriver: false, speed: 20}).start();
+      Animated.spring(ringAnim, {toValue: 0, useNativeDriver: false, speed: 20}).start();
+    }
+  }, [isSelected, scaleAnim, glowAnim, ringAnim]);
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.85,
+      useNativeDriver: false,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: false,
+      speed: 30,
+      bounciness: 10,
+    }).start();
+  }, [scaleAnim]);
+
+  const circleSize = 42;
+
+  // Interpolated values cho glow + ring
+  const shadowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.7],
+  });
+  const shadowRadius = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 14],
+  });
+  const borderWidth = ringAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 2.5],
+  });
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel={`Màu ${color.name}${isSelected ? ', đang chọn' : ''}`}
+      accessibilityRole="button"
+      className="items-center">
+      {/* Outer glow container — animated shadow */}
+      <Animated.View
+        style={{
+          width: circleSize + 10,
+          height: circleSize + 10,
+          borderRadius: (circleSize + 10) / 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{scale: scaleAnim}],
+          shadowColor: color.hex,
+          shadowOffset: {width: 0, height: 0},
+          shadowOpacity: shadowOpacity,
+          shadowRadius: shadowRadius,
+        }}>
+        {/* Ring border — animated width */}
+        <Animated.View
+          style={{
+            width: circleSize + 6,
+            height: circleSize + 6,
+            borderRadius: (circleSize + 6) / 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: borderWidth,
+            borderColor: isDark ? '#ffffff' : '#000000',
+          }}>
+          {/* Color circle */}
+          <View
+            style={{
+              width: circleSize,
+              height: circleSize,
+              borderRadius: circleSize / 2,
+              backgroundColor: color.hex,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {isSelected && (
+              <Icon
+                name="Check"
+                className="w-5 h-5"
+                style={{color: '#ffffff'}}
+              />
+            )}
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ========================================
+// GlassPreviewButton — Liquid Glass nút preview
+// ========================================
+
+interface GlassPreviewButtonProps {
+  accentHex: string;
+  isDark: boolean;
+  colors: ReturnType<typeof useColors>;
+}
+
+/**
+ * Mục đích: Nút "Bắt đầu" với hiệu ứng Liquid Glassmorphism
+ * Tham số đầu vào: accentHex (màu accent hiện tại), isDark, colors
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Live Preview section trong AppearanceSettingsScreen
+ *
+ * iOS 26+: native LiquidGlassView — hiệu ứng glass thật (blur, refraction)
+ * Fallback: Simulated glassmorphism — gradient overlay + shadow + glass bg
+ */
+function GlassPreviewButton({accentHex, isDark, colors}: GlassPreviewButtonProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 10,
+    }).start();
+  }, [scaleAnim]);
+
+  // iOS 26+ → Native Liquid Glass
+  if (isLiquidGlassSupported) {
+    return (
+      <Animated.View style={{transform: [{scale: scaleAnim}]}}>
+        <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+          {/* Shadow wrapper */}
+          <View
+            style={{
+              shadowColor: accentHex,
+              shadowOffset: {width: 0, height: 4},
+              shadowOpacity: 0.5,
+              shadowRadius: 16,
+              elevation: 8,
+              borderRadius: 16,
+            }}>
+            <LiquidGlassView
+              effect="regular"
+              tintColor={accentHex + '40'}
+              style={{
+                borderRadius: 16,
+                paddingVertical: 16,
+                paddingHorizontal: 24,
+                overflow: 'hidden',
+                alignItems: 'center',
+                justifyContent: 'center',
+                // Rim light — sáng ở top
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.08)',
+                borderTopColor: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.70)',
+                borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                backgroundColor: accentHex + '25',
+              }}>
+              {/* Inner glow gradient */}
+              <LinearGradient
+                colors={[accentHex + '30', 'transparent']}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 30,
+                  borderTopLeftRadius: 16,
+                  borderTopRightRadius: 16,
+                }}
+              />
+              <AppText
+                variant="heading3"
+                className="font-sans-bold"
+                style={{color: isDark ? '#ffffff' : '#000000'}}
+                raw>
+                ✨ Bắt đầu
+              </AppText>
+            </LiquidGlassView>
+          </View>
+        </Pressable>
+      </Animated.View>
+    );
+  }
+
+  // Fallback — Simulated glassmorphism (iOS < 26 / Android)
+  return (
+    <Animated.View style={{transform: [{scale: scaleAnim}]}}>
+      <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+        <View
+          className="rounded-2xl overflow-hidden"
+          style={{
+            // Outer glow — accent color hào quang
+            shadowColor: accentHex,
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: isDark ? 0.6 : 0.3,
+            shadowRadius: 16,
+            elevation: 8,
+          }}>
+          {/* Glass background — semi-transparent với accent tint */}
+          <View
+            className="items-center justify-center rounded-2xl overflow-hidden"
+            style={{
+              paddingVertical: 16,
+              paddingHorizontal: 24,
+              backgroundColor: isDark
+                ? accentHex + '20'
+                : accentHex + '15',
+              // Rim light borders
+              borderWidth: 1.5,
+              borderColor: isDark ? accentHex + '40' : accentHex + '30',
+              borderTopColor: isDark
+                ? 'rgba(255,255,255,0.25)'
+                : accentHex + '50',
+            }}>
+            {/* Inner glow gradient — accent tint */}
+            <LinearGradient
+              colors={[
+                isDark ? accentHex + '35' : accentHex + '20',
+                'transparent',
+              ]}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 35,
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+              }}
+            />
+            {/* Shimmer highlight — vệt sáng chéo */}
+            <LinearGradient
+              colors={['transparent', 'rgba(255,255,255,0.08)', 'transparent']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFill}
+            />
+            <AppText
+              variant="heading3"
+              className="font-sans-bold"
+              style={{color: isDark ? '#ffffff' : '#000000'}}
+              raw>
+              ✨ Bắt đầu
+            </AppText>
+          </View>
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+

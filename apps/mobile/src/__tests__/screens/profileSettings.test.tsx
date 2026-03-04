@@ -228,15 +228,18 @@ describe('Profile & Settings — Screen Tests', () => {
       expect(getByText('Tối')).toBeTruthy();
     });
 
-    it('hiển thị section "Màu nhấn" với 6 hex swatches', () => {
-      const {getByText} = render(<AppearanceSettingsScreen />);
+    it('hiển thị section "Màu nhấn" với 6 swatches và tên màu selected', () => {
+      const {getByText, getByLabelText} = render(<AppearanceSettingsScreen />);
       expect(getByText('Màu nhấn')).toBeTruthy();
-      expect(getByText('#10b981')).toBeTruthy();
-      expect(getByText('#6366f1')).toBeTruthy();
-      expect(getByText('#f59e0b')).toBeTruthy();
-      expect(getByText('#f43f5e')).toBeTruthy();
-      expect(getByText('#3b82f6')).toBeTruthy();
-      expect(getByText('#f97316')).toBeTruthy();
+      // Kiểm tra accessibility labels của 6 swatches
+      expect(getByLabelText('Màu Emerald, đang chọn')).toBeTruthy();
+      expect(getByLabelText('Màu Indigo')).toBeTruthy();
+      expect(getByLabelText('Màu Amber')).toBeTruthy();
+      expect(getByLabelText('Màu Rose')).toBeTruthy();
+      expect(getByLabelText('Màu Blue')).toBeTruthy();
+      expect(getByLabelText('Màu Orange')).toBeTruthy();
+      // Tên màu selected hiển thị bên dưới
+      expect(getByText('Emerald')).toBeTruthy();
     });
 
     it('hiển thị section "Ngôn ngữ" với flag chips', () => {
@@ -248,7 +251,7 @@ describe('Profile & Settings — Screen Tests', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
       expect(getByText('Live Preview')).toBeTruthy();
       expect(getByText('Xin chào! Đây là bản xem trước.')).toBeTruthy();
-      expect(getByText('Bắt đầu')).toBeTruthy();
+      expect(getByText('✨ Bắt đầu')).toBeTruthy();
     });
 
     it('KHÔNG hiển thị Font Size (đã loại bỏ)', () => {
@@ -424,10 +427,10 @@ describe('Profile & Settings — Screen Tests', () => {
   });
 
   describe('✅ UAT: Appearance — chọn accent color', () => {
-    it('nhấn hex #f97316 (Sunset Focus) → accentColor thay đổi', () => {
-      const {getByText} = render(<AppearanceSettingsScreen />);
-      // Nhấn vào swatch hex label thay vì tên color
-      fireEvent.press(getByText('#f97316'));
+    it('nhấn swatch Orange (Sunset Focus) → accentColor thay đổi', () => {
+      const {getByLabelText} = render(<AppearanceSettingsScreen />);
+      // Nhấn vào swatch qua accessibilityLabel
+      fireEvent.press(getByLabelText('Màu Orange'));
 
       expect(useAppStore.getState().accentColor).toBe('sunset-focus');
     });
