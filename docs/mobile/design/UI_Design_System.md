@@ -228,6 +228,130 @@ Border Radius: 22px (circle)
 > [!WARNING]
 > **Dark Mode đặc biệt:** `variant="outline"` cực kỳ khó nhìn trên nền #000000. Luôn dùng `variant="secondary"` cho button phụ trên dark mode.
 
+---
+
+### 6.1.1 Button Design System — Feature-Specific Hierarchy
+
+> **Nguyên tắc cốt lõi:** Trong cùng 1 feature, tất cả buttons PHẢI tuân theo 4 tier hierarchy dưới đây. Mỗi tier có specs cố định về màu, size, font, border radius.
+
+#### 🏗️ 4-Tier Button Hierarchy
+
+| Tier | Vai trò | Background | Text | Height | Border Radius | Border | Font |
+|------|---------|------------|------|--------|---------------|--------|------|
+| **Primary** | CTA chính — action quan trọng nhất | `FEATURE_COLOR` (solid) | `#FFFFFF` (white), 16sp | h-14 (56px) | 16px (rounded-2xl) | Không | `font-sans-bold` |
+| **Secondary** | Action phụ — option khác | `FEATURE_COLOR + '12'` (tint 7%) | `FEATURE_COLOR`, 15sp | h-12 (48px) | 14px (rounded-xl) | 1.5px `FEATURE_COLOR + '30'` | `font-sans-semibold` |
+| **Cancel** | Huỷ, đóng, dismiss | transparent | `foreground`, 15sp | h-12 (48px) | 14px (rounded-xl) | 1px `neutrals700` | `font-sans-medium` |
+| **Destructive** | Xóa vĩnh viễn, hành động không thể undo | `#EF4444` (solid) | `#FFFFFF`, 15sp | h-12 (48px) | 14px (rounded-xl) | Không | `font-sans-bold` |
+
+#### 🎨 Feature Colors
+
+| Feature | `FEATURE_COLOR` | Hex |
+|---------|-----------------|-----|
+| Listening | `LISTENING_BLUE` | `#2563EB` |
+| Speaking | `SPEAKING_GREEN` | `#16A34A` |
+| Reading | `READING_AMBER` | `#D97706` |
+| App-wide | `PRIMARY` | `#22c55e` |
+
+#### 📐 Disabled State — Per Tier
+
+| Tier | Dark Mode Disabled | Light Mode Disabled |
+|------|-------------------|---------------------|
+| **Primary** | `neutrals900` bg + `glassBorder` border | `FEATURE_COLOR + '18'` bg + `FEATURE_COLOR + '30'` border |
+| **Secondary** | `opacity: 0.5` | `opacity: 0.5` |
+| **Cancel** | `opacity: 0.5` | `opacity: 0.5` |
+
+#### 🔑 Glow Effect (chỉ Primary CTA)
+
+```typescript
+// Shadow cho Primary button khi active (KHÔNG disabled)
+style={{
+  shadowColor: FEATURE_COLOR,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.35,
+  shadowRadius: 12,
+  elevation: 8,
+}}
+```
+
+#### 📋 Decision Matrix — Chọn tier nào?
+
+| Câu hỏi | Nếu Có → |
+|----------|----------|
+| Đây có phải action chính duy nhất trên screen? | **Primary** |
+| Action phụ bên cạnh Primary? (Lưu lại, Dùng ngay) | **Secondary** |
+| Đóng/huỷ/dismiss mà không thay đổi gì? | **Cancel** (outline) |
+| Xóa dữ liệu vĩnh viễn? | **Destructive** |
+| Action phụ mà KHÔNG đi kèm Primary? | **Secondary** |
+
+#### ✅ Ví dụ đúng
+
+```
+ Listening Feature:
+ ┌──────────────────────────────────────────────┐
+ │  [Huỷ]  (Cancel/outline)  [Tạo]  (Primary)  │ ← Form bottom
+ └──────────────────────────────────────────────┘
+
+ ┌──────────────────────────────────────────────┐
+ │  [⚡ Sử dụng ngay] (Primary)  [💾 Lưu lại] (Secondary)  │ ← Dual action
+ └──────────────────────────────────────────────┘
+
+ ┌──────────────────────────────────────────────┐
+ │  [Dùng ngay] (Secondary — blue tint)         │ ← Card action
+ └──────────────────────────────────────────────┘
+
+ ┌──────────────────────────────────────────────┐
+ │  [Bắt đầu nghe] (Primary — full width CTA)   │ ← Screen bottom
+ └──────────────────────────────────────────────┘
+```
+
+#### ❌ Anti-patterns
+
+| Sai | Tại sao | Đúng |
+|-----|---------|------|
+| Huỷ = `variant="secondary"` (purple) | Purple không thuộc feature color | Huỷ = `variant="outline"` |
+| Huỷ = solid red | Red = destructive (xóa), không phải cancel | Huỷ = outline/ghost |
+| Tạo = lavender/nhạt | Primary CTA phải nổi bật nhất | Tạo = solid `FEATURE_COLOR` |
+| Dùng ngay = gray outline | Không nhận diện được là button | Dùng ngay = blue tint secondary |
+| Text trắng trên nút solid xanh dùng `colors.foreground` | Light mode foreground = dark text → không đọc được | Dùng `'#FFFFFF'` hardcode |
+| Disabled primary = `neutrals700` cả 2 mode | Light mode quá nhạt trên glass | Disabled light = blue tint `18%` |
+
+#### 💻 Code Reference — AppButton variant mapping
+
+```tsx
+// Primary CTA — Feature-branded
+<AppButton variant="primary" size="lg" className="w-full rounded-2xl"
+  style={{ backgroundColor: LISTENING_BLUE }}
+  textClassname="font-sans-bold">
+  Bắt đầu nghe
+</AppButton>
+
+// Secondary — Blue tint (TouchableOpacity vì AppButton secondary = purple)
+<TouchableOpacity className="flex-1 py-2.5 rounded-xl items-center"
+  style={{
+    backgroundColor: `${LISTENING_BLUE}12`,
+    borderWidth: 1.5,
+    borderColor: `${LISTENING_BLUE}30`,
+  }}>
+  <AppText className="text-sm font-sans-semibold" style={{ color: LISTENING_BLUE }}>
+    Dùng ngay
+  </AppText>
+</TouchableOpacity>
+
+// Cancel — Outline
+<AppButton variant="outline" size="default" className="flex-1">
+  Hủy
+</AppButton>
+
+// Destructive — chỉ cho xóa vĩnh viễn
+<AppButton variant="primary" size="default"
+  style={{ backgroundColor: '#EF4444' }}>
+  Xóa kịch bản
+</AppButton>
+```
+
+> [!IMPORTANT]
+> **AppButton `variant="secondary"`** render ra màu **purple** (từ app theme) — KHÔNG phải feature color. Khi cần secondary button theo feature color, dùng **TouchableOpacity** với blue tint styles thủ công như ví dụ trên.
+
 ### 6.2 Cards
 
 ```
