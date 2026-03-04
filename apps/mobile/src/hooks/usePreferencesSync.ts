@@ -1,30 +1,117 @@
 import {useEffect, useCallback, useRef} from 'react';
 import {useAuthStore} from '@/store/useAuthStore';
 import {useAppStore, AccentColorId, Theme} from '@/store/useAppStore';
-import {supabase} from '@/services/supabase/client';
+import {useSettingsStore} from '@/store/useSettingsStore';
+import {settingsApi, SettingsPayload} from '@/services/api/settings';
+import type {LanguageCode} from '@/config/i18n';
 
 /**
- * Mục đích: Đồng bộ preferences (theme, accent_color) giữa MMKV local và Supabase
+ * Mục đích: Đồng bộ toàn bộ settings giữa local (MMKV) và server (API backend)
  * Tham số đầu vào: không có
  * Tham số đầu ra: { loadPreferences, savePreferences }
  * Khi nào sử dụng:
- *   - Gọi 1 lần trong ProfileScreen hoặc RootNavigator
- *   - Tương tự web-v1 use-preferences-sync.ts
+ *   - Gọi 1 lần trong MoreScreen (đã gọi sẵn)
+ *   - Có thể gọi thêm trong RootNavigator nếu muốn sync sớm hơn
  *
  * Luồng:
- *   1. User đăng nhập → loadPreferences() → lấy từ DB → apply vào useAppStore
- *   2. User thay đổi theme/accent → savePreferences() → upsert vào DB
- *   3. Table: user_preferences (user_id, theme, accent_color)
+ *   1. User đăng nhập → loadPreferences() → GET /user/settings → apply vào stores
+ *   2. User thay đổi bất kỳ setting nào → debounce 1.5s → PUT /user/settings
+ *   3. Nếu server chưa có data → push local settings lên server
+ *   4. Nếu server có data → pull về merge vào local (server wins lúc login)
  */
 export function usePreferencesSync() {
+  // === App Store (theme, accent, language) ===
   const user = useAuthStore((state) => state.user);
   const theme = useAppStore((state) => state.theme);
   const accentColor = useAppStore((state) => state.accentColor);
+  const language = useAppStore((state) => state.language);
   const setTheme = useAppStore((state) => state.setTheme);
   const setAccentColor = useAppStore((state) => state.setAccentColor);
+  const setLanguage = useAppStore((state) => state.setLanguage);
+
+  // === Settings Store (audio, privacy) ===
+  const audio = useSettingsStore((state) => state.audio);
+  const privacy = useSettingsStore((state) => state.privacy);
+  const setBackgroundMusic = useSettingsStore((state) => state.setBackgroundMusic);
+  const setMusicVolume = useSettingsStore((state) => state.setMusicVolume);
+  const setMusicDucking = useSettingsStore((state) => state.setMusicDucking);
+  const setSoundEffects = useSettingsStore((state) => state.setSoundEffects);
+  const setAutoPlay = useSettingsStore((state) => state.setAutoPlay);
+  const setSaveRecordings = useSettingsStore((state) => state.setSaveRecordings);
+  const setDataSync = useSettingsStore((state) => state.setDataSync);
 
   /**
-   * Mục đích: Tải preferences từ Supabase khi user đăng nhập
+   * Mục đích: Gom toàn bộ settings hiện tại thành 1 payload để gửi lên server
+   * Tham số đầu vào: không có
+   * Tham số đầu ra: SettingsPayload
+   * Khi nào sử dụng: Trước khi gọi settingsApi.updateSettings()
+   */
+  const buildPayload = useCallback((): SettingsPayload => {
+    return {
+      theme,
+      accentColor,
+      language,
+      audio,
+      privacy,
+    };
+  }, [theme, accentColor, language, audio, privacy]);
+
+  /**
+   * Mục đích: Áp dụng settings từ server vào local stores
+   * Tham số đầu vào: settings - SettingsPayload từ server
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Sau khi GET /user/settings trả về data có nội dung
+   */
+  const applyServerSettings = useCallback(
+    (settings: SettingsPayload) => {
+      // Áp dụng theme nếu khác local
+      if (settings.theme && settings.theme !== theme) {
+        console.log('🎨 [SettingsSync] Sync theme từ server:', settings.theme);
+        setTheme(settings.theme as Theme);
+      }
+
+      // Áp dụng accent color
+      if (settings.accentColor && settings.accentColor !== accentColor) {
+        console.log('🎨 [SettingsSync] Sync accent từ server:', settings.accentColor);
+        setAccentColor(settings.accentColor as AccentColorId);
+      }
+
+      // Áp dụng language
+      if (settings.language && settings.language !== language) {
+        console.log('🌐 [SettingsSync] Sync language từ server:', settings.language);
+        setLanguage(settings.language as LanguageCode);
+      }
+
+      // Áp dụng audio settings
+      if (settings.audio) {
+        const serverAudio = settings.audio;
+        if (serverAudio.backgroundMusic) {
+          setBackgroundMusic(serverAudio.backgroundMusic.enabled);
+          setMusicVolume(serverAudio.backgroundMusic.volume);
+        }
+        setMusicDucking(serverAudio.musicDucking);
+        setSoundEffects(serverAudio.soundEffects);
+        setAutoPlay(serverAudio.autoPlay);
+        console.log('🔊 [SettingsSync] Đã sync audio settings từ server');
+      }
+
+      // Áp dụng privacy settings
+      if (settings.privacy) {
+        setSaveRecordings(settings.privacy.saveRecordings);
+        setDataSync(settings.privacy.dataSync);
+        console.log('🔒 [SettingsSync] Đã sync privacy settings từ server');
+      }
+    },
+    [
+      theme, accentColor, language,
+      setTheme, setAccentColor, setLanguage,
+      setBackgroundMusic, setMusicVolume, setMusicDucking,
+      setSoundEffects, setAutoPlay, setSaveRecordings, setDataSync,
+    ],
+  );
+
+  /**
+   * Mục đích: Tải settings từ server khi user đăng nhập
    * Tham số đầu vào: không có
    * Tham số đầu ra: void
    * Khi nào sử dụng: Tự động gọi khi user.id thay đổi (đăng nhập)
@@ -33,82 +120,55 @@ export function usePreferencesSync() {
     if (!user) return;
 
     try {
-      const {data, error} = await supabase
-        .from('user_preferences')
-        .select('theme, accent_color')
-        .eq('user_id', user.id)
-        .single();
+      const response = await settingsApi.getSettings();
 
-      if (error) {
-        // Chưa có record → tạo mới với preferences hiện tại
-        if (error.code === 'PGRST116') {
-          console.log('📝 [PreferencesSync] Tạo preferences mới cho user');
-          await supabase.from('user_preferences').insert({
-            user_id: user.id,
-            theme,
-            accent_color: accentColor,
-          });
-        } else {
-          console.error('❌ [PreferencesSync] Lỗi load:', error.message);
-        }
+      // Server chưa có settings → push local settings lên
+      if (
+        !response.settings ||
+        Object.keys(response.settings).length === 0
+      ) {
+        console.log('📝 [SettingsSync] Server chưa có settings → push local lên');
+        const payload = buildPayload();
+        await settingsApi.updateSettings(payload);
         return;
       }
 
-      // Áp dụng preferences từ DB vào local store
-      if (data) {
-        if (data.theme && data.theme !== theme) {
-          console.log('🎨 [PreferencesSync] Sync theme từ DB:', data.theme);
-          setTheme(data.theme as Theme);
-        }
-        if (data.accent_color && data.accent_color !== accentColor) {
-          console.log('🎨 [PreferencesSync] Sync accent từ DB:', data.accent_color);
-          setAccentColor(data.accent_color as AccentColorId);
-        }
-      }
+      // Server có settings → áp dụng vào local (server wins lúc login)
+      console.log('⬇️ [SettingsSync] Pull settings từ server...');
+      applyServerSettings(response.settings as SettingsPayload);
     } catch (err) {
-      console.error('❌ [PreferencesSync] Lỗi load preferences:', err);
+      console.error('❌ [SettingsSync] Lỗi load settings:', err);
     }
-  }, [user, theme, accentColor, setTheme, setAccentColor]);
+  }, [user, buildPayload, applyServerSettings]);
 
   /**
-   * Mục đích: Lưu preferences lên Supabase khi thay đổi
+   * Mục đích: Lưu toàn bộ settings lên server khi thay đổi
    * Tham số đầu vào: không có
    * Tham số đầu ra: void
-   * Khi nào sử dụng: Tự động gọi khi theme/accentColor thay đổi (debounce 1s)
+   * Khi nào sử dụng: Tự động gọi khi bất kỳ setting nào thay đổi (debounce 1.5s)
    */
   const savePreferences = useCallback(async () => {
     if (!user) return;
 
     try {
-      await supabase
-        .from('user_preferences')
-        .upsert(
-          {
-            user_id: user.id,
-            theme,
-            accent_color: accentColor,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'user_id',
-          },
-        );
-      console.log('✅ [PreferencesSync] Đã lưu preferences lên Supabase');
+      const payload = buildPayload();
+      await settingsApi.updateSettings(payload);
+      console.log('✅ [SettingsSync] Đã đồng bộ settings lên server');
     } catch (err) {
-      console.error('❌ [PreferencesSync] Lỗi save preferences:', err);
+      console.error('❌ [SettingsSync] Lỗi save settings:', err);
     }
-  }, [user, theme, accentColor]);
+  }, [user, buildPayload]);
 
-  // Load preferences khi user đăng nhập
+  // === Effect: Load settings khi user đăng nhập ===
   useEffect(() => {
     loadPreferences();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // EC-C06 fix: Dùng ref để skip lần mount đầu tiên, tránh save thừa
+  // === Effect: Save settings khi thay đổi (debounce 1.5s) ===
+  // Dùng ref để skip lần mount đầu tiên, tránh save thừa
   const isFirstRender = useRef(true);
 
-  // Save preferences khi thay đổi (debounce 1s) — bỏ qua lần mount đầu
   useEffect(() => {
     if (!user) return;
 
@@ -120,11 +180,11 @@ export function usePreferencesSync() {
 
     const timeoutId = setTimeout(() => {
       savePreferences();
-    }, 1000);
+    }, 1500);
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, accentColor, user?.id]);
+  }, [theme, accentColor, language, audio, privacy, user?.id]);
 
   return {loadPreferences, savePreferences};
 }

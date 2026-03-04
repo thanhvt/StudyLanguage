@@ -220,29 +220,35 @@ describe('Profile & Settings — Screen Tests', () => {
   // 2. VISUAL COMPLIANCE — Nội dung khớp hi-fi screens
   // ============================================================
   describe('📐 VISUAL: Appearance screen khớp ps_appearance', () => {
-    // Hi-fi: Chủ đề (Sáng/Tối/Tự động), Màu nhấn (6 colors), Ngôn ngữ (Tiếng Việt/English)
-    it('hiển thị section "Chủ đề" với 3 segments', () => {
+    // Hi-fi: Chủ đề (Sáng/Tối icon cards), Màu nhấn (6 hex swatches), Ngôn ngữ (flag chips)
+    it('hiển thị section "Chủ đề" với 2 icon cards', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
       expect(getByText('Chủ đề')).toBeTruthy();
       expect(getByText('Sáng')).toBeTruthy();
       expect(getByText('Tối')).toBeTruthy();
-      expect(getByText('Auto')).toBeTruthy();
     });
 
-    it('hiển thị section "Màu chủ đạo" với 6 colors', () => {
+    it('hiển thị section "Màu nhấn" với 6 hex swatches', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
-      expect(getByText('Màu chủ đạo')).toBeTruthy();
-      expect(getByText('Ocean Scholar')).toBeTruthy();
-      expect(getByText('Sunset Focus')).toBeTruthy();
-      expect(getByText('Royal Purple')).toBeTruthy();
-      expect(getByText('Rose Focus')).toBeTruthy();
-      expect(getByText('Ocean Blue')).toBeTruthy();
-      expect(getByText('Emerald Study')).toBeTruthy();
+      expect(getByText('Màu nhấn')).toBeTruthy();
+      expect(getByText('#10b981')).toBeTruthy();
+      expect(getByText('#6366f1')).toBeTruthy();
+      expect(getByText('#f59e0b')).toBeTruthy();
+      expect(getByText('#f43f5e')).toBeTruthy();
+      expect(getByText('#3b82f6')).toBeTruthy();
+      expect(getByText('#f97316')).toBeTruthy();
     });
 
-    it('hiển thị section "Ngôn ngữ"', () => {
+    it('hiển thị section "Ngôn ngữ" với flag chips', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
       expect(getByText('Ngôn ngữ')).toBeTruthy();
+    });
+
+    it('hiển thị Live Preview section', () => {
+      const {getByText} = render(<AppearanceSettingsScreen />);
+      expect(getByText('Live Preview')).toBeTruthy();
+      expect(getByText('Xin chào! Đây là bản xem trước.')).toBeTruthy();
+      expect(getByText('Bắt đầu')).toBeTruthy();
     });
 
     it('KHÔNG hiển thị Font Size (đã loại bỏ)', () => {
@@ -319,10 +325,11 @@ describe('Profile & Settings — Screen Tests', () => {
       expect(queryByText('90 ngày')).toBeNull();
     });
 
-    it('KHÔNG hiển thị Delete Account (đã loại bỏ)', () => {
-      const {queryByText} = render(<PrivacySettingsScreen />);
-      expect(queryByText('Xóa tài khoản')).toBeNull();
-      expect(queryByText('Delete Account')).toBeNull();
+    it('hiển thị "Vùng nguy hiểm" với nút "Xóa tài khoản"', () => {
+      const {getByText} = render(<PrivacySettingsScreen />);
+      expect(getByText('Vùng nguy hiểm')).toBeTruthy();
+      expect(getByText('Xóa tài khoản')).toBeTruthy();
+      expect(getByText('Hành động này KHÔNG THỂ hoàn tác')).toBeTruthy();
     });
   });
 
@@ -400,29 +407,27 @@ describe('Profile & Settings — Screen Tests', () => {
   // 3. UAT — User Acceptance Tests — Full user flows
   // ============================================================
   describe('✅ UAT: Appearance — chuyển theme', () => {
-    it('nhấn segment "Sáng" → theme = light', () => {
-      const {getAllByTestId} = render(<AppearanceSettingsScreen />);
-      // Có 2 SegmentedControls (Theme + Language) → getAllByTestId trả multiple
-      const segments = getAllByTestId('segment-0');
-      fireEvent.press(segments[0]); // segment-0 đầu tiên = Sáng (Theme)
+    it('nhấn card "Sáng" → theme = light', () => {
+      const {getByText} = render(<AppearanceSettingsScreen />);
+      fireEvent.press(getByText('Sáng'));
 
       expect(useAppStore.getState().theme).toBe('light');
     });
 
-    it('nhấn segment "Tối" → theme = dark', () => {
+    it('nhấn card "Tối" → theme = dark', () => {
       useAppStore.setState({theme: 'light'});
-      const {getAllByTestId} = render(<AppearanceSettingsScreen />);
-      const segments = getAllByTestId('segment-1');
-      fireEvent.press(segments[0]); // segment-1 đầu tiên = Tối (Theme)
+      const {getByText} = render(<AppearanceSettingsScreen />);
+      fireEvent.press(getByText('Tối'));
 
       expect(useAppStore.getState().theme).toBe('dark');
     });
   });
 
   describe('✅ UAT: Appearance — chọn accent color', () => {
-    it('nhấn Sunset Focus → accentColor thay đổi', () => {
+    it('nhấn hex #f97316 (Sunset Focus) → accentColor thay đổi', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
-      fireEvent.press(getByText('Sunset Focus'));
+      // Nhấn vào swatch hex label thay vì tên color
+      fireEvent.press(getByText('#f97316'));
 
       expect(useAppStore.getState().accentColor).toBe('sunset-focus');
     });
@@ -527,7 +532,7 @@ describe('Profile & Settings — Screen Tests', () => {
     it('Spec §3.1 Appearance: Theme, Accent Color, Language', () => {
       const {getByText} = render(<AppearanceSettingsScreen />);
       expect(getByText('Chủ đề')).toBeTruthy();
-      expect(getByText('Màu chủ đạo')).toBeTruthy();
+      expect(getByText('Màu nhấn')).toBeTruthy();
       expect(getByText('Ngôn ngữ')).toBeTruthy();
     });
 
@@ -556,8 +561,8 @@ describe('Profile & Settings — Screen Tests', () => {
       expect(getByText('StudyLanguage')).toBeTruthy();
     });
 
-    it('Spec §5 Tasks: Logout (trong MoreScreen)', () => {
-      // Logout nằm trong MoreScreen, không test ở đây
+    it('Spec §5 Tasks: Logout (trong MoreScreen header)', () => {
+      // Logout nằm trong MoreScreen header như icon button, không có text
       // Chỉ verify không nằm nhầm trong About screen
       const {queryByText} = render(<AboutScreen />);
       expect(queryByText('Đăng xuất')).toBeNull();

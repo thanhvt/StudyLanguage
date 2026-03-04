@@ -264,48 +264,113 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
   });
 
   return (
-    <View className="mb-1">
-      <TouchableOpacity
-        className="flex-row items-center justify-between px-4 py-3 rounded-xl"
-        style={{
-          borderBottomWidth: 1,
-          borderBottomColor: colors.glassDivider,
-          backgroundColor: hasSelectedScenario
-            ? `${LISTENING_BLUE}10`
-            : isExpanded
-              ? colors.glassHover
-              : undefined,
-          borderWidth: 0,
-          borderLeftWidth: hasSelectedScenario ? 3 : 0,
-          borderColor: hasSelectedScenario ? LISTENING_BLUE : 'transparent',
-        }}
-        onPress={onToggle}
-        activeOpacity={0.7}
-        accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}${hasSelectedScenario ? ', chứa kịch bản đang chọn' : ''}`}
-        accessibilityRole="button">
-        <View className="flex-row items-center flex-1">
-          {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
-          {hasSelectedScenario && (
-            <View className="w-2 h-2 rounded-full" style={{backgroundColor: LISTENING_BLUE, marginRight: 8}} />
-          )}
-          <AppText className="font-sans-medium text-xs uppercase tracking-wider"
-            style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.neutrals300}}>
-            {subCategory.name}
-          </AppText>
-          <View className="rounded-full px-2.5 py-1" style={{backgroundColor: colors.neutrals700, marginLeft: 8}}>
-            <AppText className="text-xs font-sans-medium" style={{color: colors.neutrals300}}>
-              {subCategory.scenarios.length}
+    <View className="mb-1" style={hasSelectedScenario ? {marginVertical: 8} : undefined}>
+      {/* Wrapper riêng cho header — overflow visible để glow layer hiển thị ra ngoài */}
+      <View style={{zIndex: 1, overflow: 'visible', position: 'relative'}}>
+        {/* Multi-layer glow — 3 lớp chồng nhau tạo hiệu ứng mờ dần ở phía xa */}
+        {hasSelectedScenario && (
+          <>
+            {/* Lớp ngoài cùng — xa nhất, mờ nhất → tạo fade-out mềm */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -14,
+                left: -14,
+                right: -14,
+                bottom: -14,
+                borderRadius: 24,
+                backgroundColor: `${LISTENING_BLUE}08`,
+                shadowColor: LISTENING_BLUE,
+                shadowOffset: {width: 0, height: 0},
+                shadowOpacity: 0.2,
+                shadowRadius: 24,
+                elevation: 4,
+              }}
+            />
+            {/* Lớp giữa — trung bình */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -10,
+                left: -10,
+                right: -10,
+                bottom: -10,
+                borderRadius: 20,
+                backgroundColor: `${LISTENING_BLUE}15`,
+                shadowColor: LISTENING_BLUE,
+                shadowOffset: {width: 0, height: 0},
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
+                elevation: 6,
+              }}
+            />
+            {/* Lớp trong cùng — gần border nhất, sáng nhất */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -6,
+                left: -6,
+                right: -6,
+                bottom: -6,
+                borderRadius: 18,
+                backgroundColor: `${LISTENING_BLUE}28`,
+                shadowColor: LISTENING_BLUE,
+                shadowOffset: {width: 0, height: 0},
+                shadowOpacity: 0.65,
+                shadowRadius: 20,
+                elevation: 10,
+              }}
+            />
+          </>
+        )}
+        <TouchableOpacity
+          className="flex-row items-center justify-between px-4 py-3"
+          style={{
+            // Khi active: dùng borderWidth cho 4 phía, KHÔNG set borderBottomWidth riêng để tránh ghi đè
+            ...(hasSelectedScenario
+              ? {
+                  borderWidth: 1.5,
+                  borderColor: `${LISTENING_BLUE}CC`,
+                }
+              : {
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.glassDivider,
+                }),
+            backgroundColor: hasSelectedScenario
+              ? `${LISTENING_BLUE}15`
+              : isExpanded
+                ? colors.glassHover
+                : undefined,
+            borderRadius: 12,
+          }}
+          onPress={onToggle}
+          activeOpacity={0.7}
+          accessibilityLabel={`${subCategory.name}, ${subCategory.scenarios.length} kịch bản${isExpanded ? ', đang mở' : ''}${hasSelectedScenario ? ', chứa kịch bản đang chọn' : ''}`}
+          accessibilityRole="button">
+          <View className="flex-row items-center flex-1">
+            {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
+            {hasSelectedScenario && (
+              <View className="w-2 h-2 rounded-full" style={{backgroundColor: LISTENING_BLUE, marginRight: 8}} />
+            )}
+            <AppText className="font-sans-medium text-xs uppercase tracking-wider"
+              style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.neutrals300}}>
+              {subCategory.name}
             </AppText>
+            <View className="rounded-full px-2.5 py-1" style={{backgroundColor: colors.neutrals700, marginLeft: 8}}>
+              <AppText className="text-xs font-sans-medium" style={{color: colors.neutrals300}}>
+                {subCategory.scenarios.length}
+              </AppText>
+            </View>
           </View>
-        </View>
-        {/* Animated chevron thay vì text ▲/▼ */}
-        <Animated.View style={{transform: [{rotate: rotateInterpolate}]}}>
-          <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals300}} />
-        </Animated.View>
-      </TouchableOpacity>
+          {/* Animated chevron thay vì text ▲/▼ */}
+          <Animated.View style={{transform: [{rotate: rotateInterpolate}]}}>
+            <Icon name="ChevronDown" className="w-4 h-4" style={{color: colors.neutrals300}} />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
 
       {isExpanded && (
-        <View className="mt-1.5 pl-1">
+        <View style={{marginTop: hasSelectedScenario ? 10 : 6, paddingLeft: 4}}>
           {subCategory.scenarios.map(scenario => (
             <ScenarioItem
               key={scenario.id}
