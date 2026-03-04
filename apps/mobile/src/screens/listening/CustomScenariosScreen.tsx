@@ -246,12 +246,16 @@ export default function CustomScenariosScreen({
                 {/* Action buttons */}
                 <View className="flex-row gap-2 mt-3">
                   <TouchableOpacity
-                    className="flex-1 py-2 rounded-lg items-center"
-                    style={{borderWidth: 1, borderColor: colors.neutrals700}}
+                    className="flex-1 py-2.5 rounded-xl items-center"
+                    style={{
+                      backgroundColor: `${LISTENING_BLUE}12`,
+                      borderWidth: 1,
+                      borderColor: `${LISTENING_BLUE}30`,
+                    }}
                     onPress={() => handleQuickUse(scenario)}
                     accessibilityLabel="Dùng ngay"
                     accessibilityRole="button">
-                    <AppText className="text-xs font-sans-medium" style={{color: colors.foreground}}>
+                    <AppText className="text-sm font-sans-semibold" style={{color: LISTENING_BLUE}}>
                       Dùng ngay
                     </AppText>
                   </TouchableOpacity>
@@ -292,7 +296,7 @@ export default function CustomScenariosScreen({
             />
             <View className="flex-row gap-3">
               <AppButton
-                variant="secondary"
+                variant="outline"
                 size="default"
                 className="flex-1"
                 onPress={() => setShowCreate(false)}>

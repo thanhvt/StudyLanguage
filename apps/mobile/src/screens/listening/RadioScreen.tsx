@@ -368,9 +368,14 @@ export default function RadioScreen({navigation}: {navigation: any}) {
             className="absolute bottom-0 left-0 right-0 px-6 pt-3"
             style={{paddingBottom: Math.max(insets.bottom, 16), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
             <AppButton
-              variant="outline"
-              size="default"
+              variant="ghost"
+              size="lg"
               className="w-full rounded-2xl"
+              style={{
+                backgroundColor: `${LISTENING_BLUE}12`,
+                borderWidth: 1.5,
+                borderColor: `${LISTENING_BLUE}30`,
+              }}
               onPress={() => {
                 haptic.medium();
                 setRadioState('idle');
@@ -378,7 +383,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
                 setCurrentTrackIndex(-1);
               }}
               accessibilityLabel="Tạo playlist mới">
-              🔄 Tạo playlist mới
+              <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
+                🔄 Tạo playlist mới
+              </AppText>
             </AppButton>
           </View>
         </>
@@ -392,7 +399,9 @@ export default function RadioScreen({navigation}: {navigation: any}) {
           </AppText>
           <AppButton
             variant="primary"
-            size="default"
+            size="lg"
+            className="rounded-2xl"
+            style={{backgroundColor: LISTENING_BLUE}}
             onPress={() => setRadioState('idle')}
             accessibilityLabel="Thử lại">
             Thử lại

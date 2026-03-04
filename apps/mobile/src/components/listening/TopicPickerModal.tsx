@@ -171,9 +171,9 @@ export default function TopicPickerModal({
           className="px-6 pt-3"
           style={{paddingBottom: Math.max(insets.bottom, 16)}}>
           {selectedTopic ? (
-            // Đã chọn → nút Xác nhận
+            // Đã chọn → nút Xác nhận — Primary CTA
             <TouchableOpacity
-              className="rounded-2xl py-3.5 items-center"
+              className="rounded-2xl py-4 items-center"
               style={{
                 backgroundColor: LISTENING_BLUE,
                 shadowColor: LISTENING_BLUE,
@@ -186,23 +186,24 @@ export default function TopicPickerModal({
               activeOpacity={0.8}
               accessibilityLabel={`Xác nhận chọn ${selectedTopic.name}`}
               accessibilityRole="button">
-              <AppText className="font-sans-bold text-base" style={{color: colors.foreground}}>
-                ✅ Xác nhận: {selectedTopic.name.length > 25 ? selectedTopic.name.slice(0, 25) + '...' : selectedTopic.name}
+              <AppText className="font-sans-bold text-base" style={{color: '#FFFFFF'}}>
+                Xác nhận: {selectedTopic.name.length > 25 ? selectedTopic.name.slice(0, 25) + '...' : selectedTopic.name}
               </AppText>
             </TouchableOpacity>
           ) : (
-            // Chưa chọn → nút Gợi ý ngẫu nhiên
+            // Chưa chọn → nút Gợi ý ngẫu nhiên — Secondary
             <TouchableOpacity
-              className="rounded-2xl py-3.5 items-center border"
+              className="rounded-2xl py-4 items-center"
               style={{
-                borderColor: LISTENING_BLUE,
-                backgroundColor: `${LISTENING_BLUE}15`,
+                borderWidth: 1.5,
+                borderColor: `${LISTENING_BLUE}30`,
+                backgroundColor: `${LISTENING_BLUE}12`,
               }}
               onPress={handleRandomScenario}
               activeOpacity={0.8}
               accessibilityLabel="Gợi ý kịch bản ngẫu nhiên"
               accessibilityRole="button">
-              <AppText className="text-primary font-sans-bold text-base">
+              <AppText className="font-sans-bold text-base" style={{color: LISTENING_BLUE}}>
                 🎲 Gợi ý ngẫu nhiên
               </AppText>
             </TouchableOpacity>
