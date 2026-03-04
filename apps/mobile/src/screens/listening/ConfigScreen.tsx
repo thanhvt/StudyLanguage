@@ -418,7 +418,7 @@ export default function ListeningConfigScreen({
             <View
               className="flex-row rounded-xl overflow-hidden"
               style={{
-                backgroundColor: isDark ? colors.neutrals900 : colors.neutrals900,
+                backgroundColor: isDark ? colors.neutrals900 : colors.neutrals700,
                 borderWidth: isDark ? 1 : 0,
                 borderColor: isDark ? colors.border : 'transparent',
               }}>
@@ -1022,10 +1022,21 @@ export default function ListeningConfigScreen({
               className="w-full rounded-2xl"
               textClassname="font-sans-bold"
               style={{
-                backgroundColor: canStart || (mode as string) === 'radio' ? LISTENING_BLUE : colors.neutrals700,
-                // Glass border — chỉ dark mode, light mode tạo vạch trắng
-                borderWidth: isLiquidGlassSupported && isDark ? 1 : 0,
-                borderColor: isLiquidGlassSupported && isDark ? 'rgba(255,255,255,0.15)' : 'transparent',
+                backgroundColor:
+                  canStart || (mode as string) === 'radio'
+                    ? LISTENING_BLUE
+                    : isDark
+                      ? colors.neutrals900
+                      : `${LISTENING_BLUE}18`,
+                // Disabled: border nhẹ để nhìn thấy nút
+                borderWidth: canStart || (mode as string) === 'radio'
+                  ? (isLiquidGlassSupported && isDark ? 1 : 0)
+                  : 1.5,
+                borderColor: canStart || (mode as string) === 'radio'
+                  ? (isLiquidGlassSupported && isDark ? 'rgba(255,255,255,0.15)' : 'transparent')
+                  : isDark
+                    ? colors.glassBorder
+                    : `${LISTENING_BLUE}30`,
               }}
               onPress={handleGenerate}
               disabled={isGenerating || (!canStart && (mode as string) !== 'radio')}
