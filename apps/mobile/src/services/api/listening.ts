@@ -63,6 +63,8 @@ export interface AudioGenerationResult {
   audioUrl: string;
   /** Timestamps cho từng câu — dùng để sync transcript */
   timestamps: ConversationTimestamp[];
+  /** Map speaker → voice ID đã sử dụng (để hiển thị tên giọng đọc) */
+  voiceMap?: Record<string, string>;
 }
 
 // =======================

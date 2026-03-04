@@ -80,6 +80,8 @@ interface ListeningState {
   ttsVolume: number;
   /** Cảm xúc ngẫu nhiên — API tự chọn emotion, emotion chips dimmed */
   randomEmotion: boolean;
+  /** Map speaker → voice ID thực tế đã dùng (từ API response, để hiển thị tên giọng đọc) */
+  activeVoiceMap: Record<string, string>;
 }
 
 interface ListeningActions {
@@ -143,6 +145,8 @@ interface ListeningActions {
   setTtsVolume: (volume: number) => void;
   /** Set random emotion on/off */
   setRandomEmotion: (value: boolean) => void;
+  /** Cập nhật voice map thực tế từ API response */
+  setActiveVoiceMap: (map: Record<string, string>) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -180,6 +184,7 @@ const initialState: ListeningState = {
   ttsRate: 0,
   ttsVolume: 100,
   randomEmotion: false,
+  activeVoiceMap: {},
 };
 
 /**
@@ -270,6 +275,7 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setTtsRate: rate => set({ttsRate: Math.max(-20, Math.min(20, rate))}),
     setTtsVolume: volume => set({ttsVolume: Math.max(0, Math.min(100, volume))}),
     setRandomEmotion: value => set({randomEmotion: value}),
+    setActiveVoiceMap: map => set({activeVoiceMap: map}),
 
     reset: () => set(initialState),
     }),

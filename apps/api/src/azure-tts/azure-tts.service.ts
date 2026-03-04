@@ -72,6 +72,8 @@ export interface AzureConversationAudioResult {
   wordTimestamps: WordTimestamp[][];
   /** URL audio trên Supabase Storage */
   audioUrl?: string;
+  /** Map speaker → voice ID đã dùng (để mobile hiển thị tên giọng đọc) */
+  voiceMap?: Record<string, string>;
 }
 
 // ============================================
@@ -447,6 +449,7 @@ export class AzureTtsService {
       timestamps: sentenceTimestamps,
       wordTimestamps: allWordTimestamps,
       audioUrl,
+      voiceMap,
     };
   }
 
@@ -496,11 +499,20 @@ export class AzureTtsService {
         this.logger.error('Lỗi upload multi-talker audio:', error);
       }
 
+      // Gán voiceMap cho multi-talker (dùng tên role làm display name)
+      const voicePair = MULTI_TALKER_VOICES[voicePairIndex] || MULTI_TALKER_VOICES[0];
+      const multiTalkerVoiceMap: Record<string, string> = {};
+      const uniqueSpeakers = [...new Set(conversation.map(c => c.speaker))];
+      for (let i = 0; i < uniqueSpeakers.length; i++) {
+        multiTalkerVoiceMap[uniqueSpeakers[i]] = voicePair.speakers[i % voicePair.speakers.length];
+      }
+
       return {
         audioBuffer: result.audioBuffer,
         timestamps: sentenceTimestamps,
         wordTimestamps: wordTimestampsBySentence,
         audioUrl,
+        voiceMap: multiTalkerVoiceMap,
       };
     } catch (error) {
       this.logger.error('Lỗi multi-talker synthesis:', error);

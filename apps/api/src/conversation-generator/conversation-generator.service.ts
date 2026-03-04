@@ -141,7 +141,16 @@ ${keywordsInstruction}
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
     this.logger.log('Prompt:', prompt);
-    try {
+
+    /**
+     * Gọi Groq API và parse response JSON
+     *
+     * Mục đích: Tách logic gọi API + parse thành helper để retry được
+     * Tham số đầu vào: Không (dùng prompt, maxTokens từ closure)
+     * Tham số đầu ra: Object đã parse từ JSON response
+     * Khi nào sử dụng: Được gọi nội bộ bởi generateConversation, tối đa 2 lần (1 lần gốc + 1 retry)
+     */
+    const callGroqAndParse = async () => {
       const response = await this.groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
         messages: [
@@ -165,7 +174,50 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         throw new Error('Không tìm thấy JSON trong response');
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      return JSON.parse(jsonMatch[0]);
+    };
+
+    try {
+      let parsed = await callGroqAndParse();
+
+      // === VALIDATION: Đảm bảo đủ số speakers ===
+      parsed = this.validateAndNormalizeSpeakers(parsed, speakerNames, numSpeakers);
+
+      // Kiểm tra số speakers thực tế sau chuẩn hóa
+      const uniqueSpeakers = [...new Set(
+        (parsed.script || []).map((line: { speaker: string }) => line.speaker),
+      )];
+
+      if (uniqueSpeakers.length < numSpeakers) {
+        this.logger.warn(
+          `LLM trả ${uniqueSpeakers.length} speakers, yêu cầu ${numSpeakers}. Đang retry 1 lần...`,
+        );
+
+        // Retry 1 lần với cùng prompt
+        try {
+          let retryParsed = await callGroqAndParse();
+          retryParsed = this.validateAndNormalizeSpeakers(retryParsed, speakerNames, numSpeakers);
+
+          const retryUniqueSpeakers = [...new Set(
+            (retryParsed.script || []).map((line: { speaker: string }) => line.speaker),
+          )];
+
+          if (retryUniqueSpeakers.length >= numSpeakers) {
+            this.logger.log(`Retry thành công: ${retryUniqueSpeakers.length} speakers`);
+            parsed = retryParsed;
+          } else {
+            this.logger.warn(
+              `Retry vẫn thiếu speakers (${retryUniqueSpeakers.length}/${numSpeakers}). Sử dụng kết quả tốt nhất.`,
+            );
+            // Dùng kết quả nào có nhiều speakers hơn
+            if (retryUniqueSpeakers.length > uniqueSpeakers.length) {
+              parsed = retryParsed;
+            }
+          }
+        } catch (retryError) {
+          this.logger.warn('Retry thất bại, dùng kết quả ban đầu:', retryError);
+        }
+      }
 
       // Log thống kê để debug
       const scriptLength = parsed.script?.length || 0;
@@ -174,8 +226,11 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
           sum + line.text.split(/\s+/).length,
         0,
       ) || 0;
+      const finalSpeakers = [...new Set(
+        (parsed.script || []).map((line: { speaker: string }) => line.speaker),
+      )];
       this.logger.log(
-        `Sinh hội thoại thành công: ${scriptLength} lượt, ${totalWordCount} từ / ${totalWords} mục tiêu, ${parsed.vocabulary?.length || 0} từ vựng`,
+        `Sinh hội thoại thành công: ${scriptLength} lượt, ${totalWordCount} từ / ${totalWords} mục tiêu, ${parsed.vocabulary?.length || 0} từ vựng, ${finalSpeakers.length}/${numSpeakers} speakers`,
       );
 
       return parsed;
@@ -183,6 +238,78 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       this.logger.error('Lỗi khi gọi Groq API:', error);
       throw error;
     }
+  }
+
+  /**
+   * Chuẩn hóa tên speaker trong script về đúng danh sách yêu cầu
+   *
+   * Mục đích: Fix trường hợp LLM đổi tên (Dave → David, Alex → Lisa)
+   * Tham số đầu vào:
+   *   - parsed: Object đã parse từ JSON response (chứa script[])
+   *   - expectedNames: Danh sách tên đúng (['Sarah', 'Mike', 'Lisa', 'David'])
+   *   - numSpeakers: Số speakers yêu cầu
+   * Tham số đầu ra: Object đã chuẩn hóa tên speaker
+   * Khi nào sử dụng: Sau khi parse JSON từ Groq API, trước khi validate số speakers
+   */
+  private validateAndNormalizeSpeakers(
+    parsed: any,
+    expectedNames: string[],
+    numSpeakers: number,
+  ): any {
+    if (!parsed.script || !Array.isArray(parsed.script)) {
+      return parsed;
+    }
+
+    // Lấy danh sách unique speakers trong response
+    const responseSpeakers = [...new Set(
+      parsed.script.map((line: { speaker: string }) => line.speaker),
+    )] as string[];
+
+    // Tạo mapping: tên trong response → tên đúng (fuzzy match)
+    const nameMapping: Record<string, string> = {};
+
+    for (const responseName of responseSpeakers) {
+      // Kiểm tra exact match trước
+      if (expectedNames.includes(responseName)) {
+        nameMapping[responseName] = responseName;
+        continue;
+      }
+
+      // Fuzzy match: tìm tên gần giống nhất (3 ký tự đầu giống hoặc substring)
+      const matched = expectedNames.find(expected => {
+        const rLower = responseName.toLowerCase();
+        const eLower = expected.toLowerCase();
+        // Tên bắt đầu giống nhau (ít nhất 3 ký tự)
+        if (rLower.substring(0, 3) === eLower.substring(0, 3)) return true;
+        // Chứa nhau
+        if (rLower.includes(eLower) || eLower.includes(rLower)) return true;
+        return false;
+      });
+
+      if (matched) {
+        nameMapping[responseName] = matched;
+        this.logger.log(`Chuẩn hóa tên speaker: "${responseName}" → "${matched}"`);
+      } else {
+        // Không match → gán tên chưa dùng
+        const usedNames = Object.values(nameMapping);
+        const availableName = expectedNames.find(n => !usedNames.includes(n));
+        if (availableName) {
+          nameMapping[responseName] = availableName;
+          this.logger.log(`Ánh xạ tên speaker mới: "${responseName}" → "${availableName}"`);
+        } else {
+          // Hết tên → giữ nguyên
+          nameMapping[responseName] = responseName;
+        }
+      }
+    }
+
+    // Apply mapping lên script
+    parsed.script = parsed.script.map((line: { speaker: string; [key: string]: any }) => ({
+      ...line,
+      speaker: nameMapping[line.speaker] || line.speaker,
+    }));
+
+    return parsed;
   }
 
   /**

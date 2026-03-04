@@ -385,13 +385,14 @@ export class AiController {
       },
     );
 
-    // Trả về base64 audio + timestamps + wordTimestamps + audioUrl
+    // Trả về base64 audio + timestamps + wordTimestamps + audioUrl + voiceMap
     return {
       audio: result.audioBuffer.toString('base64'),
       contentType: 'audio/mpeg',
       timestamps: result.timestamps,
       wordTimestamps: result.wordTimestamps,
       audioUrl: result.audioUrl,
+      voiceMap: result.voiceMap,
     };
   }
 

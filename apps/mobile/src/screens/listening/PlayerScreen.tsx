@@ -17,8 +17,54 @@ import Animated, {
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
-import {listeningApi} from '@/services/api/listening';
-import {bookmarkApi} from '@/services/api/listening';
+
+// ========================
+// Map voiceId → tên hiển thị cho Azure voices
+// ========================
+const VOICE_DISPLAY_NAMES: Record<string, string> = {
+  'en-US-AriaNeural': 'Aria',
+  'en-US-JennyNeural': 'Jenny',
+  'en-US-SaraNeural': 'Sara',
+  'en-US-JaneNeural': 'Jane',
+  'en-US-NancyNeural': 'Nancy',
+  'en-US-GuyNeural': 'Guy',
+  'en-US-DavisNeural': 'Davis',
+  'en-US-TonyNeural': 'Tony',
+  'en-US-JasonNeural': 'Jason',
+  // OpenAI voices (fallback)
+  alloy: 'Alloy',
+  echo: 'Echo',
+  fable: 'Fable',
+  onyx: 'Onyx',
+  nova: 'Nova',
+  shimmer: 'Shimmer',
+};
+
+/**
+ * Lấy tên giọng đọc thực tế thay vì tên nhân vật
+ *
+ * Mục đích: Hiển thị tên voice (Jenny, Guy) thay vì tên AI đặt (Sarah, Mike)
+ * Tham số đầu vào:
+ *   - speakerLabel: Tên nhân vật từ conversation (ví dụ: 'Sarah')
+ *   - voiceMap: Map speaker → voiceId từ API response
+ * Tham số đầu ra: Tên giọng đọc để hiển thị (ví dụ: 'Jenny')
+ * Khi nào sử dụng: Render speaker name trong Reading/Focus view
+ */
+function getVoiceDisplayName(
+  speakerLabel: string,
+  voiceMap: Record<string, string>,
+): string {
+  const voiceId = voiceMap[speakerLabel];
+  if (voiceId) {
+    // Tìm displayName từ map, fallback lấy phần tên từ voiceId
+    return VOICE_DISPLAY_NAMES[voiceId]
+      || voiceId.split('-').pop()?.replace('Neural', '') || speakerLabel;
+  }
+  // Fallback: giữ tên nhân vật nếu chưa có voiceMap (audio chưa sinh)
+  return speakerLabel;
+}
+
+import {listeningApi, bookmarkApi} from '@/services/api/listening';
 import TrackPlayer, {
   usePlaybackState,
   useProgress,
@@ -93,6 +139,8 @@ export default function ListeningPlayerScreen({
   const ttsRate = useListeningStore(state => state.ttsRate);
   const ttsVolume = useListeningStore(state => state.ttsVolume);
   const randomEmotion = useListeningStore(state => state.randomEmotion);
+  const activeVoiceMap = useListeningStore(state => state.activeVoiceMap);
+  const setActiveVoiceMap = useListeningStore(state => state.setActiveVoiceMap);
 
   // Bookmark + Dictionary
   const bookmarkedIndexes = useListeningStore(state => state.bookmarkedIndexes);
@@ -227,6 +275,10 @@ export default function ListeningPlayerScreen({
         );
         setAudioUrl(result.audioUrl);
         setTimestamps(result.timestamps);
+        // Lưu voice map thực tế từ API response (để hiển thị tên giọng đọc)
+        if (result.voiceMap) {
+          setActiveVoiceMap(result.voiceMap);
+        }
         await addTrack(
           result.audioUrl,
           conversation.title || config.topic || 'Bài nghe',
@@ -603,7 +655,7 @@ export default function ListeningPlayerScreen({
                         <AppText
                           className="text-sm font-sans-semibold"
                           style={{color: isEvenSpeaker ? LISTENING_BLUE : LISTENING_ORANGE}}>
-                          {exchange.speaker}
+                          {getVoiceDisplayName(exchange.speaker, activeVoiceMap)}
                         </AppText>
                         {isActive && (
                           <View className="ml-auto flex-row items-end gap-0.5 h-3">
@@ -683,7 +735,7 @@ export default function ListeningPlayerScreen({
                       style={{
                         color: currentExchangeIndex % 2 === 0 ? LISTENING_BLUE : LISTENING_ORANGE,
                       }}>
-                      {currentExchange.speaker}
+                      {getVoiceDisplayName(currentExchange.speaker, activeVoiceMap)}
                     </AppText>
                   </View>
 

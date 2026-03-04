@@ -56,6 +56,8 @@ export interface ConversationAudioResult {
   wordTimestamps?: WordTimestamp[][];
   /** URL audio trên storage */
   audioUrl?: string;
+  /** Map speaker → voice ID đã dùng (để mobile hiển thị tên giọng đọc) */
+  voiceMap?: Record<string, string>;
 }
 
 // ============================================
