@@ -205,8 +205,9 @@ export default function MinimizedPlayer() {
     setPlayerMode('hidden');
   };
 
-  // Drag gesture — chỉ drag, KHÔNG dùng tap gesture để tránh conflict với buttons
+  // Drag gesture — chỉ activate khi kéo > 10px, tap ngắn pass-through ngay
   const dragGesture = Gesture.Pan()
+    .minDistance(10)
     .onUpdate(e => {
       translateX.value = savedX.value + e.translationX;
       translateY.value = savedY.value + e.translationY;

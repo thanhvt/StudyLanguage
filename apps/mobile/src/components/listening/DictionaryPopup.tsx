@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   TouchableOpacity,
@@ -27,18 +27,18 @@ interface DictionaryPopupProps {
   onClose: () => void;
   /** Callback khi user lưu từ */
   onSaveWord?: (word: string) => void;
-  /** Callback khi user tap phát âm — cần pause audio chính */
-  onPlayPronunciation?: (audioUrl: string) => void;
+  /** Callback phát âm từ qua Azure TTS — parent xử lý pause/resume audio chính */
+  onPronounce?: (word: string) => Promise<void>;
 }
 
 /**
  * Mục đích: BottomSheet popup tra từ điển — hiển thị IPA, nghĩa, ví dụ, phát âm
- * Tham số đầu vào: word (string | null), onClose, onSaveWord, onPlayPronunciation
+ * Tham số đầu vào: word (string | null), onClose, onSaveWord, onPronounce
  * Tham số đầu ra: JSX.Element (BottomSheetModal)
- * Khi nào sử dụng: PlayerScreen → user tap từ trong transcript
+ * Khi nào sử dụng: PlayerScreen / ArticleScreen → user tap từ trong transcript
  *   - Gọi useDictionary() để tra nghĩa từ backend
  *   - Hiển thị: word, IPA, partOfSpeech badges, definitions, examples
- *   - Nút phát âm 🔊 (dùng audio URL từ Free Dictionary)
+ *   - Nút phát âm 🔊 (luôn hiện — dùng Azure TTS qua onPronounce callback)
  *   - Nút lưu từ 💾
  *   - Khi tap từ mới khi popup đang mở → cập nhật nội dung (MOB-LIS-MVP-EC-005)
  */
@@ -46,13 +46,14 @@ export default function DictionaryPopup({
   word,
   onClose,
   onSaveWord,
-  onPlayPronunciation,
+  onPronounce,
 }: DictionaryPopupProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
   const insets = useInsets();
   const haptic = useHaptic();
   const {result, isLoading, error, lookup, clear} = useDictionary();
+  const [isPronouncing, setIsPronouncing] = useState(false);
 
   // Khi word thay đổi → mở popup + tra từ
   useEffect(() => {
@@ -77,18 +78,26 @@ export default function DictionaryPopup({
   }, [clear, onClose]);
 
   /**
-   * Mục đích: Phát âm từ bằng audio URL từ API
-   * Tham số đầu vào: không có (dùng result.audio)
+   * Mục đích: Phát âm từ qua Azure TTS
+   * Tham số đầu vào: không có (dùng result.word)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap nút 🔊 trong popup
    */
-  const handlePlayAudio = useCallback(() => {
-    if (result?.audio && onPlayPronunciation) {
-      haptic.light();
-      onPlayPronunciation(result.audio);
-      console.log('🔊 [DictionaryPopup] Phát âm từ:', result.word);
+  const handlePlayAudio = useCallback(async () => {
+    if (!result?.word || !onPronounce || isPronouncing) {
+      return;
     }
-  }, [result, onPlayPronunciation, haptic]);
+    setIsPronouncing(true);
+    haptic.light();
+    console.log('🔊 [DictionaryPopup] Phát âm từ qua Azure TTS:', result.word);
+    try {
+      await onPronounce(result.word);
+    } catch (err) {
+      console.error('❌ [DictionaryPopup] Lỗi phát âm:', err);
+    } finally {
+      setIsPronouncing(false);
+    }
+  }, [result, onPronounce, isPronouncing, haptic]);
 
   /**
    * Mục đích: Lưu từ vào danh sách Saved Words
@@ -164,9 +173,31 @@ export default function DictionaryPopup({
       enablePanDownToClose
       onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
-      backgroundStyle={{backgroundColor: colors.background}}
-      handleIndicatorStyle={{backgroundColor: colors.neutrals600}}
-      style={{marginHorizontal: 8}}>
+      backgroundStyle={{
+        backgroundColor: colors.background,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        // Glass border — premium style giống TtsSettingsSheet
+        borderTopWidth: 1,
+        borderTopColor: colors.glassBorderStrong,
+        borderLeftWidth: 0.5,
+        borderRightWidth: 0.5,
+        borderLeftColor: colors.glassBorderStrong,
+        borderRightColor: colors.glassBorderStrong,
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: colors.neutrals600,
+        width: 40,
+        height: 4,
+      }}
+      style={{
+        // Shadow — tạo depth cho bottom sheet
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: -8},
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+        elevation: 16,
+      }}>
       <BottomSheetScrollView
         style={{maxHeight: 400, paddingBottom: insets.bottom + 16}}>
         {/* Header */}
@@ -188,15 +219,20 @@ export default function DictionaryPopup({
 
             {/* Nút hành động: phát âm + lưu từ + Google — top-right */}
             <View className="flex-row items-center gap-2 ml-3">
-              {/* Nút phát âm */}
-              {result?.audio && (
+              {/* Nút phát âm — luôn hiện khi có result */}
+              {result && onPronounce && (
                 <TouchableOpacity
                   onPress={handlePlayAudio}
                   className="w-10 h-10 rounded-full items-center justify-center"
                   style={{backgroundColor: `${LISTENING_BLUE}20`}}
+                  disabled={isPronouncing}
                   accessibilityLabel="Phát âm từ"
                   accessibilityRole="button">
-                  <Icon name="Volume2" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
+                  {isPronouncing ? (
+                    <ActivityIndicator size="small" color={LISTENING_BLUE} />
+                  ) : (
+                    <Icon name="Volume2" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
+                  )}
                 </TouchableOpacity>
               )}
               {/* Nút lưu từ */}
