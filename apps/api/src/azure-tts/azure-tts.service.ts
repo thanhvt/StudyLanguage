@@ -400,25 +400,29 @@ export class AzureTtsService {
         const result = await this.textToSpeechWithTimestamps(line.text, lineOptions);
         allResults.push(result);
 
-        // Tính duration từ word timestamps
+        // Tính duration từ word timestamps (cho sentence-level tracking)
         const lastWord = result.wordTimestamps[result.wordTimestamps.length - 1];
-        const duration = lastWord ? lastWord.endTime : 1;
+        const lastWordEnd = lastWord ? lastWord.endTime : 1;
+
+        // Tính ACTUAL audio duration từ buffer size
+        // Format: Audio16Khz128KBitRateMonoMp3 → 128kbps = 16000 bytes/s
+        const MP3_BYTES_PER_SECOND = 16000; // 128kbps / 8
+        const bufferDuration = result.audioBuffer.length / MP3_BYTES_PER_SECOND;
 
         sentenceTimestamps.push({
           startTime: currentTime,
-          endTime: currentTime + duration,
+          endTime: currentTime + lastWordEnd,
         });
 
-        // Word timestamp offset: dùng currentTime TRƯỚC khi cộng gap
-        // vì Buffer.concat không có silence gap giữa các segments
-        const wordOffset = currentTime;
-
-        currentTime += duration + 0.3; // 300ms gap cho sentence-level tracking
-        // LƯU Ý: 300ms gap CHỈ ảnh hưởng sentence timestamps (để auto-scroll)
-        // KHÔNG ảnh hưởng word timestamps (xử lý riêng bên dưới)
+        currentTime += lastWordEnd + 0.3; // 300ms gap cho sentence-level tracking
 
         this.logger.log(
-          `🔊 [DEBUG] Câu ${i + 1}/${conversation.length} — voice: ${voice}, audio: ${result.audioBuffer.length} bytes, words: ${result.wordTimestamps.length}, tổng tích lũy: ${currentTime.toFixed(1)}s`,
+          `🔊 [WORD-TIMING] Câu ${i + 1}/${conversation.length} — ` +
+          `lastWordEnd: ${lastWordEnd.toFixed(3)}s, ` +
+          `bufferDuration: ${bufferDuration.toFixed(3)}s, ` +
+          `diff: ${(bufferDuration - lastWordEnd).toFixed(3)}s, ` +
+          `words: ${result.wordTimestamps.length}, ` +
+          `audio: ${result.audioBuffer.length} bytes`,
         );
       } catch (error) {
         this.logger.error(`Lỗi sinh audio câu ${i + 1}:`, error);
@@ -428,17 +432,36 @@ export class AzureTtsService {
 
     // Merge tất cả audio buffers (KHÔNG có silence gap giữa segments!)
     const combinedBuffer = Buffer.concat(allResults.map((r) => r.audioBuffer));
-    this.logger.log(`🔊 [DEBUG] Đã merge ${allResults.length}/${conversation.length} audio segments — tổng: ${(combinedBuffer.length / 1024 / 1024).toFixed(2)} MB, ~${currentTime.toFixed(1)}s ước tính`);
 
-    // Adjust word timestamps: dùng actual audio offset (KHÔNG bao gồm phantom 300ms gap)
-    // vì Buffer.concat nối audio liền kề, không có silence padding
-    let actualOffset = 0; // Track offset chính xác theo actual audio duration
+    // Tính actual duration từ combined buffer
+    const MP3_BYTES_PER_SECOND = 16000;
+    const totalBufferDuration = combinedBuffer.length / MP3_BYTES_PER_SECOND;
+    this.logger.log(
+      `🔊 [WORD-TIMING] MERGED: ${allResults.length} segments, ` +
+      `buffer: ${(combinedBuffer.length / 1024 / 1024).toFixed(2)} MB, ` +
+      `bufferDuration: ${totalBufferDuration.toFixed(1)}s, ` +
+      `sentenceTimeTotal: ${currentTime.toFixed(1)}s`,
+    );
+
+    // ============================================
+    // QUAN TRỌNG: Word timestamp offset phải dùng ACTUAL buffer duration
+    // KHÔNG dùng lastWord.endTime vì nó KHÔNG bao gồm trailing silence
+    // VD: lastWordEnd = 4.8s nhưng audio buffer = 5.2s (0.4s silence cuối)
+    // → Nếu dùng lastWordEnd: segment 2 offset = 4.8 (quá sớm 0.4s)
+    // → Tích lũy: sau 10 segments → highlight chạy trước voice 3-5 giây
+    // ============================================
+    let actualOffset = 0;
     const allWordTimestamps: WordTimestamp[][] = allResults.map((result, i) => {
       const offset = actualOffset;
-      // Tính actual duration từ word timestamp cuối cùng
-      const lastWord = result.wordTimestamps[result.wordTimestamps.length - 1];
-      const actualDuration = lastWord ? lastWord.endTime : 1;
-      actualOffset += actualDuration; // Chỉ cộng actual duration, KHÔNG cộng gap
+      // Dùng BUFFER DURATION (actual audio length) thay vì lastWord.endTime
+      const segmentDuration = result.audioBuffer.length / MP3_BYTES_PER_SECOND;
+      actualOffset += segmentDuration;
+
+      this.logger.log(
+        `🔊 [WORD-OFFSET] Câu ${i + 1}: offset=${offset.toFixed(3)}s, ` +
+        `segDuration=${segmentDuration.toFixed(3)}s, ` +
+        `nextOffset=${actualOffset.toFixed(3)}s`,
+      );
 
       return result.wordTimestamps.map((wt) => ({
         word: wt.word,

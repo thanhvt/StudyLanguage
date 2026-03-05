@@ -487,6 +487,39 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
     );
 
     if (finishReason === 'length') {
+      // Thử salvage partial JSON trước khi throw
+      // LLM bị cắt ngang → JSON có thể incomplete nhưng phần đầu vẫn hợp lệ
+      this.logger.warn(
+        `Response bị cắt ngang (max_tokens: ${maxTokens}). Thử salvage partial JSON...`,
+      );
+      try {
+        // Thử tìm và repair JSON — cắt tại bracket cuối cùng hợp lệ
+        const partialMatch = content.match(/\{[\s\S]*"script"\s*:\s*\[[\s\S]*?\{[\s\S]*?\}/);
+        if (partialMatch) {
+          // Tìm vị trí cuối cùng của object hoàn chỉnh trong array
+          let repaired = content;
+          // Tìm tất cả các object hoàn chỉnh trong script array
+          const scriptArrayMatch = repaired.match(/"script"\s*:\s*\[([\s\S]*)/);
+          if (scriptArrayMatch) {
+            const scriptContent = scriptArrayMatch[1];
+            // Tìm object cuối cùng hoàn chỉnh (kết thúc bằng })
+            const lastCompleteObj = scriptContent.lastIndexOf('}');
+            if (lastCompleteObj > 0) {
+              const truncated = scriptContent.substring(0, lastCompleteObj + 1);
+              repaired = `{"script": [${truncated}]}`;
+              const parsed = JSON.parse(repaired);
+              if (parsed.script?.length >= 5) {
+                this.logger.log(
+                  `✅ Salvage thành công: ${parsed.script.length} turns từ response bị cắt`,
+                );
+                return parsed;
+              }
+            }
+          }
+        }
+      } catch {
+        // Salvage thất bại → throw lỗi gốc
+      }
       throw new Error(
         `Response bị cắt ngang do hết max_tokens (${maxTokens})`,
       );
@@ -897,9 +930,14 @@ ${mustAvoidSection}
 
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
-    // Ước tính maxTokens cho chunk này (tăng buffer cho Vietnamese translation)
-    const tokensPerTurn = includeVietnamese ? 300 : 180;
-    const maxTokens = Math.min(20000, Math.max(4096, Math.ceil(targetTurns * tokensPerTurn * 1.3)));
+    // Ước tính maxTokens cho chunk này
+    // Advanced + Vietnamese: mỗi turn ~60-80 words English + translation + keyPhrases = ~450 tokens
+    // Intermediate + Vietnamese: ~350 tokens/turn
+    // Beginner: ~250 tokens/turn
+    const levelMultiplier = level === 'advanced' ? 1.5 : level === 'intermediate' ? 1.2 : 1.0;
+    const baseTokensPerTurn = includeVietnamese ? 450 : 250;
+    const tokensPerTurn = Math.ceil(baseTokensPerTurn * levelMultiplier);
+    const maxTokens = Math.min(32000, Math.max(8192, Math.ceil(targetTurns * tokensPerTurn * 1.3)));
 
     this.logger.log(
       `Đang sinh chunk ${chunkIndex + 1}/${totalChunks}: "${phase.title}" - ${targetTurns} lượt (maxTokens: ${maxTokens})`,
