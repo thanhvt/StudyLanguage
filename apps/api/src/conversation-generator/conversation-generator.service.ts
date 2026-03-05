@@ -930,14 +930,14 @@ ${mustAvoidSection}
 
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
-    // Ước tính maxTokens cho chunk này
-    // Advanced + Vietnamese: mỗi turn ~60-80 words English + translation + keyPhrases = ~450 tokens
-    // Intermediate + Vietnamese: ~350 tokens/turn
-    // Beginner: ~250 tokens/turn
+    // Ước tính maxTokens cho chunk này — cần rộng rãi để tránh bị cắt ngang
+    // Advanced + Vietnamese: mỗi turn ~60-80 words English + translation + keyPhrases ≈ 600 tokens
+    // Intermediate + Vietnamese: ~400 tokens/turn
+    // Beginner: ~300 tokens/turn
     const levelMultiplier = level === 'advanced' ? 1.5 : level === 'intermediate' ? 1.2 : 1.0;
-    const baseTokensPerTurn = includeVietnamese ? 450 : 250;
+    const baseTokensPerTurn = includeVietnamese ? 600 : 350;
     const tokensPerTurn = Math.ceil(baseTokensPerTurn * levelMultiplier);
-    const maxTokens = Math.min(32000, Math.max(8192, Math.ceil(targetTurns * tokensPerTurn * 1.3)));
+    const maxTokens = Math.min(32000, Math.max(16384, Math.ceil(targetTurns * tokensPerTurn * 1.5)));
 
     this.logger.log(
       `Đang sinh chunk ${chunkIndex + 1}/${totalChunks}: "${phase.title}" - ${targetTurns} lượt (maxTokens: ${maxTokens})`,
