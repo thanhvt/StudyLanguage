@@ -21,3 +21,4 @@ export {TourTooltip, usePlayerTour} from './PlayerTour';
 export {default as GeneratingScreen} from './GeneratingScreen';
 export {default as TtsSettingsSheet} from './TtsSettingsSheet';
 export {default as ConfirmDialog} from './ConfirmDialog';
+export {default as ExchangeItem} from './ExchangeItem';

@@ -2,6 +2,11 @@ import React, {useCallback} from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import {AppText} from '@/components/ui';
 import {useColors} from '@/hooks/useColors';
+import type {WordTimestamp} from '@/services/api/listening';
+
+// Màu highlight cho từ đang nói
+const WORD_HIGHLIGHT_BG = '#3B82F620'; // blue-500 opacity 12%
+const WORD_HIGHLIGHT_COLOR = '#3B82F6'; // blue-500
 
 interface TappableTranscriptProps {
   /** Nội dung text cần render */
@@ -10,33 +15,34 @@ interface TappableTranscriptProps {
   onWordPress: (word: string) => void;
   /** Có đang active (highlight) hay không */
   isActive?: boolean;
+  /** Word timestamps cho câu này (từ Azure TTS) — dùng cho karaoke mode */
+  wordTimestamps?: WordTimestamp[];
+  /** Index từ đang được nói (-1 = không highlight) */
+  currentWordIndex?: number;
 }
 
 /**
  * Mục đích: Render text transcript thành từng từ riêng biệt, mỗi từ tap được
- * Tham số đầu vào: text (string), onWordPress (callback), isActive (boolean)
+ *   Hỗ trợ 2 mode:
+ *   1. Mode thường: Tách text bằng split → render từng từ (behavior cũ)
+ *   2. Karaoke mode: Dùng Azure wordTimestamps làm nguồn → highlight từ đang nói
+ * Tham số đầu vào: text, onWordPress, isActive, wordTimestamps?, currentWordIndex?
  * Tham số đầu ra: JSX.Element — flex-row flex-wrap của các từ
- * Khi nào sử dụng: PlayerScreen → thay thế <AppText>{exchange.text}</AppText>
- *   - Tách text bằng regex thành từng từ
- *   - Mỗi từ là TouchableOpacity với minHeight 28px cho touch target
- *   - Tap từ → gọi onWordPress(word) → mở DictionaryPopup
+ * Khi nào sử dụng: PlayerScreen → render exchange transcript
+ *   - Karaoke mode khi có wordTimestamps + isActive
+ *   - Fallback mode thường khi không có wordTimestamps
  */
 const TappableTranscript = React.memo(function TappableTranscript({
   text,
   onWordPress,
   isActive = false,
+  wordTimestamps,
+  currentWordIndex = -1,
 }: TappableTranscriptProps) {
   const colors = useColors();
-  /**
-   * Mục đích: Tách text thành mảng các từ, giữ khoảng trắng
-   * Tham số đầu vào: text (string)
-   * Tham số đầu ra: string[] — mảng từ
-   * Khi nào sử dụng: Render mỗi từ riêng biệt
-   */
-  const words = text.split(/(\s+)/);
 
   /**
-   * Mục đích: Xử lý khi user tap 1 từ
+   * Mục đích: Xử lý khi user tap 1 từ → mở dictionary popup
    * Tham số đầu vào: word (string)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap vào từ trong transcript
@@ -51,6 +57,48 @@ const TappableTranscript = React.memo(function TappableTranscript({
     },
     [onWordPress],
   );
+
+  // ========================
+  // KARAOKE MODE: Dùng Azure words làm nguồn render
+  // Giải quyết edge case word splitting mismatch (contractions, hyphens...)
+  // ========================
+  if (isActive && wordTimestamps && wordTimestamps.length > 0) {
+    return (
+      <View className="flex-row flex-wrap">
+        {wordTimestamps.map((wt, index) => {
+          const isHighlighted = index === currentWordIndex;
+          return (
+            <TouchableOpacity
+              key={`wt-${index}`}
+              onPress={() => handlePress(wt.word)}
+              activeOpacity={0.6}
+              accessibilityLabel={`Tra từ ${wt.word}`}
+              accessibilityRole="button"
+              style={{
+                minHeight: 28,
+                backgroundColor: isHighlighted ? WORD_HIGHLIGHT_BG : 'transparent',
+                borderRadius: isHighlighted ? 4 : 0,
+                paddingHorizontal: isHighlighted ? 2 : 0,
+              }}>
+              <AppText
+                className="text-base leading-6"
+                style={{
+                  color: isHighlighted ? WORD_HIGHLIGHT_COLOR : colors.foreground,
+                  fontWeight: isHighlighted ? '700' : '400',
+                }}>
+                {wt.word}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  }
+
+  // ========================
+  // MODE THƯỜNG: Split text → render (behavior cũ, backward compatible)
+  // ========================
+  const words = text.split(/(\s+)/);
 
   return (
     <View className="flex-row flex-wrap">

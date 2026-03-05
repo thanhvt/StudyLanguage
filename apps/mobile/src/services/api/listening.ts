@@ -57,12 +57,24 @@ export interface ConversationTimestamp {
   speaker: string;
 }
 
+/** Timestamp cho từng từ trong audio — dùng cho word-level karaoke highlight */
+export interface WordTimestamp {
+  /** Từ được đọc */
+  word: string;
+  /** Thời điểm bắt đầu (giây) */
+  startTime: number;
+  /** Thời điểm kết thúc (giây) */
+  endTime: number;
+}
+
 /** Kết quả sinh audio TTS từ backend */
 export interface AudioGenerationResult {
   /** URL audio file (có thể là URL tạm hoặc CDN) */
   audioUrl: string;
   /** Timestamps cho từng câu — dùng để sync transcript */
   timestamps: ConversationTimestamp[];
+  /** Word timestamps cho từng câu — dùng cho word-level karaoke highlight (chỉ Azure) */
+  wordTimestamps?: WordTimestamp[][];
   /** Map speaker → voice ID đã sử dụng (để hiển thị tên giọng đọc) */
   voiceMap?: Record<string, string>;
 }

@@ -77,7 +77,7 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 import {usePlayerGestures} from '@/hooks/usePlayerGestures';
 import {
-  TappableTranscript,
+  ExchangeItem,
   DictionaryPopup,
   WaveformVisualizer,
   PocketMode,
@@ -128,6 +128,8 @@ export default function ListeningPlayerScreen({
   const setAudioUrl = useListeningStore(state => state.setAudioUrl);
   const setGeneratingAudio = useListeningStore(state => state.setGeneratingAudio);
   const setTimestamps = useListeningStore(state => state.setTimestamps);
+  const setWordTimestamps = useListeningStore(state => state.setWordTimestamps);
+  const wordTimestamps = useListeningStore(state => state.wordTimestamps);
 
   // TTS settings
   const randomVoice = useListeningStore(state => state.randomVoice);
@@ -297,6 +299,10 @@ export default function ListeningPlayerScreen({
         );
         setAudioUrl(result.audioUrl);
         setTimestamps(result.timestamps);
+        // Lưu word timestamps cho word-level karaoke highlight (nếu có)
+        if (result.wordTimestamps) {
+          setWordTimestamps(result.wordTimestamps);
+        }
         // Lưu voice map thực tế từ API response (để hiển thị tên giọng đọc)
         if (result.voiceMap) {
           setActiveVoiceMap(result.voiceMap);
@@ -651,76 +657,28 @@ export default function ListeningPlayerScreen({
                   const isBookmarked = bookmarkedIndexes.includes(index);
 
                   return (
-                    <TouchableOpacity
+                    <ExchangeItem
                       key={index}
-                      onPress={() => handleExchangePress(index)}
-                      onLongPress={() => handleBookmarkToggle(index)}
-                      delayLongPress={400}
-                      activeOpacity={0.7}
-                      className="rounded-2xl p-4 border"
-                      onLayout={(e) => {
-                        // Ghi lại vị trí Y thực tế của exchange này (dùng cho auto-scroll)
-                        exchangeYPositions.current[index] = e.nativeEvent.layout.y;
+                      exchange={exchange}
+                      index={index}
+                      isActive={isActive}
+                      isEvenSpeaker={isEvenSpeaker}
+                      isBookmarked={isBookmarked}
+                      speakerDisplayName={getVoiceDisplayName(exchange.speaker, activeVoiceMap)}
+                      showTranslation={showTranslation}
+                      isPlaying={isTrackPlaying}
+                      playbackSpeed={playbackSpeed}
+                      wordTimestamps={wordTimestamps?.[index]}
+                      onPress={handleExchangePress}
+                      onLongPress={handleBookmarkToggle}
+                      onWordPress={setSelectedWord}
+                      onLayout={(idx, y) => {
+                        exchangeYPositions.current[idx] = y;
                       }}
-                      style={{
-                        backgroundColor: isActive
-                          ? `${LISTENING_BLUE}15`
-                          : isBookmarked
-                            ? `${LISTENING_ORANGE}08`
-                            : colors.glassHover,
-                        borderColor: isActive
-                          ? `${LISTENING_BLUE}40`
-                          : isBookmarked
-                            ? `${LISTENING_ORANGE}30`
-                            : 'transparent',
-                      }}>
-                      {/* Speaker label */}
-                      <View className="flex-row items-center mb-2">
-                        <View
-                          className="w-7 h-7 rounded-full items-center justify-center mr-2"
-                          style={{
-                            backgroundColor: isEvenSpeaker
-                              ? `${LISTENING_BLUE}20`
-                              : `${LISTENING_ORANGE}20`,
-                          }}>
-                          <AppText className="text-xs">
-                            {isEvenSpeaker ? '👤' : '👥'}
-                          </AppText>
-                        </View>
-                        <AppText
-                          className="text-sm font-sans-semibold"
-                          style={{color: isEvenSpeaker ? LISTENING_BLUE : LISTENING_ORANGE}}>
-                          {getVoiceDisplayName(exchange.speaker, activeVoiceMap)}
-                        </AppText>
-                        {isActive && (
-                          <View className="ml-auto flex-row items-end gap-0.5 h-3">
-                            <View className="w-0.5 h-1 rounded-full" style={{backgroundColor: LISTENING_BLUE}} />
-                            <View className="w-0.5 h-2 rounded-full" style={{backgroundColor: LISTENING_BLUE}} />
-                            <View className="w-0.5 h-3 rounded-full" style={{backgroundColor: LISTENING_BLUE}} />
-                            <View className="w-0.5 h-1.5 rounded-full" style={{backgroundColor: LISTENING_BLUE}} />
-                          </View>
-                        )}
-                        {isBookmarked && (
-                          <View className={isActive ? 'ml-1' : 'ml-auto'}>
-                            <AppText className="text-xs">⭐</AppText>
-                          </View>
-                        )}
-                      </View>
-
-                      {/* Nội dung tiếng Anh */}
-                      <TappableTranscript
-                        text={exchange.text}
-                        onWordPress={setSelectedWord}
-                        isActive={isActive}
-                      />
-
-                      {/* Bản dịch tiếng Việt */}
-                      {showTranslation && exchange.vietnamese && (
-                        <AppText className="text-sm mt-1 italic" style={{color: colors.neutrals500}}>
-                          {exchange.vietnamese}
-                        </AppText>
-                      )}
-                    </TouchableOpacity>
+                      foregroundColor={colors.foreground}
+                      glassHoverColor={colors.glassHover}
+                      neutrals500Color={colors.neutrals500}
+                    />
                   );
                 })}
               </View>
