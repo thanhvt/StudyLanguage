@@ -15,7 +15,6 @@ export {default as TappableTranscript} from './TappableTranscript';
 export {default as DictionaryPopup} from './DictionaryPopup';
 export {default as WaveformVisualizer} from './WaveformVisualizer';
 export {default as MinimizedPlayer} from './MinimizedPlayer';
-export {default as PocketMode} from './PocketMode';
 export {TourTooltip, usePlayerTour} from './PlayerTour';
 // Các component mới từ redesign v3
 export {default as GeneratingScreen} from './GeneratingScreen';

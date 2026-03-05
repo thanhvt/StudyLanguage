@@ -5,14 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   View,
-  Dimensions,
 } from 'react-native';
-import {GestureDetector} from 'react-native-gesture-handler';
 import Animated, {
-  FadeIn,
-  FadeOut,
   SlideInRight,
-  SlideOutLeft,
 } from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -75,12 +70,10 @@ import {useToast} from '@/components/ui/ToastProvider';
 import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
-import {usePlayerGestures} from '@/hooks/usePlayerGestures';
 import {
   ExchangeItem,
   DictionaryPopup,
   WaveformVisualizer,
-  PocketMode,
   TourTooltip,
   usePlayerTour,
 } from '@/components/listening';
@@ -92,10 +85,10 @@ import {formatTime} from '@/utils/formatTime';
 // Constants
 // ========================
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-const TOUR_TOTAL = 5;
+const TOUR_TOTAL = 4;
 const LISTENING_BLUE = '#2563EB';
 const LISTENING_ORANGE = '#F97316';
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
+
 
 /**
  * Mục đích: Màn hình phát bài nghe — redesign v3 với Reading/Focus View toggle
@@ -158,7 +151,7 @@ export default function ListeningPlayerScreen({
   // ========================
   const [viewMode, setViewMode] = useState<'reading' | 'focus'>('reading');
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const [pocketMode, setPocketMode] = useState(false);
+
 
   // ========================
   // TrackPlayer hooks
@@ -504,25 +497,6 @@ export default function ListeningPlayerScreen({
     }
   }, [timestamps, currentExchangeIndex, exchanges.length, isTrackReady, isTrackPlaying, progress.duration, progress.position, setCurrentExchangeIndex]);
 
-  const handleSwipeDownMinimize = useCallback(() => {
-    haptic.light();
-    if (audioUrl && isTrackPlaying) {
-      setPlayerMode('minimized');
-    } else {
-      setPlayerMode('hidden');
-    }
-    navigation.goBack();
-  }, [haptic, audioUrl, isTrackPlaying, setPlayerMode, navigation]);
-
-  // Gesture handler
-  const {gesture: playerGesture, animatedStyle: gestureAnimatedStyle} =
-    usePlayerGestures({
-      onSwipeLeft: handleSkipForward,
-      onSwipeRight: handleSkipBack,
-      onSwipeDown: handleSwipeDownMinimize,
-      onDoubleTap: handlePlayPause,
-    });
-
   const progressPercent =
     progress.duration > 0
       ? (progress.position / progress.duration) * 100
@@ -588,22 +562,6 @@ export default function ListeningPlayerScreen({
             <Icon name="Bookmark" className="w-5 h-5" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
 
-          {/* Pocket Mode */}
-          <TourTooltip
-            stepId="pocket"
-            activeStepId={tour.currentStepId}
-            onNext={tour.nextStep}
-            onSkip={tour.skipTour}
-            stepIndex={4}
-            totalSteps={TOUR_TOTAL}>
-            <TouchableOpacity
-              onPress={() => setPocketMode(true)}
-              className="p-2 -mr-2"
-              accessibilityLabel="Bật Pocket Mode"
-              accessibilityRole="button">
-              <Icon name="Smartphone" className="w-5 h-5" style={{color: colors.neutrals400}} />
-            </TouchableOpacity>
-          </TourTooltip>
         </View>
       </View>
 
@@ -622,8 +580,7 @@ export default function ListeningPlayerScreen({
       {/* ======================== */}
       {/* CONTENT: Reading View hoặc Focus View */}
       {/* ======================== */}
-      <GestureDetector gesture={playerGesture}>
-        <Animated.View style={[{flex: 1}, gestureAnimatedStyle]}>
+      <View style={{flex: 1}}>
           {viewMode === 'reading' ? (
             // ========================
             // READING VIEW — Full transcript chat-bubble layout
@@ -761,8 +718,7 @@ export default function ListeningPlayerScreen({
               )}
             </ScrollView>
           )}
-        </Animated.View>
-      </GestureDetector>
+      </View>
 
       {/* ======================== */}
       {/* PLAYBACK CONTROLS — bottom fixed */}
@@ -928,12 +884,7 @@ export default function ListeningPlayerScreen({
         }}
       />
 
-      {/* Pocket Mode overlay */}
-      {pocketMode && (
-        <View className="absolute inset-0" style={{zIndex: 999}}>
-          <PocketMode onExit={() => setPocketMode(false)} />
-        </View>
-      )}
+
     </View>
   );
 }
