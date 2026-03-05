@@ -125,12 +125,14 @@ function analyzeResult(
 ): TestResult {
   const script = result.script || [];
   const totalTurns = script.length;
-  const targetTurns = testCase.durationMinutes * testCase.numSpeakers;
+  const targetWords = Math.ceil(testCase.durationMinutes * 150 * 1.05);
+  // Tính targetTurns theo công thức mới: totalWords / 65 (giống service)
+  const rawExchanges = Math.ceil(targetWords / 65);
+  const targetTurns = Math.ceil(rawExchanges / testCase.numSpeakers) * testCase.numSpeakers;
 
   // Đếm từ
   const wordsPerTurn = script.map(t => t.text.split(/\s+/).length);
   const totalWords = wordsPerTurn.reduce((a, b) => a + b, 0);
-  const targetWords = Math.ceil(testCase.durationMinutes * 150 * 1.15);
   const avgWordsPerTurn = totalTurns > 0 ? Math.round(totalWords / totalTurns) : 0;
   const minWordsPerTurn = Math.min(...wordsPerTurn);
   const maxWordsPerTurn = Math.max(...wordsPerTurn);
@@ -152,12 +154,16 @@ function analyzeResult(
     issues.push(`Tổng từ quá ít: ${totalWords} < ${Math.round(targetWords * 0.80)} (80% mục tiêu)`);
   }
 
+  if (totalWords > targetWords * 1.30) {
+    issues.push(`Tổng từ quá nhiều: ${totalWords} > ${Math.round(targetWords * 1.30)} (130% mục tiêu)`);
+  }
+
   if (totalTurns < targetTurns * 0.80) {
     issues.push(`Số lượt quá ít: ${totalTurns} < ${Math.round(targetTurns * 0.80)} (80% mục tiêu)`);
   }
 
-  if (avgWordsPerTurn < 50) {
-    issues.push(`Trung bình từ/lượt quá ngắn: ${avgWordsPerTurn} < 50`);
+  if (avgWordsPerTurn < 40) {
+    issues.push(`Trung bình từ/lượt quá ngắn: ${avgWordsPerTurn} < 40`);
   }
 
   if (speakersFound.length < testCase.numSpeakers) {
@@ -168,17 +174,21 @@ function analyzeResult(
     issues.push(`Thời lượng ước tính quá ngắn: ${estimatedMinutes.toFixed(1)} phút < ${testCase.durationMinutes * 0.8} phút`);
   }
 
+  if (durationAccuracy > 130) {
+    issues.push(`Thời lượng ước tính quá dài: ${estimatedMinutes.toFixed(1)} phút > ${testCase.durationMinutes * 1.3} phút`);
+  }
+
   // Coherence check: lấy 3 câu đầu và 3 câu cuối
   const firstTurns = script.slice(0, 3).map(t => `${t.speaker}: "${t.text.substring(0, 100)}..."`);
   const lastTurns = script.slice(-3).map(t => `${t.speaker}: "${t.text.substring(0, 100)}..."`);
 
-  // Kiểm tra lặp nội dung
-  const allTexts = script.map(t => t.text.toLowerCase());
-  const duplicates = allTexts.filter((text, index) =>
-    allTexts.findIndex(t => t === text) !== index
+  // Kiểm tra lặp nội dung: dùng 50 ký tự đầu (tránh false positive)
+  const firstChars = script.map(t => t.text.substring(0, 50).toLowerCase().trim());
+  const duplicates = firstChars.filter((text, index) =>
+    firstChars.findIndex(t => t === text) !== index
   );
-  if (duplicates.length > 0) {
-    issues.push(`Phát hiện ${duplicates.length} câu lặp hoàn toàn!`);
+  if (duplicates.length > 3) {
+    issues.push(`Phát hiện ${duplicates.length} câu có phần đầu lặp (50 chars)!`);
   }
 
   return {

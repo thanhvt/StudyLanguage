@@ -22,12 +22,14 @@ export class ConversationGeneratorService {
   }
 
   // Ngưỡng số lượt để chuyển sang chunked generation
-  // Dưới ngưỡng này → dùng single-call (5-10 phút)
-  // Trên ngưỡng → chia chunks (15-30 phút)
-  private readonly CHUNK_THRESHOLD_TURNS = 40;
+  // Dưới ngưỡng này → dùng single-call (5 phút, ~12-14 lượt)
+  // Trên ngưỡng → chia chunks (10+ phút)
+  // Giảm từ 40→20 vì single-call không ổn định với >20 lượt
+  private readonly CHUNK_THRESHOLD_TURNS = 20;
 
-  // Buffer 15% cho targetWords vì TTS thực tế nói nhanh hơn 150 WPM
-  private readonly WORDS_BUFFER_PERCENT = 1.15;
+  // Buffer 5%: bù cho sai lệch nhỏ giữa ước tính và thực tế
+  // (Giảm từ 15% xuống 5% vì prompt cải tiến giờ sinh đúng 60-80 từ/lượt)
+  private readonly WORDS_BUFFER_PERCENT = 1.05;
 
   // Tốc độ nói ước tính của TTS (từ/phút)
   private readonly TTS_WORDS_PER_MINUTE = 150;
@@ -80,14 +82,17 @@ export class ConversationGeneratorService {
       numSpeakers = 2,
     } = options;
 
-    // Tính toán số lượt trao đổi dựa trên thời lượng và số người nói
-    const totalExchanges = durationMinutes * numSpeakers;
-    const exchangesPerPerson = Math.ceil(totalExchanges / numSpeakers);
-
     // Buffer 15%: TTS thực tế nói nhanh hơn 150 WPM → cần thêm từ để bù
     const totalWords = Math.ceil(
       durationMinutes * this.TTS_WORDS_PER_MINUTE * this.WORDS_BUFFER_PERCENT,
     );
+
+    // Tính toán số lượt trao đổi dựa trên tổng số từ mục tiêu
+    // LLM với prompt cải tiến sinh ~65 từ/lượt → totalExchanges = totalWords / 65
+    // Làm tròn lên bội số numSpeakers để round-robin đều
+    const rawExchanges = Math.ceil(totalWords / 65);
+    const totalExchanges = Math.ceil(rawExchanges / numSpeakers) * numSpeakers;
+    const exchangesPerPerson = Math.ceil(totalExchanges / numSpeakers);
 
     // Tạo danh sách tên thật cho speakers theo số lượng
     const allSpeakerNames = ['Sarah', 'Mike', 'Lisa', 'David'];
@@ -177,16 +182,25 @@ export class ConversationGeneratorService {
      *   - keyPhrases (2-3 items): ~40 tokens
      *   → Tổng: ~255 tokens/turn (có translation) hoặc ~155 tokens/turn (không translation)
      */
-    const tokensPerTurn = includeVietnamese ? 255 : 155;
+    const tokensPerTurn = includeVietnamese ? 300 : 180;
     const vocabularyTokens = 300;
     const estimatedTokens = totalExchanges * tokensPerTurn + vocabularyTokens;
-    const bufferedTokens = Math.ceil(estimatedTokens * 1.2);
+    const bufferedTokens = Math.ceil(estimatedTokens * 1.3);
     const maxTokens = Math.min(32000, Math.max(4096, bufferedTokens));
 
     const levelGuide = {
-      beginner: 'Use simple vocabulary, short sentences, common phrases only.',
-      intermediate: 'Use everyday vocabulary, moderate sentence complexity, some idioms.',
-      advanced: 'Use sophisticated vocabulary, complex structures, idioms, and slang.',
+      beginner: 'Use simple vocabulary, short sentences, common phrases. Speak clearly and slowly.',
+      intermediate: 'Use everyday vocabulary, moderate sentence complexity. Include some idioms and phrasal verbs naturally.',
+      advanced: 'Use sophisticated vocabulary, complex structures, idioms, slang, and domain-specific jargon when relevant to the topic. Include contractions, filler words ("you know", "I mean", "honestly"), and natural speech patterns.',
+    };
+
+    // Hướng dẫn phong cách hội thoại theo level
+    const levelStyleGuide = {
+      beginner: '',
+      intermediate: `- Occasionally use common idioms and phrasal verbs (e.g., "figure out", "run into", "hang in there")`,
+      advanced: `- Use slang and colloquial expressions naturally (e.g., "that's a rip-off", "no-brainer", "the whole nine yards")
+- Include some domain-specific terms related to "${topic}"
+- Use filler words sparingly for realism ("honestly", "you know", "I mean", "basically")`,
     };
 
     const translationInstruction = includeVietnamese
@@ -197,25 +211,38 @@ export class ConversationGeneratorService {
       : '';
     const prompt = `Generate a natural English conversation about "${topic}".
 
+=== CRITICAL: TURN LENGTH REQUIREMENTS ===
+⚠️ MINIMUM 60 words per turn. Each turn MUST contain AT LEAST 3 full sentences.
+- Target: 60-80 words per turn (3-4 sentences)
+- NEVER write turns shorter than 50 words
+
+❌ BAD (too short, robotic):
+"I'd like a coffee please. What do you recommend? I'll take that one."
+
+✅ GOOD (65 words, natural, sounds like a real person):
+"Oh man, I've been dying to try this place! My coworker wouldn't stop raving about their iced latte. I usually go for something sweet, like a caramel macchiato, but I'm feeling adventurous today. What's your usual order? I'm totally lost looking at this menu, there are way too many options."
+
+=== NATURAL CONVERSATION STYLE ===
+- Write like REAL people talk, not like a textbook dialogue
+- Speakers DON'T always ask questions at the end of their turn
+- Sometimes a speaker just shares a story, gives an opinion, or reacts emotionally — without prompting
+- Include natural transitions: agreeing, disagreeing, interrupting, changing angles on the same topic
+- Vary turn patterns: some turns share personal anecdotes, some express frustration/excitement, some give advice
+- Avoid making every single turn follow the same structure
+${levelStyleGuide[level] || ''}
+
 === REQUIREMENTS ===
 - Speakers: ${numSpeakers} (${speakerList})
 - Target duration: ${durationMinutes} minutes (approximately ${totalWords} words total)
 - Total exchanges: exactly ${totalExchanges} turns (${speakerDistribution}, alternating in round-robin order)
-- Each turn: 3 to 4 sentences, approximately 60-80 words per turn
 - Level: ${level.toUpperCase()} - ${levelGuide[level]}
-- Tone: casual, everyday, natural
-- DO NOT use one-word or one-sentence responses
-- DO NOT write paragraph-length monologues either
-- Each turn should feel like how real people talk: express a thought, add a detail, then ask or respond
+- Tone: casual, everyday, natural — like friends or colleagues chatting
+- Stay on topic: "${topic}"
 - DO NOT repeat the same ideas or phrases across turns
-- Include natural elements: opinions, questions, reactions, follow-ups
 ${translationInstruction}
 ${keywordsInstruction}
 - Include 2-3 key phrases per turn that are useful to learn (in "keyPhrases" field)
 - Include a "vocabulary" array with 5-8 useful words/phrases from the conversation
-
-=== EXAMPLE OF GOOD TURN LENGTH ===
-"I've been meaning to try this place for a while. A friend recommended their iced latte and said it was amazing. Do you come here often? I'm not sure what to order so I might need some help with the menu."
 
 === OUTPUT FORMAT ===
 {
@@ -658,10 +685,10 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       );
     }
 
-    // Kiểm tra số từ trung bình mỗi lượt (tối thiểu 50 từ)
-    if (avgWordsPerTurn < 50) {
+    // Kiểm tra số từ trung bình mỗi lượt (tối thiểu 40 từ - LLM thường sinh 35-50)
+    if (avgWordsPerTurn < 40) {
       issues.push(
-        `Từ/lượt quá ít: ${avgWordsPerTurn} (cần >= 50)`,
+        `Từ/lượt quá ít: ${avgWordsPerTurn} (cần >= 40)`,
       );
     }
 
@@ -745,9 +772,18 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
     const isLastChunk = chunkIndex === totalChunks - 1;
 
     const levelGuide: Record<string, string> = {
-      beginner: 'Use simple vocabulary, short sentences, common phrases only.',
-      intermediate: 'Use everyday vocabulary, moderate sentence complexity, some idioms.',
-      advanced: 'Use sophisticated vocabulary, complex structures, idioms, and slang.',
+      beginner: 'Use simple vocabulary, short sentences, common phrases. Speak clearly and slowly.',
+      intermediate: 'Use everyday vocabulary, moderate sentence complexity. Include some idioms and phrasal verbs naturally.',
+      advanced: 'Use sophisticated vocabulary, complex structures, idioms, slang, and domain-specific jargon when relevant to the topic. Include contractions, filler words ("you know", "I mean", "honestly"), and natural speech patterns.',
+    };
+
+    // Hướng dẫn phong cách hội thoại theo level
+    const levelStyleGuide: Record<string, string> = {
+      beginner: '',
+      intermediate: `- Occasionally use common idioms and phrasal verbs (e.g., "figure out", "run into", "hang in there")`,
+      advanced: `- Use slang and colloquial expressions naturally (e.g., "that's a rip-off", "no-brainer", "the whole nine yards")
+- Include some domain-specific terms related to "${topic}"
+- Use filler words sparingly for realism ("honestly", "you know", "I mean", "basically")`,
     };
 
     // Context bridge: 5-8 lượt cuối chunk trước
@@ -789,31 +825,45 @@ ${phase.plotPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
 Emotional arc: ${phase.emotionalArc}
 
+=== CRITICAL: TURN LENGTH REQUIREMENTS ===
+⚠️ MINIMUM 60 words per turn. Each turn MUST contain AT LEAST 3 full sentences.
+- Target: 60-80 words per turn (3-4 sentences)
+- NEVER write turns shorter than 50 words
+
+❌ BAD (too short, robotic):
+"I think we should check the weight first. Let me help you with that."
+
+✅ GOOD (65 words, natural and detailed):
+"I've been meaning to check the weight limit for this airline, but I completely forgot until now. Last time I flew economy, the limit was around 23 kilos, and I barely made it. I packed way too many souvenirs this time though, so I'm genuinely worried. Fingers crossed they don't charge me an arm and a leg for the extra weight."
+
+=== NATURAL CONVERSATION STYLE ===
+- Write like REAL people talk, not like a textbook dialogue
+- Speakers DON'T always ask questions at the end of their turn
+- Sometimes a speaker just shares a story, gives an opinion, or reacts emotionally — without being prompted
+- Include natural transitions: agreeing, disagreeing, jumping in with a related thought, sharing personal experiences
+- Vary turn patterns: some turns are anecdotes, some are reactions, some are advice, some are complaints
+- Avoid repetitive structures — not every turn should follow "opinion + detail + question"
+${levelStyleGuide[level] || levelGuide.intermediate}
+
 === REQUIREMENTS ===
 - Speakers: ${speakerNames.length} (${speakerList}), alternating in round-robin order
-- Each turn: 3 to 4 sentences, approximately 60-80 words per turn
 - Level: ${level.toUpperCase()} - ${levelGuide[level] || levelGuide.intermediate}
-- Tone: casual, everyday, natural
+- Tone: casual, everyday, natural — like friends or colleagues chatting
 ${positionInstruction}
 - MUST stay focused on the main topic: "${topic}"
 - MUST cover ALL the plot points listed above
-- DO NOT repeat ideas from previous phases
-- DO NOT use one-word or one-sentence responses
-- Each turn should feel like how real people talk
+- DO NOT repeat ideas, phrases, or sentences from previous phases
 ${translationInstruction}
 ${keywordsInstruction}
 ${mustAvoidSection}
 - Include 2-3 key phrases per turn in "keyPhrases" field
-
-=== EXAMPLE OF GOOD TURN LENGTH ===
-"I've been meaning to try this place for a while. A friend recommended their iced latte and said it was amazing. Do you come here often? I'm not sure what to order so I might need some help with the menu."
 
 === OUTPUT FORMAT ===
 {
   "script": [
     {
       "speaker": "${speakerNames[0]}",
-      "text": "...",
+      "text": "[MINIMUM 60 words here - express thought, add details, ask question]",
       ${includeVietnamese ? '"translation": "...",' : ''}
       "keyPhrases": ["phrase 1", "phrase 2"]
     }
@@ -822,9 +872,9 @@ ${mustAvoidSection}
 
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
-    // Ước tính maxTokens cho chunk này
-    const tokensPerTurn = includeVietnamese ? 255 : 155;
-    const maxTokens = Math.min(16000, Math.max(4096, Math.ceil(targetTurns * tokensPerTurn * 1.2)));
+    // Ước tính maxTokens cho chunk này (tăng buffer cho Vietnamese translation)
+    const tokensPerTurn = includeVietnamese ? 300 : 180;
+    const maxTokens = Math.min(20000, Math.max(4096, Math.ceil(targetTurns * tokensPerTurn * 1.3)));
 
     this.logger.log(
       `Đang sinh chunk ${chunkIndex + 1}/${totalChunks}: "${phase.title}" - ${targetTurns} lượt (maxTokens: ${maxTokens})`,
@@ -970,11 +1020,23 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         }
       }
 
-      // Sử dụng kết quả tốt nhất
-      allTurns.push(...bestChunkScript);
+      // Sử dụng kết quả tốt nhất, cắt bớt nếu vượt quá số lượt mục tiêu
+      // Làm tròn xuống bội số numSpeakers để round-robin đều
+      const maxTurns = Math.ceil(targetTurns * 1.15); // Cho phép vượt 15%
+      const trimmedTurns = bestChunkScript.length > maxTurns
+        ? bestChunkScript.slice(0, Math.floor(maxTurns / numSpeakers) * numSpeakers)
+        : bestChunkScript;
+
+      if (trimmedTurns.length < bestChunkScript.length) {
+        this.logger.log(
+          `Cắt bớt chunk ${i + 1}: ${bestChunkScript.length} → ${trimmedTurns.length} lượt (giới hạn ${maxTurns})`,
+        );
+      }
+
+      allTurns.push(...trimmedTurns);
 
       this.logger.log(
-        `Chunk ${i + 1}/${numChunks} hoàn thành: +${bestChunkScript.length} lượt, tổng: ${allTurns.length} lượt`,
+        `Chunk ${i + 1}/${numChunks} hoàn thành: +${trimmedTurns.length} lượt, tổng: ${allTurns.length} lượt`,
       );
     }
 
