@@ -67,7 +67,6 @@ import TrackPlayer, {
 } from 'react-native-track-player';
 import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import {useToast} from '@/components/ui/ToastProvider';
-import {useDialog} from '@/components/ui/DialogProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 import {
@@ -151,6 +150,7 @@ export default function ListeningPlayerScreen({
   // ========================
   const [viewMode, setViewMode] = useState<'reading' | 'focus'>('reading');
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [isLooping, setIsLooping] = useState(false);
 
 
   // ========================
@@ -165,7 +165,6 @@ export default function ListeningPlayerScreen({
     playbackState.state === State.Paused;
 
   const {showError, showInfo, showSuccess} = useToast();
-  const {showConfirm} = useDialog();
   const haptic = useHaptic();
   const colors = useColors();
 
@@ -422,21 +421,6 @@ export default function ListeningPlayerScreen({
     }
   };
 
-  const handleNewConversation = () => {
-    showConfirm(
-      'Tạo bài mới?',
-      'Bài nghe hiện tại sẽ bị xóa.',
-      async () => {
-        haptic.medium();
-        try { await TrackPlayer.reset(); } catch {}
-        setPlayerMode('hidden');
-        audioGenRequestedRef.current = false;
-        reset();
-        navigation.goBack();
-      },
-    );
-  };
-
   const cycleSpeed = async () => {
     const currentIdx = SPEEDS.indexOf(playbackSpeed);
     const nextIdx = (currentIdx + 1) % SPEEDS.length;
@@ -535,7 +519,7 @@ export default function ListeningPlayerScreen({
           {conversation.title || config.topic || 'Bài nghe'}
         </AppText>
 
-        {/* Right actions: View Toggle + Bookmark + Pocket */}
+        {/* Right actions: View Toggle + Translation + Bookmark */}
         <View className="flex-row items-center gap-1">
           {/* Reading/Focus toggle */}
           <TouchableOpacity
@@ -561,6 +545,30 @@ export default function ListeningPlayerScreen({
             accessibilityRole="button">
             <Icon name="Bookmark" className="w-5 h-5" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
+
+          {/* Translation toggle (VI) */}
+          <TourTooltip
+            stepId="translation"
+            activeStepId={tour.currentStepId}
+            onNext={tour.nextStep}
+            onSkip={tour.skipTour}
+            stepIndex={3}
+            totalSteps={TOUR_TOTAL}>
+            <TouchableOpacity
+              onPress={() => {
+                toggleTranslation();
+                haptic.light();
+              }}
+              className="p-2"
+              accessibilityLabel={showTranslation ? 'Ẩn bản dịch tiếng Việt' : 'Hiện bản dịch tiếng Việt'}
+              accessibilityRole="button">
+              <AppText
+                className="text-base font-sans-bold"
+                style={{color: showTranslation ? LISTENING_BLUE : colors.neutrals400}}>
+                VI
+              </AppText>
+            </TouchableOpacity>
+          </TourTooltip>
 
         </View>
       </View>
@@ -720,35 +728,56 @@ export default function ListeningPlayerScreen({
           )}
       </View>
 
-      {/* ======================== */}
-      {/* PLAYBACK CONTROLS — bottom fixed */}
-      {/* ======================== */}
-      <View className="px-6 pb-safe-offset-4 pt-3" style={{backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.neutrals900}}>
-        {/* Progress bar + waveform */}
+      <View
+        className="mx-4 mb-safe-offset-3 mt-2 rounded-2xl px-5 pt-4 pb-5 mb-2"
+        style={{
+          backgroundColor: 'transparent',
+        }}>
+        {/* Row 1: Waveform + Thời gian */}
         {(audioUrl || isTrackReady) && (
           <View className="mb-3">
-            <View className="flex-row items-center gap-2">
-              <WaveformVisualizer isPlaying={isTrackPlaying} height={20} />
-              <View className="flex-1 h-1 rounded-full overflow-hidden" style={{backgroundColor: colors.neutrals800}}>
-                <View
-                  className="h-full rounded-full"
-                  style={{width: `${progressPercent}%`, backgroundColor: LISTENING_BLUE}}
-                />
-              </View>
-            </View>
-            <View className="flex-row justify-between mt-1">
-              <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals500, minWidth: 40}}>
+            <View className="flex-row items-end justify-between">
+              {/* Waveform xanh/cam */}
+              <WaveformVisualizer isPlaying={isTrackPlaying} height={36} />
+              {/* Thời gian: current / total */}
+              <AppText className="text-sm font-sans-semibold" style={{color: colors.foreground}}>
                 {formatTime(progress.position)}
+                <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals400}}>
+                  {' / '}{formatTime(progress.duration)}
+                </AppText>
               </AppText>
-              <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals500, minWidth: 40, textAlign: 'right'}}>
-                {formatTime(progress.duration)}
-              </AppText>
+            </View>
+
+            {/* Progress bar với chấm cam */}
+            <View className="mt-2 h-1.5 rounded-full overflow-visible" style={{backgroundColor: colors.neutrals800}}>
+              <View
+                className="h-full rounded-full"
+                style={{width: `${Math.min(progressPercent, 100)}%`, backgroundColor: LISTENING_BLUE}}
+              />
+              {/* Chấm cam indicator */}
+              <View
+                style={{
+                  position: 'absolute',
+                  left: `${Math.min(progressPercent, 100)}%`,
+                  top: -4,
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: '#F97316',
+                  marginLeft: -7,
+                  shadowColor: '#F97316',
+                  shadowOffset: {width: 0, height: 0},
+                  shadowOpacity: 0.6,
+                  shadowRadius: 4,
+                  elevation: 4,
+                }}
+              />
             </View>
           </View>
         )}
 
-        {/* Control row */}
-        <View className="flex-row items-center justify-center">
+        {/* Row 2: Controls */}
+        <View className="flex-row items-center justify-between">
           {/* Tốc độ */}
           <TourTooltip
             stepId="speed"
@@ -758,34 +787,11 @@ export default function ListeningPlayerScreen({
             stepIndex={2}
             totalSteps={TOUR_TOTAL}>
             <TouchableOpacity
-              className="rounded-full px-3 py-2"
-              style={{backgroundColor: colors.neutrals900}}
+              className="rounded-xl px-3 py-1.5"
+              style={{backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorder}}
               onPress={cycleSpeed}>
               <AppText className="font-sans-bold text-sm" style={{color: colors.foreground}}>
                 {playbackSpeed}x
-              </AppText>
-            </TouchableOpacity>
-          </TourTooltip>
-
-          {/* Translation toggle */}
-          <TourTooltip
-            stepId="translation"
-            activeStepId={tour.currentStepId}
-            onNext={tour.nextStep}
-            onSkip={tour.skipTour}
-            stepIndex={3}
-            totalSteps={TOUR_TOTAL}>
-            <TouchableOpacity
-              className="rounded-full px-3 py-2 ml-2"
-              style={{backgroundColor: showTranslation ? `${LISTENING_BLUE}20` : colors.glassBg}}
-              onPress={() => {
-                toggleTranslation();
-                haptic.light();
-              }}>
-              <AppText
-                className="text-sm font-sans-bold"
-                style={{color: showTranslation ? LISTENING_BLUE : '#6b7280'}}>
-                VI
               </AppText>
             </TouchableOpacity>
           </TourTooltip>
@@ -798,14 +804,23 @@ export default function ListeningPlayerScreen({
             onSkip={tour.skipTour}
             stepIndex={1}
             totalSteps={TOUR_TOTAL}>
-            <View className="flex-row items-center gap-5 mx-4">
-              <TouchableOpacity onPress={handleSkipBack}>
-                <Icon name="SkipBack" className="w-6 h-6" style={{color: colors.neutrals300}} />
+            <View className="flex-row items-center gap-4">
+              {/* Skip Back */}
+              <TouchableOpacity onPress={handleSkipBack} className="items-center">
+                <Icon name="Rewind" className="w-5 h-5" style={{color: colors.neutrals400}} />
               </TouchableOpacity>
 
+              {/* Play/Pause */}
               <TouchableOpacity
                 className="w-14 h-14 rounded-full items-center justify-center"
-                style={{backgroundColor: LISTENING_BLUE}}
+                style={{
+                  backgroundColor: LISTENING_BLUE,
+                  shadowColor: '#2563EB',
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: 0.35,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}
                 onPress={handlePlayPause}
                 disabled={isGeneratingAudio}>
                 {isGeneratingAudio ? (
@@ -818,18 +833,34 @@ export default function ListeningPlayerScreen({
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleSkipForward}>
-                <Icon name="SkipForward" className="w-6 h-6" style={{color: colors.neutrals300}} />
+              {/* Skip Forward */}
+              <TouchableOpacity onPress={handleSkipForward} className="items-center">
+                <Icon name="FastForward" className="w-5 h-5" style={{color: colors.neutrals400}} />
               </TouchableOpacity>
             </View>
           </TourTooltip>
 
-          {/* Nút bài mới */}
+          {/* Loop button */}
           <TouchableOpacity
-            className="rounded-full px-3 py-2"
-            style={{backgroundColor: colors.neutrals900}}
-            onPress={handleNewConversation}>
-            <Icon name="RefreshCw" className="w-4 h-4" style={{color: colors.neutrals300}} />
+            className="rounded-xl p-2"
+            style={{
+              backgroundColor: isLooping ? `${LISTENING_BLUE}20` : colors.glassBg,
+              borderWidth: 1,
+              borderColor: isLooping ? `${LISTENING_BLUE}40` : colors.glassBorder,
+            }}
+            onPress={async () => {
+              const newLoop = !isLooping;
+              setIsLooping(newLoop);
+              haptic.light();
+              try {
+                // Bật/tắt loop cho TrackPlayer
+                const RepeatMode = require('react-native-track-player').RepeatMode;
+                await TrackPlayer.setRepeatMode(newLoop ? RepeatMode.Track : RepeatMode.Off);
+              } catch {}
+            }}
+            accessibilityLabel={isLooping ? 'Tắt lặp lại' : 'Bật lặp lại'}
+            accessibilityRole="button">
+            <Icon name="Repeat" className="w-5 h-5" style={{color: isLooping ? LISTENING_BLUE : colors.neutrals400}} />
           </TouchableOpacity>
         </View>
       </View>
