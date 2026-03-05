@@ -22,6 +22,7 @@ import type {
   ListeningConfig,
   ConversationResult,
   ConversationTimestamp,
+  WordTimestamp,
 } from '@/services/api/listening';
 import type {TopicScenario} from '@/data/topic-data';
 
@@ -56,6 +57,8 @@ interface ListeningState {
   isGeneratingAudio: boolean;
   /** Timestamps cho từng câu — sync audio với transcript */
   timestamps: ConversationTimestamp[] | null;
+  /** Word timestamps cho từng câu — word-level karaoke highlight */
+  wordTimestamps: WordTimestamp[][] | null;
   /** Giọng đọc random hay chọn thủ công */
   randomVoice: boolean;
   /** Map voice đã chọn cho từng speaker (speakerLabel → voiceId) */
@@ -117,6 +120,8 @@ interface ListeningActions {
   setGeneratingAudio: (value: boolean) => void;
   /** Set timestamps cho transcript sync */
   setTimestamps: (ts: ConversationTimestamp[] | null) => void;
+  /** Set word timestamps cho word-level karaoke highlight */
+  setWordTimestamps: (wt: WordTimestamp[][] | null) => void;
   /** Set random voice on/off */
   setRandomVoice: (value: boolean) => void;
   /** Set voice cho từng speaker */
@@ -172,6 +177,7 @@ const initialState: ListeningState = {
   audioUrl: null,
   isGeneratingAudio: false,
   timestamps: null,
+  wordTimestamps: null,
   randomVoice: true,
   voicePerSpeaker: {},
   multiTalker: false,
@@ -242,6 +248,7 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setAudioUrl: url => set({audioUrl: url}),
     setGeneratingAudio: value => set({isGeneratingAudio: value}),
     setTimestamps: ts => set({timestamps: ts}),
+    setWordTimestamps: wt => set({wordTimestamps: wt}),
     setRandomVoice: value => set({randomVoice: value}),
     setVoicePerSpeaker: map => set({voicePerSpeaker: map}),
     setMultiTalker: value => set({multiTalker: value}),
