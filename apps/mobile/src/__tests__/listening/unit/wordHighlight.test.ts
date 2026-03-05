@@ -4,87 +4,14 @@
  * Mục đích: Kiểm tra hàm findCurrentWordIndex (binary search) và các edge cases
  * Tham số đầu vào: WordTimestamp[], position (number)
  * Tham số đầu ra: index (number) — vị trí từ đang nói
- * Khi nào sử dụng: Chạy trước khi implement useWordHighlight hook
+ * Khi nào sử dụng: CI/CD + chạy trước khi merge feature branch
  */
 
-// ============================================
-// TYPE DEFINITION (sẽ move sang file riêng khi implement)
-// ============================================
-
-interface WordTimestamp {
-  word: string;
-  startTime: number;
-  endTime: number;
-}
-
-// ============================================
-// HÀM CẦN TEST (sẽ implement sau)
-// ============================================
-
-/**
- * Mục đích: Tìm index của từ đang được nói tại thời điểm `position`
- * Tham số đầu vào:
- *   - timestamps: mảng WordTimestamp đã sắp xếp theo startTime
- *   - position: vị trí audio hiện tại (giây)
- * Tham số đầu ra: index (number), -1 nếu không tìm thấy
- * Khi nào sử dụng: Được gọi mỗi 80ms bởi useWordHighlight hook
- */
-function findCurrentWordIndex(
-  timestamps: WordTimestamp[],
-  position: number,
-): number {
-  if (!timestamps.length) return -1;
-
-  let lo = 0;
-  let hi = timestamps.length - 1;
-
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const ts = timestamps[mid];
-
-    if (position < ts.startTime) {
-      hi = mid - 1;
-    } else if (position > ts.endTime) {
-      lo = mid + 1;
-    } else {
-      // position >= startTime && position <= endTime
-      return mid;
-    }
-  }
-
-  return -1; // Đang ở khoảng lặng giữa 2 từ
-}
-
-/**
- * Mục đích: Tìm từ đang nói, nếu ở khoảng lặng thì giữ từ trước đó
- * Tham số đầu vào:
- *   - timestamps: mảng WordTimestamp
- *   - position: vị trí audio hiện tại (giây)
- *   - lastIndex: index từ trước đó (để giữ highlight khi ở gap)
- * Tham số đầu ra: index (number)
- * Khi nào sử dụng: Wrapper trên findCurrentWordIndex, xử lý gap case
- */
-function findCurrentWordIndexWithFallback(
-  timestamps: WordTimestamp[],
-  position: number,
-  lastIndex: number,
-): number {
-  const exactIndex = findCurrentWordIndex(timestamps, position);
-
-  // Nếu tìm thấy chính xác → trả về
-  if (exactIndex !== -1) return exactIndex;
-
-  // Nếu ở khoảng lặng → giữ từ trước đó (nếu hợp lệ)
-  if (lastIndex >= 0 && lastIndex < timestamps.length) {
-    // Chỉ giữ nếu position chưa vượt quá từ tiếp theo
-    const nextIndex = lastIndex + 1;
-    if (nextIndex < timestamps.length && position < timestamps[nextIndex].startTime) {
-      return lastIndex;
-    }
-  }
-
-  return -1;
-}
+import {
+  findCurrentWordIndex,
+  findCurrentWordIndexWithFallback,
+  type WordTimestamp,
+} from '@/utils/wordHighlightUtils';
 
 // ============================================
 // FIXTURES — Dữ liệu test chuẩn
