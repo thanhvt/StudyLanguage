@@ -23,6 +23,7 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
 import {getTotalScenarios, TOPIC_CATEGORIES, type TopicScenario} from '@/data/topic-data';
 import {customScenarioApi, type CustomScenario} from '@/services/api/customScenarios';
+import {radioApi, type PlaylistSummary} from '@/services/api/radio';
 import {
   DurationSelector,
   SpeakersSelector,
@@ -107,6 +108,10 @@ export default function ListeningConfigScreen({
   const [generatingStep, setGeneratingStep] = useState(0);
   const [activeSpeaker, setActiveSpeaker] = useState<string | undefined>();
 
+  // T-01: Radio playlist history state
+  const [radioPlaylists, setRadioPlaylists] = useState<PlaylistSummary[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
+
   // ========================
   // Hooks
   // ========================
@@ -178,6 +183,67 @@ export default function ListeningConfigScreen({
       setTopicInput('');
     }
   }, [selectedTopic]);
+
+  // T-01: Fetch radio playlists khi chuyển sang radio tab
+  useEffect(() => {
+    if (mode === 'radio') {
+      setIsLoadingPlaylists(true);
+      radioApi
+        .getPlaylists()
+        .then(playlists => {
+          console.log('📻 [Config] Nhận', playlists.length, 'playlists');
+          setRadioPlaylists(playlists);
+        })
+        .catch(err => {
+          console.warn('⚠️ [Config] Không thể tải playlists:', err?.message);
+        })
+        .finally(() => setIsLoadingPlaylists(false));
+    }
+  }, [mode]);
+
+  /**
+   * Mục đích: Load playlist cũ và navigate sang RadioScreen để replay
+   * Tham số đầu vào: playlistId (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User tap vào playlist card trong "Your Playlists"
+   */
+  const handleLoadPlaylist = useCallback(
+    async (playlistId: string) => {
+      try {
+        haptic.medium();
+        console.log('📻 [Config] Đang tải playlist:', playlistId);
+        const detail = await radioApi.getPlaylistById(playlistId);
+        // Navigate sang RadioScreen với dữ liệu playlist đã load
+        navigation.navigate('Radio', {
+          loadedPlaylist: {
+            playlist: {
+              id: detail.id,
+              name: detail.name,
+              description: detail.description ?? '',
+              duration: 0, // Sẽ tính từ items
+              trackCount: detail.items.length,
+            },
+            items: detail.items.map((item: any, idx: number) => ({
+              id: item.id,
+              topic: item.topic,
+              conversation: item.conversation || [],
+              duration: item.duration || 0,
+              numSpeakers: item.num_speakers || 2,
+              category: item.category || '',
+              subCategory: item.sub_category || '',
+              position: item.position ?? idx,
+              audioUrl: item.audio_url || undefined,
+              audioTimestamps: item.audio_timestamps || undefined,
+            })),
+          },
+        });
+      } catch (error: any) {
+        console.error('❌ [Config] Lỗi load playlist:', error);
+        showError('Không thể mở playlist', error?.message || 'Vui lòng thử lại');
+      }
+    },
+    [haptic, navigation, showError],
+  );
 
   // ========================
   // Business Logic
@@ -268,7 +334,10 @@ export default function ListeningConfigScreen({
     // Nếu Radio mode → navigate đến RadioScreen
     if (mode === 'radio') {
       haptic.light();
-      navigation.navigate('Radio');
+      navigation.navigate('Radio', {
+        duration: config.durationMinutes,
+        autoGenerate: true,
+      });
       return;
     }
 
@@ -897,14 +966,15 @@ export default function ListeningConfigScreen({
                     />
                   </View>
                   <View className="flex-row flex-wrap gap-2">
-                    {[1, 5, 10, 15, 20, 30].map(min => {
+                    {[1, 30, 60, 120].map(min => {
                       const isActive = config.durationMinutes === min;
+                      const label = min >= 60 ? `${min / 60}h` : `${min}'`;
                       return (
                         <TouchableOpacity
                           key={min}
                           className="items-center justify-center rounded-xl border"
                           style={{
-                            width: '30%',
+                            width: '22%',
                             flexGrow: 1,
                             paddingVertical: 10,
                             backgroundColor: isActive
@@ -924,7 +994,7 @@ export default function ListeningConfigScreen({
                             style={{
                               color: isActive ? '#FFFFFF' : colors.foreground,
                             }}>
-                            {min}'
+                            {label}
                           </AppText>
                         </TouchableOpacity>
                       );
@@ -933,7 +1003,7 @@ export default function ListeningConfigScreen({
                 </SectionCard>
               </View>
 
-              {/* Your Playlists */}
+              {/* T-01: Your Playlists — Lấy từ API */}
               <View className="px-6 mb-4">
                 <SectionCard>
                   <View className="flex-row items-center justify-between mb-3">
@@ -944,17 +1014,19 @@ export default function ListeningConfigScreen({
                         Your playlists
                       </AppText>
                     </View>
-                    <TouchableOpacity
-                      onPress={() => {
-                        haptic.light();
-                        // TODO: Navigate to all playlists
-                      }}>
-                      <AppText
-                        className="text-xs"
-                        style={{color: LISTENING_BLUE}}>
-                        Xem tất cả
-                      </AppText>
-                    </TouchableOpacity>
+                    {radioPlaylists.length > 3 && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          haptic.light();
+                          // TODO: Navigate to all playlists screen
+                        }}>
+                        <AppText
+                          className="text-xs"
+                          style={{color: LISTENING_BLUE}}>
+                          Xem tất cả
+                        </AppText>
+                      </TouchableOpacity>
+                    )}
                   </View>
                   <View className="flex-row items-center mb-3">
                     <AppText
@@ -966,20 +1038,84 @@ export default function ListeningConfigScreen({
                       className="rounded-full px-2 py-0.5 ml-2"
                       style={{backgroundColor: LISTENING_BLUE}}>
                       <AppText className="text-xs font-sans-bold text-white">
-                        0
+                        {radioPlaylists.length}
                       </AppText>
                     </View>
                   </View>
 
+                  {/* Loading state */}
+                  {isLoadingPlaylists && (
+                    <View className="items-center py-6">
+                      <AppText className="text-sm" style={{color: colors.neutrals400}}>
+                        Đang tải playlists...
+                      </AppText>
+                    </View>
+                  )}
+
+                  {/* Playlist cards */}
+                  {!isLoadingPlaylists && radioPlaylists.length > 0 && (
+                    <View className="gap-2">
+                      {radioPlaylists.slice(0, 5).map(pl => (
+                        <TouchableOpacity
+                          key={pl.id}
+                          className="flex-row items-center rounded-xl border px-3 py-3"
+                          style={{
+                            borderColor: colors.neutrals800,
+                            backgroundColor: 'rgba(255,255,255,0.03)',
+                          }}
+                          onPress={() => handleLoadPlaylist(pl.id)}
+                          activeOpacity={0.7}
+                          accessibilityLabel={`Mở playlist ${pl.name}`}
+                          accessibilityRole="button">
+                          {/* Play icon */}
+                          <View
+                            className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                            style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+                            <Icon
+                              name="Play"
+                              className="w-5 h-5"
+                              style={{color: LISTENING_BLUE}}
+                            />
+                          </View>
+                          {/* Info */}
+                          <View className="flex-1">
+                            <AppText
+                              className="font-sans-medium text-sm"
+                              style={{color: colors.foreground}}
+                              numberOfLines={1}>
+                              {pl.name}
+                            </AppText>
+                            <AppText
+                              className="text-xs mt-0.5"
+                              style={{color: colors.neutrals400}}>
+                              {pl.itemCount ?? 0} bài •{' '}
+                              {new Date(pl.created_at).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </AppText>
+                          </View>
+                          <Icon
+                            name="ChevronRight"
+                            className="w-4 h-4"
+                            style={{color: colors.neutrals500}}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
                   {/* Empty state */}
-                  <View className="items-center py-8">
-                    <AppText className="text-3xl mb-2">📻</AppText>
-                    <AppText
-                      className="text-sm text-center"
-                      style={{color: colors.neutrals400}}>
-                      Chưa có playlist nào.{'\n'}Nhấn "Tạo Radio playlist" để bắt đầu!
-                    </AppText>
-                  </View>
+                  {!isLoadingPlaylists && radioPlaylists.length === 0 && (
+                    <View className="items-center py-8">
+                      <AppText className="text-3xl mb-2">📻</AppText>
+                      <AppText
+                        className="text-sm text-center"
+                        style={{color: colors.neutrals400}}>
+                        Chưa có playlist nào.{'\n'}Nhấn "Tạo Radio playlist" để bắt đầu!
+                      </AppText>
+                    </View>
+                  )}
                 </SectionCard>
               </View>
             </>

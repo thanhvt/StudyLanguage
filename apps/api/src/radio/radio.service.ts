@@ -31,6 +31,12 @@ export interface RadioPlaylistItem {
 }
 
 /**
+ * Cấp độ mặc định cho Radio Mode — fix intermediate
+ * Mục đích: Không cho user chọn, luôn dùng intermediate
+ */
+const RADIO_DEFAULT_LEVEL = 'intermediate';
+
+/**
  * Danh sách scenarios có sẵn để pick random
  * Copy từ topic-data.ts để sử dụng ở backend
  */
@@ -66,6 +72,18 @@ const SCENARIOS = [
   { id: 'personal-32', topic: 'Medical Appointment', category: 'personal', subCategory: 'Family' },
   { id: 'personal-36', topic: 'Job Interview (HR Round)', category: 'personal', subCategory: 'Family' },
   { id: 'personal-37', topic: 'Salary Negotiation', category: 'personal', subCategory: 'Family' },
+  // Business - Kinh doanh
+  { id: 'business-1', topic: 'Quarterly Business Review', category: 'business', subCategory: 'Meetings' },
+  { id: 'business-2', topic: 'Client Pitch Presentation', category: 'business', subCategory: 'Meetings' },
+  { id: 'business-3', topic: 'Budget Planning Meeting', category: 'business', subCategory: 'Finance' },
+  { id: 'business-4', topic: 'Vendor Contract Negotiation', category: 'business', subCategory: 'Procurement' },
+  { id: 'business-5', topic: 'Team Building Discussion', category: 'business', subCategory: 'HR' },
+  // Academic - Học thuật
+  { id: 'academic-1', topic: 'Study Group Discussion', category: 'academic', subCategory: 'Classroom' },
+  { id: 'academic-2', topic: 'Research Paper Review', category: 'academic', subCategory: 'Research' },
+  { id: 'academic-3', topic: 'University Admissions Interview', category: 'academic', subCategory: 'Admissions' },
+  { id: 'academic-4', topic: 'Lab Experiment Briefing', category: 'academic', subCategory: 'Lab' },
+  { id: 'academic-5', topic: 'Thesis Defense Preparation', category: 'academic', subCategory: 'Research' },
 ];
 
 /**
@@ -109,26 +127,54 @@ export class RadioService {
    * Trả về: Số bài
    */
   calculateTrackCount(totalDuration: number): number {
-    // Mỗi bài trung bình 5-10 phút, lấy avg = 7 phút
+    // Duration 1 phút → 1 track, còn lại mỗi bài ~7 phút
+    if (totalDuration <= 1) return 1;
     const avgDurationPerTrack = 7;
     return Math.ceil(totalDuration / avgDurationPerTrack);
   }
 
   /**
+   * Random số speakers cho Radio Mode
+   *
+   * Mục đích: Đa dạng hoá conversations với 2-4 speakers
+   * Tham số đầu vào: không
+   * Tham số đầu ra: number (2, 3, hoặc 4)
+   * Khi nào sử dụng: Khi generate mỗi track trong playlist
+   */
+  getRandomSpeakerCount(): number {
+    // 60% chance 2 speakers, 25% chance 3, 15% chance 4
+    const rand = Math.random();
+    if (rand < 0.60) return 2;
+    if (rand < 0.85) return 3;
+    return 4;
+  }
+
+  /**
    * Chọn ngẫu nhiên các topics từ danh sách scenarios
    *
-   * Mục đích: Pick random không trùng lặp
-   * Tham số: count - Số topics cần chọn
-   * Trả về: Mảng các scenario đã chọn
+   * Mục đích: Pick random không trùng lặp, hỗ trợ filter theo categories
+   * Tham số đầu vào: count - Số topics cần chọn, categories - Filter theo categories (optional)
+   * Tham số đầu ra: Mảng các scenario đã chọn
+   * Khi nào sử dụng: generateRadioPlaylist() gọi để chọn topics
    */
-  pickRandomTopics(count: number): typeof SCENARIOS {
-    // Shuffle array using Fisher-Yates
-    const shuffled = [...SCENARIOS];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  pickRandomTopics(count: number, categories?: string[]): typeof SCENARIOS {
+    // Filter theo categories nếu có
+    let pool = [...SCENARIOS];
+    if (categories && categories.length > 0) {
+      pool = pool.filter(s => categories.includes(s.category));
+      // Fallback nếu filter quá ít
+      if (pool.length < count) {
+        this.logger.warn(`Chỉ có ${pool.length} scenarios cho categories [${categories.join(',')}], dùng tất cả`);
+        pool = [...SCENARIOS];
+      }
     }
-    return shuffled.slice(0, count);
+
+    // Shuffle array using Fisher-Yates
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, count);
   }
 
   /**
@@ -145,19 +191,76 @@ export class RadioService {
   }
 
   /**
+   * T-17: Sinh smart topics bằng AI
+   *
+   * Mục đích: Dùng LLM để generate topics đa dạng, sáng tạo
+   * Tham số đầu vào: count - Số topics cần sinh, categories - Filter (optional)
+   * Tham số đầu ra: Mảng scenario tương thích với SCENARIOS format
+   * Khi nào sử dụng: generateRadioPlaylist() gọi thay vì pickRandomTopics()
+   */
+  async generateSmartTopics(count: number, categories?: string[]): Promise<typeof SCENARIOS> {
+    const categoryHint = categories?.length
+      ? `Focus trên các lĩnh vực: ${categories.join(', ')}.`
+      : 'Đa dạng các lĩnh vực: công nghệ, đời sống, kinh doanh, học thuật.';
+
+    const prompt = `Generate ${count} chủ đề hội thoại tiếng Anh cho radio podcast.
+${categoryHint}
+Mỗi chủ đề phải thực tế, thú vị, và phù hợp cho người Việt luyện nghe.
+Trả về JSON array, mỗi item có:
+- "topic": tên chủ đề (tiếng Anh, ngắn gọn)
+- "category": 1 trong [it, daily, personal, business, academic]
+- "subCategory": phụ danh mục
+
+Ví dụ: [{"topic":"Sprint Planning Meeting","category":"it","subCategory":"Agile"}]
+CHỈ trả JSON, không giải thích.`;
+
+    try {
+      const response = await this.aiService.generateText(prompt);
+
+      // Parse JSON từ response
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error('Không parse được JSON từ AI response');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('AI trả về mảng rỗng');
+      }
+
+      // Map thành format tương thích SCENARIOS
+      return parsed.slice(0, count).map((item: any) => ({
+        id: `smart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        topic: item.topic || 'Random Conversation',
+        category: item.category || 'daily',
+        subCategory: item.subCategory || 'General',
+      }));
+    } catch (error) {
+      this.logger.warn('generateSmartTopics lỗi, fallback:', error);
+      throw error; // Để caller handle fallback
+    }
+  }
+
+  /**
    * Generate Radio Playlist cho user
    *
    * Mục đích: Tạo playlist hoàn chỉnh (chỉ text, không audio)
-   * Tham số:
+   * Tham số đầu vào:
    *   - userId: ID của user
    *   - duration: Thời lượng đã chọn (phút)
-   * Trả về: RadioPlaylistResult với playlist và items
+   *   - categories: Filter theo categories (optional)
+   * Tham số đầu ra: RadioPlaylistResult với playlist và items
+   * Khi nào sử dụng: RadioController.generateRadioPlaylist() gọi
    */
   async generateRadioPlaylist(
     userId: string,
     duration: number,
+    categories?: string[],
   ): Promise<RadioPlaylistResult> {
     this.logger.log(`Đang tạo Radio playlist ${duration} phút cho user ${userId}`);
+    if (categories?.length) {
+      this.logger.log(`Filter categories: [${categories.join(', ')}]`);
+    }
 
     // Tính số bài cần generate
     const trackCount = this.calculateTrackCount(duration);
@@ -165,8 +268,15 @@ export class RadioService {
 
     this.logger.log(`Sẽ generate ${trackCount} bài, mỗi bài ~${trackDuration} phút`);
 
-    // Pick random topics
-    const selectedTopics = this.pickRandomTopics(trackCount);
+    // T-17: Dùng AI smart topics thay vì hardcoded SCENARIOS
+    let selectedTopics: typeof SCENARIOS;
+    try {
+      selectedTopics = await this.generateSmartTopics(trackCount, categories);
+      this.logger.log(`AI sinh ${selectedTopics.length} topics thành công`);
+    } catch (err) {
+      this.logger.warn('AI smart topics thất bại, dùng random SCENARIOS:', err);
+      selectedTopics = this.pickRandomTopics(trackCount, categories);
+    }
 
     // Tạo playlist trong database trước
     const now = new Date();
@@ -197,14 +307,16 @@ export class RadioService {
 
     for (let i = 0; i < selectedTopics.length; i++) {
       const scenario = selectedTopics[i];
-      this.logger.log(`Generating track ${i + 1}/${trackCount}: ${scenario.topic}`);
+      // T-06: Random số speakers 2-4 cho mỗi track
+      const numSpeakers = this.getRandomSpeakerCount();
+      this.logger.log(`Generating track ${i + 1}/${trackCount}: ${scenario.topic} (${numSpeakers} speakers)`);
 
       try {
-        // Gọi AI Service để generate conversation (chỉ text)
+        // T-05: Level fix = intermediate
         const result = await this.aiService.generateConversation(
           scenario.topic,
           trackDuration,
-          2, // 2 speakers
+          numSpeakers,
         );
 
         // Lưu vào playlist_items
@@ -215,7 +327,7 @@ export class RadioService {
             topic: scenario.topic,
             conversation: result.script,
             duration: trackDuration,
-            num_speakers: 2,
+            num_speakers: numSpeakers,
             category: scenario.category,
             sub_category: scenario.subCategory,
             position: i,
@@ -233,7 +345,7 @@ export class RadioService {
           topic: scenario.topic,
           conversation: result.script,
           duration: trackDuration,
-          numSpeakers: 2,
+          numSpeakers,
           category: scenario.category,
           subCategory: scenario.subCategory,
           position: i,

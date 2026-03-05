@@ -21,6 +21,8 @@ export interface RadioPlaylistItem {
   category: string;
   subCategory: string;
   position: number;
+  audioUrl?: string;
+  audioTimestamps?: {startTime: number; endTime: number}[];
 }
 
 /** Kết quả generate playlist */
@@ -35,17 +37,38 @@ export interface RadioPlaylistResult {
   items: RadioPlaylistItem[];
 }
 
+/** Playlist summary cho danh sách */
+export interface PlaylistSummary {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  itemCount: number;
+}
+
+/** Playlist detail kèm items */
+export interface PlaylistDetail {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  items: RadioPlaylistItem[];
+}
+
 // =======================
 // Radio API Service
 // =======================
 
 /**
  * Mục đích: Service gọi API backend cho Radio Mode
- * Tham số đầu vào: duration (1|30|60|120 phút)
- * Tham số đầu ra: RadioPlaylistResult
+ * Tham số đầu vào: duration, categories
+ * Tham số đầu ra: RadioPlaylistResult, PlaylistSummary[], PlaylistDetail
  * Khi nào sử dụng:
- *   - RadioScreen: gọi getPreview() để hiện info trước khi generate
- *   - RadioScreen: gọi generate() khi user xác nhận tạo playlist
+ *   - RadioScreen: gọi generate() khi user tạo playlist
+ *   - ConfigScreen: gọi getPlaylists() để hiện "Your Playlists"
+ *   - RadioScreen: gọi updateTrackAudio() sau khi sinh TTS
  */
 export const radioApi = {
   /**
@@ -61,18 +84,89 @@ export const radioApi = {
   },
 
   /**
-   * Mục đích: Generate playlist mới
-   * Tham số đầu vào: duration (1|30|60|120 phút)
+   * Mục đích: Generate playlist mới với duration và categories
+   * Tham số đầu vào: duration (1|30|60|120), categories (optional)
    * Tham số đầu ra: Promise<RadioPlaylistResult>
    * Khi nào sử dụng: User chọn duration → nhấn "Bắt đầu" → tạo playlist
    */
-  generate: async (duration: number): Promise<RadioPlaylistResult> => {
-    console.log('📻 [Radio] Generating playlist, duration:', duration, 'phút');
+  generate: async (
+    duration: number,
+    categories?: string[],
+  ): Promise<RadioPlaylistResult> => {
+    console.log(
+      '📻 [Radio] Đang tạo playlist, duration:',
+      duration,
+      'phút',
+      categories ? `categories: [${categories.join(',')}]` : '',
+    );
     const response = await apiClient.post(
       '/radio/generate',
-      {duration},
+      {duration, ...(categories?.length ? {categories} : {})},
       {timeout: 120000}, // 2 phút — generate text cho nhiều track
     );
     return response.data.data;
   },
+
+  // =======================
+  // Playlist History (T-01, T-02)
+  // =======================
+
+  /**
+   * Mục đích: Lấy danh sách playlists của user
+   * Tham số đầu vào: không
+   * Tham số đầu ra: Promise<PlaylistSummary[]>
+   * Khi nào sử dụng: ConfigScreen radio tab → hiện "Your Playlists"
+   */
+  getPlaylists: async (): Promise<PlaylistSummary[]> => {
+    console.log('📻 [Radio] Lấy danh sách playlists...');
+    const response = await apiClient.get('/playlists');
+    return response.data.playlists || [];
+  },
+
+  /**
+   * Mục đích: Lấy chi tiết playlist kèm items
+   * Tham số đầu vào: playlistId
+   * Tham số đầu ra: Promise<PlaylistDetail>
+   * Khi nào sử dụng: User tap playlist cũ → load và play lại
+   */
+  getPlaylistById: async (playlistId: string): Promise<PlaylistDetail> => {
+    console.log('📻 [Radio] Lấy chi tiết playlist:', playlistId);
+    const response = await apiClient.get(`/playlists/${playlistId}`);
+    return response.data.playlist;
+  },
+
+  /**
+   * Mục đích: Xóa playlist
+   * Tham số đầu vào: playlistId
+   * Tham số đầu ra: Promise<void>
+   * Khi nào sử dụng: User swipe delete / nhấn nút xóa
+   */
+  deletePlaylist: async (playlistId: string): Promise<void> => {
+    console.log('📻 [Radio] Xóa playlist:', playlistId);
+    await apiClient.delete(`/playlists/${playlistId}`);
+  },
+
+  // =======================
+  // Audio Caching (T-03, T-04)
+  // =======================
+
+  /**
+   * Mục đích: Lưu audio URL + timestamps sau khi sinh TTS
+   * Tham số đầu vào: playlistId, itemId, audioUrl, audioTimestamps
+   * Tham số đầu ra: Promise<void>
+   * Khi nào sử dụng: Sau generateConversationAudio() thành công → cache vào DB
+   */
+  updateTrackAudio: async (
+    playlistId: string,
+    itemId: string,
+    audioUrl: string,
+    audioTimestamps?: {startTime: number; endTime: number}[],
+  ): Promise<void> => {
+    console.log('📻 [Radio] Lưu audio URL cho track:', itemId);
+    await apiClient.put(`/playlists/${playlistId}/items/${itemId}/audio`, {
+      audioUrl,
+      ...(audioTimestamps ? {audioTimestamps} : {}),
+    });
+  },
 };
+

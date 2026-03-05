@@ -54,11 +54,21 @@ export class RadioController {
    * Tham số: duration (phút)
    * Trả về: Playlist object với items
    */
+  /**
+   * Tạo Radio playlist mới
+   *
+   * Mục đích: Generate playlist với duration và categories đã chọn
+   * Tham số đầu vào:
+   *   - duration: Thời lượng (1, 30, 60, 120 phút)
+   *   - categories: Lọc theo categories (optional)
+   * Tham số đầu ra: Playlist object với items
+   * Khi nào sử dụng: Mobile gọi khi user nhấn "Tạo Radio playlist"
+   */
   @Post('generate')
   @UseGuards(SupabaseAuthGuard)
   async generateRadioPlaylist(
     @Req() req: any,
-    @Body() body: { duration: number },
+    @Body() body: { duration: number; categories?: string[] },
   ) {
     try {
       // Lấy userId từ request (đã được auth middleware xử lý)
@@ -71,7 +81,7 @@ export class RadioController {
         );
       }
 
-      const { duration } = body;
+      const { duration, categories } = body;
 
       if (!duration || ![1, 30, 60, 120].includes(duration)) {
         throw new HttpException(
@@ -80,13 +90,26 @@ export class RadioController {
         );
       }
 
+      // Validate categories nếu có
+      const validCategories = ['it', 'daily', 'personal', 'business', 'academic'];
+      if (categories && categories.length > 0) {
+        const invalidCats = categories.filter(c => !validCategories.includes(c));
+        if (invalidCats.length > 0) {
+          throw new HttpException(
+            `Categories không hợp lệ: ${invalidCats.join(', ')}. Chỉ chấp nhận: ${validCategories.join(', ')}`,
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+
       this.logger.log(
-        `User ${userId} đang tạo Radio playlist ${duration} phút`,
+        `User ${userId} đang tạo Radio playlist ${duration} phút${categories ? ` [${categories.join(',')}]` : ''}`,
       );
 
       const result = await this.radioService.generateRadioPlaylist(
         userId,
         duration,
+        categories,
       );
 
       return {
