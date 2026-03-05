@@ -182,20 +182,16 @@ export class ConversationGeneratorService {
       .join(', ');
 
     /**
-     * Ước tính max_tokens dựa trên cấu trúc output thực tế
+     * Ước tính max_tokens — cần rộng rãi để tránh bị cắt ngang
+     * Groq llama-3.3-70b hỗ trợ tối đa 32768 tokens
      *
-     * Cấu trúc mỗi turn:
-     *   - speaker + JSON keys: ~15 tokens
-     *   - text (60-80 words): ~100 tokens
-     *   - translation (tiếng Việt): ~100 tokens (nếu có)
-     *   - keyPhrases (2-3 items): ~40 tokens
-     *   → Tổng: ~255 tokens/turn (có translation) hoặc ~155 tokens/turn (không translation)
+     * Mỗi turn thực tế có thể lên tới 500 tokens (text + translation + keyPhrases + JSON)
+     * Min 8192 tokens để đảm bảo không bao giờ bị cắt với conversation ngắn
      */
-    const tokensPerTurn = includeVietnamese ? 300 : 180;
-    const vocabularyTokens = 300;
+    const tokensPerTurn = includeVietnamese ? 500 : 300;
+    const vocabularyTokens = 500;
     const estimatedTokens = totalExchanges * tokensPerTurn + vocabularyTokens;
-    const bufferedTokens = Math.ceil(estimatedTokens * 1.3);
-    const maxTokens = Math.min(32000, Math.max(4096, bufferedTokens));
+    const maxTokens = Math.min(32000, Math.max(8192, Math.ceil(estimatedTokens * 1.5)));
 
     const levelGuide = {
       beginner: 'Use simple vocabulary, short sentences, common phrases. Speak clearly and slowly.',
