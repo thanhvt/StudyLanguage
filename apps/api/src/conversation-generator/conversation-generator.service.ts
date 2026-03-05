@@ -69,7 +69,32 @@ export class ConversationGeneratorService {
     const totalExchanges = durationMinutes * numSpeakers;
     const exchangesPerPerson = Math.ceil(totalExchanges / numSpeakers);
     const totalWords = durationMinutes * 150; // 150 từ/phút (tốc độ TTS)
-    const maxTokens = Math.min(8000, totalWords * 4); // Buffer x4 vì có thêm translation + vocabulary
+
+    /**
+     * Ước tính max_tokens dựa trên cấu trúc output thực tế
+     *
+     * Mục đích: Tính chính xác số tokens cần cho response JSON
+     * Tham số đầu vào: totalExchanges, includeVietnamese
+     * Tham số đầu ra: maxTokens hợp lý cho Groq API
+     * Khi nào sử dụng: Mỗi lần gọi generateConversation
+     *
+     * Cấu trúc mỗi turn:
+     *   - speaker + JSON keys: ~15 tokens
+     *   - text (60-80 words): ~100 tokens
+     *   - translation (tiếng Việt): ~100 tokens (nếu có)
+     *   - keyPhrases (2-3 items): ~40 tokens
+     *   → Tổng: ~255 tokens/turn (có translation) hoặc ~155 tokens/turn (không translation)
+     *
+     * Vocabulary section: ~300 tokens (5-8 items)
+     * Buffer 20%: Phòng trường hợp LLM sinh dài hơn dự kiến
+     */
+    const tokensPerTurn = includeVietnamese ? 255 : 155;
+    const vocabularyTokens = 300;
+    const estimatedTokens = totalExchanges * tokensPerTurn + vocabularyTokens;
+    const bufferedTokens = Math.ceil(estimatedTokens * 1.2); // Buffer 20%
+
+    // Giới hạn: tối thiểu 4096, tối đa 32000 (giới hạn model Llama 3.3 70B)
+    const maxTokens = Math.min(32000, Math.max(4096, bufferedTokens));
 
     // Tạo danh sách tên thật cho speakers theo số lượng
     const allSpeakerNames = ['Sarah', 'Mike', 'Lisa', 'David'];
@@ -140,7 +165,10 @@ ${keywordsInstruction}
 
 RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
-    this.logger.log('Prompt:', prompt);
+    this.logger.log(
+      `Prompt input (maxTokens: ${maxTokens}, estimated: ${estimatedTokens}): `,
+      prompt,
+    );
 
     /**
      * Gọi Groq API và parse response JSON
@@ -166,7 +194,17 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       });
 
       const content = response.choices[0]?.message?.content || '';
-      this.logger.log('Đã nhận response từ Groq API');
+      const finishReason = response.choices[0]?.finish_reason;
+      this.logger.log(
+        `Đã nhận response từ Groq API (finish_reason: ${finishReason}, content length: ${content.length})`,
+      );
+
+      // Response bị cắt do hết token → throw để retry logic xử lý
+      if (finishReason === 'length') {
+        throw new Error(
+          `Response bị cắt ngang do hết max_tokens (${maxTokens}). Cần tăng maxTokens hoặc giảm độ dài hội thoại.`,
+        );
+      }
 
       // Parse JSON từ response
       const jsonMatch = content.match(/\{[\s\S]*\}/);

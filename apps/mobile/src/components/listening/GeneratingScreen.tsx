@@ -126,11 +126,12 @@ export default function GeneratingScreen({
 
   const emotionLabel = ttsEmotion === 'default' ? 'Mặc định' : ttsEmotion;
 
-  // Tạo danh sách speakers giả lập — dựa trên numSpeakers
+  // Tạo danh sách speakers — chỉ hiển thị đúng số lượng numSpeakers, không lặp thêm
   const numSpeakers = config.numSpeakers ?? 2;
-  const speakerNames = numSpeakers === 2
-    ? ['Speaker A', 'Speaker B', 'Speaker A', 'Speaker B', 'Speaker A']
-    : Array.from({length: 5}, (_, i) => `Speaker ${String.fromCharCode(65 + (i % numSpeakers))}`);
+  const speakerNames = Array.from(
+    {length: numSpeakers},
+    (_, i) => `Speaker ${String.fromCharCode(65 + i)}`,
+  );
 
   return (
     <View className="flex-1" style={{backgroundColor: colors.background}}>
