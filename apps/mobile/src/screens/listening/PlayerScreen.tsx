@@ -213,23 +213,32 @@ export default function ListeningPlayerScreen({
       setPlayerMode('full');
 
       // Auto-scroll tới câu đang phát khi quay lại từ MinimizedPlayer
+      // Cơ chế 2 bước:
+      //   Bước 1: Scroll ước lượng ngay (để user thấy phản hồi nhanh)
+      //   Bước 2: Scroll chính xác sau khi onLayout đã fire (500ms)
       const interactionPromise = require('react-native').InteractionManager.runAfterInteractions(() => {
         const idx = useListeningStore.getState().currentExchangeIndex;
         if (idx > 0 && scrollViewRef.current) {
-          // Ưu tiên dùng vị trí đo được từ onLayout (chính xác)
-          const measuredY = exchangeYPositions.current[idx];
-          if (measuredY !== undefined) {
-            // Y chính xác = offset container + offset exchange - 20px padding trên
-            const scrollY = exchangeContainerOffsetY.current + measuredY - 20;
-            scrollViewRef.current.scrollTo({y: Math.max(0, scrollY), animated: true});
-          } else {
-            scrollViewRef.current.scrollTo({y: idx * 120, animated: true});
-          }
+          // Bước 1: Scroll ước lượng ngay lập tức
+          scrollViewRef.current.scrollTo({y: idx * 120, animated: false});
         }
       });
 
+      // Bước 2: Sau 500ms — onLayout đã fire → scroll chính xác
+      const preciseScrollTimer = setTimeout(() => {
+        const idx = useListeningStore.getState().currentExchangeIndex;
+        if (idx > 0 && scrollViewRef.current) {
+          const measuredY = exchangeYPositions.current[idx];
+          if (measuredY !== undefined) {
+            const scrollY = exchangeContainerOffsetY.current + measuredY - 20;
+            scrollViewRef.current.scrollTo({y: Math.max(0, scrollY), animated: true});
+          }
+        }
+      }, 500);
+
       return () => {
         interactionPromise.cancel();
+        clearTimeout(preciseScrollTimer);
         const currentState = useAudioPlayerStore.getState();
         if (currentState.isPlaying && currentState.playerMode === 'full') {
           setPlayerMode('minimized');
@@ -772,10 +781,10 @@ export default function ListeningPlayerScreen({
               </View>
             </View>
             <View className="flex-row justify-between mt-1">
-              <AppText className="text-xs" style={{color: colors.neutrals500}}>
+              <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals500, minWidth: 40}}>
                 {formatTime(progress.position)}
               </AppText>
-              <AppText className="text-xs" style={{color: colors.neutrals500}}>
+              <AppText className="text-sm font-sans-medium" style={{color: colors.neutrals500, minWidth: 40, textAlign: 'right'}}>
                 {formatTime(progress.duration)}
               </AppText>
             </View>
