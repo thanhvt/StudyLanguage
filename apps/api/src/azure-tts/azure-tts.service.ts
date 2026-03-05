@@ -409,7 +409,13 @@ export class AzureTtsService {
           endTime: currentTime + duration,
         });
 
-        currentTime += duration + 0.3; // 300ms gap
+        // Word timestamp offset: dùng currentTime TRƯỚC khi cộng gap
+        // vì Buffer.concat không có silence gap giữa các segments
+        const wordOffset = currentTime;
+
+        currentTime += duration + 0.3; // 300ms gap cho sentence-level tracking
+        // LƯU Ý: 300ms gap CHỈ ảnh hưởng sentence timestamps (để auto-scroll)
+        // KHÔNG ảnh hưởng word timestamps (xử lý riêng bên dưới)
 
         this.logger.log(
           `🔊 [DEBUG] Câu ${i + 1}/${conversation.length} — voice: ${voice}, audio: ${result.audioBuffer.length} bytes, words: ${result.wordTimestamps.length}, tổng tích lũy: ${currentTime.toFixed(1)}s`,
@@ -420,13 +426,20 @@ export class AzureTtsService {
       }
     }
 
-    // Merge tất cả audio buffers
+    // Merge tất cả audio buffers (KHÔNG có silence gap giữa segments!)
     const combinedBuffer = Buffer.concat(allResults.map((r) => r.audioBuffer));
     this.logger.log(`🔊 [DEBUG] Đã merge ${allResults.length}/${conversation.length} audio segments — tổng: ${(combinedBuffer.length / 1024 / 1024).toFixed(2)} MB, ~${currentTime.toFixed(1)}s ước tính`);
 
-    // Adjust word timestamps theo offset từng câu
+    // Adjust word timestamps: dùng actual audio offset (KHÔNG bao gồm phantom 300ms gap)
+    // vì Buffer.concat nối audio liền kề, không có silence padding
+    let actualOffset = 0; // Track offset chính xác theo actual audio duration
     const allWordTimestamps: WordTimestamp[][] = allResults.map((result, i) => {
-      const offset = sentenceTimestamps[i].startTime;
+      const offset = actualOffset;
+      // Tính actual duration từ word timestamp cuối cùng
+      const lastWord = result.wordTimestamps[result.wordTimestamps.length - 1];
+      const actualDuration = lastWord ? lastWord.endTime : 1;
+      actualOffset += actualDuration; // Chỉ cộng actual duration, KHÔNG cộng gap
+
       return result.wordTimestamps.map((wt) => ({
         word: wt.word,
         startTime: wt.startTime + offset,
