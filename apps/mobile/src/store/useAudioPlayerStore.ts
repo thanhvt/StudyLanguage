@@ -25,7 +25,7 @@ import type {ConversationTimestamp, ConversationResult} from '@/services/api/lis
 // =======================
 
 /** Chế độ hiển thị player */
-export type PlayerMode = 'full' | 'compact' | 'minimized' | 'hidden';
+export type PlayerMode = 'full' | 'minimized' | 'hidden';
 
 /** Thông tin session audio đang phát / gần nhất */
 export interface AudioSession {
@@ -65,7 +65,7 @@ interface AudioPlayerState {
 }
 
 interface AudioPlayerActions {
-  /** Set chế độ player (full → compact → minimized → hidden) */
+  /** Set chế độ player (full → minimized → hidden) */
   setPlayerMode: (mode: PlayerMode) => void;
   /** Set tốc độ phát (được persist) */
   setPlaybackSpeed: (speed: number) => void;
@@ -94,10 +94,10 @@ const initialState: AudioPlayerState = {
  * Tham số đầu vào: không (global store)
  * Tham số đầu ra: state + actions
  * Khi nào sử dụng:
- *   - CompactPlayer / MinimizedPlayer: đọc playerMode, isPlaying, lastSession
+ *   - MinimizedPlayer: đọc playerMode, isPlaying, lastSession
  *   - PlayerScreen: đọc/ghi playbackSpeed, volume; gọi saveSession khi có audio
  *   - ConfigScreen: đọc lastSession để hiện "Tiếp tục nghe" button
- *   - MainStack: đọc playerMode để quyết định render Compact/Minimized
+ *   - MainStack: đọc playerMode để quyết định render MinimizedPlayer
  *   - PERSIST: playbackSpeed, volume, lastSession được lưu qua MMKV
  * KHÔNG PERSIST: playerMode, isPlaying (runtime-only)
  */

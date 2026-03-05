@@ -24,29 +24,28 @@
 
 ## Flow 1: Global Player Modes (Sprint 2.1–2.4)
 
-### MAN-ENH-001 ✅ Player Mode — Full → Compact
+### MAN-ENH-001 ✅ Player Mode — Full → Minimized
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
 | 1 | Generate bài nghe → vào PlayerScreen | Full player hiện | | |
-| 2 | Tap Back (quay về Config hoặc Dashboard) | CompactPlayer hiện ở bottom (mini bar) | | |
-| 3 | Kiểm tra CompactPlayer | Hiện: tên bài, waveform animation, nút Play/Pause | | |
+| 2 | Tap Back (quay về Config hoặc Dashboard) | MinimizedPlayer hiện (floating pill) | | |
+| 3 | Kiểm tra MinimizedPlayer | Hiện: tên bài, waveform, nút Play/Pause, nút Close | | |
 | 4 | Audio vẫn phát | ✅ Không bị dừng khi chuyển mode | | |
-| 5 | Tap vào CompactPlayer | Navigate lại PlayerScreen (Full mode) | | |
+| 5 | Tap vào MinimizedPlayer | Navigate lại PlayerScreen (Full mode) | | |
 
-### MAN-ENH-002 ✅ Player Mode — Compact → Minimized
+### MAN-ENH-002 ✅ MinimizedPlayer — Draggable + Interactions
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | CompactPlayer đang hiện | OK | | |
-| 2 | Swipe down trên CompactPlayer | Chuyển thành MinimizedPlayer (FAB nhỏ) | | |
-| 3 | Kiểm tra MinimizedPlayer | Nút tròn/pill nhỏ, có icon Play/Pause | | |
-| 4 | Kéo MinimizedPlayer xung quanh màn hình | Draggable, snap vào các vị trí | | |
-| 5 | Tap MinimizedPlayer | Quay lại Full player | | |
+| 1 | MinimizedPlayer đang hiện | OK | | |
+| 2 | Kiểm tra MinimizedPlayer | Pill nhỏ, có icon Play/Pause + Close | | |
+| 3 | Kéo MinimizedPlayer xung quanh màn hình | Draggable, snap vào các vị trí | | |
+| 4 | Tap MinimizedPlayer | Quay lại Full player | | |
 
 ### MAN-ENH-003 ⚠️ Player Mode — Hidden
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | Đang phát audio + ở Compact mode | OK | | |
-| 2 | Stop audio hoàn toàn (nếu có nút) | Player ẩn, không hiện Compact/Minimized | | |
+| 1 | Đang phát audio + ở Minimized mode | OK | | |
+| 2 | Stop audio hoàn toàn (nếu có nút) | Player ẩn, không hiện MinimizedPlayer | | |
 | 3 | Navigate qua app | Không thấy player ở bất kỳ screen nào | | |
 
 ---
@@ -276,7 +275,7 @@
 ### MAN-ENH-028 ⚠️ Confirm khi generate bài mới (đang phát)
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | Đang phát audio từ bài trước | CompactPlayer hiện | | |
+| 1 | Đang phát audio từ bài trước | MinimizedPlayer hiện | | |
 | 2 | Config screen → chọn topic mới → "Bắt đầu nghe" | Dialog confirm hiện | | |
 | 3 | Dialog hỏi | "Bạn đang nghe bài cũ. Muốn tạo bài mới?" | | |
 | 4 | Tap **Huỷ** | Dialog đóng, audio cũ vẫn phát | | |
@@ -289,34 +288,34 @@
 > **Ngày thêm:** 2026-02-19
 > **Ref:** `PlayerScreen.tsx` — `useFocusEffect` + `handleSwipeDownMinimize`
 
-### MAN-ENH-029 ✅ Tab Switch — CompactPlayer hiện khi đổi tab
+### MAN-ENH-029 ✅ Tab Switch — MinimizedPlayer hiện khi đổi tab
 
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
 | 1 | Generate bài → vào PlayerScreen, audio đang phát | Full player hiện | | |
-| 2 | Tap tab **Reading** (bottom tab) | CompactPlayer hiện ở bottom | | |
-| 3 | Tap tab **Dashboard** | CompactPlayer vẫn hiện | | |
+| 2 | Tap tab **Reading** (bottom tab) | MinimizedPlayer hiện (floating pill) | | |
+| 3 | Tap tab **Dashboard** | MinimizedPlayer vẫn hiện | | |
 | 4 | Tap tab **Listening** | PlayerScreen hiện lại full mode | | |
 | 5 | Audio vẫn phát xuyên suốt | ✅ Không bị dừng khi đổi tab | | |
-| 6 | Audio KHÔNG phát + đổi tab | CompactPlayer KHÔNG hiện | | |
+| 6 | Audio KHÔNG phát + đổi tab | MinimizedPlayer KHÔNG hiện | | |
 | 7 | Đổi tab nhanh 5 lần | Ổn định, không crash | | |
 
-### MAN-ENH-030 ✅ Swipe Down → Compact mode (FIXED)
+### MAN-ENH-030 ✅ Swipe Down → Minimized mode (FIXED)
 
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
 | 1 | PlayerScreen đang phát | Full player hiện | | |
-| 2 | Swipe down vùng transcript | Player đóng, CompactPlayer hiện, audio tiếp tục | | |
+| 2 | Swipe down vùng transcript | Player đóng, MinimizedPlayer hiện, audio tiếp tục | | |
 | 3 | Haptic | Rung nhẹ | | |
-| 4 | Swipe down khi KHÔNG phát | Player đóng, hidden mode (không CompactPlayer) | | |
+| 4 | Swipe down khi KHÔNG phát | Player đóng, hidden mode (không MinimizedPlayer) | | |
 
-### MAN-ENH-031 ⚠️ Back button — CompactPlayer cũng hiện
+### MAN-ENH-031 ⚠️ Back button — MinimizedPlayer cũng hiện
 
 | # | Bước | Expected | P/F | Bug ID |
 |:-:|------|----------|:---:|--------|
-| 1 | PlayerScreen đang phát → Tap ← Back | CompactPlayer hiện ở Config screen | | |
+| 1 | PlayerScreen đang phát → Tap ← Back | MinimizedPlayer hiện ở Config screen | | |
 | 2 | Audio vẫn phát | ✅ Không bị dừng | | |
-| 3 | Tap CompactPlayer | Quay lại Full player | | |
+| 3 | Tap MinimizedPlayer | Quay lại Full player | | |
 
 ---
 

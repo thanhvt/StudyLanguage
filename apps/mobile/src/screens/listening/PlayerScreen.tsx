@@ -201,14 +201,14 @@ export default function ListeningPlayerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus/blur — chuyển compact mode
+  // Focus/blur — chuyển minimized mode
   useFocusEffect(
     useCallback(() => {
       setPlayerMode('full');
       return () => {
         const currentState = useAudioPlayerStore.getState();
         if (currentState.isPlaying && currentState.playerMode === 'full') {
-          setPlayerMode('compact');
+          setPlayerMode('minimized');
         }
       };
     }, [setPlayerMode]),
@@ -466,7 +466,7 @@ export default function ListeningPlayerScreen({
   const handleSwipeDownMinimize = useCallback(() => {
     haptic.light();
     if (audioUrl && isTrackPlaying) {
-      setPlayerMode('compact');
+      setPlayerMode('minimized');
     } else {
       setPlayerMode('hidden');
     }
@@ -500,7 +500,7 @@ export default function ListeningPlayerScreen({
         <TouchableOpacity
           onPress={() => {
             if (isTrackPlaying && audioUrl) {
-              setPlayerMode('compact');
+              setPlayerMode('minimized');
             } else {
               setPlayerMode('hidden');
             }

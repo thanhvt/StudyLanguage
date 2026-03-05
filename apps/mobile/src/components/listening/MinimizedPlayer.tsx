@@ -1,5 +1,5 @@
 import React from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View, Dimensions} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,11 +19,14 @@ import {useColors} from '@/hooks/useColors';
 import {formatTime} from '@/utils/formatTime';
 
 const LISTENING_BLUE = '#2563EB';
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+// Chiều rộng pill — tối thiểu 200, tối đa 65% màn hình
+const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.65, 280);
 
 /**
  * Mục đích: Floating pill MinimizedPlayer — hiện khi player thu nhỏ
  *   Pill hình viên thuốc, position absolute, góc phải dưới, draggable
- *   Nội dung: waveform + tên bài + thời gian + nút play + nút close
+ *   Nội dung: waveform + tên bài + speaker đang nói + thời gian + nút play + nút close
  * Tham số đầu vào: không (đọc từ stores)
  * Tham số đầu ra: JSX.Element | null
  * Khi nào sử dụng: RootNavigator render component này khi playerMode === 'minimized'
@@ -41,6 +44,8 @@ export default function MinimizedPlayer() {
 
   const config = useListeningStore(state => state.config);
   const selectedTopic = useListeningStore(state => state.selectedTopic);
+  const conversation = useListeningStore(state => state.conversation);
+  const currentExchangeIndex = useListeningStore(state => state.currentExchangeIndex);
   const numSpeakers = config.numSpeakers ?? 2;
 
   const playbackState = usePlaybackState();
@@ -53,13 +58,26 @@ export default function MinimizedPlayer() {
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
 
-  // Chỉ hiện khi mode = minimized
+  // Animated style — PHẢI gọi trước early return (Rules of Hooks)
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {translateX: translateX.value},
+      {translateY: translateY.value},
+    ],
+  }));
+
+  // Chỉ hiện khi mode = minimized — đặt SAU tất cả hooks
   if (playerMode !== 'minimized') {
     return null;
   }
 
   // Tên chủ đề — truncate
   const topicName = selectedTopic?.name || config.topic || 'Bài nghe';
+
+  // Lấy tên speaker đang nói hiện tại
+  const exchanges = conversation?.conversation || [];
+  const currentExchange = exchanges[currentExchangeIndex];
+  const speakerName = currentExchange?.speaker || '';
 
   /**
    * Mục đích: Tap pill → mở full PlayerScreen
@@ -125,12 +143,10 @@ export default function MinimizedPlayer() {
     tapGesture,
   );
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {translateX: translateX.value},
-      {translateY: translateY.value},
-    ],
-  }));
+  // Tính phần trăm progress
+  const progressPercent = progress.duration > 0
+    ? (progress.position / progress.duration) * 100
+    : 0;
 
   return (
     <GestureDetector gesture={composedGesture}>
@@ -139,14 +155,15 @@ export default function MinimizedPlayer() {
           {
             position: 'absolute',
             bottom: insets.bottom + 70,
-            left: 16,
             right: 16,
+            width: PILL_WIDTH,
             borderRadius: 28,
-            shadowColor: '#000',
+            // Glass-effect shadow với màu xanh nhẹ
+            shadowColor: LISTENING_BLUE,
             shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
-            elevation: 10,
+            shadowOpacity: 0.18,
+            shadowRadius: 16,
+            elevation: 12,
           },
           animatedStyle,
         ]}>
@@ -157,12 +174,12 @@ export default function MinimizedPlayer() {
             height: 3,
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            backgroundColor: colors.glassBorder,
+            backgroundColor: `${LISTENING_BLUE}15`,
           }}>
           <View
             className="h-full"
             style={{
-              width: `${progress.duration > 0 ? (progress.position / progress.duration) * 100 : 0}%`,
+              width: `${progressPercent}%`,
               backgroundColor: LISTENING_BLUE,
               borderTopLeftRadius: 28,
             }}
@@ -171,18 +188,18 @@ export default function MinimizedPlayer() {
 
         {/* Body của pill */}
         <View
-          className="flex-row items-center px-4 py-2.5"
+          className="flex-row items-center px-3 py-2"
           style={{
             borderRadius: 28,
             borderTopLeftRadius: 0,
             borderTopRightRadius: 0,
             borderWidth: 1,
             borderTopWidth: 0,
-            borderColor: `${LISTENING_BLUE}25`,
+            borderColor: `${LISTENING_BLUE}20`,
             backgroundColor: colors.neutrals900,
           }}>
           {/* Waveform bars indicator */}
-          <View className="flex-row items-end mr-3" style={{gap: 1.5, height: 16}}>
+          <View className="flex-row items-end mr-2" style={{gap: 1.5, height: 16}}>
             {[6, 12, 16, 8, 14].map((h, i) => (
               <View
                 key={i}
@@ -196,23 +213,24 @@ export default function MinimizedPlayer() {
             ))}
           </View>
 
-          {/* Title + Time */}
-          <View className="flex-1 mr-2" style={{minWidth: 0}}>
+          {/* Title + Speaker + Time */}
+          <View className="flex-1 mr-1.5" style={{minWidth: 0}}>
             <AppText
-              className="text-sm font-sans-bold"
+              className="text-[12px] font-sans-bold"
               style={{color: colors.foreground}}
               numberOfLines={1}>
               {topicName}
             </AppText>
-            <AppText className="text-[11px]" style={{color: colors.neutrals300}} numberOfLines={1}>
+            <AppText className="text-[10px]" style={{color: colors.neutrals300}} numberOfLines={1}>
               {formatTime(progress.position)} / {formatTime(progress.duration)} · {numSpeakers}sp
+              {speakerName ? ` · 🎤${speakerName}` : ''}
             </AppText>
           </View>
 
           {/* Play/Pause button */}
           <TouchableOpacity
             onPress={handlePlayPause}
-            className="w-8 h-8 rounded-full items-center justify-center mr-2"
+            className="w-7 h-7 rounded-full items-center justify-center mr-1.5"
             style={{backgroundColor: `${LISTENING_BLUE}20`}}
             hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
             activeOpacity={0.7}
@@ -220,7 +238,7 @@ export default function MinimizedPlayer() {
             accessibilityRole="button">
             <Icon
               name={isTrackPlaying ? 'Pause' : 'Play'}
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               style={{color: LISTENING_BLUE}}
             />
           </TouchableOpacity>
@@ -234,7 +252,7 @@ export default function MinimizedPlayer() {
             accessibilityRole="button">
             <Icon
               name="X"
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               style={{color: colors.neutrals400}}
             />
           </TouchableOpacity>

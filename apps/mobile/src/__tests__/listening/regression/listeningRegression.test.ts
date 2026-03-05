@@ -61,10 +61,10 @@ describe('Listening Regression Tests', () => {
   });
 
   // ================================
-  // BUG-12: CompactPlayer isTrackPlaying consistency
+  // BUG-12: MinimizedPlayer isTrackPlaying consistency
   // ================================
   describe('BUG-12: isTrackPlaying consistency', () => {
-    // CompactPlayer phải dùng `isTrackPlaying` (từ usePlaybackState)
+    // MinimizedPlayer phải dùng `isTrackPlaying` (từ usePlaybackState)
     // thay vì `isPlaying` (từ AudioPlayerStore) — tránh mismatch
 
     it('store isPlaying và track playing state có thể khác nhau', () => {
