@@ -207,18 +207,18 @@ export default function ListeningPlayerScreen({
       setPlayerMode('full');
 
       // Auto-scroll tới câu đang phát khi quay lại từ MinimizedPlayer
-      // Dùng setTimeout để đợi layout render xong
-      const scrollTimer = setTimeout(() => {
+      // Dùng InteractionManager để đợi animation + layout render xong → giảm lag
+      const interactionPromise = require('react-native').InteractionManager.runAfterInteractions(() => {
         const idx = useListeningStore.getState().currentExchangeIndex;
         if (idx > 0 && scrollViewRef.current) {
-          // Ước lượng: mỗi exchange ~100px, scroll tới vị trí câu đang phát
-          const estimatedY = idx * 100;
+          // Ước lượng: mỗi exchange ~120px (tùy nội dung)
+          const estimatedY = idx * 120;
           scrollViewRef.current.scrollTo({y: estimatedY, animated: true});
         }
-      }, 300);
+      });
 
       return () => {
-        clearTimeout(scrollTimer);
+        interactionPromise.cancel();
         const currentState = useAudioPlayerStore.getState();
         if (currentState.isPlaying && currentState.playerMode === 'full') {
           setPlayerMode('minimized');
@@ -310,16 +310,20 @@ export default function ListeningPlayerScreen({
   }, [conversation]);
 
   // Sync transcript highlight theo audio position
+  // LƯU Ý: KHÔNG đưa currentExchangeIndex vào deps — nó tự thay đổi chính nó → infinite loop
   useEffect(() => {
     if (!timestamps?.length || !isTrackPlaying) {return;}
     const currentTime = progress.position;
     const activeIndex = timestamps.findIndex(
       ts => currentTime >= ts.startTime && currentTime < ts.endTime,
     );
-    if (activeIndex !== -1 && activeIndex !== currentExchangeIndex) {
+    // So sánh với store value trực tiếp thay vì reactive dep
+    const currentIdx = useListeningStore.getState().currentExchangeIndex;
+    if (activeIndex !== -1 && activeIndex !== currentIdx) {
       setCurrentExchangeIndex(activeIndex);
     }
-  }, [progress.position, timestamps, isTrackPlaying, currentExchangeIndex, setCurrentExchangeIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.position, timestamps, isTrackPlaying]);
 
   // ========================
   // Empty state

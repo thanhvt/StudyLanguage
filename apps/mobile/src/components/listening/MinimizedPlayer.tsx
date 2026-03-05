@@ -145,10 +145,13 @@ export default function MinimizedPlayer() {
     const activeIndex = timestamps.findIndex(
       ts => currentTime >= ts.startTime && currentTime < ts.endTime,
     );
-    if (activeIndex !== -1 && activeIndex !== currentExchangeIndex) {
+    // Dùng getState() thay vì reactive dep để tránh infinite loop
+    const currentIdx = useListeningStore.getState().currentExchangeIndex;
+    if (activeIndex !== -1 && activeIndex !== currentIdx) {
       setCurrentExchangeIndex(activeIndex);
     }
-  }, [progress.position, timestamps, isTrackPlaying, currentExchangeIndex, setCurrentExchangeIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.position, timestamps, isTrackPlaying]);
 
   // Chỉ hiện khi mode = minimized — đặt SAU tất cả hooks
   if (playerMode !== 'minimized') {

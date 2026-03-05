@@ -53,9 +53,10 @@ export class ConversationGeneratorService {
    * Luồng gọi: Controller -> Service -> Groq API -> Parse JSON
    *
    * Tính toán:
-   *   - Tốc độ TTS: ~150 từ/phút + buffer 15%
-   *   - Nếu <= 40 lượt → single-call (logic cũ)
-   *   - Nếu > 40 lượt → chunked generation (chia 3-4 chunks)
+   *   - Tốc độ TTS: ~150 từ/phút + buffer 5%
+   *   - totalExchanges = totalWords / 65 (avg words/turn)
+   *   - Nếu <= 20 lượt → single-call
+   *   - Nếu > 20 lượt → chunked generation (chia 2-4 chunks)
    */
   async generateConversation(options: {
     topic: string;
@@ -75,14 +76,21 @@ export class ConversationGeneratorService {
   }> {
     const {
       topic,
-      durationMinutes = 5,
+      durationMinutes: rawDuration = 5,
       level = 'intermediate',
       includeVietnamese = true,
       keywords,
-      numSpeakers = 2,
+      numSpeakers: rawSpeakers = 2,
     } = options;
 
-    // Buffer 15%: TTS thực tế nói nhanh hơn 150 WPM → cần thêm từ để bù
+    // === Defensive validation (DTO đã validate, nhưng guard cho direct calls) ===
+    if (!topic || topic.trim().length < 3) {
+      throw new Error('Topic phải có ít nhất 3 ký tự');
+    }
+    const numSpeakers = Math.min(Math.max(rawSpeakers, 2), 4);
+    const durationMinutes = Math.min(Math.max(rawDuration, 3), 30);
+
+    // Buffer 5%: bù cho sai lệch nhỏ giữa ước tính và thực tế
     const totalWords = Math.ceil(
       durationMinutes * this.TTS_WORDS_PER_MINUTE * this.WORDS_BUFFER_PERCENT,
     );
@@ -302,7 +310,17 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         throw new Error('Không tìm thấy JSON trong response');
       }
 
-      return JSON.parse(jsonMatch[0]);
+      // Sanitize JSON trước khi parse (LLM đôi khi thêm trailing comma, comment)
+      const rawJson = jsonMatch[0];
+      const sanitized = rawJson
+        .replace(/,\s*([}\]])/g, '$1')   // trailing commas
+        .replace(/\/\/.*$/gm, '');        // inline comments
+
+      try {
+        return JSON.parse(sanitized);
+      } catch (parseError) {
+        throw new Error(`JSON parse lỗi: ${parseError instanceof Error ? parseError.message : String(parseError)}. Raw (200 chars): ${rawJson.substring(0, 200)}`);
+      }
     };
 
     try {
@@ -482,7 +500,17 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       throw new Error('Không tìm thấy JSON trong response');
     }
 
-    return JSON.parse(jsonMatch[0]);
+    // Sanitize JSON trước khi parse (LLM đôi khi thêm trailing comma, comment)
+    const rawJson = jsonMatch[0];
+    const sanitized = rawJson
+      .replace(/,\s*([}\]])/g, '$1')   // trailing commas
+      .replace(/\/\/.*$/gm, '');        // inline comments
+
+    try {
+      return JSON.parse(sanitized);
+    } catch (parseError) {
+      throw new Error(`JSON parse lỗi: ${parseError instanceof Error ? parseError.message : String(parseError)}. Raw (200 chars): ${rawJson.substring(0, 200)}`);
+    }
   }
 
   /**
@@ -953,6 +981,11 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
     let totalRetries = 0;
 
     for (let i = 0; i < numChunks; i++) {
+      // Delay 1.5s giữa các chunk API calls để tránh rate limit Groq
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
       const phase = outline.phases[i];
       const targetTurns = turnsPerChunk[i];
 
@@ -1049,7 +1082,7 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       0,
     );
     const finalSpeakers = [...new Set(allTurns.map(t => t.speaker))];
-    const estimatedDuration = (finalWordCount / 155).toFixed(1);
+    const estimatedDuration = (finalWordCount / this.TTS_WORDS_PER_MINUTE).toFixed(1);
 
     this.logger.log(
       `🎉 Chunked Generation hoàn thành: ${allTurns.length} lượt, ${finalWordCount} từ / ${totalWords} mục tiêu (${Math.round(finalWordCount / totalWords * 100)}%), ` +

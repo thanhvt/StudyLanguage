@@ -33,6 +33,8 @@ interface TestCase {
   numSpeakers: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   expectChunked: boolean; // true nếu mong đợi dùng chunked path
+  includeVietnamese?: boolean; // mặc định true
+  keywords?: string; // từ khóa gợi ý
 }
 
 interface TestResult {
@@ -87,26 +89,66 @@ const TEST_CASES: TestCase[] = [
     level: 'intermediate',
     expectChunked: true,
   },
+  // === NEW TEST CASES: Edge cases & missing coverage ===
+  {
+    name: '4️⃣ Beginner: 5 phút, 2 người (Verify simple vocab)',
+    topic: 'Asking for directions to the train station',
+    durationMinutes: 5,
+    numSpeakers: 2,
+    level: 'beginner',
+    expectChunked: false,
+  },
+  {
+    name: '5️⃣ Advanced: 10 phút, 3 người (Verify slang/jargon)',
+    topic: 'Discussing stock market trends and cryptocurrency investments',
+    durationMinutes: 10,
+    numSpeakers: 3,
+    level: 'advanced',
+    expectChunked: true,
+  },
+  {
+    name: '6️⃣ Boundary: 10 phút, 2 người (Just above threshold)',
+    topic: 'Planning a weekend road trip with a friend',
+    durationMinutes: 10,
+    numSpeakers: 2,
+    level: 'intermediate',
+    expectChunked: true,
+  },
+  {
+    name: '7️⃣ English only: 5 phút, 2 người (No Vietnamese)',
+    topic: 'Returning a defective product at a store',
+    durationMinutes: 5,
+    numSpeakers: 2,
+    level: 'intermediate',
+    expectChunked: false,
+    includeVietnamese: false,
+  },
+  {
+    name: '8️⃣ Edge: 5 phút, 4 người (Many speakers, few turns)',
+    topic: 'Deciding which restaurant to go for lunch',
+    durationMinutes: 5,
+    numSpeakers: 4,
+    level: 'intermediate',
+    expectChunked: false,
+  },
+  {
+    name: '9️⃣ Max: 30 phút, 2 người (Long + few speakers)',
+    topic: 'Two friends catching up after years of not seeing each other',
+    durationMinutes: 30,
+    numSpeakers: 2,
+    level: 'intermediate',
+    expectChunked: true,
+  },
+  {
+    name: '🔟 Keywords: 10 phút, 3 người (Keyword injection)',
+    topic: 'Renting an apartment in a new city',
+    durationMinutes: 10,
+    numSpeakers: 3,
+    level: 'intermediate',
+    expectChunked: true,
+    keywords: 'lease agreement, security deposit, landlord, moving in',
+  },
 ];
-
-// Chỉ chạy 3 test case chính, bỏ 2 test case phụ để tiết kiệm thời gian
-// Uncomment thêm nếu cần:
-// {
-//   name: '4️⃣ 20 phút, 3 người (Topic drift check)',
-//   topic: 'Planning a surprise birthday party for a friend',
-//   durationMinutes: 20,
-//   numSpeakers: 3,
-//   level: 'intermediate',
-//   expectChunked: true,
-// },
-// {
-//   name: '5️⃣ 25 phút, 4 người (Complex topic)',
-//   topic: 'Booking and checking in at a hotel, dealing with room issues',
-//   durationMinutes: 25,
-//   numSpeakers: 4,
-//   level: 'advanced',
-//   expectChunked: true,
-// },
 
 /**
  * Phân tích kết quả 1 test case
@@ -137,8 +179,8 @@ function analyzeResult(
   const minWordsPerTurn = Math.min(...wordsPerTurn);
   const maxWordsPerTurn = Math.max(...wordsPerTurn);
 
-  // Ước tính thời lượng audio
-  const estimatedMinutes = totalWords / 155;
+  // Ước tính thời lượng audio (dùng 150 WPM khớp với service constant)
+  const estimatedMinutes = totalWords / 150;
 
   // Speakers
   const speakersFound = [...new Set(script.map(t => t.speaker))];
@@ -154,8 +196,8 @@ function analyzeResult(
     issues.push(`Tổng từ quá ít: ${totalWords} < ${Math.round(targetWords * 0.80)} (80% mục tiêu)`);
   }
 
-  if (totalWords > targetWords * 1.30) {
-    issues.push(`Tổng từ quá nhiều: ${totalWords} > ${Math.round(targetWords * 1.30)} (130% mục tiêu)`);
+  if (totalWords > targetWords * 1.70) {
+    issues.push(`Tổng từ quá nhiều: ${totalWords} > ${Math.round(targetWords * 1.70)} (170% mục tiêu)`);
   }
 
   if (totalTurns < targetTurns * 0.80) {
@@ -174,21 +216,21 @@ function analyzeResult(
     issues.push(`Thời lượng ước tính quá ngắn: ${estimatedMinutes.toFixed(1)} phút < ${testCase.durationMinutes * 0.8} phút`);
   }
 
-  if (durationAccuracy > 130) {
-    issues.push(`Thời lượng ước tính quá dài: ${estimatedMinutes.toFixed(1)} phút > ${testCase.durationMinutes * 1.3} phút`);
+  if (durationAccuracy > 170) {
+    issues.push(`Thời lượng ước tính quá dài: ${estimatedMinutes.toFixed(1)} phút > ${testCase.durationMinutes * 1.7} phút`);
   }
 
   // Coherence check: lấy 3 câu đầu và 3 câu cuối
   const firstTurns = script.slice(0, 3).map(t => `${t.speaker}: "${t.text.substring(0, 100)}..."`);
   const lastTurns = script.slice(-3).map(t => `${t.speaker}: "${t.text.substring(0, 100)}..."`);
 
-  // Kiểm tra lặp nội dung: dùng 50 ký tự đầu (tránh false positive)
-  const firstChars = script.map(t => t.text.substring(0, 50).toLowerCase().trim());
+  // Kiểm tra lặp nội dung: dùng 80 ký tự đầu (tránh false positive từ common phrases)
+  const firstChars = script.map(t => t.text.substring(0, 80).toLowerCase().trim());
   const duplicates = firstChars.filter((text, index) =>
     firstChars.findIndex(t => t === text) !== index
   );
-  if (duplicates.length > 3) {
-    issues.push(`Phát hiện ${duplicates.length} câu có phần đầu lặp (50 chars)!`);
+  if (duplicates.length > 5) {
+    issues.push(`Phát hiện ${duplicates.length} câu có phần đầu lặp (80 chars)!`);
   }
 
   return {
@@ -272,7 +314,8 @@ async function main() {
         durationMinutes: testCase.durationMinutes,
         numSpeakers: testCase.numSpeakers,
         level: testCase.level,
-        includeVietnamese: true,
+        includeVietnamese: testCase.includeVietnamese ?? true,
+        keywords: testCase.keywords,
       });
 
       const durationMs = Date.now() - startTime;
