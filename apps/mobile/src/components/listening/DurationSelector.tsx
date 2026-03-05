@@ -21,10 +21,10 @@ const LISTENING_BLUE = '#2563EB';
 
 /** Phạm vi duration */
 const MIN_DURATION = 5;
-const MAX_DURATION = 60;
+const MAX_DURATION = 30;
 
 /** Danh sách giá trị duration cho picker — bước 5 phút */
-const DURATION_OPTIONS = [5, 10, 15, 20, 25, 30, 45, 60];
+const DURATION_OPTIONS = [5, 10, 15, 20, 25, 30];
 
 /** Chiều cao mỗi item trong picker list */
 const PICKER_ITEM_HEIGHT = 48;

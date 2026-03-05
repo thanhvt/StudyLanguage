@@ -27,7 +27,7 @@ export class ConversationGeneratorService {
    * Mục đích: Tạo đoạn hội thoại tự nhiên để học tiếng Anh
    * Tham số đầu vào:
    *   - topic: Chủ đề hội thoại (vd: "ordering coffee", "job interview")
-   *   - durationMinutes: Thời lượng hội thoại (5 | 10 | 15 phút)
+   *   - durationMinutes: Thời lượng hội thoại (5-30 phút)
    *   - level: Trình độ (beginner | intermediate | advanced)
    *   - includeVietnamese: Có thêm bản dịch tiếng Việt không
    * Tham số đầu ra: Object chứa script hội thoại

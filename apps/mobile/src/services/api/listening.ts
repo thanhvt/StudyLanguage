@@ -7,7 +7,7 @@ import {apiClient} from './client';
 /** Cấu hình để generate conversation */
 export interface ListeningConfig {
   topic: string;
-  /** Thời lượng (phút) — backend chấp nhận 5-15 */
+  /** Thời lượng (phút) — backend chấp nhận 5-30 */
   durationMinutes: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   includeVietnamese?: boolean;
@@ -186,13 +186,13 @@ function mapBackendResponse(raw: BackendResponse): ConversationResult {
 }
 
 /**
- * Mục đích: Giới hạn durationMinutes về khoảng backend chấp nhận (5-15)
+ * Mục đích: Giới hạn durationMinutes về khoảng backend chấp nhận (5-30)
  * Tham số đầu vào: minutes (number) — giá trị user chọn
  * Tham số đầu ra: number — giá trị đã clamp
  * Khi nào sử dụng: Trước khi gửi request lên backend
  */
 function clampDuration(minutes: number): number {
-  return Math.max(5, Math.min(15, minutes));
+  return Math.max(5, Math.min(30, minutes));
 }
 
 // =======================

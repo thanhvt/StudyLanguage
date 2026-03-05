@@ -201,11 +201,24 @@ export default function ListeningPlayerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus/blur — chuyển minimized mode
+  // Focus/blur — chuyển minimized mode + auto-scroll tới câu đang phát
   useFocusEffect(
     useCallback(() => {
       setPlayerMode('full');
+
+      // Auto-scroll tới câu đang phát khi quay lại từ MinimizedPlayer
+      // Dùng setTimeout để đợi layout render xong
+      const scrollTimer = setTimeout(() => {
+        const idx = useListeningStore.getState().currentExchangeIndex;
+        if (idx > 0 && scrollViewRef.current) {
+          // Ước lượng: mỗi exchange ~100px, scroll tới vị trí câu đang phát
+          const estimatedY = idx * 100;
+          scrollViewRef.current.scrollTo({y: estimatedY, animated: true});
+        }
+      }, 300);
+
       return () => {
+        clearTimeout(scrollTimer);
         const currentState = useAudioPlayerStore.getState();
         if (currentState.isPlaying && currentState.playerMode === 'full') {
           setPlayerMode('minimized');

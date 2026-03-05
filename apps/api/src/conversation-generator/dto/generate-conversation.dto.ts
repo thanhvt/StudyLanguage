@@ -17,13 +17,13 @@ export class GenerateConversationDto {
 
   @ApiPropertyOptional({
     description: 'Thời lượng hội thoại (phút)',
-    enum: [5, 10, 15],
+    enum: [5, 10, 15, 20, 25, 30],
     default: 5,
   })
   @IsOptional()
   @IsNumber()
   @Min(5)
-  @Max(15)
+  @Max(30)
   durationMinutes?: number;
 
   @ApiPropertyOptional({

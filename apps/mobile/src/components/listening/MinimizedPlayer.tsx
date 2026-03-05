@@ -1,9 +1,14 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {TouchableOpacity, View, Dimensions} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  runOnJS,
+  withRepeat,
+  withTiming,
+  withSequence,
+  withDelay,
+  Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {AppText} from '@/components/ui';
@@ -22,15 +27,25 @@ const LISTENING_BLUE = '#2563EB';
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 // Chiều rộng pill — tối thiểu 200, tối đa 65% màn hình
 const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.65, 280);
+const PILL_RADIUS = 15;
+
+// Cấu hình waveform bars
+const WAVEFORM_BARS = [
+  {baseHeight: 6, delay: 0},
+  {baseHeight: 12, delay: 100},
+  {baseHeight: 16, delay: 50},
+  {baseHeight: 8, delay: 150},
+  {baseHeight: 14, delay: 75},
+];
 
 /**
  * Mục đích: Floating pill MinimizedPlayer — hiện khi player thu nhỏ
  *   Pill hình viên thuốc, position absolute, góc phải dưới, draggable
- *   Nội dung: waveform + tên bài + speaker đang nói + thời gian + nút play + nút close
+ *   Nội dung: waveform (animated) + tên bài + speaker + thời gian + nút play + nút close
  * Tham số đầu vào: không (đọc từ stores)
  * Tham số đầu ra: JSX.Element | null
  * Khi nào sử dụng: RootNavigator render component này khi playerMode === 'minimized'
- *   Tap = mở full PlayerScreen, Tap play = toggle, Tap X = đóng, Kéo = di chuyển
+ *   Tap body = mở full PlayerScreen, Tap play = toggle, Tap X = đóng, Kéo = di chuyển
  */
 export default function MinimizedPlayer() {
   const haptic = useHaptic();
@@ -46,6 +61,8 @@ export default function MinimizedPlayer() {
   const selectedTopic = useListeningStore(state => state.selectedTopic);
   const conversation = useListeningStore(state => state.conversation);
   const currentExchangeIndex = useListeningStore(state => state.currentExchangeIndex);
+  const setCurrentExchangeIndex = useListeningStore(state => state.setCurrentExchangeIndex);
+  const timestamps = useListeningStore(state => state.timestamps);
   const numSpeakers = config.numSpeakers ?? 2;
 
   const playbackState = usePlaybackState();
@@ -58,13 +75,80 @@ export default function MinimizedPlayer() {
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
 
-  // Animated style — PHẢI gọi trước early return (Rules of Hooks)
-  const animatedStyle = useAnimatedStyle(() => ({
+  // Waveform animation — 5 thanh, mỗi thanh 1 shared value
+  const bar0 = useSharedValue(WAVEFORM_BARS[0].baseHeight * 0.35);
+  const bar1 = useSharedValue(WAVEFORM_BARS[1].baseHeight * 0.35);
+  const bar2 = useSharedValue(WAVEFORM_BARS[2].baseHeight * 0.35);
+  const bar3 = useSharedValue(WAVEFORM_BARS[3].baseHeight * 0.35);
+  const bar4 = useSharedValue(WAVEFORM_BARS[4].baseHeight * 0.35);
+  const barValues = [bar0, bar1, bar2, bar3, bar4];
+
+  // Animated style cho pill (drag)
+  const pillAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       {translateX: translateX.value},
       {translateY: translateY.value},
     ],
   }));
+
+  // Animated styles cho từng waveform bar
+  const barStyle0 = useAnimatedStyle(() => ({height: bar0.value}));
+  const barStyle1 = useAnimatedStyle(() => ({height: bar1.value}));
+  const barStyle2 = useAnimatedStyle(() => ({height: bar2.value}));
+  const barStyle3 = useAnimatedStyle(() => ({height: bar3.value}));
+  const barStyle4 = useAnimatedStyle(() => ({height: bar4.value}));
+  const barStyles = [barStyle0, barStyle1, barStyle2, barStyle3, barStyle4];
+
+  /**
+   * Mục đích: Animate waveform bars khi đang phát, dừng khi pause
+   * Tham số đầu vào: isTrackPlaying (boolean)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: useEffect theo dõi isTrackPlaying
+   */
+  useEffect(() => {
+    if (isTrackPlaying) {
+      // Bắt đầu animation: mỗi bar dao động lên xuống theo pattern khác nhau
+      WAVEFORM_BARS.forEach((cfg, i) => {
+        const minH = cfg.baseHeight * 0.25;
+        const maxH = cfg.baseHeight;
+        barValues[i].value = withDelay(
+          cfg.delay,
+          withRepeat(
+            withSequence(
+              withTiming(maxH, {duration: 300 + i * 50, easing: Easing.inOut(Easing.ease)}),
+              withTiming(minH, {duration: 250 + i * 40, easing: Easing.inOut(Easing.ease)}),
+            ),
+            -1, // Lặp vô hạn
+            true, // Reverse
+          ),
+        );
+      });
+    } else {
+      // Dừng: co bars về kích thước nhỏ
+      barValues.forEach((val, i) => {
+        cancelAnimation(val);
+        val.value = withTiming(WAVEFORM_BARS[i].baseHeight * 0.35, {duration: 200});
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTrackPlaying]);
+
+  /**
+   * Mục đích: Sync currentExchangeIndex theo audio position — giữ speaker name real-time
+   * Tham số đầu vào: progress.position, timestamps, isTrackPlaying
+   * Tham số đầu ra: void (cập nhật store)
+   * Khi nào sử dụng: Khi PlayerScreen unmount, MinimizedPlayer tiếp quản sync
+   */
+  useEffect(() => {
+    if (!timestamps?.length || !isTrackPlaying) {return;}
+    const currentTime = progress.position;
+    const activeIndex = timestamps.findIndex(
+      ts => currentTime >= ts.startTime && currentTime < ts.endTime,
+    );
+    if (activeIndex !== -1 && activeIndex !== currentExchangeIndex) {
+      setCurrentExchangeIndex(activeIndex);
+    }
+  }, [progress.position, timestamps, isTrackPlaying, currentExchangeIndex, setCurrentExchangeIndex]);
 
   // Chỉ hiện khi mode = minimized — đặt SAU tất cả hooks
   if (playerMode !== 'minimized') {
@@ -80,7 +164,7 @@ export default function MinimizedPlayer() {
   const speakerName = currentExchange?.speaker || '';
 
   /**
-   * Mục đích: Tap pill → mở full PlayerScreen
+   * Mục đích: Tap body pill → mở full PlayerScreen
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap vào phần body của pill (trừ nút play/close)
@@ -121,7 +205,7 @@ export default function MinimizedPlayer() {
     setPlayerMode('hidden');
   };
 
-  // Drag gesture — cho phép kéo pill tự do
+  // Drag gesture — chỉ drag, KHÔNG dùng tap gesture để tránh conflict với buttons
   const dragGesture = Gesture.Pan()
     .onUpdate(e => {
       translateX.value = savedX.value + e.translationX;
@@ -132,24 +216,13 @@ export default function MinimizedPlayer() {
       savedY.value = translateY.value;
     });
 
-  // Tap → expand full player
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    runOnJS(handleExpand)();
-  });
-
-  // Kết hợp gestures: drag ưu tiên, nếu không drag thì tap
-  const composedGesture = Gesture.Race(
-    dragGesture,
-    tapGesture,
-  );
-
   // Tính phần trăm progress
   const progressPercent = progress.duration > 0
     ? (progress.position / progress.duration) * 100
     : 0;
 
   return (
-    <GestureDetector gesture={composedGesture}>
+    <GestureDetector gesture={dragGesture}>
       <Animated.View
         style={[
           {
@@ -157,23 +230,21 @@ export default function MinimizedPlayer() {
             bottom: insets.bottom + 70,
             right: 16,
             width: PILL_WIDTH,
-            borderRadius: 28,
-            // Glass-effect shadow với màu xanh nhẹ
+            borderRadius: PILL_RADIUS,
+            overflow: 'hidden',
+            // Glass-effect shadow
             shadowColor: LISTENING_BLUE,
             shadowOffset: {width: 0, height: 4},
             shadowOpacity: 0.18,
             shadowRadius: 16,
             elevation: 12,
           },
-          animatedStyle,
+          pillAnimatedStyle,
         ]}>
         {/* Progress line — thanh xanh mỏng trên đỉnh pill */}
         <View
-          className="overflow-hidden"
           style={{
             height: 3,
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
             backgroundColor: `${LISTENING_BLUE}15`,
           }}>
           <View
@@ -181,82 +252,87 @@ export default function MinimizedPlayer() {
             style={{
               width: `${progressPercent}%`,
               backgroundColor: LISTENING_BLUE,
-              borderTopLeftRadius: 28,
             }}
           />
         </View>
 
-        {/* Body của pill */}
-        <View
-          className="flex-row items-center px-3 py-2"
-          style={{
-            borderRadius: 28,
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-            borderWidth: 1,
-            borderTopWidth: 0,
-            borderColor: `${LISTENING_BLUE}20`,
-            backgroundColor: colors.neutrals900,
-          }}>
-          {/* Waveform bars indicator */}
-          <View className="flex-row items-end mr-2" style={{gap: 1.5, height: 16}}>
-            {[6, 12, 16, 8, 14].map((h, i) => (
-              <View
-                key={i}
-                className="w-[2.5px] rounded-full"
-                style={{
-                  height: isTrackPlaying ? h : h * 0.35,
-                  backgroundColor: LISTENING_BLUE,
-                  opacity: isTrackPlaying ? 1 : 0.4,
-                }}
+        {/* Body của pill — TouchableOpacity để tap expand */}
+        <TouchableOpacity
+          onPress={handleExpand}
+          activeOpacity={0.85}
+          accessibilityLabel="Mở full player"
+          accessibilityRole="button">
+          <View
+            className="flex-row items-center px-3 py-2"
+            style={{
+              borderWidth: 1,
+              borderTopWidth: 0,
+              borderColor: `${LISTENING_BLUE}20`,
+              backgroundColor: colors.neutrals900,
+            }}>
+            {/* Waveform bars — animated */}
+            <View className="flex-row items-end mr-2" style={{gap: 1.5, height: 16}}>
+              {WAVEFORM_BARS.map((cfg, i) => (
+                <Animated.View
+                  key={i}
+                  style={[
+                    {
+                      width: 2.5,
+                      borderRadius: 2,
+                      backgroundColor: LISTENING_BLUE,
+                      opacity: isTrackPlaying ? 1 : 0.4,
+                    },
+                    barStyles[i],
+                  ]}
+                />
+              ))}
+            </View>
+
+            {/* Title + Speaker + Time */}
+            <View className="flex-1 mr-1.5" style={{minWidth: 0}}>
+              <AppText
+                className="text-[12px] font-sans-bold"
+                style={{color: colors.foreground}}
+                numberOfLines={1}>
+                {topicName}
+              </AppText>
+              <AppText className="text-[10px]" style={{color: colors.neutrals300}} numberOfLines={1}>
+                {formatTime(progress.position)} / {formatTime(progress.duration)} · {numSpeakers} speakers
+                {speakerName ? ` · 🎤  ${speakerName}` : ''}
+              </AppText>
+            </View>
+
+            {/* Play/Pause button — stopPropagation tránh trigger expand */}
+            <TouchableOpacity
+              onPress={handlePlayPause}
+              className="w-7 h-7 rounded-full items-center justify-center mr-1.5"
+              style={{backgroundColor: `${LISTENING_BLUE}20`}}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+              activeOpacity={0.6}
+              accessibilityLabel={isTrackPlaying ? 'Tạm dừng' : 'Phát'}
+              accessibilityRole="button">
+              <Icon
+                name={isTrackPlaying ? 'Pause' : 'Play'}
+                className="w-3.5 h-3.5"
+                style={{color: LISTENING_BLUE}}
               />
-            ))}
+            </TouchableOpacity>
+
+            {/* Close button */}
+            <TouchableOpacity
+              onPress={handleClose}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+              activeOpacity={0.6}
+              accessibilityLabel="Đóng mini player"
+              accessibilityRole="button">
+              <Icon
+                name="X"
+                className="w-3.5 h-3.5"
+                style={{color: colors.neutrals400}}
+              />
+            </TouchableOpacity>
           </View>
-
-          {/* Title + Speaker + Time */}
-          <View className="flex-1 mr-1.5" style={{minWidth: 0}}>
-            <AppText
-              className="text-[12px] font-sans-bold"
-              style={{color: colors.foreground}}
-              numberOfLines={1}>
-              {topicName}
-            </AppText>
-            <AppText className="text-[10px]" style={{color: colors.neutrals300}} numberOfLines={1}>
-              {formatTime(progress.position)} / {formatTime(progress.duration)} · {numSpeakers}sp
-              {speakerName ? ` · 🎤${speakerName}` : ''}
-            </AppText>
-          </View>
-
-          {/* Play/Pause button */}
-          <TouchableOpacity
-            onPress={handlePlayPause}
-            className="w-7 h-7 rounded-full items-center justify-center mr-1.5"
-            style={{backgroundColor: `${LISTENING_BLUE}20`}}
-            hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
-            activeOpacity={0.7}
-            accessibilityLabel={isTrackPlaying ? 'Tạm dừng' : 'Phát'}
-            accessibilityRole="button">
-            <Icon
-              name={isTrackPlaying ? 'Pause' : 'Play'}
-              className="w-3.5 h-3.5"
-              style={{color: LISTENING_BLUE}}
-            />
-          </TouchableOpacity>
-
-          {/* Close button */}
-          <TouchableOpacity
-            onPress={handleClose}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-            activeOpacity={0.7}
-            accessibilityLabel="Đóng mini player"
-            accessibilityRole="button">
-            <Icon
-              name="X"
-              className="w-3.5 h-3.5"
-              style={{color: colors.neutrals400}}
-            />
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </Animated.View>
     </GestureDetector>
   );
