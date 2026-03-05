@@ -65,26 +65,92 @@ const TappableTranscript = React.memo(function TappableTranscript({
   if (isActive && wordTimestamps && wordTimestamps.length > 0) {
     // Tách text gốc thành từng token (giữ khoảng trắng)
     const originalTokens = text.split(/(\s+)/);
-    // Tracking: map vị trí từ thực (bỏ whitespace) → Azure word index
-    let azureIdx = 0;
+
+    // ========================
+    // Two-pointer alignment: map original tokens → Azure word indices
+    // Xử lý edge cases:
+    //   - Azure tách dấu câu riêng: "mean," → ["mean", ","] (2 Azure tokens cho 1 original)
+    //   - Azure tách contraction: "it's" → ["it", "'s"] (2 Azure tokens cho 1 original)
+    //   - Kết quả: mỗi original token biết mình tương ứng Azure index nào
+    // ========================
+    const cleanWord = (w: string) => w.replace(/[^a-zA-Z\u00C0-\u024F']/g, '').toLowerCase();
+
+    // Pre-compute alignment: mỗi original non-whitespace token → Azure index
+    const tokenToAzureIdx: (number | -1)[] = [];
+    let aPtr = 0; // con trỏ Azure
+
+    for (const token of originalTokens) {
+      if (/^\s+$/.test(token)) {
+        tokenToAzureIdx.push(-1); // whitespace → không map
+        continue;
+      }
+
+      const cleanToken = cleanWord(token);
+      if (!cleanToken) {
+        tokenToAzureIdx.push(-1); // token chỉ toàn punctuation
+        continue;
+      }
+
+      // Tìm Azure word match tại hoặc sau aPtr
+      let matched = false;
+      const searchLimit = Math.min(aPtr + 5, wordTimestamps.length); // Không tìm quá xa
+
+      for (let i = aPtr; i < searchLimit; i++) {
+        const azureClean = cleanWord(wordTimestamps[i].word);
+
+        // Match chính xác
+        if (azureClean === cleanToken) {
+          tokenToAzureIdx.push(i);
+          aPtr = i + 1;
+          matched = true;
+          break;
+        }
+
+        // Match partial: original "it's" vs Azure "it" (contraction đầu)
+        if (cleanToken.startsWith(azureClean) && azureClean.length > 0) {
+          tokenToAzureIdx.push(i);
+          // Skip phần còn lại của contraction trong Azure (ví dụ "'s")
+          aPtr = i + 1;
+          while (aPtr < wordTimestamps.length) {
+            const remainder = cleanWord(wordTimestamps[aPtr].word);
+            if (cleanToken.includes(remainder) && remainder.length > 0 && remainder.length < cleanToken.length) {
+              aPtr++;
+            } else {
+              break;
+            }
+          }
+          matched = true;
+          break;
+        }
+
+        // Skip Azure punctuation tokens (chỉ chứa dấu câu, không có chữ cái)
+        if (!azureClean) {
+          continue; // Skip và thử Azure token tiếp theo
+        }
+      }
+
+      if (!matched) {
+        // Không tìm thấy match → dùng vị trí hiện tại (best effort)
+        tokenToAzureIdx.push(aPtr < wordTimestamps.length ? aPtr : -1);
+        aPtr++;
+      }
+    }
 
     return (
       <View className="flex-row flex-wrap">
         {originalTokens.map((token, tokenIndex) => {
+          const mappedIdx = tokenToAzureIdx[tokenIndex];
+
           // Khoảng trắng → render trực tiếp (giữ spacing gốc)
-          if (/^\s+$/.test(token)) {
+          if (mappedIdx === -1 || /^\s+$/.test(token)) {
             return (
               <AppText key={`s-${tokenIndex}`} className="text-base" style={{color: colors.foreground}}>
-                {' '}
+                {/^\s+$/.test(token) ? ' ' : token}
               </AppText>
             );
           }
 
-          // Từ thực: map sang Azure index để check highlight
-          const currentAzureIdx = azureIdx;
-          azureIdx++; // Di chuyển sang từ Azure tiếp theo
-
-          const isHighlighted = currentAzureIdx === currentWordIndex;
+          const isHighlighted = mappedIdx === currentWordIndex;
 
           return (
             <TouchableOpacity
