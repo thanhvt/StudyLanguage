@@ -21,6 +21,23 @@ export class ConversationGeneratorService {
     });
   }
 
+  // Ngưỡng số lượt để chuyển sang chunked generation
+  // Dưới ngưỡng này → dùng single-call (5-10 phút)
+  // Trên ngưỡng → chia chunks (15-30 phút)
+  private readonly CHUNK_THRESHOLD_TURNS = 40;
+
+  // Buffer 15% cho targetWords vì TTS thực tế nói nhanh hơn 150 WPM
+  private readonly WORDS_BUFFER_PERCENT = 1.15;
+
+  // Tốc độ nói ước tính của TTS (từ/phút)
+  private readonly TTS_WORDS_PER_MINUTE = 150;
+
+  // Số lượt tối đa mỗi chunk (LLM xử lý tốt nhất ở mức này)
+  private readonly MAX_TURNS_PER_CHUNK = 30;
+
+  // Số lần retry tối đa cho mỗi chunk
+  private readonly MAX_CHUNK_RETRIES = 2;
+
   /**
    * Sinh hội thoại tiếng Anh theo chủ đề và thời lượng
    *
@@ -34,10 +51,9 @@ export class ConversationGeneratorService {
    * Luồng gọi: Controller -> Service -> Groq API -> Parse JSON
    *
    * Tính toán:
-   *   - Tốc độ TTS: ~150 từ/phút
-   *   - 5 phút = 750 từ = 10 lượt (mỗi lượt ~75 từ)
-   *   - 10 phút = 1500 từ = 20 lượt (mỗi lượt ~75 từ)
-   *   - 15 phút = 2250 từ = 30 lượt (mỗi lượt ~75 từ)
+   *   - Tốc độ TTS: ~150 từ/phút + buffer 15%
+   *   - Nếu <= 40 lượt → single-call (logic cũ)
+   *   - Nếu > 40 lượt → chunked generation (chia 3-4 chunks)
    */
   async generateConversation(options: {
     topic: string;
@@ -65,18 +81,94 @@ export class ConversationGeneratorService {
     } = options;
 
     // Tính toán số lượt trao đổi dựa trên thời lượng và số người nói
-    // Mỗi người nói = durationMinutes lần → tổng = durationMinutes * numSpeakers
     const totalExchanges = durationMinutes * numSpeakers;
     const exchangesPerPerson = Math.ceil(totalExchanges / numSpeakers);
-    const totalWords = durationMinutes * 150; // 150 từ/phút (tốc độ TTS)
+
+    // Buffer 15%: TTS thực tế nói nhanh hơn 150 WPM → cần thêm từ để bù
+    const totalWords = Math.ceil(
+      durationMinutes * this.TTS_WORDS_PER_MINUTE * this.WORDS_BUFFER_PERCENT,
+    );
+
+    // Tạo danh sách tên thật cho speakers theo số lượng
+    const allSpeakerNames = ['Sarah', 'Mike', 'Lisa', 'David'];
+    const speakerNames = allSpeakerNames.slice(0, numSpeakers);
+
+    this.logger.log(
+      `Đang sinh hội thoại: "${topic}" - ${durationMinutes} phút - ${numSpeakers} người - ${totalExchanges} lượt - ${totalWords} từ (có buffer) - Level: ${level}`,
+    );
+
+    // === ROUTING: Chọn single-call hoặc chunked generation ===
+    if (totalExchanges > this.CHUNK_THRESHOLD_TURNS) {
+      this.logger.log(
+        `Hội thoại dài (${totalExchanges} lượt > ${this.CHUNK_THRESHOLD_TURNS}) → sử dụng Chunked Generation`,
+      );
+      return this.generateChunkedConversation({
+        topic,
+        durationMinutes,
+        level,
+        includeVietnamese,
+        keywords,
+        numSpeakers,
+        totalExchanges,
+        totalWords,
+        speakerNames,
+        exchangesPerPerson,
+      });
+    }
+
+    // === SINGLE-CALL PATH: Hội thoại ngắn (5-10 phút) ===
+    this.logger.log(
+      `Hội thoại ngắn (${totalExchanges} lượt <= ${this.CHUNK_THRESHOLD_TURNS}) → sử dụng Single-call`,
+    );
+    return this.generateSingleCallConversation({
+      topic,
+      durationMinutes,
+      level,
+      includeVietnamese,
+      keywords,
+      numSpeakers,
+      totalExchanges,
+      totalWords,
+      speakerNames,
+      exchangesPerPerson,
+    });
+  }
+
+  /**
+   * Sinh hội thoại ngắn bằng 1 lần gọi LLM (logic gốc)
+   *
+   * Mục đích: Xử lý hội thoại <= 40 lượt, không cần chia chunks
+   * Tham số đầu vào: Các thông số đã tính toán từ generateConversation
+   * Tham số đầu ra: Script hội thoại hoàn chỉnh + vocabulary
+   * Khi nào sử dụng: Khi totalExchanges <= CHUNK_THRESHOLD_TURNS
+   */
+  private async generateSingleCallConversation(params: {
+    topic: string;
+    durationMinutes: number;
+    level: 'beginner' | 'intermediate' | 'advanced';
+    includeVietnamese: boolean;
+    keywords?: string;
+    numSpeakers: number;
+    totalExchanges: number;
+    totalWords: number;
+    speakerNames: string[];
+    exchangesPerPerson: number;
+  }): Promise<{
+    script: { speaker: string; text: string; translation?: string; keyPhrases?: string[] }[];
+    vocabulary: { word: string; meaning: string; example: string }[];
+  }> {
+    const {
+      topic, durationMinutes, level, includeVietnamese, keywords,
+      numSpeakers, totalExchanges, totalWords, speakerNames, exchangesPerPerson,
+    } = params;
+
+    const speakerList = speakerNames.join(', ');
+    const speakerDistribution = speakerNames
+      .map(name => `${name} speaks ${exchangesPerPerson} times`)
+      .join(', ');
 
     /**
      * Ước tính max_tokens dựa trên cấu trúc output thực tế
-     *
-     * Mục đích: Tính chính xác số tokens cần cho response JSON
-     * Tham số đầu vào: totalExchanges, includeVietnamese
-     * Tham số đầu ra: maxTokens hợp lý cho Groq API
-     * Khi nào sử dụng: Mỗi lần gọi generateConversation
      *
      * Cấu trúc mỗi turn:
      *   - speaker + JSON keys: ~15 tokens
@@ -84,36 +176,17 @@ export class ConversationGeneratorService {
      *   - translation (tiếng Việt): ~100 tokens (nếu có)
      *   - keyPhrases (2-3 items): ~40 tokens
      *   → Tổng: ~255 tokens/turn (có translation) hoặc ~155 tokens/turn (không translation)
-     *
-     * Vocabulary section: ~300 tokens (5-8 items)
-     * Buffer 20%: Phòng trường hợp LLM sinh dài hơn dự kiến
      */
     const tokensPerTurn = includeVietnamese ? 255 : 155;
     const vocabularyTokens = 300;
     const estimatedTokens = totalExchanges * tokensPerTurn + vocabularyTokens;
-    const bufferedTokens = Math.ceil(estimatedTokens * 1.2); // Buffer 20%
-
-    // Giới hạn: tối thiểu 4096, tối đa 32000 (giới hạn model Llama 3.3 70B)
+    const bufferedTokens = Math.ceil(estimatedTokens * 1.2);
     const maxTokens = Math.min(32000, Math.max(4096, bufferedTokens));
-
-    // Tạo danh sách tên thật cho speakers theo số lượng
-    const allSpeakerNames = ['Sarah', 'Mike', 'Lisa', 'David'];
-    const speakerNames = allSpeakerNames.slice(0, numSpeakers);
-    const speakerList = speakerNames.join(', ');
-    const speakerDistribution = speakerNames
-      .map(name => `${name} speaks ${exchangesPerPerson} times`)
-      .join(', ');
-
-    this.logger.log(
-      `Đang sinh hội thoại: "${topic}" - ${durationMinutes} phút - ${numSpeakers} người - ${totalExchanges} lượt - Level: ${level}`,
-    );
 
     const levelGuide = {
       beginner: 'Use simple vocabulary, short sentences, common phrases only.',
-      intermediate:
-        'Use everyday vocabulary, moderate sentence complexity, some idioms.',
-      advanced:
-        'Use sophisticated vocabulary, complex structures, idioms, and slang.',
+      intermediate: 'Use everyday vocabulary, moderate sentence complexity, some idioms.',
+      advanced: 'Use sophisticated vocabulary, complex structures, idioms, and slang.',
     };
 
     const translationInstruction = includeVietnamese
@@ -170,14 +243,6 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
       prompt,
     );
 
-    /**
-     * Gọi Groq API và parse response JSON
-     *
-     * Mục đích: Tách logic gọi API + parse thành helper để retry được
-     * Tham số đầu vào: Không (dùng prompt, maxTokens từ closure)
-     * Tham số đầu ra: Object đã parse từ JSON response
-     * Khi nào sử dụng: Được gọi nội bộ bởi generateConversation, tối đa 2 lần (1 lần gốc + 1 retry)
-     */
     const callGroqAndParse = async () => {
       const response = await this.groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
@@ -199,14 +264,12 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         `Đã nhận response từ Groq API (finish_reason: ${finishReason}, content length: ${content.length})`,
       );
 
-      // Response bị cắt do hết token → throw để retry logic xử lý
       if (finishReason === 'length') {
         throw new Error(
           `Response bị cắt ngang do hết max_tokens (${maxTokens}). Cần tăng maxTokens hoặc giảm độ dài hội thoại.`,
         );
       }
 
-      // Parse JSON từ response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('Không tìm thấy JSON trong response');
@@ -217,11 +280,8 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
 
     try {
       let parsed = await callGroqAndParse();
-
-      // === VALIDATION: Đảm bảo đủ số speakers ===
       parsed = this.validateAndNormalizeSpeakers(parsed, speakerNames, numSpeakers);
 
-      // Kiểm tra số speakers thực tế sau chuẩn hóa
       const uniqueSpeakers = [...new Set(
         (parsed.script || []).map((line: { speaker: string }) => line.speaker),
       )];
@@ -230,16 +290,12 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         this.logger.warn(
           `LLM trả ${uniqueSpeakers.length} speakers, yêu cầu ${numSpeakers}. Đang retry 1 lần...`,
         );
-
-        // Retry 1 lần với cùng prompt
         try {
           let retryParsed = await callGroqAndParse();
           retryParsed = this.validateAndNormalizeSpeakers(retryParsed, speakerNames, numSpeakers);
-
           const retryUniqueSpeakers = [...new Set(
             (retryParsed.script || []).map((line: { speaker: string }) => line.speaker),
           )];
-
           if (retryUniqueSpeakers.length >= numSpeakers) {
             this.logger.log(`Retry thành công: ${retryUniqueSpeakers.length} speakers`);
             parsed = retryParsed;
@@ -247,7 +303,6 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
             this.logger.warn(
               `Retry vẫn thiếu speakers (${retryUniqueSpeakers.length}/${numSpeakers}). Sử dụng kết quả tốt nhất.`,
             );
-            // Dùng kết quả nào có nhiều speakers hơn
             if (retryUniqueSpeakers.length > uniqueSpeakers.length) {
               parsed = retryParsed;
             }
@@ -257,7 +312,6 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         }
       }
 
-      // Log thống kê để debug
       const scriptLength = parsed.script?.length || 0;
       const totalWordCount = parsed.script?.reduce(
         (sum: number, line: { text: string }) =>
@@ -348,6 +402,654 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
     }));
 
     return parsed;
+  }
+
+  // ============================================
+  // CHUNKED GENERATION METHODS
+  // ============================================
+
+  /**
+   * Gọi Groq API và parse response JSON (helper dùng chung)
+   *
+   * Mục đích: Tách logic gọi API + parse thành method reusable
+   * Tham số đầu vào:
+   *   - prompt: Nội dung prompt gửi đến LLM
+   *   - maxTokens: Giới hạn số tokens cho response
+   *   - temperature: Độ sáng tạo (0-1)
+   * Tham số đầu ra: Object đã parse từ JSON response
+   * Khi nào sử dụng: Được gọi bởi generateChunk và generateStoryOutline
+   */
+  private async callGroqAndParseJson(
+    prompt: string,
+    maxTokens: number,
+    temperature = 0.8,
+  ): Promise<any> {
+    const response = await this.groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an expert English teacher creating conversations for Vietnamese learners. You always respond with valid JSON only.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    });
+
+    const content = response.choices[0]?.message?.content || '';
+    const finishReason = response.choices[0]?.finish_reason;
+    this.logger.log(
+      `Groq response (finish_reason: ${finishReason}, content length: ${content.length})`,
+    );
+
+    if (finishReason === 'length') {
+      throw new Error(
+        `Response bị cắt ngang do hết max_tokens (${maxTokens})`,
+      );
+    }
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Không tìm thấy JSON trong response');
+    }
+
+    return JSON.parse(jsonMatch[0]);
+  }
+
+  /**
+   * Sinh story outline (dàn ý) cho toàn bộ cuộc hội thoại
+   *
+   * Mục đích: Tạo "xương sống" cho conversation, chia thành các phases
+   *   với plotPoints cụ thể để đảm bảo nội dung liền mạch, không trôi topic
+   * Tham số đầu vào:
+   *   - topic: Chủ đề hội thoại
+   *   - numChunks: Số phases/chunks cần chia
+   *   - speakerNames: Danh sách tên speakers
+   *   - level: Trình độ
+   *   - durationMinutes: Thời lượng tổng
+   * Tham số đầu ra: Mảng các PhaseOutline, mỗi phần có plotPoints và mustAvoidTopics
+   * Khi nào sử dụng: Bước đầu tiên của chunked generation, trước khi sinh chunks
+   */
+  private async generateStoryOutline(params: {
+    topic: string;
+    numChunks: number;
+    speakerNames: string[];
+    level: string;
+    durationMinutes: number;
+    turnsPerChunk: number[];
+  }): Promise<{
+    phases: {
+      phaseNumber: number;
+      title: string;
+      plotPoints: string[];
+      emotionalArc: string;
+      mustIncludeTopics: string[];
+      mustAvoidTopics: string[];
+    }[];
+  }> {
+    const { topic, numChunks, speakerNames, level, durationMinutes, turnsPerChunk } = params;
+
+    const prompt = `Create a detailed conversation outline about "${topic}" for ${speakerNames.length} speakers (${speakerNames.join(', ')}).
+The conversation is ${durationMinutes} minutes long, level: ${level}, divided into ${numChunks} phases.
+
+For EACH phase, provide:
+1. A short title describing the phase focus
+2. 3-4 specific plot points (concrete events/actions, NOT generic statements)
+3. Emotional arc (how speakers feel during this phase)
+4. Key topics that MUST be discussed in this phase
+5. Topics that MUST NOT be discussed yet (save for later phases)
+
+=== IMPORTANT RULES ===
+- ALL phases must stay focused on the main topic: "${topic}"
+- Each phase should explore a DIFFERENT ASPECT of the topic
+- Plot points must be SPECIFIC and ACTIONABLE (not vague like "they discuss the topic")
+- The phases should tell a story with a clear arc: setup → development → climax → resolution
+- Phase ${numChunks} must wrap up the conversation naturally
+
+=== OUTPUT FORMAT ===
+{
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "title": "Short descriptive title",
+      "targetTurns": ${turnsPerChunk[0]},
+      "plotPoints": ["specific event 1", "specific event 2", "specific event 3"],
+      "emotionalArc": "curious → worried → determined",
+      "mustIncludeTopics": ["topic A", "topic B"],
+      "mustAvoidTopics": ["topic C (save for phase 2)", "topic D (save for phase 3)"]
+    }
+  ]
+}
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    this.logger.log(`Đang sinh story outline cho "${topic}" (${numChunks} phases)...`);
+
+    try {
+      const parsed = await this.callGroqAndParseJson(prompt, 2000, 0.7);
+
+      if (!parsed.phases || !Array.isArray(parsed.phases) || parsed.phases.length < numChunks) {
+        this.logger.warn(
+          `Outline chỉ có ${parsed.phases?.length || 0} phases, cần ${numChunks}. Tạo outline mặc định.`,
+        );
+        return this.buildDefaultOutline(params);
+      }
+
+      this.logger.log(
+        `Sinh outline thành công: ${parsed.phases.length} phases - ${parsed.phases.map((p: any) => p.title).join(' → ')}`,
+      );
+      return parsed;
+    } catch (error) {
+      this.logger.warn('Lỗi sinh outline, sử dụng outline mặc định:', error);
+      return this.buildDefaultOutline(params);
+    }
+  }
+
+  /**
+   * Tạo outline mặc định khi LLM không sinh được
+   *
+   * Mục đích: Fallback đảm bảo luôn có outline để chunked generation hoạt động
+   * Tham số đầu vào: Các tham số giống generateStoryOutline
+   * Tham số đầu ra: PhaseOutline mặc định với 4 phases tiêu chuẩn
+   * Khi nào sử dụng: Khi generateStoryOutline thất bại hoặc trả kết quả không hợp lệ
+   */
+  private buildDefaultOutline(params: {
+    topic: string;
+    numChunks: number;
+    turnsPerChunk: number[];
+  }): {
+    phases: {
+      phaseNumber: number;
+      title: string;
+      plotPoints: string[];
+      emotionalArc: string;
+      mustIncludeTopics: string[];
+      mustAvoidTopics: string[];
+    }[];
+  } {
+    const { topic, numChunks, turnsPerChunk } = params;
+    const defaultPhases = [
+      {
+        title: `Introduction - Setting up the situation about "${topic}"`,
+        emotionalArc: 'curious → interested → engaged',
+        plotPoints: [
+          `Introduce the situation related to "${topic}"`,
+          'Speakers share their initial thoughts and experiences',
+          'Identify the main challenge or question',
+        ],
+      },
+      {
+        title: `Development - Exploring different aspects of "${topic}"`,
+        emotionalArc: 'engaged → concerned → brainstorming',
+        plotPoints: [
+          'Discuss specific details and challenges',
+          'Share personal experiences or advice',
+          'Consider different options or approaches',
+        ],
+      },
+      {
+        title: `Climax - Dealing with the main challenge of "${topic}"`,
+        emotionalArc: 'nervous → hopeful → determined',
+        plotPoints: [
+          'Face the main challenge directly',
+          'Negotiate or work through the problem',
+          'Find potential solutions together',
+        ],
+      },
+      {
+        title: `Resolution - Wrapping up "${topic}"`,
+        emotionalArc: 'relieved → satisfied → optimistic',
+        plotPoints: [
+          'Reach a conclusion or resolution',
+          'Share lessons learned',
+          'Look forward and make future plans',
+        ],
+      },
+    ];
+
+    return {
+      phases: defaultPhases.slice(0, numChunks).map((phase, i) => ({
+        phaseNumber: i + 1,
+        title: phase.title,
+        plotPoints: phase.plotPoints,
+        emotionalArc: phase.emotionalArc,
+        mustIncludeTopics: [],
+        mustAvoidTopics: [],
+        targetTurns: turnsPerChunk[i],
+      })),
+    };
+  }
+
+  /**
+   * Validate kết quả 1 chunk sau khi sinh
+   *
+   * Mục đích: Kiểm tra chunk có đạt yêu cầu về số lượt, số từ không
+   * Tham số đầu vào:
+   *   - script: Mảng các lượt nói trong chunk
+   *   - targetTurns: Số lượt mục tiêu cho chunk này
+   *   - targetWordsPerTurn: Số từ trung bình mục tiêu mỗi lượt (mặc định 65)
+   * Tham số đầu ra: Object validation với isValid, actualTurns, actualWords, avgWordsPerTurn
+   * Khi nào sử dụng: Sau khi sinh mỗi chunk, trước khi quyết định retry hay chấp nhận
+   */
+  private validateChunk(
+    script: { speaker: string; text: string }[],
+    targetTurns: number,
+  ): {
+    isValid: boolean;
+    actualTurns: number;
+    totalWords: number;
+    avgWordsPerTurn: number;
+    issues: string[];
+  } {
+    const actualTurns = script.length;
+    const totalWords = script.reduce(
+      (sum, line) => sum + line.text.split(/\s+/).length,
+      0,
+    );
+    const avgWordsPerTurn = actualTurns > 0 ? Math.round(totalWords / actualTurns) : 0;
+    const issues: string[] = [];
+
+    // Kiểm tra số lượt (cho phép sai lệch 10%)
+    if (actualTurns < targetTurns * 0.9) {
+      issues.push(
+        `Thiếu lượt: ${actualTurns}/${targetTurns} (cần >= ${Math.ceil(targetTurns * 0.9)})`,
+      );
+    }
+
+    // Kiểm tra số từ trung bình mỗi lượt (tối thiểu 50 từ)
+    if (avgWordsPerTurn < 50) {
+      issues.push(
+        `Từ/lượt quá ít: ${avgWordsPerTurn} (cần >= 50)`,
+      );
+    }
+
+    const isValid = issues.length === 0;
+    return { isValid, actualTurns, totalWords, avgWordsPerTurn, issues };
+  }
+
+  /**
+   * Tạo tóm tắt nội dung đã sinh từ các chunks trước
+   *
+   * Mục đích: Tạo "TOPICS ALREADY COVERED" để truyền vào prompt chunk tiếp theo
+   *   nhằm tránh LLM lặp lại nội dung
+   * Tham số đầu vào: allPreviousTurns - tất cả lượt nói đã sinh từ các chunks trước
+   * Tham số đầu ra: String tóm tắt ngắn gọn (8-10 câu đại diện)
+   * Khi nào sử dụng: Trước khi sinh chunk 2, 3, 4 — truyền vào buildChunkPrompt
+   */
+  private buildPreviousSummary(
+    allPreviousTurns: { speaker: string; text: string }[],
+  ): string {
+    if (allPreviousTurns.length === 0) return '';
+
+    // Lấy 8-10 lượt tiêu biểu trải đều qua conversation
+    const maxSamples = Math.min(10, allPreviousTurns.length);
+    const step = Math.max(1, Math.floor(allPreviousTurns.length / maxSamples));
+    const keyTurns: string[] = [];
+
+    for (let i = 0; i < allPreviousTurns.length && keyTurns.length < maxSamples; i += step) {
+      const turn = allPreviousTurns[i];
+      // Cắt ngắn text để không chiếm quá nhiều tokens
+      const shortText = turn.text.length > 100
+        ? turn.text.substring(0, 100) + '...'
+        : turn.text;
+      keyTurns.push(`- ${turn.speaker}: "${shortText}"`);
+    }
+
+    return keyTurns.join('\n');
+  }
+
+  /**
+   * Sinh 1 chunk hội thoại với context từ chunks trước
+   *
+   * Mục đích: Gọi LLM sinh 1 phần hội thoại (20-30 lượt) với context bridge
+   *   đảm bảo nội dung liền mạch và không lặp
+   * Tham số đầu vào:
+   *   - phase: Outline phase hiện tại (plotPoints, mustAvoidTopics)
+   *   - chunkIndex: Số thứ tự chunk (0-based)
+   *   - previousTurns: 5-8 lượt cuối chunk trước (context bridge)
+   *   - previousSummary: Tóm tắt nội dung đã nói
+   *   - speakerNames, level, includeVietnamese, keywords, topic
+   * Tham số đầu ra: Mảng các lượt nói cho chunk này
+   * Khi nào sử dụng: Được gọi bởi generateChunkedConversation cho mỗi chunk
+   */
+  private async generateChunk(params: {
+    topic: string;
+    phase: {
+      phaseNumber: number;
+      title: string;
+      plotPoints: string[];
+      emotionalArc: string;
+      mustIncludeTopics: string[];
+      mustAvoidTopics: string[];
+    };
+    chunkIndex: number;
+    totalChunks: number;
+    targetTurns: number;
+    previousTurns: { speaker: string; text: string }[];
+    previousSummary: string;
+    speakerNames: string[];
+    level: string;
+    includeVietnamese: boolean;
+    keywords?: string;
+  }): Promise<{ speaker: string; text: string; translation?: string; keyPhrases?: string[] }[]> {
+    const {
+      topic, phase, chunkIndex, totalChunks, targetTurns,
+      previousTurns, previousSummary, speakerNames, level,
+      includeVietnamese, keywords,
+    } = params;
+
+    const speakerList = speakerNames.join(', ');
+    const isFirstChunk = chunkIndex === 0;
+    const isLastChunk = chunkIndex === totalChunks - 1;
+
+    const levelGuide: Record<string, string> = {
+      beginner: 'Use simple vocabulary, short sentences, common phrases only.',
+      intermediate: 'Use everyday vocabulary, moderate sentence complexity, some idioms.',
+      advanced: 'Use sophisticated vocabulary, complex structures, idioms, and slang.',
+    };
+
+    // Context bridge: 5-8 lượt cuối chunk trước
+    const contextBridge = previousTurns.length > 0
+      ? `=== PREVIOUS CONTEXT (continue naturally from here) ===\n${previousTurns.map(t => `${t.speaker}: "${t.text}"`).join('\n')}\n\n`
+      : '';
+
+    // Tóm tắt nội dung đã nói (tránh lặp)
+    const summarySection = previousSummary
+      ? `=== TOPICS ALREADY COVERED (DO NOT REPEAT these ideas) ===\n${previousSummary}\n\n`
+      : '';
+
+    // Instruction đặc biệt cho chunk đầu và chunk cuối
+    const positionInstruction = isFirstChunk
+      ? '- This is the OPENING of the conversation. Start naturally with greetings or introducing the topic.'
+      : isLastChunk
+        ? '- This is the FINAL part. Wrap up the conversation naturally with conclusions, lessons learned, or future plans.'
+        : '- This is the MIDDLE of the conversation. Continue naturally from the previous context.';
+
+    const translationInstruction = includeVietnamese
+      ? `- Include a "translation" field with Vietnamese translation for each turn`
+      : `- Do NOT include "translation" field`;
+
+    const keywordsInstruction = keywords
+      ? `- Try to use these keywords naturally: ${keywords}`
+      : '';
+
+    const mustAvoidSection = phase.mustAvoidTopics.length > 0
+      ? `- DO NOT discuss these topics yet (they are for later phases): ${phase.mustAvoidTopics.join(', ')}`
+      : '';
+
+    const prompt = `${isFirstChunk ? `Generate` : `Continue`} a natural English conversation about "${topic}".
+
+${contextBridge}${summarySection}=== YOUR TASK: Phase ${phase.phaseNumber}/${totalChunks} - "${phase.title}" ===
+Generate exactly ${targetTurns} turns for this phase.
+
+Plot points to cover in this phase:
+${phase.plotPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Emotional arc: ${phase.emotionalArc}
+
+=== REQUIREMENTS ===
+- Speakers: ${speakerNames.length} (${speakerList}), alternating in round-robin order
+- Each turn: 3 to 4 sentences, approximately 60-80 words per turn
+- Level: ${level.toUpperCase()} - ${levelGuide[level] || levelGuide.intermediate}
+- Tone: casual, everyday, natural
+${positionInstruction}
+- MUST stay focused on the main topic: "${topic}"
+- MUST cover ALL the plot points listed above
+- DO NOT repeat ideas from previous phases
+- DO NOT use one-word or one-sentence responses
+- Each turn should feel like how real people talk
+${translationInstruction}
+${keywordsInstruction}
+${mustAvoidSection}
+- Include 2-3 key phrases per turn in "keyPhrases" field
+
+=== EXAMPLE OF GOOD TURN LENGTH ===
+"I've been meaning to try this place for a while. A friend recommended their iced latte and said it was amazing. Do you come here often? I'm not sure what to order so I might need some help with the menu."
+
+=== OUTPUT FORMAT ===
+{
+  "script": [
+    {
+      "speaker": "${speakerNames[0]}",
+      "text": "...",
+      ${includeVietnamese ? '"translation": "...",' : ''}
+      "keyPhrases": ["phrase 1", "phrase 2"]
+    }
+  ]
+}
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    // Ước tính maxTokens cho chunk này
+    const tokensPerTurn = includeVietnamese ? 255 : 155;
+    const maxTokens = Math.min(16000, Math.max(4096, Math.ceil(targetTurns * tokensPerTurn * 1.2)));
+
+    this.logger.log(
+      `Đang sinh chunk ${chunkIndex + 1}/${totalChunks}: "${phase.title}" - ${targetTurns} lượt (maxTokens: ${maxTokens})`,
+    );
+
+    const parsed = await this.callGroqAndParseJson(prompt, maxTokens);
+
+    if (!parsed.script || !Array.isArray(parsed.script)) {
+      throw new Error(`Chunk ${chunkIndex + 1}: Response không có script array`);
+    }
+
+    return parsed.script;
+  }
+
+  /**
+   * Điều phối toàn bộ flow Chunked Generation
+   *
+   * Mục đích: Orchestrate việc sinh hội thoại dài bằng cách:
+   *   1. Sinh story outline
+   *   2. Sinh từng chunk với context bridge
+   *   3. Validate + retry mỗi chunk
+   *   4. Merge tất cả chunks + sinh vocabulary
+   * Tham số đầu vào: Các tham số đã tính toán từ generateConversation
+   * Tham số đầu ra: Script hội thoại hoàn chỉnh + vocabulary
+   * Khi nào sử dụng: Khi totalExchanges > CHUNK_THRESHOLD_TURNS (hội thoại 15-30 phút)
+   */
+  private async generateChunkedConversation(params: {
+    topic: string;
+    durationMinutes: number;
+    level: 'beginner' | 'intermediate' | 'advanced';
+    includeVietnamese: boolean;
+    keywords?: string;
+    numSpeakers: number;
+    totalExchanges: number;
+    totalWords: number;
+    speakerNames: string[];
+    exchangesPerPerson: number;
+  }): Promise<{
+    script: { speaker: string; text: string; translation?: string; keyPhrases?: string[] }[];
+    vocabulary: { word: string; meaning: string; example: string }[];
+  }> {
+    const {
+      topic, durationMinutes, level, includeVietnamese, keywords,
+      numSpeakers, totalExchanges, totalWords, speakerNames,
+    } = params;
+
+    // === Bước 1: Tính toán chunks ===
+    const numChunks = Math.ceil(totalExchanges / this.MAX_TURNS_PER_CHUNK);
+    const baseTurns = Math.floor(totalExchanges / numChunks);
+    const remainder = totalExchanges % numChunks;
+
+    // Phân bổ lượt đều cho mỗi chunk, chunk đầu nhận phần dư
+    // Làm tròn theo numSpeakers để round-robin đều
+    const turnsPerChunk = Array.from({ length: numChunks }, (_, i) => {
+      const raw = baseTurns + (i < remainder ? 1 : 0);
+      // Làm tròn xuống bội số của numSpeakers để round-robin đều
+      return Math.max(numSpeakers, Math.floor(raw / numSpeakers) * numSpeakers);
+    });
+
+    this.logger.log(
+      `Chunked Generation: ${numChunks} chunks, lượt/chunk: [${turnsPerChunk.join(', ')}], tổng: ${turnsPerChunk.reduce((a, b) => a + b, 0)}`,
+    );
+
+    // === Bước 2: Sinh story outline ===
+    const outline = await this.generateStoryOutline({
+      topic,
+      numChunks,
+      speakerNames,
+      level,
+      durationMinutes,
+      turnsPerChunk,
+    });
+
+    // === Bước 3: Sinh từng chunk ===
+    const allTurns: { speaker: string; text: string; translation?: string; keyPhrases?: string[] }[] = [];
+    let totalRetries = 0;
+
+    for (let i = 0; i < numChunks; i++) {
+      const phase = outline.phases[i];
+      const targetTurns = turnsPerChunk[i];
+
+      // Context bridge: lấy 6 lượt cuối từ allTurns
+      const contextSize = Math.min(6, allTurns.length);
+      const previousTurns = allTurns.slice(-contextSize);
+
+      // Tóm tắt nội dung đã sinh
+      const previousSummary = this.buildPreviousSummary(allTurns);
+
+      let chunkScript: { speaker: string; text: string; translation?: string; keyPhrases?: string[] }[] = [];
+      let bestChunkScript = chunkScript;
+      let bestValidation = { isValid: false, actualTurns: 0, totalWords: 0, avgWordsPerTurn: 0, issues: ['Chưa sinh'] };
+
+      // Sinh chunk + validate + retry
+      for (let retry = 0; retry <= this.MAX_CHUNK_RETRIES; retry++) {
+        try {
+          chunkScript = await this.generateChunk({
+            topic,
+            phase,
+            chunkIndex: i,
+            totalChunks: numChunks,
+            targetTurns,
+            previousTurns,
+            previousSummary,
+            speakerNames,
+            level,
+            includeVietnamese,
+            keywords,
+          });
+
+          // Chuẩn hóa tên speakers
+          const tempParsed = { script: chunkScript };
+          const normalized = this.validateAndNormalizeSpeakers(tempParsed, speakerNames, numSpeakers);
+          chunkScript = normalized.script;
+
+          // Validate chunk
+          const validation = this.validateChunk(chunkScript, targetTurns);
+
+          this.logger.log(
+            `Chunk ${i + 1}/${numChunks} (retry ${retry}): ${validation.actualTurns} lượt, ${validation.totalWords} từ, ${validation.avgWordsPerTurn} từ/lượt${validation.isValid ? ' ✅' : ' ❌ ' + validation.issues.join(', ')}`,
+          );
+
+          // Lưu kết quả tốt nhất (nhiều lượt nhất)
+          if (validation.actualTurns > bestValidation.actualTurns) {
+            bestChunkScript = chunkScript;
+            bestValidation = validation;
+          }
+
+          if (validation.isValid) {
+            break; // Chunk đạt yêu cầu, không cần retry
+          }
+
+          if (retry < this.MAX_CHUNK_RETRIES) {
+            totalRetries++;
+            this.logger.warn(
+              `Chunk ${i + 1} chưa đạt, retry ${retry + 1}/${this.MAX_CHUNK_RETRIES}: ${validation.issues.join(', ')}`,
+            );
+          }
+        } catch (error) {
+          this.logger.error(`Lỗi sinh chunk ${i + 1} (retry ${retry}):`, error);
+          if (retry === this.MAX_CHUNK_RETRIES && bestChunkScript.length === 0) {
+            throw new Error(`Không thể sinh chunk ${i + 1} sau ${this.MAX_CHUNK_RETRIES + 1} lần thử`);
+          }
+        }
+      }
+
+      // Sử dụng kết quả tốt nhất
+      allTurns.push(...bestChunkScript);
+
+      this.logger.log(
+        `Chunk ${i + 1}/${numChunks} hoàn thành: +${bestChunkScript.length} lượt, tổng: ${allTurns.length} lượt`,
+      );
+    }
+
+    // === Bước 4: Sinh vocabulary riêng ===
+    const vocabulary = await this.generateVocabularyFromScript(allTurns, topic, level);
+
+    // === Bước 5: Final validation ===
+    const finalWordCount = allTurns.reduce(
+      (sum, line) => sum + line.text.split(/\s+/).length,
+      0,
+    );
+    const finalSpeakers = [...new Set(allTurns.map(t => t.speaker))];
+    const estimatedDuration = (finalWordCount / 155).toFixed(1);
+
+    this.logger.log(
+      `🎉 Chunked Generation hoàn thành: ${allTurns.length} lượt, ${finalWordCount} từ / ${totalWords} mục tiêu (${Math.round(finalWordCount / totalWords * 100)}%), ` +
+      `~${estimatedDuration} phút ước tính, ${finalSpeakers.length}/${numSpeakers} speakers, ${totalRetries} retries`,
+    );
+
+    return { script: allTurns, vocabulary };
+  }
+
+  /**
+   * Sinh vocabulary từ script đã hoàn thành
+   *
+   * Mục đích: Tạo danh sách từ vựng hữu ích từ nội dung hội thoại đã sinh
+   * Tham số đầu vào:
+   *   - script: Toàn bộ script hội thoại
+   *   - topic: Chủ đề
+   *   - level: Trình độ
+   * Tham số đầu ra: Mảng 5-8 từ vựng với nghĩa và ví dụ
+   * Khi nào sử dụng: Bước cuối của chunked generation, sau khi đã có script hoàn chỉnh
+   */
+  private async generateVocabularyFromScript(
+    script: { speaker: string; text: string }[],
+    topic: string,
+    level: string,
+  ): Promise<{ word: string; meaning: string; example: string }[]> {
+    // Lấy 10 câu tiêu biểu để trích xuất từ vựng
+    const step = Math.max(1, Math.floor(script.length / 10));
+    const sampleSentences = [];
+    for (let i = 0; i < script.length && sampleSentences.length < 10; i += step) {
+      sampleSentences.push(script[i].text);
+    }
+
+    const prompt = `Extract 5-8 useful vocabulary words/phrases from this English conversation about "${topic}" (level: ${level}).
+
+Sample sentences from the conversation:
+${sampleSentences.map((s, i) => `${i + 1}. "${s}"`).join('\n')}
+
+For each word/phrase, provide:
+- The word or phrase in English
+- Vietnamese meaning
+- An example sentence using it
+
+=== OUTPUT FORMAT ===
+{
+  "vocabulary": [
+    {
+      "word": "overweight baggage",
+      "meaning": "hành lý quá ký (vượt giới hạn cân nặng)",
+      "example": "My overweight baggage cost me an extra $50 at the airport."
+    }
+  ]
+}
+
+RETURN ONLY VALID JSON, NO OTHER TEXT.`;
+
+    try {
+      const parsed = await this.callGroqAndParseJson(prompt, 1500, 0.7);
+      return parsed.vocabulary || [];
+    } catch (error) {
+      this.logger.warn('Lỗi sinh vocabulary, trả mảng rỗng:', error);
+      return [];
+    }
   }
 
   /**
