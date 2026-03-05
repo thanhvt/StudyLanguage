@@ -63,16 +63,35 @@ const TappableTranscript = React.memo(function TappableTranscript({
   // Giải quyết edge case word splitting mismatch (contractions, hyphens...)
   // ========================
   if (isActive && wordTimestamps && wordTimestamps.length > 0) {
+    // Tách text gốc thành từng token (giữ khoảng trắng)
+    const originalTokens = text.split(/(\s+)/);
+    // Tracking: map vị trí từ thực (bỏ whitespace) → Azure word index
+    let azureIdx = 0;
+
     return (
       <View className="flex-row flex-wrap">
-        {wordTimestamps.map((wt, index) => {
-          const isHighlighted = index === currentWordIndex;
+        {originalTokens.map((token, tokenIndex) => {
+          // Khoảng trắng → render trực tiếp (giữ spacing gốc)
+          if (/^\s+$/.test(token)) {
+            return (
+              <AppText key={`s-${tokenIndex}`} className="text-base" style={{color: colors.foreground}}>
+                {' '}
+              </AppText>
+            );
+          }
+
+          // Từ thực: map sang Azure index để check highlight
+          const currentAzureIdx = azureIdx;
+          azureIdx++; // Di chuyển sang từ Azure tiếp theo
+
+          const isHighlighted = currentAzureIdx === currentWordIndex;
+
           return (
             <TouchableOpacity
-              key={`wt-${index}`}
-              onPress={() => handlePress(wt.word)}
+              key={`wt-${tokenIndex}`}
+              onPress={() => handlePress(token)}
               activeOpacity={0.6}
-              accessibilityLabel={`Tra từ ${wt.word}`}
+              accessibilityLabel={`Tra từ ${token}`}
               accessibilityRole="button"
               style={{
                 minHeight: 28,
@@ -86,7 +105,7 @@ const TappableTranscript = React.memo(function TappableTranscript({
                   color: isHighlighted ? WORD_HIGHLIGHT_COLOR : colors.foreground,
                   fontWeight: isHighlighted ? '700' : '400',
                 }}>
-                {wt.word}
+                {token}
               </AppText>
             </TouchableOpacity>
           );
