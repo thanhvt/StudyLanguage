@@ -167,7 +167,7 @@ function analyzeResult(
 ): TestResult {
   const script = result.script || [];
   const totalTurns = script.length;
-  const targetWords = Math.ceil(testCase.durationMinutes * 150 * 1.05);
+  const targetWords = Math.ceil(testCase.durationMinutes * 185 * 1.05);
   // Tính targetTurns theo công thức mới: totalWords / 65 (giống service)
   const rawExchanges = Math.ceil(targetWords / 65);
   const targetTurns = Math.ceil(rawExchanges / testCase.numSpeakers) * testCase.numSpeakers;
@@ -179,8 +179,8 @@ function analyzeResult(
   const minWordsPerTurn = Math.min(...wordsPerTurn);
   const maxWordsPerTurn = Math.max(...wordsPerTurn);
 
-  // Ước tính thời lượng audio (dùng 150 WPM khớp với service constant)
-  const estimatedMinutes = totalWords / 150;
+  // Ước tính thời lượng audio (dùng 185 WPM khớp với service constant — đo từ Azure TTS thực tế)
+  const estimatedMinutes = totalWords / 185;
 
   // Speakers
   const speakersFound = [...new Set(script.map(t => t.speaker))];

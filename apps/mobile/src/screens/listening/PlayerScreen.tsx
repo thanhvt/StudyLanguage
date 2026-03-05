@@ -176,6 +176,10 @@ export default function ListeningPlayerScreen({
 
   const audioGenRequestedRef = useRef(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  // Lưu vị trí Y thực tế của từng exchange (đo bằng onLayout)
+  const exchangeYPositions = useRef<Record<number, number>>({});
+  // Offset của exchanges container trong ScrollView
+  const exchangeContainerOffsetY = useRef(0);
 
   // Audio Player Store
   const persistedSpeed = useAudioPlayerStore(state => state.playbackSpeed);
@@ -207,13 +211,18 @@ export default function ListeningPlayerScreen({
       setPlayerMode('full');
 
       // Auto-scroll tới câu đang phát khi quay lại từ MinimizedPlayer
-      // Dùng InteractionManager để đợi animation + layout render xong → giảm lag
       const interactionPromise = require('react-native').InteractionManager.runAfterInteractions(() => {
         const idx = useListeningStore.getState().currentExchangeIndex;
         if (idx > 0 && scrollViewRef.current) {
-          // Ước lượng: mỗi exchange ~120px (tùy nội dung)
-          const estimatedY = idx * 120;
-          scrollViewRef.current.scrollTo({y: estimatedY, animated: true});
+          // Ưu tiên dùng vị trí đo được từ onLayout (chính xác)
+          const measuredY = exchangeYPositions.current[idx];
+          if (measuredY !== undefined) {
+            // Y chính xác = offset container + offset exchange - 20px padding trên
+            const scrollY = exchangeContainerOffsetY.current + measuredY - 20;
+            scrollViewRef.current.scrollTo({y: Math.max(0, scrollY), animated: true});
+          } else {
+            scrollViewRef.current.scrollTo({y: idx * 120, animated: true});
+          }
         }
       });
 
@@ -630,7 +639,12 @@ export default function ListeningPlayerScreen({
               </TourTooltip>
 
               {/* Exchanges — chat bubble style */}
-              <View className="gap-3">
+              <View
+                className="gap-3"
+                onLayout={(e) => {
+                  // Ghi lại offset của container trong ScrollView
+                  exchangeContainerOffsetY.current = e.nativeEvent.layout.y;
+                }}>
                 {exchanges.map((exchange, index) => {
                   const isActive = index === currentExchangeIndex;
                   const isEvenSpeaker = index % 2 === 0;
@@ -644,6 +658,10 @@ export default function ListeningPlayerScreen({
                       delayLongPress={400}
                       activeOpacity={0.7}
                       className="rounded-2xl p-4 border"
+                      onLayout={(e) => {
+                        // Ghi lại vị trí Y thực tế của exchange này (dùng cho auto-scroll)
+                        exchangeYPositions.current[index] = e.nativeEvent.layout.y;
+                      }}
                       style={{
                         backgroundColor: isActive
                           ? `${LISTENING_BLUE}15`

@@ -31,8 +31,9 @@ export class ConversationGeneratorService {
   // (Giảm từ 15% xuống 5% vì prompt cải tiến giờ sinh đúng 60-80 từ/lượt)
   private readonly WORDS_BUFFER_PERCENT = 1.05;
 
-  // Tốc độ nói ước tính của TTS (từ/phút)
-  private readonly TTS_WORDS_PER_MINUTE = 150;
+  // Tốc độ nói thực tế của Azure TTS (đo từ production: 182-187 WPM)
+  // Áp dụng cho tất cả tổ hợp: 3 levels × 6 durations × 3 speaker counts = 54 cases
+  private readonly TTS_WORDS_PER_MINUTE = 185;
 
   // Số lượt tối đa mỗi chunk (LLM xử lý tốt nhất ở mức này)
   private readonly MAX_TURNS_PER_CHUNK = 30;
