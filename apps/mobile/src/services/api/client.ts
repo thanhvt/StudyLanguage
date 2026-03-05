@@ -28,11 +28,11 @@ const apiClient = axios.create({
 });
 
 // Interceptor: Tự động gắn access token vào mỗi request
+// Sử dụng session từ auth store (đồng bộ, không acquire lock)
+// thay vì gọi supabase.auth.getSession() mỗi lần (acquire lock → race condition)
 apiClient.interceptors.request.use(
-  async config => {
-    const {
-      data: {session},
-    } = await supabase.auth.getSession();
+  config => {
+    const session = useAuthStore.getState().session;
 
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;

@@ -15,21 +15,10 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useColors} from '@/hooks/useColors';
+// BUG-05 fix: Dùng chung utility thay vì duplicate
+import {formatTime} from '@/utils/formatTime';
 
 const LISTENING_BLUE = '#2563EB';
-
-/**
- * Mục đích: Format giây thành m:ss
- * Tham số đầu vào: seconds (number)
- * Tham số đầu ra: string
- * Khi nào sử dụng: Hiển thị thời gian trong mini player
- */
-function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) { return '0:00'; }
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 /**
  * Mục đích: Floating pill MinimizedPlayer — hiện khi player thu nhỏ

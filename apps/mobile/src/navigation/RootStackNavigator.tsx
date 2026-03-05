@@ -43,34 +43,30 @@ export default function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    // Kiểm tra session đã lưu khi app khởi động
-    const initAuth = async () => {
-      try {
-        console.log('🔐 [Auth] Đang kiểm tra session...');
-        const existingSession = await authService.getSession();
+    // Sử dụng onAuthStateChange thay vì gọi getSession() riêng
+    // onAuthStateChange phát ra event INITIAL_SESSION khi register callback
+    // → không cần gọi getSession() thêm → tránh acquire lock 2 lần
+    let isFirstEvent = true;
 
-        if (existingSession) {
-          console.log('✅ [Auth] Đã tìm thấy session, auto-login');
-          setUser(existingSession.user);
-          setSession(existingSession);
-        } else {
-          console.log('ℹ️ [Auth] Không có session, yêu cầu đăng nhập');
-        }
-      } catch (error) {
-        console.error('❌ [Auth] Lỗi kiểm tra session:', error);
-      } finally {
-        setInitialized();
-      }
-    };
-
-    initAuth();
-
-    // Lắng nghe thay đổi auth state (login/logout/token refresh)
     const {data: subscription} = authService.onAuthStateChange(
       (newSession, newUser) => {
-        console.log('🔄 [Auth] State thay đổi:', newUser?.email ?? 'null');
-        setSession(newSession);
-        setUser(newUser);
+        if (isFirstEvent) {
+          // Event đầu tiên = INITIAL_SESSION → thay thế initAuth()
+          isFirstEvent = false;
+          if (newSession) {
+            console.log('✅ [Auth] Đã tìm thấy session, auto-login');
+          } else {
+            console.log('ℹ️ [Auth] Không có session, yêu cầu đăng nhập');
+          }
+          setSession(newSession);
+          setUser(newUser);
+          setInitialized();
+        } else {
+          // Các event sau = LOGIN/LOGOUT/TOKEN_REFRESH
+          console.log('🔄 [Auth] State thay đổi:', newUser?.email ?? 'null');
+          setSession(newSession);
+          setUser(newUser);
+        }
       },
     );
 
