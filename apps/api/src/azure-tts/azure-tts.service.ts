@@ -371,7 +371,9 @@ export class AzureTtsService {
       throw new Error('Azure Speech chưa được cấu hình.');
     }
 
-    this.logger.log(`Đang sinh audio conversation ${conversation.length} câu...`);
+    // Debug: tổng số từ để ước tính thời lượng
+    const totalWords = conversation.reduce((sum, c) => sum + c.text.split(/\s+/).length, 0);
+    this.logger.log(`🔊 [DEBUG] Đang sinh audio conversation: ${conversation.length} câu, ~${totalWords} từ, ước tính ~${(totalWords / 150).toFixed(1)} phút`);
 
     // Gán giọng cho mỗi speaker
     const voiceMap = this.assignVoicesToSpeakers(conversation, options);
@@ -410,7 +412,7 @@ export class AzureTtsService {
         currentTime += duration + 0.3; // 300ms gap
 
         this.logger.log(
-          `Sinh audio câu ${i + 1}/${conversation.length} - voice: ${voice}, emotion: ${emotion || 'none'}`,
+          `🔊 [DEBUG] Câu ${i + 1}/${conversation.length} — voice: ${voice}, audio: ${result.audioBuffer.length} bytes, words: ${result.wordTimestamps.length}, tổng tích lũy: ${currentTime.toFixed(1)}s`,
         );
       } catch (error) {
         this.logger.error(`Lỗi sinh audio câu ${i + 1}:`, error);
@@ -420,6 +422,7 @@ export class AzureTtsService {
 
     // Merge tất cả audio buffers
     const combinedBuffer = Buffer.concat(allResults.map((r) => r.audioBuffer));
+    this.logger.log(`🔊 [DEBUG] Đã merge ${allResults.length}/${conversation.length} audio segments — tổng: ${(combinedBuffer.length / 1024 / 1024).toFixed(2)} MB, ~${currentTime.toFixed(1)}s ước tính`);
 
     // Adjust word timestamps theo offset từng câu
     const allWordTimestamps: WordTimestamp[][] = allResults.map((result, i) => {

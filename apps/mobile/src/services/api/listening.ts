@@ -216,7 +216,7 @@ export const listeningApi = {
   generateConversation: async (
     config: ListeningConfig,
   ): Promise<ConversationResult> => {
-    // Clamp duration để tránh 400 từ backend DTO validation (min=5, max=15)
+    // Clamp duration để về khoảng backend chấp nhận (min=5, max=30)
     const payload = {
       topic: config.topic,
       durationMinutes: clampDuration(config.durationMinutes),

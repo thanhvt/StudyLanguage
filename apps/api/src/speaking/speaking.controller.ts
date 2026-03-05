@@ -16,8 +16,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SpeakingService } from './speaking.service';
+import { GroqSttService } from '../groq-stt/groq-stt.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max, IsEnum } from 'class-validator';
 
 // ==================== DTOs ====================
 
@@ -66,19 +67,43 @@ class ShadowingEvaluateDto {
   speed?: number;
 }
 
+/**
+ * DTO cho transcribe-and-evaluate combo
+ *
+ * Mục đích: Validate input POST /speaking/transcribe-and-evaluate
+ * Khi nào sử dụng: Mobile gửi audio + câu gốc → backend transcribe + evaluate 1 lần
+ */
+class TranscribeAndEvaluateDto {
+  @IsString()
+  @IsNotEmpty()
+  originalText: string;
+
+  @IsNumber()
+  @IsOptional()
+  speed?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['whisper-large-v3-turbo', 'whisper-large-v3'])
+  model?: 'whisper-large-v3-turbo' | 'whisper-large-v3';
+}
+
 // ==================== Controller ====================
 
 /**
  * SpeakingController - API endpoints cho Speaking feature
  *
- * Mục đích: Tongue twisters, stats, gamification, voice clone, shadowing
+ * Mục đích: Tongue twisters, stats, gamification, voice clone, shadowing, STT
  * Base path: /api/speaking
  * Khi nào sử dụng: Speaking screen trên mobile app
  */
 @Controller('speaking')
 @UseGuards(SupabaseAuthGuard)
 export class SpeakingController {
-  constructor(private readonly speakingService: SpeakingService) {}
+  constructor(
+    private readonly speakingService: SpeakingService,
+    private readonly groqSttService: GroqSttService,
+  ) {}
 
   // ============================================
   // CORE ENDPOINTS
@@ -213,5 +238,125 @@ export class SpeakingController {
       dto.speed ?? 1.0,
     );
   }
+
+  // ============================================
+  // STT: GROQ WHISPER ENDPOINTS
+  // ============================================
+
+  /**
+   * POST /api/speaking/transcribe
+   *
+   * Mục đích: Transcribe audio file thành text bằng Groq Whisper
+   * @param file - Audio file (m4a, mp3, wav, webm, ogg, flac)
+   * @returns { text, language, duration, model }
+   * Khi nào sử dụng:
+   *   - PracticeScreen → sau ghi âm → gửi audio → nhận text
+   *   - ShadowingScreen → sau ghi âm → gửi audio → nhận text
+   *   - CoachSessionScreen → voice input → gửi audio → nhận text
+   */
+  @Post('transcribe')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('audio'))
+  async transcribe(
+    @UploadedFile() file: Express.Multer.File,
+    @Query('model') model?: 'whisper-large-v3-turbo' | 'whisper-large-v3',
+    @Query('language') language?: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng cung cấp audio file');
+    }
+
+    if (!this.groqSttService.checkConfigured()) {
+      throw new BadRequestException('Groq STT chưa được cấu hình');
+    }
+
+    const result = await this.groqSttService.transcribeBuffer(
+      file.buffer,
+      file.originalname || 'recording.m4a',
+      { model, language },
+    );
+
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  /**
+   * POST /api/speaking/transcribe-and-evaluate
+   *
+   * Mục đích: Combo flow — transcribe audio + evaluate phát âm trong 1 request
+   * @param file - Audio file (m4a, mp3, wav...)
+   * @param dto - { originalText, speed?, model? }
+   * @returns { transcript, evaluation }
+   * Khi nào sử dụng:
+   *   - PracticeScreen → submit recording → 1 API call thay vì 2
+   *   - ShadowingScreen → submit recording → transcribe + evaluate
+   */
+  @Post('transcribe-and-evaluate')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('audio'))
+  async transcribeAndEvaluate(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: TranscribeAndEvaluateDto,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng cung cấp audio file');
+    }
+
+    if (!this.groqSttService.checkConfigured()) {
+      throw new BadRequestException('Groq STT chưa được cấu hình');
+    }
+
+    // Bước 1: Transcribe
+    const transcribeResult = await this.groqSttService.transcribeBuffer(
+      file.buffer,
+      file.originalname || 'recording.m4a',
+      { model: dto.model, language: 'en' },
+    );
+
+    if (!transcribeResult.text.trim()) {
+      return {
+        success: false,
+        error: 'Không nghe được gì, thử nói to hơn nhé!',
+        transcript: '',
+      };
+    }
+
+    // Bước 2: Evaluate
+    const evaluation = await this.speakingService.evaluateShadowing(
+      req.user.id,
+      dto.originalText,
+      transcribeResult.text,
+      dto.speed ?? 1.0,
+    );
+
+    return {
+      success: true,
+      transcript: transcribeResult.text,
+      transcribeModel: transcribeResult.model,
+      audioDuration: transcribeResult.duration,
+      evaluation: evaluation.shadowing,
+    };
+  }
+
+  /**
+   * GET /api/speaking/stt-models
+   *
+   * Mục đích: Lấy danh sách models STT có sẵn
+   * @returns Mảng { id, name, description }
+   * Khi nào sử dụng: Mobile hiển thị lựa chọn model Whisper trong settings
+   */
+  @Get('stt-models')
+  @HttpCode(HttpStatus.OK)
+  getSttModels() {
+    return {
+      success: true,
+      models: this.groqSttService.getAvailableModels(),
+      configured: this.groqSttService.checkConfigured(),
+    };
+  }
 }
+
 

@@ -368,6 +368,10 @@ export class AiController {
   @Post('generate-conversation-audio')
   @HttpCode(HttpStatus.OK)
   async generateConversationAudio(@Body() dto: GenerateConversationAudioDto) {
+    // Debug: log số lượng câu nhận được từ mobile
+    const totalWords = dto.conversation.reduce((sum, c) => sum + c.text.split(/\s+/).length, 0);
+    console.log(`🔊 [DEBUG-Controller] Nhận ${dto.conversation.length} câu, ~${totalWords} từ từ mobile → gọi TTS`);
+
     const result = await this.ttsProviderService.generateConversationAudio(
       dto.conversation,
       {

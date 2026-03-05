@@ -154,7 +154,7 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
       name: 'recording.m4a',
     } as any);
 
-    const response = await apiClient.post('/ai/transcribe', formData, {
+    const response = await apiClient.post('/speaking/transcribe', formData, {
       headers: {'Content-Type': 'multipart/form-data'},
       timeout: 30000,
     });

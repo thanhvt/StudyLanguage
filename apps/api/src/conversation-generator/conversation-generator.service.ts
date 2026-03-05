@@ -1053,23 +1053,11 @@ RETURN ONLY VALID JSON, NO OTHER TEXT.`;
         }
       }
 
-      // Sử dụng kết quả tốt nhất, cắt bớt nếu vượt quá số lượt mục tiêu
-      // Làm tròn xuống bội số numSpeakers để round-robin đều
-      const maxTurns = Math.ceil(targetTurns * 1.15); // Cho phép vượt 15%
-      const trimmedTurns = bestChunkScript.length > maxTurns
-        ? bestChunkScript.slice(0, Math.floor(maxTurns / numSpeakers) * numSpeakers)
-        : bestChunkScript;
-
-      if (trimmedTurns.length < bestChunkScript.length) {
-        this.logger.log(
-          `Cắt bớt chunk ${i + 1}: ${bestChunkScript.length} → ${trimmedTurns.length} lượt (giới hạn ${maxTurns})`,
-        );
-      }
-
-      allTurns.push(...trimmedTurns);
+      // Sử dụng kết quả tốt nhất — không cắt bớt, chấp nhận thừa nội dung
+      allTurns.push(...bestChunkScript);
 
       this.logger.log(
-        `Chunk ${i + 1}/${numChunks} hoàn thành: +${trimmedTurns.length} lượt, tổng: ${allTurns.length} lượt`,
+        `Chunk ${i + 1}/${numChunks} hoàn thành: +${bestChunkScript.length} lượt, tổng: ${allTurns.length} lượt`,
       );
     }
 
