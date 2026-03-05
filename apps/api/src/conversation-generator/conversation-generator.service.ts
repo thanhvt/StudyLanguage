@@ -33,7 +33,7 @@ export class ConversationGeneratorService {
 
   // Tốc độ nói thực tế của Azure TTS (đo từ production: 182-187 WPM)
   // Áp dụng cho tất cả tổ hợp: 3 levels × 6 durations × 3 speaker counts = 54 cases
-  private readonly TTS_WORDS_PER_MINUTE = 185;
+  private readonly TTS_WORDS_PER_MINUTE = 168;
 
   // Số lượt tối đa mỗi chunk (LLM xử lý tốt nhất ở mức này)
   private readonly MAX_TURNS_PER_CHUNK = 30;
