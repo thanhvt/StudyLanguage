@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StatusBar,
   Animated as RNAnimated,
-  Linking,
   Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -185,17 +184,50 @@ export default function ArticleScreen() {
   );
 
   /**
-   * Mục đích: Phát âm từ — dùng audio URL từ Dictionary API
-   * Tham số đầu vào: audioUrl (string) — URL file mp3 phát âm
-   * Tham số đầu ra: void — mở URL để phát audio
+   * Mục đích: Phát âm từ qua Azure TTS
+   * Tham số đầu vào: pronounceWord (string) — từ cần phát âm
+   * Tham số đầu ra: Promise<void>
    * Khi nào sử dụng: User nhấn 🔊 trong DictionaryPopup
    */
-  const handlePlayPronunciation = useCallback((audioUrl: string) => {
-    console.log('🔊 [ArticleScreen] Phát âm từ URL:', audioUrl);
-    Linking.openURL(audioUrl).catch(err =>
-      console.error('❌ [ArticleScreen] Lỗi phát âm:', err),
-    );
-  }, []);
+  const handlePronounce = useCallback(async (pronounceWord: string) => {
+    try {
+      console.log('🔊 [ArticleScreen] Phát âm từ qua Azure TTS:', pronounceWord);
+
+      // Pause TTS reader nếu đang đọc bài
+      const wasTtsReading = tts.isReading;
+      if (wasTtsReading) {
+        tts.pause();
+      }
+
+      // Gọi Azure TTS
+      const {listeningApi} = require('@/services/api/listening');
+      const audioData = await listeningApi.previewVoice(pronounceWord, 'en-US-JennyNeural');
+
+      // Chuyển ArrayBuffer → base64 → ghi file tạm
+      const {Buffer} = require('buffer');
+      const base64Audio = Buffer.from(audioData).toString('base64');
+      const RNFS = require('react-native-fs');
+      const tempPath = `${RNFS.CachesDirectoryPath}/dict_pronounce_${pronounceWord}.mp3`;
+      await RNFS.writeFile(tempPath, base64Audio, 'base64');
+
+      // Phát audio
+      const AudioRecorderPlayer = require('react-native-audio-recorder-player').default;
+      const player = new AudioRecorderPlayer();
+      await player.startPlayer(`file://${tempPath}`);
+      player.addPlayBackListener((e: any) => {
+        if (e.currentPosition >= e.duration - 100) {
+          player.stopPlayer();
+          player.removePlayBackListener();
+          // Resume TTS reader nếu trước đó đang đọc
+          if (wasTtsReading) {
+            tts.play();
+          }
+        }
+      });
+    } catch (err) {
+      console.error('❌ [ArticleScreen] Lỗi phát âm:', err);
+    }
+  }, [tts]);
 
   /**
    * Mục đích: Bắt đầu bài đọc mới
@@ -645,7 +677,7 @@ export default function ArticleScreen() {
         word={selectedWord}
         onClose={() => setSelectedWord(null)}
         onSaveWord={handleSaveWord}
-        onPlayPronunciation={handlePlayPronunciation}
+        onPronounce={handlePronounce}
       />
     </SafeAreaView>
     </GestureHandlerRootView>

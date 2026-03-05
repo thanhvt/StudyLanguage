@@ -232,6 +232,7 @@ export const listeningApi = {
     const response = await apiClient.post(
       '/conversation-generator/generate',
       payload,
+      {timeout: 120000}, // 2 phút — API sinh hội thoại cần ~1 phút
     );
 
     console.log('✅ [Listening] Nhận response, đang map dữ liệu...');

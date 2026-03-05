@@ -898,18 +898,33 @@ export default function ListeningPlayerScreen({
           useVocabularyStore.getState().addWord(word, 'listening');
           showSuccess('Đã lưu từ "' + word + '"');
         }}
-        onPlayPronunciation={async (pronunciationUrl) => {
+        onPronounce={async (pronounceWord) => {
           try {
+            // Pause audio hội thoại nếu đang phát
             const wasPlaying = isTrackPlaying;
             if (wasPlaying) {await TrackPlayer.pause();}
             const currentProgress = await TrackPlayer.getProgress();
-            const Audio = require('react-native-audio-recorder-player').default;
-            const audioRecorderPlayer = new Audio();
-            await audioRecorderPlayer.startPlayer(pronunciationUrl);
-            audioRecorderPlayer.addPlayBackListener(async (e: any) => {
+
+            // Gọi Azure TTS để sinh audio phát âm từ
+            console.log('🔊 [PlayerScreen] Phát âm từ qua Azure TTS:', pronounceWord);
+            const audioData = await listeningApi.previewVoice(pronounceWord, 'en-US-JennyNeural');
+
+            // Chuyển ArrayBuffer → base64 → ghi file tạm
+            const {Buffer} = require('buffer');
+            const base64Audio = Buffer.from(audioData).toString('base64');
+            const RNFS = require('react-native-fs');
+            const tempPath = `${RNFS.CachesDirectoryPath}/dict_pronounce_${pronounceWord}.mp3`;
+            await RNFS.writeFile(tempPath, base64Audio, 'base64');
+
+            // Phát audio qua audio recorder player
+            const AudioRecorderPlayer = require('react-native-audio-recorder-player').default;
+            const player = new AudioRecorderPlayer();
+            await player.startPlayer(`file://${tempPath}`);
+            player.addPlayBackListener(async (e: any) => {
               if (e.currentPosition >= e.duration - 100) {
-                audioRecorderPlayer.stopPlayer();
-                audioRecorderPlayer.removePlayBackListener();
+                player.stopPlayer();
+                player.removePlayBackListener();
+                // Resume audio hội thoại nếu trước đó đang phát
                 if (wasPlaying) {
                   try {
                     await TrackPlayer.seekTo(currentProgress.position);
