@@ -78,6 +78,10 @@ export default function ListeningConfigScreen({
   const setConfig = useListeningStore(state => state.setConfig);
   const selectedTopic = useListeningStore(state => state.selectedTopic);
   const setConversation = useListeningStore(state => state.setConversation);
+  const setAudioUrl = useListeningStore(state => state.setAudioUrl);
+  const setTimestamps = useListeningStore(state => state.setTimestamps);
+  const setWordTimestamps = useListeningStore(state => state.setWordTimestamps);
+  const setCurrentExchangeIndex = useListeningStore(state => state.setCurrentExchangeIndex);
   const setSelectedTopic = useListeningStore(state => state.setSelectedTopic);
   const isGenerating = useListeningStore(state => state.isGenerating);
   const setGenerating = useListeningStore(state => state.setGenerating);
@@ -230,6 +234,14 @@ export default function ListeningConfigScreen({
         ...config,
         topic,
       });
+
+      // QUAN TRỌNG: Clear audio state cũ trước khi set conversation mới
+      // Nếu không, PlayerScreen thấy audioUrl cũ → skip generate → phát audio bài cũ
+      setAudioUrl(null);
+      setTimestamps(null);
+      setWordTimestamps(null);
+      setCurrentExchangeIndex(0);
+      try { await TrackPlayer.reset(); } catch {}
 
       setConversation(result);
       haptic.success();
