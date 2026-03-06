@@ -275,7 +275,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             backgroundColor: isCurrent ? `${LISTENING_BLUE}15` : undefined,
             borderColor: isCurrent
               ? `${LISTENING_BLUE}40`
-              : isDark ? colors.glassBorder : colors.border,
+              : isDark ? 'rgba(255,255,255,0.15)' : colors.border,
           }}
           onPress={() => handlePlayTrack(item, index)}
           disabled={isGenerating}
@@ -284,17 +284,17 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           accessibilityRole="button">
           <View className="flex-row items-center">
             {/* Track number / Playing indicator */}
-            <TrackPulse isActive={isCurrent && !isGenerating} size={32}>
+            <TrackPulse isActive={isCurrent && !isGenerating} size={28}>
               <View
-                className="w-8 h-8 rounded-full items-center justify-center"
+                className="w-7 h-7 rounded-full items-center justify-center"
                 style={{backgroundColor: isCurrent ? LISTENING_BLUE : colors.surface}}>
                 {isGenerating ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : isCurrent ? (
-                  <Icon name="Volume2" className="w-4 h-4" style={{color: '#FFFFFF'}} />
+                  <Icon name="Volume2" className="w-3.5 h-3.5" style={{color: '#FFFFFF'}} />
                 ) : (
                   <AppText
-                    className={`text-sm font-sans-bold`}
+                    className={`text-xs font-sans-bold`}
                     style={{color: isCurrent ? '#FFFFFF' : colors.neutrals400}}>
                     {index + 1}
                   </AppText>
@@ -324,7 +324,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 )}
                 <Icon
                   name={isCurrent ? 'Pause' : 'Play'}
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   style={{color: isCurrent ? LISTENING_BLUE : colors.neutrals500}}
                 />
               </View>
@@ -392,9 +392,12 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           accessibilityRole="button">
           <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
-        <AppText className="font-sans-bold text-lg flex-1 text-center" style={{color: colors.foreground}}>
-          📻 Radio Mode
-        </AppText>
+        <View className="flex-row items-center flex-1 justify-center">
+          <Icon name="Radio" className="w-5 h-5 mr-1.5" style={{color: LISTENING_BLUE}} />
+          <AppText className="font-sans-bold text-lg" style={{color: colors.foreground}}>
+            Radio Mode
+          </AppText>
+        </View>
         <View className="w-10" />
       </View>
 
@@ -409,7 +412,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             Nghe thụ động
           </AppText>
           <AppText className="text-center mb-8" style={{color: colors.neutrals400}}>
-            Chọn thời lượng, AI sẽ tạo playlist random cho bạn 🎲
+            Chọn thời lượng, AI sẽ tạo playlist random cho bạn
           </AppText>
 
           {/* Duration picker */}
@@ -500,8 +503,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             disabled={radioState === 'generating'}
             accessibilityLabel="Tạo playlist Radio">
             {radioState === 'generating'
-              ? `🔄 Đang tạo ${Math.ceil(selectedDuration / 7)} bài...`
-              : '📻 Bắt đầu Radio'}
+              ? `Đang tạo ${Math.ceil(selectedDuration / 7)} bài...`
+              : 'Bắt đầu Radio'}
           </AppButton>
 
           {radioState === 'generating' && sseProgress && sseProgress.total > 0 && (
@@ -618,9 +621,12 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 useRadioStore.getState().setCurrentTrackIndex(-1);
               }}
               accessibilityLabel="Tạo playlist mới">
-              <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
-                🔄 Tạo playlist mới
-              </AppText>
+              <View className="flex-row items-center">
+                <Icon name="RefreshCw" className="w-4 h-4 mr-1.5" style={{color: LISTENING_BLUE}} />
+                <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
+                  Tạo playlist mới
+                </AppText>
+              </View>
             </AppButton>
           </View>
         </>

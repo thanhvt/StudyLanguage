@@ -113,7 +113,7 @@ export default function RadioControlsBar({
             style={{color: shuffle ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
-            className="text-[10px] mt-0.5"
+            className="text-xs mt-0.5"
             style={{color: shuffle ? LISTENING_BLUE : colors.neutrals400}}>
             Trộn
           </AppText>
@@ -131,7 +131,7 @@ export default function RadioControlsBar({
             style={{color: repeatActive ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
-            className="text-[10px] mt-0.5"
+            className="text-xs mt-0.5"
             style={{color: repeatActive ? LISTENING_BLUE : colors.neutrals400}}>
             {repeat === 'off' ? 'Lặp' : repeat === 'all' ? 'Tất cả' : '1 bài'}
           </AppText>
@@ -149,7 +149,7 @@ export default function RadioControlsBar({
             {playbackSpeed}x
           </AppText>
           <AppText
-            className="text-[10px] mt-0.5"
+            className="text-xs mt-0.5"
             style={{color: playbackSpeed !== 1.0 ? LISTENING_BLUE : colors.neutrals400}}>
             Tốc độ
           </AppText>
@@ -171,7 +171,7 @@ export default function RadioControlsBar({
             style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
-            className="text-[10px] mt-0.5"
+            className="text-xs mt-0.5"
             style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : colors.neutrals400}}>
             {sleepTimerMinutes > 0 ? `${sleepTimerMinutes}'` : 'Ngủ'}
           </AppText>
@@ -189,7 +189,7 @@ export default function RadioControlsBar({
             style={{color: colors.error}}
           />
           <AppText
-            className="text-[10px] mt-0.5"
+            className="text-xs mt-0.5"
             style={{color: colors.error}}>
             Xóa
           </AppText>
