@@ -312,6 +312,8 @@ export const listeningApi = {
       /** Cảm xúc ngẫu nhiên — API tự random emotion */
       randomEmotion?: boolean;
     },
+    /** T-22: AbortSignal để cancel request khi skip nhanh */
+    signal?: AbortSignal,
   ): Promise<AudioGenerationResult> => {
     const payload: Record<string, unknown> = {
       conversation: conversation.map(line => ({
@@ -343,7 +345,7 @@ export const listeningApi = {
     const response = await apiClient.post(
       '/ai/generate-conversation-audio',
       payload,
-      {timeout: 180000}, // 3 phút — sinh audio chậm hơn generate text
+      {timeout: 180000, signal}, // T-22: Truyền AbortSignal vào axios config
     );
 
     console.log('✅ [Listening] Nhận audio URL:', response.data.audioUrl);

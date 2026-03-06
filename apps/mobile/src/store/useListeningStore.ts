@@ -25,6 +25,7 @@ import type {
   WordTimestamp,
 } from '@/services/api/listening';
 import type {TopicScenario} from '@/data/topic-data';
+import type {CustomCategory} from '@/services/api/customCategories';
 
 // =======================
 // Listening Store State
@@ -85,6 +86,10 @@ interface ListeningState {
   randomEmotion: boolean;
   /** Map speaker → voice ID thực tế đã dùng (từ API response, để hiển thị tên giọng đọc) */
   activeVoiceMap: Record<string, string>;
+  /** Danh sách custom categories của user */
+  customCategories: CustomCategory[];
+  /** Đã load custom categories từ API chưa */
+  customCategoriesLoaded: boolean;
 }
 
 interface ListeningActions {
@@ -152,6 +157,14 @@ interface ListeningActions {
   setRandomEmotion: (value: boolean) => void;
   /** Cập nhật voice map thực tế từ API response */
   setActiveVoiceMap: (map: Record<string, string>) => void;
+  /** Set danh sách custom categories */
+  setCustomCategories: (categories: CustomCategory[]) => void;
+  /** Thêm 1 custom category mới vào danh sách */
+  addCustomCategory: (category: CustomCategory) => void;
+  /** Cập nhật 1 custom category */
+  updateCustomCategory: (id: string, data: Partial<CustomCategory>) => void;
+  /** Xóa 1 custom category khỏi danh sách */
+  removeCustomCategory: (id: string) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -191,6 +204,8 @@ const initialState: ListeningState = {
   ttsVolume: 100,
   randomEmotion: false,
   activeVoiceMap: {},
+  customCategories: [],
+  customCategoriesLoaded: false,
 };
 
 /**
@@ -284,6 +299,26 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
     setRandomEmotion: value => set({randomEmotion: value}),
     setActiveVoiceMap: map => set({activeVoiceMap: map}),
 
+    setCustomCategories: categories =>
+      set({customCategories: categories, customCategoriesLoaded: true}),
+
+    addCustomCategory: category =>
+      set(state => ({
+        customCategories: [...state.customCategories, category],
+      })),
+
+    updateCustomCategory: (id, data) =>
+      set(state => ({
+        customCategories: state.customCategories.map(c =>
+          c.id === id ? {...c, ...data} : c,
+        ),
+      })),
+
+    removeCustomCategory: id =>
+      set(state => ({
+        customCategories: state.customCategories.filter(c => c.id !== id),
+      })),
+
     reset: () => set(initialState),
     }),
     {
@@ -292,6 +327,8 @@ export const useListeningStore = create<ListeningState & ListeningActions>()(
       // Chỉ persist favoriteScenarioIds — các state khác là session-specific
       partialize: (state) => ({
         favoriteScenarioIds: state.favoriteScenarioIds,
+        customCategories: state.customCategories,
+        customCategoriesLoaded: state.customCategoriesLoaded,
       }),
     },
   ),

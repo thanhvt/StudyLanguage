@@ -12,6 +12,7 @@ import { ListenLaterModule } from './listen-later/listen-later.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { RadioModule } from './radio/radio.module';
 import { CustomScenariosModule } from './custom-scenarios/custom-scenarios.module';
+import { CustomCategoriesModule } from './custom-categories/custom-categories.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { ConversationGeneratorModule } from './conversation-generator/conversation-generator.module';
@@ -52,6 +53,7 @@ import { BookmarksModule } from './bookmarks/bookmarks.module';
     PlaylistsModule, // Module tính năng Playlists
     RadioModule, // Module tính năng Radio Mode
     CustomScenariosModule, // Module tính năng Custom Scenarios
+    CustomCategoriesModule, // Module tính năng Custom Categories (nhóm chủ đề)
     FeedbackModule, // Module tính năng Góp ý/Phản hồi
     ConversationGeneratorModule, // Module sinh hội thoại tiếng Anh với Groq API
     UserModule, // Module quản lý user: profile, gamification, settings

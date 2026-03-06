@@ -9,6 +9,8 @@ export interface CreateCustomScenarioDto {
   name: string;
   description?: string;
   category?: string;
+  /** ID nhóm chủ đề (custom_categories.id). NULL = Other */
+  categoryId?: string;
 }
 
 /**
@@ -18,6 +20,8 @@ export interface UpdateCustomScenarioDto {
   name?: string;
   description?: string;
   isFavorite?: boolean;
+  /** ID nhóm chủ đề (custom_categories.id). null = move to Other */
+  categoryId?: string | null;
 }
 
 /**
@@ -46,11 +50,21 @@ export class CustomScenariosService {
    * @param userId - ID của user hiện tại
    * @returns Danh sách scenarios, favorites trước, theo created_at mới nhất
    */
-  async getCustomScenarios(userId: string) {
-    const { data, error } = await this.supabase
+  async getCustomScenarios(userId: string, categoryId?: string | null) {
+    let query = this.supabase
       .from('custom_scenarios')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', userId);
+
+    // Lọc theo categoryId nếu có
+    if (categoryId === null || categoryId === 'null') {
+      // Lấy scenarios thuộc Other (category_id = null)
+      query = query.is('category_id', null);
+    } else if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+
+    const { data, error } = await query
       .order('is_favorite', { ascending: false })
       .order('created_at', { ascending: false });
 
@@ -81,6 +95,7 @@ export class CustomScenariosService {
         name: dto.name,
         description: dto.description || '',
         category: dto.category || 'custom',
+        category_id: dto.categoryId || null,
       })
       .select()
       .single();
@@ -116,6 +131,7 @@ export class CustomScenariosService {
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.isFavorite !== undefined) updateData.is_favorite = dto.isFavorite;
+    if (dto.categoryId !== undefined) updateData.category_id = dto.categoryId || null;
 
     const { data, error } = await this.supabase
       .from('custom_scenarios')
@@ -210,6 +226,47 @@ export class CustomScenariosService {
   }
 
   /**
+   * Mục đích: Di chuyển scenario sang category khác
+   * Tham số đầu vào: userId, scenarioId, targetCategoryId (null = Other)
+   * Tham số đầu ra: { success, scenario }
+   * Khi nào sử dụng: Settings > ManageCategories > ManageScenarios > "Di chuyển nhóm"
+   */
+  async moveScenario(
+    userId: string,
+    scenarioId: string,
+    targetCategoryId: string | null,
+  ) {
+    this.logger.log(
+      `[moveScenario] Di chuyển scenario ${scenarioId} → category ${targetCategoryId || 'Other'}`,
+    );
+
+    const { data, error } = await this.supabase
+      .from('custom_scenarios')
+      .update({
+        category_id: targetCategoryId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', scenarioId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      this.logger.error('[moveScenario] Lỗi di chuyển:', error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new NotFoundException('Chủ đề không tồn tại');
+    }
+
+    return {
+      success: true,
+      scenario: this.transformScenario(data),
+    };
+  }
+
+  /**
    * Transform database row thành response format
    */
   private transformScenario(row: any) {
@@ -218,6 +275,7 @@ export class CustomScenariosService {
       name: row.name,
       description: row.description,
       category: row.category,
+      categoryId: row.category_id || null,
       isFavorite: row.is_favorite || false,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

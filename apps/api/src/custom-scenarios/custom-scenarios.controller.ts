@@ -9,6 +9,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -47,6 +48,10 @@ class CreateCustomScenarioDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
 }
 
 /**
@@ -67,6 +72,10 @@ class UpdateCustomScenarioDto {
   @IsBoolean()
   @IsOptional()
   isFavorite?: boolean;
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
 }
 
 /**
@@ -89,9 +98,12 @@ export class CustomScenariosController {
    */
   @Get()
   @ApiOperation({ summary: 'Lấy danh sách custom scenarios' })
-  async getCustomScenarios(@Req() req: any) {
+  async getCustomScenarios(
+    @Req() req: any,
+    @Query('categoryId') categoryId?: string,
+  ) {
     const userId = req.user.id;
-    return this.customScenariosService.getCustomScenarios(userId);
+    return this.customScenariosService.getCustomScenarios(userId, categoryId);
   }
 
   /**

@@ -302,59 +302,70 @@ CHỈ trả JSON, không giải thích.`;
       throw new Error('Không thể tạo playlist');
     }
 
-    // Generate conversations cho từng topic (text-only, không TTS)
+    // T-12: Generate conversations song song (Promise.allSettled)
     const items: RadioPlaylistItem[] = [];
 
-    for (let i = 0; i < selectedTopics.length; i++) {
-      const scenario = selectedTopics[i];
+    const generatePromises = selectedTopics.map(async (scenario, i) => {
       // T-06: Random số speakers 2-4 cho mỗi track
       const numSpeakers = this.getRandomSpeakerCount();
       this.logger.log(`Generating track ${i + 1}/${trackCount}: ${scenario.topic} (${numSpeakers} speakers)`);
 
-      try {
-        // T-05: Level fix = intermediate
-        const result = await this.aiService.generateConversation(
-          scenario.topic,
-          trackDuration,
-          numSpeakers,
-        );
+      // T-05: Level = intermediate (đã implicit trong prompt AI — "Giao tiếp hàng ngày, dễ hiểu")
+      const result = await this.aiService.generateConversation(
+        scenario.topic,
+        trackDuration,
+        numSpeakers,
+      );
 
-        // Lưu vào playlist_items
-        const { data: item, error: itemError } = await this.supabase
-          .from('playlist_items')
-          .insert({
-            playlist_id: playlist.id,
-            topic: scenario.topic,
-            conversation: result.script,
-            duration: trackDuration,
-            num_speakers: numSpeakers,
-            category: scenario.category,
-            sub_category: scenario.subCategory,
-            position: i,
-          })
-          .select()
-          .single();
+      return { scenario, result, numSpeakers, position: i };
+    });
 
-        if (itemError) {
-          this.logger.error(`Lỗi lưu item ${i}:`, itemError);
-          continue;
-        }
+    const settled = await Promise.allSettled(generatePromises);
 
-        items.push({
-          id: item.id,
+    // Xử lý kết quả song song
+    for (const outcome of settled) {
+      if (outcome.status === 'rejected') {
+        this.logger.error('Lỗi generate track:', outcome.reason);
+        continue;
+      }
+
+      const { scenario, result, numSpeakers, position } = outcome.value;
+
+      // Lưu vào playlist_items
+      const { data: item, error: itemError } = await this.supabase
+        .from('playlist_items')
+        .insert({
+          playlist_id: playlist.id,
           topic: scenario.topic,
           conversation: result.script,
           duration: trackDuration,
-          numSpeakers,
+          num_speakers: numSpeakers,
           category: scenario.category,
-          subCategory: scenario.subCategory,
-          position: i,
-        });
-      } catch (error) {
-        this.logger.error(`Lỗi generate track ${i}:`, error);
-        // Tiếp tục với track tiếp theo
+          sub_category: scenario.subCategory,
+          position,
+        })
+        .select()
+        .single();
+
+      if (itemError) {
+        this.logger.error(`Lỗi lưu item ${position}:`, itemError);
+        continue;
       }
+
+      items.push({
+        id: item.id,
+        topic: scenario.topic,
+        conversation: result.script,
+        duration: trackDuration,
+        numSpeakers,
+        category: scenario.category,
+        subCategory: scenario.subCategory,
+        position,
+      });
     }
+
+    // Sắp xếp theo position (vì Promise.allSettled có thể trả về không đúng thứ tự)
+    items.sort((a, b) => a.position - b.position);
 
     this.logger.log(`Hoàn thành Radio playlist: ${items.length}/${trackCount} tracks`);
 

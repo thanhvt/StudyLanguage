@@ -27,6 +27,9 @@ import {
   type TopicSubCategory,
 } from '@/data/topic-data';
 import {useListeningStore} from '@/store/useListeningStore';
+import {UserCategoryView} from './UserCategoryView';
+import {CreateCategorySheet} from './CreateCategorySheet';
+import {customCategoryApi} from '@/services/api/customCategories';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -595,15 +598,62 @@ export default function TopicPicker({
     }
   }, [haptic, setSelectedTopic, setSelectedCategory, setSelectedSubCategory]);
 
-  // Tab data: Yêu thích + categories + Custom
+  // Tab data: Yêu thích + hardcoded categories + user categories + Custom
+  const customCategories = useListeningStore(s => s.customCategories);
+  const setCustomCategories = useListeningStore(s => s.setCustomCategories);
+
+  // State cho CreateCategorySheet
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
+
+  /**
+   * Mục đích: Load/refresh custom categories từ API
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void (cập nhật store)
+   * Khi nào sử dụng: Mount, sau khi đóng CreateCategorySheet (đảm bảo scenarioCount mới nhất)
+   */
+  const refreshCategories = useCallback(() => {
+    customCategoryApi.list()
+      .then(res => setCustomCategories(res.categories))
+      .catch(err => console.error('📂 [TopicPicker] Lỗi load categories:', err));
+  }, [setCustomCategories]);
+
+  // Load custom categories từ API — LUÔN re-fetch khi mount (tránh stale cache)
+  useEffect(() => {
+    refreshCategories();
+  }, [refreshCategories]);
+
+  // EC-06: Re-fetch sau khi CreateCategorySheet đóng → cập nhật scenarioCount
+  useEffect(() => {
+    if (!showCreateSheet) {
+      refreshCategories();
+    }
+  }, [showCreateSheet, refreshCategories]);
+
   const categoryTabs: CategoryTab[] = useMemo(
     () => [
       {id: 'favorites', name: 'Yêu thích', icon: '⭐'},
       ...TOPIC_CATEGORIES.map(c => ({id: c.id, name: c.name, icon: c.icon})),
+      // User-created categories (theo thời gian tạo)
+      ...customCategories.map(c => ({id: c.id, name: c.name, icon: c.icon})),
       {id: 'custom', name: 'Tuỳ chỉnh', icon: '✨'},
     ],
-    [],
+    [customCategories],
   );
+
+  // Tìm user category đang active (nếu đang chọn tab user category)
+  const activeUserCategory = useMemo(
+    () => customCategories.find(c => c.id === selectedCategory),
+    [customCategories, selectedCategory],
+  );
+
+  // EC-11: Fallback nếu selectedCategory đã bị xoá (không tồn tại trong tabs)
+  useEffect(() => {
+    const tabIds = categoryTabs.map(t => t.id);
+    if (selectedCategory && !tabIds.includes(selectedCategory)) {
+      // Category đã bị xoá → reset về tab đầu tiên
+      setSelectedCategory(categoryTabs[0]?.id || 'favorites');
+    }
+  }, [categoryTabs, selectedCategory, setSelectedCategory]);
 
   // ========================
   // Render Category Tabs
@@ -705,7 +755,7 @@ export default function TopicPicker({
         )}
       </View>
 
-      {/* Category Tabs — Horizontal Scroll (có tab Yêu thích đầu tiên) */}
+      {/* Category Tabs — Horizontal Scroll + nút [➕] cuối */}
       <FlatList
         data={categoryTabs}
         renderItem={renderCategoryTab}
@@ -714,6 +764,30 @@ export default function TopicPicker({
         showsHorizontalScrollIndicator={false}
         className="mb-4"
         contentContainerStyle={{paddingRight: 16}}
+        ListFooterComponent={
+          customCategories.length < 10 ? (
+            <TouchableOpacity
+              className="px-3 py-2.5 rounded-full mr-2"
+              style={{
+                backgroundColor: `${LISTENING_BLUE}08`,
+                borderWidth: 1,
+                borderColor: `${LISTENING_BLUE}30`,
+                borderStyle: 'dashed',
+              }}
+              onPress={() => {
+                haptic.light();
+                setShowCreateSheet(true);
+              }}
+              disabled={disabled}
+              activeOpacity={0.7}
+              accessibilityLabel="Thêm nhóm chủ đề mới"
+              accessibilityRole="button">
+              <View className="flex-row items-center">
+                <Icon name="Plus" className="w-3.5 h-3.5" style={{color: LISTENING_BLUE}} />
+              </View>
+            </TouchableOpacity>
+          ) : null
+        }
       />
 
       {/* Nội dung: Search results hoặc Tab content */}
@@ -762,6 +836,20 @@ export default function TopicPicker({
       ) : selectedCategory === 'custom' ? (
         // Tab "Tuỳ chỉnh" — placeholder, sẽ được render bởi parent (Modal)
         null
+      ) : activeUserCategory ? (
+        // Tab User Category — hiển thị scenarios của nhóm user tạo
+        <UserCategoryView
+          category={activeUserCategory}
+          favoriteIds={favoriteIds}
+          onSelectScenario={(scenario, categoryId) => {
+            handleSelectScenario(scenario);
+          }}
+          onManage={(categoryId) => {
+            // TODO: Navigate tới Settings > ManageCategories
+            console.log('⚙️ Navigate to ManageCategories:', categoryId);
+          }}
+          disabled={disabled}
+        />
       ) : activeCategory ? (
         // Danh sách SubCategories + Scenarios
         <View>
@@ -808,6 +896,16 @@ export default function TopicPicker({
           </TouchableOpacity>
         </View>
       )}
+
+      {/* CreateCategorySheet — bottom sheet tạo nhóm mới */}
+      <CreateCategorySheet
+        visible={showCreateSheet}
+        onClose={() => setShowCreateSheet(false)}
+        onCreated={(categoryId) => {
+          // Auto-switch tới tab mới
+          setSelectedCategory(categoryId);
+        }}
+      />
     </View>
   );
 }

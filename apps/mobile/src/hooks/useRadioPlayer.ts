@@ -1,7 +1,8 @@
 /**
  * useRadioPlayer — Hook quản lý audio playback cho Radio Mode
  *
- * Mục đích: Đóng gói logic phát audio (TrackPlayer), skip, previous, speed, sleep timer
+ * Mục đích: Đóng gói logic phát audio (TrackPlayer), skip, previous, speed, sleep timer,
+ *           fade in/out (T-29), AbortController (T-22), auto pre-download (T-25)
  * Tham số đầu vào: không
  * Tham số đầu ra: object chứa play, skip, previous, setSpeed, togglePlay...
  * Khi nào sử dụng:
@@ -17,6 +18,29 @@ import {useListeningStore} from '@/store/useListeningStore';
 import {listeningApi} from '@/services/api/listening';
 import {radioApi} from '@/services/api/radio';
 import type {RadioPlaylistItem} from '@/services/api/radio';
+
+// T-29: Hằng số cho fade
+const FADE_DURATION_MS = 800;
+const FADE_STEPS = 16;
+
+/**
+ * Mục đích: Fade volume từ from → to trong duration ms
+ * Tham số đầu vào: from (0-1), to (0-1), duration ms
+ * Tham số đầu ra: Promise<void>
+ * Khi nào sử dụng: Trước khi dừng (fade out) và sau khi play (fade in)
+ */
+async function fadeVolume(from: number, to: number, duration: number = FADE_DURATION_MS) {
+  const stepDuration = duration / FADE_STEPS;
+  const stepSize = (to - from) / FADE_STEPS;
+  for (let i = 0; i <= FADE_STEPS; i++) {
+    try {
+      await TrackPlayer.setVolume(from + stepSize * i);
+      await new Promise<void>(r => setTimeout(r, stepDuration));
+    } catch {
+      break; // Player đã bị reset
+    }
+  }
+}
 
 /**
  * Mục đích: Custom hook quản lý Radio audio playback
@@ -61,6 +85,9 @@ export function useRadioPlayer() {
   const currentTrackIndexRef = useRef(currentTrackIndex);
   currentTrackIndexRef.current = currentTrackIndex;
 
+  // T-22: AbortController ref cho race condition
+  const abortRef = useRef<AbortController | null>(null);
+
   // Sleep timer check interval
   const sleepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -73,9 +100,23 @@ export function useRadioPlayer() {
   const playTrack = useCallback(
     async (item: RadioPlaylistItem, index: number) => {
       try {
+        // T-22: Cancel request trước đó nếu đang chạy
+        if (abortRef.current) {
+          abortRef.current.abort();
+        }
+        abortRef.current = new AbortController();
+
         setCurrentTrackIndex(index);
         setGeneratingAudio(true);
         setPlaybackState('loading');
+
+        // T-29: Fade out track cũ (nếu có)
+        try {
+          const state = await TrackPlayer.getPlaybackState();
+          if (state.state === State.Playing) {
+            await fadeVolume(1, 0, 400); // Fade out nhanh
+          }
+        } catch { /* Không có track cũ */ }
 
         let audioUrl: string;
 
@@ -100,6 +141,7 @@ export function useRadioPlayer() {
               volume: ttsVolume,
               randomEmotion,
             },
+            abortRef.current?.signal, // T-22: Cancel khi skip nhanh
           );
           audioUrl = audioResult.audioUrl;
 
@@ -115,12 +157,20 @@ export function useRadioPlayer() {
 
         // T-16: Dùng TrackPlayer queue thay vì reset
         await setupPlayer();
-        await TrackPlayer.reset();
+        const queue = await TrackPlayer.getQueue();
+        if (queue.length > 0) {
+          // Xóa tracks cũ trước track mới để giữ queue sạch
+          await TrackPlayer.removeUpcomingTracks();
+        }
         await addTrack(audioUrl, item.topic);
 
-        // Áp dụng playback speed
+        // Áp dụng playback speed + volume 0 trước khi play
         await TrackPlayer.setRate(playbackSpeed);
+        await TrackPlayer.setVolume(0);
         await TrackPlayer.play();
+
+        // T-29: Fade in
+        await fadeVolume(0, 1);
 
         setGeneratingAudio(false);
         setPlaybackState('playing');
@@ -132,6 +182,8 @@ export function useRadioPlayer() {
 
         console.log(`✅ [RadioPlayer] Đang phát track ${index + 1}`);
       } catch (error: any) {
+        // T-22: Ignore abortion errors
+        if (error?.name === 'AbortError') return;
         console.error('❌ [RadioPlayer] Lỗi phát:', error);
         setGeneratingAudio(false);
         setPlaybackState('idle');
@@ -228,7 +280,18 @@ export function useRadioPlayer() {
     listeningApi
       .generateConversationAudio(
         nextItem.conversation.map(c => ({speaker: c.speaker, text: c.text})),
-        {provider: 'azure', randomVoice: true},
+        {
+          provider: 'azure',
+          randomVoice,
+          ...(Object.keys(voicePerSpeaker).length > 0 && {voicePerSpeaker}),
+          multiTalker,
+          multiTalkerPairIndex,
+          emotion: ttsEmotion,
+          pitch: ttsPitch,
+          rate: ttsRate,
+          volume: ttsVolume,
+          randomEmotion,
+        },
       )
       .then(result => {
         console.log(`✅ [RadioPlayer] Pre-fetch xong track ${nextIdx + 1}`);

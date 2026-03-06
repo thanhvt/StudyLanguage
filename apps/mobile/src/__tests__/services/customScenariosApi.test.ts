@@ -150,4 +150,75 @@ describe('customScenarioApi', () => {
       );
     });
   });
+
+  // ========================
+  // list + categoryId filter
+  // ========================
+  describe('list with categoryId', () => {
+    it('gọi GET /custom-scenarios?categoryId=xxx khi có filter', async () => {
+      mockGet.mockResolvedValue({data: {scenarios: [mockScenario]}} as any);
+
+      await customScenarioApi.list('cat-123');
+
+      expect(mockGet).toHaveBeenCalledWith('/custom-scenarios?categoryId=cat-123');
+    });
+
+    it('gọi GET /custom-scenarios không có params khi undefined', async () => {
+      mockGet.mockResolvedValue({data: {scenarios: []}} as any);
+
+      await customScenarioApi.list();
+
+      expect(mockGet).toHaveBeenCalledWith('/custom-scenarios');
+    });
+  });
+
+  // ========================
+  // create with categoryId
+  // ========================
+  describe('create with categoryId', () => {
+    it('gửi categoryId khi tạo scenario mới', async () => {
+      mockPost.mockResolvedValue({data: {scenario: mockScenario}} as any);
+
+      await customScenarioApi.create({
+        name: 'Test',
+        categoryId: 'cat-123',
+      });
+
+      expect(mockPost).toHaveBeenCalledWith('/custom-scenarios', {
+        name: 'Test',
+        categoryId: 'cat-123',
+      });
+    });
+  });
+
+  // ========================
+  // move
+  // ========================
+  describe('move', () => {
+    it('gọi PATCH /custom-scenarios/:id với categoryId mới', async () => {
+      mockPatch.mockResolvedValue({
+        data: {scenario: {...mockScenario, categoryId: 'cat-456'}},
+      } as any);
+
+      const result = await customScenarioApi.move('cs-1', 'cat-456');
+
+      expect(mockPatch).toHaveBeenCalledWith('/custom-scenarios/cs-1', {
+        categoryId: 'cat-456',
+      });
+      expect(result.categoryId).toBe('cat-456');
+    });
+
+    it('di chuyển về Other (categoryId = null)', async () => {
+      mockPatch.mockResolvedValue({
+        data: {scenario: {...mockScenario, categoryId: null}},
+      } as any);
+
+      const result = await customScenarioApi.move('cs-1', null);
+
+      expect(mockPatch).toHaveBeenCalledWith('/custom-scenarios/cs-1', {
+        categoryId: null,
+      });
+      expect(result.categoryId).toBeNull();
+    });
+  });
 });

@@ -184,6 +184,27 @@ const MoreScreen = () => {
               icon: () => (
                 <View
                   className="w-8 h-8 rounded-full items-center justify-center"
+                  style={{backgroundColor: '#2563EB' + '20'}}>
+                  <Icon
+                    name="FolderOpen"
+                    className="w-4 h-4"
+                    style={{color: '#2563EB'}}
+                  />
+                </View>
+              ),
+              title: 'Quản lý nhóm chủ đề',
+              onPress: () => {
+                // Navigate tới Listening tab → ManageCategories screen
+                (navigation as any).navigate('MainTabs', {
+                  screen: 'Listening',
+                  params: {screen: 'ManageCategories'},
+                });
+              },
+            },
+            {
+              icon: () => (
+                <View
+                  className="w-8 h-8 rounded-full items-center justify-center"
                   style={{backgroundColor: '#f43f5e' + '20'}}>
                   <Icon
                     name="Shield"

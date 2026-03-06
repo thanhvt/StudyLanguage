@@ -5,6 +5,7 @@ import ListeningPlayerScreen from '@/screens/listening/PlayerScreen';
 import RadioScreen from '@/screens/listening/RadioScreen';
 import CustomScenariosScreen from '@/screens/listening/CustomScenariosScreen';
 import BookmarksVocabularyScreen from '@/screens/listening/BookmarksVocabularyScreen';
+import ManageCategoriesScreen from '@/screens/listening/ManageCategoriesScreen';
 
 export type ListeningStackParamList = {
   Config: undefined;
@@ -12,6 +13,7 @@ export type ListeningStackParamList = {
   Radio: undefined;
   CustomScenarios: undefined;
   BookmarksVocabulary: undefined;
+  ManageCategories: {focusCategoryId?: string} | undefined;
 };
 
 const Stack = createNativeStackNavigator<ListeningStackParamList>();
@@ -34,6 +36,7 @@ export default function ListeningStack() {
       <Stack.Screen name="Radio" component={RadioScreen} />
       <Stack.Screen name="CustomScenarios" component={CustomScenariosScreen} />
       <Stack.Screen name="BookmarksVocabulary" component={BookmarksVocabularyScreen} />
+      <Stack.Screen name="ManageCategories" component={ManageCategoriesScreen} />
     </Stack.Navigator>
   );
 }

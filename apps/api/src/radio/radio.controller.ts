@@ -10,9 +10,14 @@ import {
   HttpStatus,
   Logger,
   UseGuards,
+  Sse,
 } from '@nestjs/common';
 import { RadioService } from './radio.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
+import { Observable, Subject } from 'rxjs';
+
+// T-13: Lưu progress subjects cho từng user
+const progressSubjects = new Map<string, Subject<MessageEvent>>();
 
 /**
  * RadioController - Controller xử lý API cho Radio Mode
@@ -42,18 +47,56 @@ export class RadioController {
       data: {
         duration,
         trackCount,
-        estimatedTime: `~${Math.ceil(trackCount * 3)} giây`, // ~3s per track to generate text
+        estimatedTime: `~${Math.ceil(trackCount * 3)} giây`,
       },
     };
   }
 
   /**
-   * Tạo Radio playlist mới
+   * T-13: SSE endpoint cho progress khi generate
    *
-   * Mục đích: Generate playlist với duration đã chọn
-   * Tham số: duration (phút)
-   * Trả về: Playlist object với items
+   * Mục đích: Real-time progress cho mobile khi đang generate playlist
+   * Tham số đầu vào: userId (từ auth)
+   * Tham số đầu ra: Observable<MessageEvent> — stream SSE events
+   * Khi nào sử dụng: Mobile kết nối trước khi gọi POST /generate
    */
+  @Sse('generate/progress')
+  @UseGuards(SupabaseAuthGuard)
+  generateProgress(@Req() req: any): Observable<MessageEvent> {
+    const userId = req.user?.id || req.user?.sub || 'unknown';
+    const subject = new Subject<MessageEvent>();
+    progressSubjects.set(userId, subject);
+
+    // Cleanup khi client ngắt kết nối
+    req.on('close', () => {
+      subject.complete();
+      progressSubjects.delete(userId);
+    });
+
+    return subject.asObservable();
+  }
+
+  /**
+   * Emit progress event cho user (static helper)
+   *
+   * Mục đích: Gửi SSE event về cho client
+   * Tham số đầu vào: userId, track index, total, topic
+   * Khi nào sử dụng: RadioService gọi khi generate xong mỗi track
+   */
+  static emitProgress(userId: string, trackIndex: number, total: number, topic: string) {
+    const subject = progressSubjects.get(userId);
+    if (subject) {
+      subject.next({
+        data: JSON.stringify({
+          trackIndex,
+          total,
+          topic,
+          percent: Math.round(((trackIndex + 1) / total) * 100),
+        }),
+      } as MessageEvent);
+    }
+  }
+
   /**
    * Tạo Radio playlist mới
    *
@@ -71,7 +114,6 @@ export class RadioController {
     @Body() body: { duration: number; categories?: string[] },
   ) {
     try {
-      // Lấy userId từ request (đã được auth middleware xử lý)
       const userId = req.user?.id || req.user?.sub;
 
       if (!userId) {
@@ -90,20 +132,19 @@ export class RadioController {
         );
       }
 
-      // Validate categories nếu có
       const validCategories = ['it', 'daily', 'personal', 'business', 'academic'];
       if (categories && categories.length > 0) {
         const invalidCats = categories.filter(c => !validCategories.includes(c));
         if (invalidCats.length > 0) {
           throw new HttpException(
-            `Categories không hợp lệ: ${invalidCats.join(', ')}. Chỉ chấp nhận: ${validCategories.join(', ')}`,
+            `Categories không hợp lệ: ${invalidCats.join(', ')}`,
             HttpStatus.BAD_REQUEST,
           );
         }
       }
 
       this.logger.log(
-        `User ${userId} đang tạo Radio playlist ${duration} phút${categories ? ` [${categories.join(',')}]` : ''}`,
+        `User ${userId} tạo Radio playlist ${duration} phút${categories ? ` [${categories.join(',')}]` : ''}`,
       );
 
       const result = await this.radioService.generateRadioPlaylist(
@@ -111,6 +152,16 @@ export class RadioController {
         duration,
         categories,
       );
+
+      // T-13: Hoàn thành — close SSE stream
+      const subject = progressSubjects.get(userId);
+      if (subject) {
+        subject.next({
+          data: JSON.stringify({ done: true, trackCount: result.items.length }),
+        } as MessageEvent);
+        subject.complete();
+        progressSubjects.delete(userId);
+      }
 
       return {
         success: true,

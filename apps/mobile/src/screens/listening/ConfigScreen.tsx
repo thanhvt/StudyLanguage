@@ -34,6 +34,7 @@ import TrackPlayer from 'react-native-track-player';
 import LinearGradient from 'react-native-linear-gradient';
 import TtsSettingsSheet from '@/components/listening/TtsSettingsSheet';
 import GeneratingScreen from '@/components/listening/GeneratingScreen';
+import NowPlayingBar from '@/components/listening/NowPlayingBar';
 import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
 
 // ========================
@@ -1123,6 +1124,13 @@ export default function ListeningConfigScreen({
 
         </Animated.ScrollView>
       </KeyboardAvoidingView>
+
+      {/* T-09: NowPlayingBar — mini player cho Radio khi đang ở ConfigScreen */}
+      <NowPlayingBar
+        onPress={() => {
+          navigation.navigate('RadioScreen' as never);
+        }}
+      />
 
       {/* ======================== */}
       {/* STICKY FOOTER */}

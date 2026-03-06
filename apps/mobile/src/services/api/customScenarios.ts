@@ -10,6 +10,8 @@ export interface CustomScenario {
   name: string;
   description: string;
   category?: string;
+  /** ID nhóm chủ đề (custom_categories.id). null = Other */
+  categoryId: string | null;
   isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
@@ -33,13 +35,14 @@ export interface CustomScenario {
 export const customScenarioApi = {
   /**
    * Mục đích: Lấy danh sách custom scenarios
-   * Tham số đầu vào: không
+   * Tham số đầu vào: categoryId (optional) — lọc theo nhóm, null = Other
    * Tham số đầu ra: Promise<CustomScenario[]>
-   * Khi nào sử dụng: Component mount hoặc refresh
+   * Khi nào sử dụng: Component mount hoặc chuyển tab category
    */
-  list: async (): Promise<CustomScenario[]> => {
-    console.log('📝 [CustomScenario] Lấy danh sách...');
-    const response = await apiClient.get('/custom-scenarios');
+  list: async (categoryId?: string | null): Promise<CustomScenario[]> => {
+    console.log('📝 [CustomScenario] Lấy danh sách...', categoryId ? `category: ${categoryId}` : 'all');
+    const params = categoryId !== undefined ? `?categoryId=${categoryId}` : '';
+    const response = await apiClient.get(`/custom-scenarios${params}`);
     // Backend trả { success, scenarios, count } → cần lấy .scenarios
     const data = response.data as any;
     return (data?.scenarios ?? data ?? []) as CustomScenario[];
@@ -55,8 +58,9 @@ export const customScenarioApi = {
     name: string;
     description?: string;
     category?: string;
+    categoryId?: string;
   }): Promise<CustomScenario> => {
-    console.log('📝 [CustomScenario] Tạo mới:', data.name);
+    console.log('📝 [CustomScenario] Tạo mới:', data.name, 'nhóm:', data.categoryId || 'Other');
     const response = await apiClient.post('/custom-scenarios', data);
     // Backend trả { success, scenario } → lấy .scenario
     const result = response.data as any;
@@ -87,5 +91,23 @@ export const customScenarioApi = {
   delete: async (id: string): Promise<void> => {
     console.log('📝 [CustomScenario] Xoá:', id);
     await apiClient.delete(`/custom-scenarios/${id}`);
+  },
+
+  /**
+   * Mục đích: Di chuyển scenario sang category khác
+   * Tham số đầu vào: id, targetCategoryId (null = Other)
+   * Tham số đầu ra: Promise<CustomScenario>
+   * Khi nào sử dụng: ManageScenariosSheet > "Di chuyển nhóm"
+   */
+  move: async (
+    id: string,
+    targetCategoryId: string | null,
+  ): Promise<CustomScenario> => {
+    console.log('📝 [CustomScenario] Di chuyển:', id, '→', targetCategoryId || 'Other');
+    const response = await apiClient.patch(`/custom-scenarios/${id}`, {
+      categoryId: targetCategoryId,
+    });
+    const result = response.data as any;
+    return (result?.scenario ?? result) as CustomScenario;
   },
 };

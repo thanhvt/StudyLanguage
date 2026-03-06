@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -14,15 +15,29 @@ import {useToast} from '@/components/ui/ToastProvider';
 import {radioApi, RadioPlaylistItem, RadioPlaylistResult} from '@/services/api/radio';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useRadioStore} from '@/store/useRadioStore';
+import {useAppStore} from '@/store/useAppStore';
 import {listeningApi} from '@/services/api/listening';
 import TrackPlayer, {Event} from 'react-native-track-player';
 import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import LinearGradient from 'react-native-linear-gradient';
+import RadioControlsBar from '@/components/listening/RadioControlsBar';
+import RadioSkeleton from '@/components/listening/RadioSkeleton';
+import TrackPulse from '@/components/listening/TrackPulse';
 
 // =======================
 // Constants
 // =======================
 const LISTENING_BLUE = '#2563EB';
+
+// T-18: Categories cho filter
+const CATEGORIES = [
+  {id: 'it', label: '💻 Công nghệ'},
+  {id: 'daily', label: '🌍 Đời sống'},
+  {id: 'personal', label: '👤 Cá nhân'},
+  {id: 'business', label: '💼 Kinh doanh'},
+  {id: 'academic', label: '🎓 Học thuật'},
+];
 
 /** Các option duration cho Radio */
 const DURATION_OPTIONS = [
@@ -50,6 +65,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const haptic = useHaptic();
   const insets = useInsets();
   const {showError, showSuccess} = useToast();
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
 
   // T-02: Nhận loadedPlaylist từ route params
   const loadedPlaylist = route?.params?.loadedPlaylist as RadioPlaylistResult | undefined;
@@ -68,6 +85,11 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // T-18: Selected categories
+  const preferredCategories = useRadioStore(s => s.preferredCategories);
+  const setPreferredCategories = useRadioStore(s => s.setPreferredCategories);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(preferredCategories);
 
   // Global player store
   const setPlayerMode = useAudioPlayerStore(s => s.setPlayerMode);
@@ -127,7 +149,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       console.log('📻 [Radio] Auto-generate từ ConfigScreen, duration:', selectedDuration);
       // Gọi API generate ngay
       radioApi
-        .generate(selectedDuration)
+        .generate(selectedDuration, selectedCategories.length > 0 ? selectedCategories : undefined)
         .then(result => {
           setPlaylist(result);
           setRadioState('ready');
@@ -160,7 +182,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       setRadioState('generating');
       console.log('📻 [Radio] Đang tạo playlist', selectedDuration, 'phút...');
 
-      const result = await radioApi.generate(selectedDuration);
+      const result = await radioApi.generate(selectedDuration, selectedCategories.length > 0 ? selectedCategories : undefined);
       setPlaylist(result);
       setRadioState('ready');
       showSuccess(
@@ -299,23 +321,25 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           accessibilityRole="button">
           <View className="flex-row items-center">
             {/* Track number / Playing indicator */}
-            <View
-              className="w-8 h-8 rounded-full items-center justify-center mr-3"
-              style={{backgroundColor: isCurrent ? LISTENING_BLUE : undefined}}>
-              {isGenerating ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : isCurrent ? (
-                <Icon name="Volume2" className="w-4 h-4 text-primary-foreground" />
-              ) : (
-                <AppText
-                  className={`text-sm font-sans-bold ${
-                    isCurrent ? 'text-primary-foreground' : ''
-                  }`}
-                  style={!isCurrent ? {color: colors.neutrals400} : undefined}>
-                  {index + 1}
-                </AppText>
-              )}
-            </View>
+            <TrackPulse isActive={isCurrent && !isGenerating} size={32}>
+              <View
+                className="w-8 h-8 rounded-full items-center justify-center"
+                style={{backgroundColor: isCurrent ? LISTENING_BLUE : undefined}}>
+                {isGenerating ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : isCurrent ? (
+                  <Icon name="Volume2" className="w-4 h-4 text-primary-foreground" />
+                ) : (
+                  <AppText
+                    className={`text-sm font-sans-bold ${
+                      isCurrent ? 'text-primary-foreground' : ''
+                    }`}
+                    style={!isCurrent ? {color: colors.neutrals400} : undefined}>
+                    {index + 1}
+                  </AppText>
+                )}
+              </View>
+            </TrackPulse>
 
             {/* Track info */}
             <View className="flex-1">
@@ -349,43 +373,48 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   );
 
   return (
-    <View className="flex-1">
-      {/* T-08: Glassmorphism background — matching ConfigScreen style */}
-      <LinearGradient
-        colors={[
-          '#0a0e1a',
-          '#0d1528',
-          '#0f1e35',
-          '#0a1628',
-          '#080d18',
-        ]}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        className="absolute inset-0"
-      />
-      {/* Aurora floating blobs */}
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
+      {/* T-08: Glassmorphism background — chỉ dark mode dùng gradient */}
+      {isDark && (
+        <LinearGradient
+          colors={[
+            '#0a0e1a',
+            '#0d1528',
+            '#0f1e35',
+            '#0a1628',
+            '#080d18',
+          ]}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          className="absolute inset-0"
+        />
+      )}
+      {/* Aurora floating blobs — nhẹ hơn trong light mode */}
       <View
-        className="absolute w-[300] h-[300] rounded-full opacity-[0.08]"
+        className="absolute w-[300] h-[300] rounded-full"
         style={{
           backgroundColor: LISTENING_BLUE,
+          opacity: isDark ? 0.08 : 0.06,
           top: -80,
           right: -60,
           transform: [{scale: 1.2}],
         }}
       />
       <View
-        className="absolute w-[250] h-[250] rounded-full opacity-[0.06]"
+        className="absolute w-[250] h-[250] rounded-full"
         style={{
           backgroundColor: '#3B82F6',
+          opacity: isDark ? 0.06 : 0.04,
           bottom: 120,
           left: -80,
           transform: [{scale: 1.3}],
         }}
       />
       <View
-        className="absolute w-[200] h-[200] rounded-full opacity-[0.05]"
+        className="absolute w-[200] h-[200] rounded-full"
         style={{
           backgroundColor: '#8B5CF6',
+          opacity: isDark ? 0.05 : 0.03,
           top: '40%' as any,
           right: -40,
         }}
@@ -397,9 +426,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           className="p-2 -ml-2"
           accessibilityLabel="Quay lại"
           accessibilityRole="button">
-          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: '#E2E8F0'}} />
+          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
-        <AppText className="font-sans-bold text-lg flex-1 text-center" style={{color: '#E2E8F0'}}>
+        <AppText className="font-sans-bold text-lg flex-1 text-center" style={{color: colors.foreground}}>
           📻 Radio Mode
         </AppText>
         <View className="w-10" />
@@ -412,10 +441,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
            ========================================== */
         <View className="flex-1 px-6 justify-center">
           {/* Tiêu đề */}
-          <AppText className="font-sans-bold text-2xl text-center mb-2" style={{color: '#E2E8F0'}}>
+          <AppText className="font-sans-bold text-2xl text-center mb-2" style={{color: colors.foreground}}>
             Nghe thụ động
           </AppText>
-          <AppText className="text-center mb-8" style={{color: '#94A3B8'}}>
+          <AppText className="text-center mb-8" style={{color: colors.neutrals400}}>
             Chọn thời lượng, AI sẽ tạo playlist random cho bạn 🎲
           </AppText>
 
@@ -428,8 +457,12 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                   key={opt.value}
                   className="flex-row items-center rounded-2xl border px-4 py-4"
                   style={{
-                    backgroundColor: isSelected ? `${LISTENING_BLUE}15` : undefined,
-                    borderColor: isSelected ? `${LISTENING_BLUE}40` : undefined,
+                    backgroundColor: isSelected
+                      ? isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`
+                      : isDark ? undefined : colors.surface,
+                    borderColor: isSelected
+                      ? `${LISTENING_BLUE}40`
+                      : isDark ? colors.glassBorder : colors.border,
                   }}
                   onPress={() => {
                     haptic.light();
@@ -458,6 +491,44 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             })}
           </View>
 
+          {/* T-18: Category filter chips */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-6"
+            contentContainerStyle={{paddingHorizontal: 4, gap: 8}}>
+            {CATEGORIES.map(cat => {
+              const isActive = selectedCategories.includes(cat.id);
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  onPress={() => {
+                    const next = isActive
+                      ? selectedCategories.filter(c => c !== cat.id)
+                      : [...selectedCategories, cat.id];
+                    setSelectedCategories(next);
+                    setPreferredCategories(next);
+                  }}
+                  className="rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: isActive
+                      ? `${LISTENING_BLUE}25`
+                      : isDark ? 'rgba(255,255,255,0.06)' : colors.surface,
+                    borderWidth: 1,
+                    borderColor: isActive
+                      ? `${LISTENING_BLUE}50`
+                      : isDark ? 'rgba(255,255,255,0.08)' : colors.border,
+                  }}>
+                  <AppText
+                    className="text-xs"
+                    style={{color: isActive ? LISTENING_BLUE : colors.neutrals400}}>
+                    {cat.label}
+                  </AppText>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
           {/* Generate button */}
           <AppButton
             variant="primary"
@@ -474,9 +545,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           </AppButton>
 
           {radioState === 'generating' && (
-            <AppText className="text-xs text-center mt-3" style={{color: '#94A3B8'}}>
-              AI đang tạo hội thoại cho {selectedDuration} phút nghe...
-            </AppText>
+            <RadioSkeleton trackCount={Math.ceil(selectedDuration / 7)} />
           )}
         </View>
       ) : (
@@ -507,10 +576,32 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             showsVerticalScrollIndicator={false}
           />
 
+          {/* T-19/T-20/T-21/T-24: RadioControlsBar */}
+          <RadioControlsBar
+            onDelete={async () => {
+              if (playlist?.playlist?.id) {
+                try {
+                  await radioApi.deletePlaylist(playlist.playlist.id);
+                  setRadioState('idle');
+                  setPlaylist(null);
+                  setCurrentTrackIndex(-1);
+                  showSuccess('Đã xóa', 'Playlist đã được xóa thành công');
+                } catch {
+                  showError('Lỗi', 'Không thể xóa playlist');
+                }
+              }
+            }}
+          />
+
           {/* Bottom controls */}
           <View
-            className="absolute bottom-0 left-0 right-0 px-6 pt-3"
-            style={{paddingBottom: Math.max(insets.bottom, 16), backgroundColor: 'rgba(10, 14, 26, 0.95)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)'}}>
+            className="px-6 pt-3"
+            style={{
+              paddingBottom: Math.max(insets.bottom, 16),
+              backgroundColor: isDark ? 'rgba(10, 14, 26, 0.95)' : colors.background,
+              borderTopWidth: 1,
+              borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border,
+            }}>
             <AppButton
               variant="ghost"
               size="lg"

@@ -12,6 +12,7 @@ import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useRadioStore} from '@/store/useRadioStore';
 import {useRadioPlayer} from '@/hooks/useRadioPlayer';
+import {useColors} from '@/hooks/useColors';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -40,6 +41,7 @@ export default function RadioControlsBar({
   const cycleRepeat = useRadioStore(s => s.cycleRepeat);
   const setSleepTimer = useRadioStore(s => s.setSleepTimer);
   const {setSpeed} = useRadioPlayer();
+  const colors = useColors();
 
   const [showSleepPicker, setShowSleepPicker] = useState(false);
 
@@ -109,11 +111,11 @@ export default function RadioControlsBar({
           <Icon
             name="Shuffle"
             className="w-5 h-5"
-            style={{color: shuffle ? LISTENING_BLUE : '#64748B'}}
+            style={{color: shuffle ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
             className="text-[10px] mt-0.5"
-            style={{color: shuffle ? LISTENING_BLUE : '#64748B'}}>
+            style={{color: shuffle ? LISTENING_BLUE : colors.neutrals400}}>
             Trộn
           </AppText>
         </TouchableOpacity>
@@ -127,11 +129,11 @@ export default function RadioControlsBar({
           <Icon
             name={repeatIcon}
             className="w-5 h-5"
-            style={{color: repeatActive ? LISTENING_BLUE : '#64748B'}}
+            style={{color: repeatActive ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
             className="text-[10px] mt-0.5"
-            style={{color: repeatActive ? LISTENING_BLUE : '#64748B'}}>
+            style={{color: repeatActive ? LISTENING_BLUE : colors.neutrals400}}>
             {repeat === 'off' ? 'Lặp' : repeat === 'all' ? 'Tất cả' : '1 bài'}
           </AppText>
         </TouchableOpacity>
@@ -144,12 +146,12 @@ export default function RadioControlsBar({
           accessibilityRole="button">
           <AppText
             className="text-sm font-sans-bold"
-            style={{color: playbackSpeed !== 1.0 ? LISTENING_BLUE : '#64748B'}}>
+            style={{color: playbackSpeed !== 1.0 ? LISTENING_BLUE : colors.neutrals400}}>
             {playbackSpeed}x
           </AppText>
           <AppText
             className="text-[10px] mt-0.5"
-            style={{color: playbackSpeed !== 1.0 ? LISTENING_BLUE : '#64748B'}}>
+            style={{color: playbackSpeed !== 1.0 ? LISTENING_BLUE : colors.neutrals400}}>
             Tốc độ
           </AppText>
         </TouchableOpacity>
@@ -167,11 +169,11 @@ export default function RadioControlsBar({
           <Icon
             name="Moon"
             className="w-5 h-5"
-            style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : '#64748B'}}
+            style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : colors.neutrals400}}
           />
           <AppText
             className="text-[10px] mt-0.5"
-            style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : '#64748B'}}>
+            style={{color: sleepTimerMinutes > 0 ? LISTENING_BLUE : colors.neutrals400}}>
             {sleepTimerMinutes > 0 ? `${sleepTimerMinutes}'` : 'Ngủ'}
           </AppText>
         </TouchableOpacity>
@@ -185,11 +187,11 @@ export default function RadioControlsBar({
           <Icon
             name="Trash2"
             className="w-5 h-5"
-            style={{color: '#EF4444'}}
+            style={{color: colors.error}}
           />
           <AppText
             className="text-[10px] mt-0.5"
-            style={{color: '#EF4444'}}>
+            style={{color: colors.error}}>
             Xóa
           </AppText>
         </TouchableOpacity>

@@ -151,9 +151,11 @@ export const useRadioStore = create<RadioState & RadioActions>()(
       },
       clearSleepTimer: () => set({sleepTimerMinutes: 0, sleepTimerEndAt: 0}),
 
-      setPlaybackSpeed: speed => set({
-        playbackSpeed: Math.max(0.5, Math.min(2.0, speed)),
-      }),
+      setPlaybackSpeed: speed => {
+        // Guard NaN / Infinity → fallback 1.0
+        const safe = Number.isFinite(speed) ? speed : 1.0;
+        set({playbackSpeed: Math.max(0.5, Math.min(2.0, safe))});
+      },
 
       toggleShuffle: () => set(s => ({shuffle: !s.shuffle})),
 
@@ -254,7 +256,7 @@ export const useRadioStore = create<RadioState & RadioActions>()(
     {
       name: 'radio-store',
       storage: createJSONStorage(() => mmkvStorage),
-      // Chỉ persist các preference lâu dài, không persist playlist/playback state
+      // Persist cả playlist + track index để resume playback (T-26)
       partialize: state => ({
         playbackSpeed: state.playbackSpeed,
         preferredCategories: state.preferredCategories,
@@ -263,6 +265,9 @@ export const useRadioStore = create<RadioState & RadioActions>()(
         lastListenedDate: state.lastListenedDate,
         shuffle: state.shuffle,
         repeat: state.repeat,
+        currentPlaylist: state.currentPlaylist,
+        currentTrackIndex: state.currentTrackIndex,
+        trackProgress: state.trackProgress,
       }),
     },
   ),

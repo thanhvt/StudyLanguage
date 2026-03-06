@@ -12,6 +12,8 @@ import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useRadioStore} from '@/store/useRadioStore';
 import {useRadioPlayer} from '@/hooks/useRadioPlayer';
+import {useColors} from '@/hooks/useColors';
+import {useAppStore} from '@/store/useAppStore';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -26,6 +28,9 @@ export default function NowPlayingBar({onPress}: {onPress?: () => void}) {
   const currentPlaylist = useRadioStore(s => s.currentPlaylist);
   const currentTrackIndex = useRadioStore(s => s.currentTrackIndex);
   const {togglePlay, skip} = useRadioPlayer();
+  const colors = useColors();
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
 
   // Ẩn nếu không đang phát
   if (!currentPlaylist || currentTrackIndex < 0 || playbackState === 'idle') {
@@ -43,9 +48,9 @@ export default function NowPlayingBar({onPress}: {onPress?: () => void}) {
     <TouchableOpacity
       className="mx-4 mb-2 rounded-2xl overflow-hidden"
       style={{
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255,255,255,0.95)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border,
       }}
       onPress={onPress}
       activeOpacity={0.8}
@@ -63,11 +68,11 @@ export default function NowPlayingBar({onPress}: {onPress?: () => void}) {
         <View className="flex-1 mr-3">
           <AppText
             className="font-sans-medium text-sm"
-            style={{color: '#E2E8F0'}}
+            style={{color: colors.foreground}}
             numberOfLines={1}>
             {track.topic}
           </AppText>
-          <AppText className="text-xs" style={{color: '#94A3B8'}}>
+          <AppText className="text-xs" style={{color: colors.neutrals400}}>
             Track {currentTrackIndex + 1}/{total} • {track.numSpeakers} người
           </AppText>
         </View>
@@ -99,21 +104,23 @@ export default function NowPlayingBar({onPress}: {onPress?: () => void}) {
               skip();
             }}
             className="w-9 h-9 rounded-full items-center justify-center"
-            style={{backgroundColor: 'rgba(255,255,255,0.08)'}}
+            style={{
+              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : colors.surface,
+            }}
             disabled={isLoading || currentTrackIndex >= total - 1}
             accessibilityLabel="Bài tiếp theo"
             accessibilityRole="button">
             <Icon
               name="SkipForward"
               className="w-4 h-4"
-              style={{color: '#94A3B8'}}
+              style={{color: colors.neutrals400}}
             />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Progress bar nhỏ */}
-      <View className="h-[2px]" style={{backgroundColor: 'rgba(255,255,255,0.05)'}}>
+      <View className="h-[2px]" style={{backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : colors.border}}>
         <View
           className="h-full"
           style={{
