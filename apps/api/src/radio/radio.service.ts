@@ -114,7 +114,8 @@ export class RadioService {
    * Trả về: Số phút được chọn
    */
   generateRandomDuration(): number {
-    const durations = [30, 60, 120];
+    // S-03 fix: Bao gồm 1 phút — đồng bộ với mobile DURATION_OPTIONS [1, 30, 60, 120]
+    const durations = [1, 30, 60, 120];
     const randomIndex = Math.floor(Math.random() * durations.length);
     return durations[randomIndex];
   }
@@ -302,66 +303,73 @@ CHỈ trả JSON, không giải thích.`;
       throw new Error('Không thể tạo playlist');
     }
 
-    // T-12: Generate conversations song song (Promise.allSettled)
+    // T-12: Generate conversations with concurrency limit
+    // Batch 4 tại 1 thời điểm — tránh API rate limiting với 18 tracks
+    const CONCURRENCY = 4;
     const items: RadioPlaylistItem[] = [];
 
-    const generatePromises = selectedTopics.map(async (scenario, i) => {
-      // T-06: Random số speakers 2-4 cho mỗi track
-      const numSpeakers = this.getRandomSpeakerCount();
-      this.logger.log(`Generating track ${i + 1}/${trackCount}: ${scenario.topic} (${numSpeakers} speakers)`);
+    for (let batchStart = 0; batchStart < selectedTopics.length; batchStart += CONCURRENCY) {
+      const batch = selectedTopics.slice(batchStart, batchStart + CONCURRENCY);
+      this.logger.log(`Đang generate batch ${Math.floor(batchStart / CONCURRENCY) + 1}: tracks ${batchStart + 1}-${batchStart + batch.length}`);
 
-      // T-05: Level = intermediate (đã implicit trong prompt AI — "Giao tiếp hàng ngày, dễ hiểu")
-      const result = await this.aiService.generateConversation(
-        scenario.topic,
-        trackDuration,
-        numSpeakers,
-      );
+      const batchPromises = batch.map(async (scenario, batchIdx) => {
+        const globalIdx = batchStart + batchIdx;
+        const numSpeakers = this.getRandomSpeakerCount();
+        this.logger.log(`Generating track ${globalIdx + 1}/${trackCount}: ${scenario.topic} (${numSpeakers} speakers)`);
 
-      return { scenario, result, numSpeakers, position: i };
-    });
+        // T-05: Level = intermediate (implicit trong prompt AI)
+        const result = await this.aiService.generateConversation(
+          scenario.topic,
+          trackDuration,
+          numSpeakers,
+        );
 
-    const settled = await Promise.allSettled(generatePromises);
+        return { scenario, result, numSpeakers, position: globalIdx };
+      });
 
-    // Xử lý kết quả song song
-    for (const outcome of settled) {
-      if (outcome.status === 'rejected') {
-        this.logger.error('Lỗi generate track:', outcome.reason);
-        continue;
-      }
+      const settled = await Promise.allSettled(batchPromises);
 
-      const { scenario, result, numSpeakers, position } = outcome.value;
+      // Xử lý kết quả batch
+      for (const outcome of settled) {
+        if (outcome.status === 'rejected') {
+          this.logger.error('Lỗi generate track:', outcome.reason);
+          continue;
+        }
 
-      // Lưu vào playlist_items
-      const { data: item, error: itemError } = await this.supabase
-        .from('playlist_items')
-        .insert({
-          playlist_id: playlist.id,
+        const { scenario, result, numSpeakers, position } = outcome.value;
+
+        // Lưu vào playlist_items
+        const { data: item, error: itemError } = await this.supabase
+          .from('playlist_items')
+          .insert({
+            playlist_id: playlist.id,
+            topic: scenario.topic,
+            conversation: result.script,
+            duration: trackDuration,
+            num_speakers: numSpeakers,
+            category: scenario.category,
+            sub_category: scenario.subCategory,
+            position,
+          })
+          .select()
+          .single();
+
+        if (itemError) {
+          this.logger.error(`Lỗi lưu item ${position}:`, itemError);
+          continue;
+        }
+
+        items.push({
+          id: item.id,
           topic: scenario.topic,
           conversation: result.script,
           duration: trackDuration,
-          num_speakers: numSpeakers,
+          numSpeakers,
           category: scenario.category,
-          sub_category: scenario.subCategory,
+          subCategory: scenario.subCategory,
           position,
-        })
-        .select()
-        .single();
-
-      if (itemError) {
-        this.logger.error(`Lỗi lưu item ${position}:`, itemError);
-        continue;
+        });
       }
-
-      items.push({
-        id: item.id,
-        topic: scenario.topic,
-        conversation: result.script,
-        duration: trackDuration,
-        numSpeakers,
-        category: scenario.category,
-        subCategory: scenario.subCategory,
-        position,
-      });
     }
 
     // Sắp xếp theo position (vì Promise.allSettled có thể trả về không đúng thứ tự)

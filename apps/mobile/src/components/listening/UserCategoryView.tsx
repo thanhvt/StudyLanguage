@@ -12,6 +12,7 @@ import {customScenarioApi, type CustomScenario} from '@/services/api/customScena
 import {useListeningStore} from '@/store/useListeningStore';
 import type {CustomCategory} from '@/services/api/customCategories';
 import type {TopicScenario} from '@/data/topic-data';
+import {Alert} from 'react-native';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -74,6 +75,43 @@ export function UserCategoryView({
     loadScenarios();
     return () => { mounted = false; };
   }, [category.id]);
+
+  /**
+   * Mục đích: Tạo scenario nhanh + thêm vào category này
+   * Tham số đầu vào: không (dùng Alert.prompt)
+   * Tham số đầu ra: void (cập nhật local state)
+   * Khi nào sử dụng: User nhấn '+ Thêm chủ đề vào nhóm'
+   */
+  const handleQuickAddScenario = useCallback(() => {
+    Alert.prompt(
+      'Thêm chủ đề nhanh',
+      `Nhập tên chủ đề cho nhóm "${category.icon} ${category.name}"`,
+      [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Thêm',
+          onPress: async (name?: string) => {
+            const trimmed = name?.trim();
+            if (!trimmed) return;
+            try {
+              const newScenario = await customScenarioApi.create({
+                name: trimmed,
+                categoryId: category.id,
+              });
+              haptic.success();
+              // Thêm vào danh sách local ngay
+              setScenarios(prev => [newScenario, ...prev]);
+            } catch (err) {
+              Alert.alert('Lỗi', 'Không thể tạo chủ đề. Thử lại.');
+            }
+          },
+        },
+      ],
+      'plain-text',
+      '',
+      'default',
+    );
+  }, [category, haptic]);
 
   /**
    * Mục đích: Chuyển đổi CustomScenario → TopicScenario format
@@ -212,8 +250,8 @@ export function UserCategoryView({
           borderStyle: 'dashed',
         }}
         onPress={() => {
-          // TODO: Mở QuickScenarioSheet (pre-fill category = this)
           haptic.light();
+          handleQuickAddScenario();
         }}
         disabled={disabled}>
         <Icon name="Plus" className="w-4 h-4 mr-2" style={{color: LISTENING_BLUE}} />

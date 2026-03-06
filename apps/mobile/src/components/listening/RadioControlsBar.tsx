@@ -13,8 +13,7 @@ import Icon from '@/components/ui/Icon';
 import {useRadioStore} from '@/store/useRadioStore';
 import {useRadioPlayer} from '@/hooks/useRadioPlayer';
 import {useColors} from '@/hooks/useColors';
-
-const LISTENING_BLUE = '#2563EB';
+import {LISTENING_BLUE} from '@/constants/listening';
 
 // Speed options cho cycle
 const SPEED_OPTIONS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];

@@ -8,8 +8,7 @@
  */
 import React, {useEffect, useRef} from 'react';
 import {Animated, View, Easing} from 'react-native';
-
-const LISTENING_BLUE = '#2563EB';
+import {LISTENING_BLUE} from '@/constants/listening';
 
 /**
  * Mục đích: Component pulse animation bao quanh children

@@ -55,7 +55,7 @@ describe('RadioService', () => {
   // generateRandomDuration
   // ========================
   describe('generateRandomDuration', () => {
-    it('trả về 1 trong 3 giá trị: 30, 60, 120', () => {
+    it('trả về 1 trong 4 giá trị: 1, 30, 60, 120', () => {
       const results = new Set<number>();
       for (let i = 0; i < 100; i++) {
         results.add(service.generateRandomDuration());
@@ -63,7 +63,7 @@ describe('RadioService', () => {
       // Phải có ít nhất 2 giá trị khác nhau (xác suất gần 100%)
       expect(results.size).toBeGreaterThanOrEqual(2);
       results.forEach(val => {
-        expect([30, 60, 120]).toContain(val);
+        expect([1, 30, 60, 120]).toContain(val);
       });
     });
   });

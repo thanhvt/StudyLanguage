@@ -49,22 +49,20 @@ async function fadeVolume(from: number, to: number, duration: number = FADE_DURA
  * Khi nào sử dụng: RadioScreen, NowPlayingBar
  */
 export function useRadioPlayer() {
-  // Radio store
-  const {
-    currentPlaylist,
-    currentTrackIndex,
-    playbackState,
-    isGeneratingAudio,
-    playbackSpeed,
-    sleepTimerEndAt,
-    setPlaybackState,
-    setCurrentTrackIndex,
-    setGeneratingAudio,
-    nextTrack,
-    previousTrack,
-    addListenedTime,
-    checkAndUpdateStreak,
-  } = useRadioStore();
+  // S-07 fix: Individual selectors instead of destructuring — avoids re-render on unrelated state changes
+  const currentPlaylist = useRadioStore(s => s.currentPlaylist);
+  const currentTrackIndex = useRadioStore(s => s.currentTrackIndex);
+  const playbackState = useRadioStore(s => s.playbackState);
+  const isGeneratingAudio = useRadioStore(s => s.isGeneratingAudio);
+  const playbackSpeed = useRadioStore(s => s.playbackSpeed);
+  const sleepTimerEndAt = useRadioStore(s => s.sleepTimerEndAt);
+  const setPlaybackState = useRadioStore(s => s.setPlaybackState);
+  const setCurrentTrackIndex = useRadioStore(s => s.setCurrentTrackIndex);
+  const setGeneratingAudio = useRadioStore(s => s.setGeneratingAudio);
+  const nextTrack = useRadioStore(s => s.nextTrack);
+  const previousTrack = useRadioStore(s => s.previousTrack);
+  const addListenedTime = useRadioStore(s => s.addListenedTime);
+  const checkAndUpdateStreak = useRadioStore(s => s.checkAndUpdateStreak);
 
   // Global audio player store
   const setGlobalPlaying = useAudioPlayerStore(s => s.setIsPlaying);
@@ -313,7 +311,9 @@ export function useRadioPlayer() {
         console.warn('⚠️ Pre-fetch lỗi:', err?.message);
         prefetchRef.current = null; // Reset để thử lại
       });
-  }, [currentPlaylist, currentTrackIndex]);
+    // S-04 fix: Include TTS settings so voice changes trigger re-fetch
+  }, [currentPlaylist, currentTrackIndex, randomVoice, voicePerSpeaker,
+      multiTalker, multiTalkerPairIndex, ttsEmotion, ttsPitch, ttsRate, ttsVolume, randomEmotion]);
 
   // Sleep timer effect
   useEffect(() => {

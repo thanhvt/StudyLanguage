@@ -213,28 +213,60 @@ export function CreateCategorySheet({
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-              {/* Icon Picker */}
-              <View className="flex-row items-center mb-4">
-                <AppText className="text-sm font-sans-medium mr-3" style={{color: colors.neutrals500}}>
-                  Icon:
+              {/* Icon + Tên nhóm — cùng hàng */}
+              <View className="mb-4">
+                <AppText className="text-sm font-sans-medium mb-2" style={{color: colors.neutrals500}}>
+                  Tên nhóm:
                 </AppText>
-                <TouchableOpacity
-                  className="rounded-xl items-center justify-center"
-                  style={{
-                    width: 48, height: 48,
-                    backgroundColor: colors.glassBg,
-                    borderWidth: 1,
-                    borderColor: colors.glassBorderStrong,
-                  }}
-                  onPress={() => {
-                    haptic.light();
-                    setShowEmojiGrid(!showEmojiGrid);
-                  }}>
-                  <AppText className="text-2xl">{selectedIcon}</AppText>
-                </TouchableOpacity>
+                <View className="flex-row items-center">
+                  {/* Icon picker button */}
+                  <TouchableOpacity
+                    className="rounded-xl items-center justify-center mr-3"
+                    style={{
+                      width: 48, height: 48,
+                      backgroundColor: showEmojiGrid ? `${LISTENING_BLUE}08` : colors.glassBg,
+                      borderWidth: 1,
+                      borderColor: showEmojiGrid ? LISTENING_BLUE : colors.glassBorderStrong,
+                    }}
+                    onPress={() => {
+                      haptic.light();
+                      setShowEmojiGrid(!showEmojiGrid);
+                    }}>
+                    <AppText className="text-2xl">{selectedIcon}</AppText>
+                  </TouchableOpacity>
+
+                  {/* Name input */}
+                  <View
+                    className="flex-1 flex-row items-center rounded-xl px-4"
+                    style={{
+                      backgroundColor: colors.glassBg,
+                      borderWidth: 1,
+                      borderColor: categoryName.trim().length > 0 ? LISTENING_BLUE : colors.glassBorderStrong,
+                      height: 48,
+                    }}>
+                    <TextInput
+                      ref={nameInputRef}
+                      className="flex-1 text-base"
+                      style={{color: colors.foreground}}
+                      placeholder="VD: Business English"
+                      placeholderTextColor={colors.neutrals500}
+                      value={categoryName}
+                      onChangeText={text => setCategoryName(text.slice(0, MAX_NAME_LENGTH))}
+                      maxLength={MAX_NAME_LENGTH}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      returnKeyType="done"
+                    />
+                    <AppText
+                      className="text-xs"
+                      style={{color: categoryName.length >= MAX_NAME_LENGTH ? '#EF4444' : colors.neutrals400}}>
+                      {categoryName.length}/{MAX_NAME_LENGTH}
+                    </AppText>
+                  </View>
+                </View>
               </View>
 
-              {/* Emoji Grid (toggle) */}
+              {/* Emoji Grid (toggle — hiện bên dưới hàng icon+tên) */}
               {showEmojiGrid && (
                 <View className="flex-row flex-wrap mb-4 p-3 rounded-xl" style={{backgroundColor: colors.glassBg}}>
                   {POPULAR_EMOJIS.map((emoji, idx) => (
@@ -256,40 +288,6 @@ export function CreateCategorySheet({
                   ))}
                 </View>
               )}
-
-              {/* Tên nhóm */}
-              <View className="mb-4">
-                <AppText className="text-sm font-sans-medium mb-2" style={{color: colors.neutrals500}}>
-                  Tên nhóm:
-                </AppText>
-                <View
-                  className="flex-row items-center rounded-xl px-4"
-                  style={{
-                    backgroundColor: colors.glassBg,
-                    borderWidth: 1,
-                    borderColor: categoryName.trim().length > 0 ? LISTENING_BLUE : colors.glassBorderStrong,
-                    height: 48,
-                  }}>
-                  <TextInput
-                    ref={nameInputRef}
-                    className="flex-1 text-base"
-                    style={{color: colors.foreground}}
-                    placeholder="VD: Business English"
-                    placeholderTextColor={colors.neutrals500}
-                    value={categoryName}
-                    onChangeText={text => setCategoryName(text.slice(0, MAX_NAME_LENGTH))}
-                    maxLength={MAX_NAME_LENGTH}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    returnKeyType="done"
-                  />
-                  <AppText
-                    className="text-xs"
-                    style={{color: categoryName.length >= MAX_NAME_LENGTH ? '#EF4444' : colors.neutrals400}}>
-                    {categoryName.length}/{MAX_NAME_LENGTH}
-                  </AppText>
-                </View>
-              </View>
 
               {/* Thêm chủ đề ngay (tuỳ chọn) */}
               <View className="mb-4">

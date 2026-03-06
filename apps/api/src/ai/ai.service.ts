@@ -61,7 +61,7 @@ export class AiService {
           { role: 'user', content: prompt },
         ],
         temperature: 0.9,
-        max_tokens: 4000, // Tăng lên để hội thoại dài không bị cắt giữa chừng
+        max_tokens: maxTokens,
       });
 
       const result = response.choices[0]?.message?.content || '';
@@ -97,15 +97,20 @@ export class AiService {
     this.logger.log(`Đang sinh hội thoại về chủ đề: ${topic}`);
 
     // Tính toán số từ mục tiêu dựa trên thời lượng
-    // Cấu hình cho hội thoại DÀI và CHI TIẾT
-    const WORDS_PER_MINUTE = 300; // Mục tiêu cao để sinh nhiều nội dung
+    // WPM = 168 — đo từ production Azure TTS (khớp với conversation-generator.service.ts)
+    const WORDS_PER_MINUTE = 168;
     const targetWordCount = durationMinutes * WORDS_PER_MINUTE;
-    const minWordCount = Math.floor(targetWordCount * 1.1); // Thêm 10% buffer
-    const minExchanges = Math.max(30, durationMinutes * 10); // 10 lượt/phút - nhiều trao đổi
+    const minWordCount = Math.floor(targetWordCount * 1.05); // Buffer 5% (khớp Listening)
+    const minExchanges = Math.max(10, Math.ceil(targetWordCount / 65)); // ~65 từ/lượt (khớp Listening)
     const avgWordsPerTurn = Math.max(
       40,
       Math.ceil(targetWordCount / minExchanges),
-    ); // Ít nhất 25 từ/lượt
+    );
+
+    // Dynamic max_tokens — tránh JSON bị cắt
+    // Mỗi turn ~300 tokens (text + JSON overhead), min 8192
+    const estimatedTokens = minExchanges * 300 + 500;
+    const maxTokens = Math.min(16000, Math.max(8192, Math.ceil(estimatedTokens * 1.5)));
 
     const keywordsInstruction = keywords
       ? `Hãy sử dụng các từ khóa sau trong hội thoại: ${keywords}`

@@ -15,6 +15,14 @@ import {
 import { RadioService } from './radio.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { Observable, Subject } from 'rxjs';
+import { Request } from 'express';
+
+/**
+ * N-04: Typed request với user info từ SupabaseAuthGuard
+ */
+interface AuthenticatedRequest extends Request {
+  user?: { id?: string; sub?: string };
+}
 
 // T-13: Lưu progress subjects cho từng user
 const progressSubjects = new Map<string, Subject<MessageEvent>>();
@@ -62,7 +70,7 @@ export class RadioController {
    */
   @Sse('generate/progress')
   @UseGuards(SupabaseAuthGuard)
-  generateProgress(@Req() req: any): Observable<MessageEvent> {
+  generateProgress(@Req() req: AuthenticatedRequest): Observable<MessageEvent> {
     const userId = req.user?.id || req.user?.sub || 'unknown';
     const subject = new Subject<MessageEvent>();
     progressSubjects.set(userId, subject);
@@ -110,7 +118,7 @@ export class RadioController {
   @Post('generate')
   @UseGuards(SupabaseAuthGuard)
   async generateRadioPlaylist(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Body() body: { duration: number; categories?: string[] },
   ) {
     try {

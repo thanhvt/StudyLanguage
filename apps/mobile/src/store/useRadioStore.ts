@@ -146,8 +146,10 @@ export const useRadioStore = create<RadioState & RadioActions>()(
       setGeneratingAudio: value => set({isGeneratingAudio: value}),
 
       setSleepTimer: minutes => {
-        const endAt = minutes > 0 ? Date.now() + minutes * 60 * 1000 : 0;
-        set({sleepTimerMinutes: minutes, sleepTimerEndAt: endAt});
+        // S-06: Guard negative values
+        const safe = Math.max(0, minutes);
+        const endAt = safe > 0 ? Date.now() + safe * 60 * 1000 : 0;
+        set({sleepTimerMinutes: safe, sleepTimerEndAt: endAt});
       },
       clearSleepTimer: () => set({sleepTimerMinutes: 0, sleepTimerEndAt: 0}),
 
@@ -238,7 +240,11 @@ export const useRadioStore = create<RadioState & RadioActions>()(
 
       previousTrack: () => {
         const {currentPlaylist, currentTrackIndex} = get();
-        if (!currentPlaylist || currentTrackIndex <= 0) {return 0;}
+        if (!currentPlaylist || currentTrackIndex <= 0) {
+          // S-01: Set state consistently (return 0 AND update store)
+          set({currentTrackIndex: 0});
+          return 0;
+        }
         const prev = currentTrackIndex - 1;
         set({currentTrackIndex: prev});
         return prev;

@@ -19,6 +19,8 @@ interface TopicPickerModalProps {
   onClose: () => void;
   /** Disabled khi đang generate */
   disabled?: boolean;
+  /** Callback khi user muốn quản lý category — parent navigate */
+  onManageCategory?: (categoryId: string) => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export default function TopicPickerModal({
   visible,
   onClose,
   disabled = false,
+  onManageCategory,
 }: TopicPickerModalProps) {
   const insets = useSafeAreaInsets();
   const haptic = useHaptic();
@@ -151,6 +154,11 @@ export default function TopicPickerModal({
           <TopicPicker
             disabled={disabled}
             showCategoryBadge={true}
+            onManageCategory={(categoryId) => {
+              // Đóng modal trước, sau đó navigate
+              onClose();
+              onManageCategory?.(categoryId);
+            }}
           />
 
           {/* Tab "Tuỳ chỉnh" → inline CustomScenarioInput */}

@@ -1217,6 +1217,13 @@ export default function ListeningConfigScreen({
         visible={showTopicModal}
         onClose={() => setShowTopicModal(false)}
         disabled={isGenerating}
+        onManageCategory={(categoryId) => {
+          // Đóng modal + navigate đến ManageCategoriesScreen
+          setShowTopicModal(false);
+          setTimeout(() => {
+            navigation.navigate('ManageCategories' as never, { focusCategoryId: categoryId } as never);
+          }, 300);
+        }}
       />
 
       {/* TTS Settings Sheet */}

@@ -13,22 +13,16 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useInsets} from '@/hooks/useInsets';
 import {useToast} from '@/components/ui/ToastProvider';
 import {radioApi, RadioPlaylistItem, RadioPlaylistResult} from '@/services/api/radio';
-import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
-import {useListeningStore} from '@/store/useListeningStore';
 import {useRadioStore} from '@/store/useRadioStore';
+import {useRadioPlayer} from '@/hooks/useRadioPlayer';
 import {useAppStore} from '@/store/useAppStore';
-import {listeningApi} from '@/services/api/listening';
-import TrackPlayer, {Event} from 'react-native-track-player';
-import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import LinearGradient from 'react-native-linear-gradient';
 import RadioControlsBar from '@/components/listening/RadioControlsBar';
 import RadioSkeleton from '@/components/listening/RadioSkeleton';
 import TrackPulse from '@/components/listening/TrackPulse';
-
-// =======================
-// Constants
-// =======================
-const LISTENING_BLUE = '#2563EB';
+import {LISTENING_BLUE} from '@/constants/listening';
+import {connectRadioProgress, type RadioProgressEvent} from '@/services/api/radioSSE';
+import {useRadioPredownload} from '@/hooks/useRadioPredownload';
 
 // T-18: Categories cho filter
 const CATEGORIES = [
@@ -74,7 +68,14 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const routeDuration = route?.params?.duration as number | undefined;
   const autoGenerate = route?.params?.autoGenerate as boolean | undefined;
 
-  // State
+  // B-02 fix: Dùng useRadioPlayer thay vì tự viết handlePlayTrack
+  const {
+    playTrack,
+    currentTrackIndex,
+    isGeneratingAudio,
+  } = useRadioPlayer();
+
+  // Local state
   const [selectedDuration, setSelectedDuration] = useState(routeDuration ?? 30);
   const [radioState, setRadioState] = useState<RadioState>(
     loadedPlaylist ? 'ready' : autoGenerate ? 'generating' : 'idle',
@@ -82,64 +83,54 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const [playlist, setPlaylist] = useState<RadioPlaylistResult | null>(
     loadedPlaylist ?? null,
   );
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // T-13: SSE progress state
+  const [sseProgress, setSseProgress] = useState<RadioProgressEvent | null>(null);
+  const sseAbortRef = useRef<AbortController | null>(null);
+
+  // T-25: Pre-download all tracks audio (phải sau radioState/playlist)
+  const {
+    downloadedCount,
+    total: downloadTotal,
+    isDownloading,
+    isTrackDownloaded,
+  } = useRadioPredownload(
+    // Chỉ pre-download khi playlist ready hoặc đang play
+    (radioState === 'ready' || radioState === 'playing') ? playlist : null,
+    // Callback: cập nhật audioUrl trong local state khi download xong
+    (index, audioUrl) => {
+      setPlaylist(prev => {
+        if (!prev) return prev;
+        const updatedItems = [...prev.items];
+        updatedItems[index] = {...updatedItems[index], audioUrl};
+        return {...prev, items: updatedItems};
+      });
+    },
+  );
 
   // T-18: Selected categories
   const preferredCategories = useRadioStore(s => s.preferredCategories);
   const setPreferredCategories = useRadioStore(s => s.setPreferredCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(preferredCategories);
 
-  // Global player store
-  const setPlayerMode = useAudioPlayerStore(s => s.setPlayerMode);
-  const setGlobalPlaying = useAudioPlayerStore(s => s.setIsPlaying);
-
-  // T-07: Đọc TTS settings từ useListeningStore thay vì hardcode
-  const randomVoice = useListeningStore(s => s.randomVoice);
-  const voicePerSpeaker = useListeningStore(s => s.voicePerSpeaker);
-  const multiTalker = useListeningStore(s => s.multiTalker);
-  const multiTalkerPairIndex = useListeningStore(s => s.multiTalkerPairIndex);
-  const ttsEmotion = useListeningStore(s => s.ttsEmotion);
-  const ttsPitch = useListeningStore(s => s.ttsPitch);
-  const ttsRate = useListeningStore(s => s.ttsRate);
-  const ttsVolume = useListeningStore(s => s.ttsVolume);
-  const randomEmotion = useListeningStore(s => s.randomEmotion);
-
-  // Ref cho current index (tránh stale closure trong event listener)
-  const currentTrackIndexRef = useRef(-1);
-
-  // BUG-03 fix: Ref cho handlePlayTrack để event listener luôn dùng phiên bản mới nhất
-  const handlePlayTrackRef = useRef<((item: RadioPlaylistItem, index: number) => Promise<void>) | undefined>(undefined);
-
   /**
    * Mục đích: Auto chuyển sang track tiếp theo khi track hiện tại kết thúc
    * Khi nào sử dụng: TrackPlayer phát xong queue → listener tự chạy
    */
+  // Auto scroll tới track đang phát khi index thay đổi
   useEffect(() => {
-    const subscription = TrackPlayer.addEventListener(
-      Event.PlaybackQueueEnded,
-      async () => {
-        const idx = currentTrackIndexRef.current;
-        const items = playlist?.items;
-        if (!items || idx < 0 || idx >= items.length - 1) {
-          console.log('📻 [Radio] Playlist đã phát hết');
-          setGlobalPlaying(false);
-          return;
-        }
-        // Tự động phát track tiếp theo — dùng ref để tránh stale closure
-        const nextIdx = idx + 1;
-        console.log(`📻 [Radio] Auto next → track ${nextIdx + 1}`);
-        if (handlePlayTrackRef.current) {
-          await handlePlayTrackRef.current(items[nextIdx], nextIdx);
-        }
-        // Auto scroll tới track đang phát
-        flatListRef.current?.scrollToIndex({index: nextIdx, animated: true});
-      },
-    );
-    return () => subscription.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlist]);
+    if (currentTrackIndex >= 0 && playlist?.items?.length) {
+      flatListRef.current?.scrollToIndex({index: currentTrackIndex, animated: true});
+    }
+  }, [currentTrackIndex, playlist]);
+
+  // T-13: Cleanup SSE khi unmount
+  useEffect(() => {
+    return () => {
+      sseAbortRef.current?.abort();
+    };
+  }, []);
 
   // Auto-generate khi navigate từ ConfigScreen với autoGenerate=true
   const hasAutoGenerated = useRef(false);
@@ -152,6 +143,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         .generate(selectedDuration, selectedCategories.length > 0 ? selectedCategories : undefined)
         .then(result => {
           setPlaylist(result);
+          // Đồng bộ playlist vào store để useRadioPlayer dùng được
+          useRadioStore.getState().setCurrentPlaylist(result);
           setRadioState('ready');
           showSuccess(
             'Playlist sẵn sàng!',
@@ -176,14 +169,29 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn "Bắt đầu" sau khi chọn duration
    */
+  // B-01 fix: Thêm selectedCategories vào deps
   const handleGenerate = useCallback(async () => {
     try {
       haptic.medium();
       setRadioState('generating');
+      setSseProgress(null);
       console.log('📻 [Radio] Đang tạo playlist', selectedDuration, 'phút...');
+
+      // T-13: Kết nối SSE trước khi generate
+      sseAbortRef.current?.abort();
+      sseAbortRef.current = connectRadioProgress(
+        (data) => setSseProgress(data),
+        () => console.log('✅ [SSE] Generate hoàn thành'),
+        () => console.warn('⚠️ [SSE] Lỗi kết nối, tiếp tục không SSE'),
+      );
 
       const result = await radioApi.generate(selectedDuration, selectedCategories.length > 0 ? selectedCategories : undefined);
       setPlaylist(result);
+      // Lưu playlist vào store để useRadioPlayer có thể dùng
+      useRadioStore.getState().setCurrentPlaylist(result);
+      // T-13: Dọn SSE connection khi xong
+      sseAbortRef.current?.abort();
+      setSseProgress(null);
       setRadioState('ready');
       showSuccess(
         'Playlist sẵn sàng!',
@@ -193,108 +201,34 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
     } catch (error: any) {
       console.error('❌ [Radio] Lỗi tạo playlist:', error);
       setRadioState('error');
+      // T-13: Dọn SSE connection khi lỗi
+      sseAbortRef.current?.abort();
+      setSseProgress(null);
       showError(
         'Không thể tạo playlist',
         error?.response?.data?.message || 'Vui lòng thử lại sau',
       );
     }
-  }, [selectedDuration, haptic, showSuccess, showError]);
+  }, [selectedDuration, selectedCategories, haptic, showSuccess, showError]);
 
   /**
-   * Mục đích: Phát một track cụ thể trong playlist
+   * Mục đích: Phát track — delegate sang useRadioPlayer (có abort, fade, queue)
    * Tham số đầu vào: item (RadioPlaylistItem), index (number)
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User tap vào 1 track hoặc auto-play tuần tự
+   * Khi nào sử dụng: User tap vào track trong FlatList
    */
   const handlePlayTrack = useCallback(
     async (item: RadioPlaylistItem, index: number) => {
-      try {
-        haptic.light();
-        setCurrentTrackIndex(index);
-        currentTrackIndexRef.current = index;
-        setIsGeneratingAudio(true);
-        setRadioState('playing');
-
-        let audioUrl: string;
-
-        // T-04: Kiểm tra audio_url đã cache chưa → skip TTS nếu có
-        if (item.audioUrl) {
-          console.log(`🎵 [Radio] Dùng audio đã cache cho track ${index + 1}:`, item.topic);
-          audioUrl = item.audioUrl;
-        } else {
-          console.log(`🎵 [Radio] Đang sinh audio mới cho track ${index + 1}:`, item.topic);
-
-          // T-07: Dùng TTS settings từ store thay vì hardcode
-          const audioResult = await listeningApi.generateConversationAudio(
-            item.conversation.map(c => ({speaker: c.speaker, text: c.text})),
-            {
-              provider: 'azure',
-              randomVoice,
-              ...(Object.keys(voicePerSpeaker).length > 0 && {voicePerSpeaker}),
-              multiTalker,
-              multiTalkerPairIndex,
-              emotion: ttsEmotion,
-              pitch: ttsPitch,
-              rate: ttsRate,
-              volume: ttsVolume,
-              randomEmotion,
-            },
-          );
-          audioUrl = audioResult.audioUrl;
-
-          // T-03: Cache audio URL vào DB
-          if (playlist?.playlist?.id) {
-            radioApi
-              .updateTrackAudio(
-                playlist.playlist.id,
-                item.id,
-                audioUrl,
-                audioResult.timestamps?.map(t => ({
-                  startTime: t.startTime,
-                  endTime: t.endTime,
-                })),
-              )
-              .then(() => {
-                console.log('💾 [Radio] Đã cache audio URL cho track:', item.id);
-                // Cập nhật local state để lần sau không cần sinh lại
-                if (playlist) {
-                  const updatedItems = [...playlist.items];
-                  updatedItems[index] = {...updatedItems[index], audioUrl};
-                  setPlaylist({...playlist, items: updatedItems});
-                }
-              })
-              .catch(err => {
-                console.warn('⚠️ [Radio] Không thể cache audio URL:', err?.message);
-              });
-          }
-        }
-
-        // Load vào TrackPlayer
-        await setupPlayer();
-        await TrackPlayer.reset();
-        await addTrack(audioUrl, item.topic);
-        await TrackPlayer.play();
-
-        setIsGeneratingAudio(false);
-        setGlobalPlaying(true);
-        setPlayerMode('full');
-
-        console.log('✅ [Radio] Đang phát track', index + 1);
-      } catch (error: any) {
-        console.error('❌ [Radio] Lỗi phát track:', error);
-        setIsGeneratingAudio(false);
-        showError('Lỗi phát audio', 'Không thể sinh audio cho track này');
+      haptic.light();
+      setRadioState('playing');
+      // Đảm bảo store có playlist trước khi play
+      if (playlist) {
+        useRadioStore.getState().setCurrentPlaylist(playlist);
       }
+      await playTrack(item, index);
     },
-    [
-      haptic, showError, setGlobalPlaying, setPlayerMode, playlist,
-      randomVoice, voicePerSpeaker, multiTalker, multiTalkerPairIndex,
-      ttsEmotion, ttsPitch, ttsRate, ttsVolume, randomEmotion,
-    ],
+    [haptic, playlist, playTrack],
   );
-
-  // BUG-03 fix: Cập nhật ref sau mỗi render để event listener luôn dùng phiên bản mới nhất
-  handlePlayTrackRef.current = handlePlayTrack;
 
   /**
    * Mục đích: Render một track item trong danh sách
@@ -312,7 +246,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           className="mx-4 mb-3 rounded-2xl border px-4 py-3.5"
           style={{
             backgroundColor: isCurrent ? `${LISTENING_BLUE}15` : undefined,
-            borderColor: isCurrent ? `${LISTENING_BLUE}40` : undefined,
+            borderColor: isCurrent
+              ? `${LISTENING_BLUE}40`
+              : isDark ? colors.glassBorder : colors.border,
           }}
           onPress={() => handlePlayTrack(item, index)}
           disabled={isGenerating}
@@ -324,17 +260,15 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             <TrackPulse isActive={isCurrent && !isGenerating} size={32}>
               <View
                 className="w-8 h-8 rounded-full items-center justify-center"
-                style={{backgroundColor: isCurrent ? LISTENING_BLUE : undefined}}>
+                style={{backgroundColor: isCurrent ? LISTENING_BLUE : colors.surface}}>
                 {isGenerating ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : isCurrent ? (
-                  <Icon name="Volume2" className="w-4 h-4 text-primary-foreground" />
+                  <Icon name="Volume2" className="w-4 h-4" style={{color: '#FFFFFF'}} />
                 ) : (
                   <AppText
-                    className={`text-sm font-sans-bold ${
-                      isCurrent ? 'text-primary-foreground' : ''
-                    }`}
-                    style={!isCurrent ? {color: colors.neutrals400} : undefined}>
+                    className={`text-sm font-sans-bold`}
+                    style={{color: isCurrent ? '#FFFFFF' : colors.neutrals400}}>
                     {index + 1}
                   </AppText>
                 )}
@@ -344,10 +278,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             {/* Track info */}
             <View className="flex-1">
               <AppText
-                className={`font-sans-medium ${
-                  isCurrent ? 'text-primary' : ''
-                } font-sans-medium`}
-                style={!isCurrent ? {color: colors.foreground} : undefined}
+                className="font-sans-medium"
+                style={{color: isCurrent ? LISTENING_BLUE : colors.foreground}}
                 numberOfLines={1}>
                 {item.topic}
               </AppText>
@@ -357,19 +289,24 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
               </AppText>
             </View>
 
-            {/* Play icon */}
+            {/* Play icon / Downloaded badge */}
             {!isGenerating && (
-              <Icon
-                name={isCurrent ? 'Pause' : 'Play'}
-                className="w-5 h-5"
-                style={{color: isCurrent ? undefined : colors.neutrals500}}
-              />
+              <View className="flex-row items-center">
+                {isTrackDownloaded(item.id) && !isCurrent && (
+                  <Icon name="Check" className="w-3.5 h-3.5 mr-1" style={{color: '#22C55E'}} />
+                )}
+                <Icon
+                  name={isCurrent ? 'Pause' : 'Play'}
+                  className="w-5 h-5"
+                  style={{color: isCurrent ? LISTENING_BLUE : colors.neutrals500}}
+                />
+              </View>
             )}
           </View>
         </TouchableOpacity>
       );
     },
-    [currentTrackIndex, isGeneratingAudio, handlePlayTrack],
+    [currentTrackIndex, isGeneratingAudio, handlePlayTrack, colors, isDark, isTrackDownloaded],
   );
 
   return (
@@ -435,7 +372,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       </View>
 
       {/* Nội dung chính */}
-      {radioState === 'idle' || radioState === 'generating' ? (
+      {radioState === 'idle' || radioState === 'generating' || radioState === 'error' ? (
         /* ==========================================
            PHASE 1: Chọn duration + Generate
            ========================================== */
@@ -476,7 +413,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                   <View className="flex-1">
                     <AppText
                       className="font-sans-bold text-base"
-                      style={{color: isSelected ? LISTENING_BLUE : undefined}}>
+                      style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
                       {opt.label}
                     </AppText>
                     <AppText className="text-xs" style={{color: colors.neutrals500}}>
@@ -545,7 +482,28 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           </AppButton>
 
           {radioState === 'generating' && (
-            <RadioSkeleton trackCount={Math.ceil(selectedDuration / 7)} />
+            <RadioSkeleton
+              trackCount={Math.ceil(selectedDuration / 7)}
+              progress={sseProgress}
+            />
+          )}
+
+          {/* Error state — hiển thị bên trong phase 1 */}
+          {radioState === 'error' && (
+            <View className="items-center mt-6">
+              <AppText className="text-center mb-4" style={{color: colors.error}}>
+                Có lỗi xảy ra khi tạo playlist 😔
+              </AppText>
+              <AppButton
+                variant="primary"
+                size="lg"
+                className="rounded-2xl"
+                style={{backgroundColor: LISTENING_BLUE}}
+                onPress={() => setRadioState('idle')}
+                accessibilityLabel="Thử lại">
+                Thử lại
+              </AppButton>
+            </View>
           )}
         </View>
       ) : (
@@ -563,6 +521,25 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 {playlist.items.length} bài • {playlist.playlist.duration} phút •{' '}
                 {playlist.playlist.description}
               </AppText>
+              {/* T-25: Download progress */}
+              {isDownloading && downloadTotal > 0 && (
+                <View className="flex-row items-center mt-1">
+                  <View
+                    className="flex-1 h-1 rounded-full mr-2 overflow-hidden"
+                    style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        backgroundColor: LISTENING_BLUE,
+                        width: `${Math.round((downloadedCount / downloadTotal) * 100)}%`,
+                      }}
+                    />
+                  </View>
+                  <AppText className="text-xs" style={{color: colors.neutrals400}}>
+                    Đã tải: {downloadedCount}/{downloadTotal}
+                  </AppText>
+                </View>
+              )}
             </View>
           )}
 
@@ -584,7 +561,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                   await radioApi.deletePlaylist(playlist.playlist.id);
                   setRadioState('idle');
                   setPlaylist(null);
-                  setCurrentTrackIndex(-1);
+                  useRadioStore.getState().setCurrentTrackIndex(-1);
                   showSuccess('Đã xóa', 'Playlist đã được xóa thành công');
                 } catch {
                   showError('Lỗi', 'Không thể xóa playlist');
@@ -615,7 +592,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 haptic.medium();
                 setRadioState('idle');
                 setPlaylist(null);
-                setCurrentTrackIndex(-1);
+                useRadioStore.getState().setCurrentTrackIndex(-1);
               }}
               accessibilityLabel="Tạo playlist mới">
               <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
@@ -626,23 +603,6 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         </>
       )}
 
-      {/* Error state */}
-      {radioState === 'error' && (
-        <View className="px-6 items-center mt-4">
-          <AppText className="text-destructive text-center mb-4">
-            Có lỗi xảy ra khi tạo playlist 😔
-          </AppText>
-          <AppButton
-            variant="primary"
-            size="lg"
-            className="rounded-2xl"
-            style={{backgroundColor: LISTENING_BLUE}}
-            onPress={() => setRadioState('idle')}
-            accessibilityLabel="Thử lại">
-            Thử lại
-          </AppButton>
-        </View>
-      )}
     </View>
   );
 }

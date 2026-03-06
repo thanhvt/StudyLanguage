@@ -14,8 +14,7 @@ import {useRadioStore} from '@/store/useRadioStore';
 import {useRadioPlayer} from '@/hooks/useRadioPlayer';
 import {useColors} from '@/hooks/useColors';
 import {useAppStore} from '@/store/useAppStore';
-
-const LISTENING_BLUE = '#2563EB';
+import {LISTENING_BLUE} from '@/constants/listening';
 
 /**
  * Mục đích: Mini bar ở bottom hiện track đang phát + controls

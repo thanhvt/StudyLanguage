@@ -64,6 +64,8 @@ interface TopicPickerProps {
   onScenarioSelected?: () => void;
   /** Hiện category badge trên search results (thường true khi trong modal) */
   showCategoryBadge?: boolean;
+  /** Callback khi user nhấn "Quản lý nhóm" — parent đóng modal và navigate */
+  onManageCategory?: (categoryId: string) => void;
 }
 
 // ========================
@@ -491,6 +493,7 @@ export default function TopicPicker({
   disabled = false,
   onScenarioSelected,
   showCategoryBadge = true,
+  onManageCategory,
 }: TopicPickerProps) {
   const colors = useColors();
   const haptic = useHaptic();
@@ -767,11 +770,11 @@ export default function TopicPicker({
         ListFooterComponent={
           customCategories.length < 10 ? (
             <TouchableOpacity
-              className="px-3 py-2.5 rounded-full mr-2"
+              className="px-4 py-2.5 rounded-full mr-2"
               style={{
-                backgroundColor: `${LISTENING_BLUE}08`,
-                borderWidth: 1,
-                borderColor: `${LISTENING_BLUE}30`,
+                backgroundColor: `${LISTENING_BLUE}10`,
+                borderWidth: 1.5,
+                borderColor: `${LISTENING_BLUE}40`,
                 borderStyle: 'dashed',
               }}
               onPress={() => {
@@ -780,10 +783,14 @@ export default function TopicPicker({
               }}
               disabled={disabled}
               activeOpacity={0.7}
+              hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
               accessibilityLabel="Thêm nhóm chủ đề mới"
               accessibilityRole="button">
               <View className="flex-row items-center">
-                <Icon name="Plus" className="w-3.5 h-3.5" style={{color: LISTENING_BLUE}} />
+                <Icon name="Plus" className="w-4 h-4 mr-1" style={{color: LISTENING_BLUE}} />
+                <AppText className="text-sm font-sans-medium" style={{color: LISTENING_BLUE}}>
+                  Thêm
+                </AppText>
               </View>
             </TouchableOpacity>
           ) : null
@@ -845,8 +852,8 @@ export default function TopicPicker({
             handleSelectScenario(scenario);
           }}
           onManage={(categoryId) => {
-            // TODO: Navigate tới Settings > ManageCategories
-            console.log('⚙️ Navigate to ManageCategories:', categoryId);
+            // Gọi callback để parent đóng modal + navigate đến ManageCategories
+            onManageCategory?.(categoryId);
           }}
           disabled={disabled}
         />
