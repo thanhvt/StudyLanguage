@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
@@ -20,6 +21,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import RadioControlsBar from '@/components/listening/RadioControlsBar';
 import RadioSkeleton from '@/components/listening/RadioSkeleton';
 import TrackPulse from '@/components/listening/TrackPulse';
+import RadioTrackSheet from '@/components/listening/RadioTrackSheet';
 import {LISTENING_BLUE} from '@/constants/listening';
 import {connectRadioProgress, type RadioProgressEvent} from '@/services/api/radioSSE';
 import {useRadioPredownload} from '@/hooks/useRadioPredownload';
@@ -84,6 +86,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
     loadedPlaylist ?? null,
   );
   const flatListRef = useRef<FlatList>(null);
+
+  // Bottom Sheet state — track nào đang mở sheet (null = đóng)
+  const [sheetTrackIndex, setSheetTrackIndex] = useState<number | null>(null);
 
   // T-13: SSE progress state
   const [sseProgress, setSseProgress] = useState<RadioProgressEvent | null>(null);
@@ -223,22 +228,33 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   }, [selectedDuration, selectedCategories, haptic, showSuccess, showError]);
 
   /**
-   * Mục đích: Phát track — delegate sang useRadioPlayer (có abort, fade, queue)
+   * Mục đích: Xử lý tap track — mở sheet + play/pause logic
    * Tham số đầu vào: item (RadioPlaylistItem), index (number)
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap vào track trong FlatList
+   *   - Tap track khác → play track mới + mở sheet
+   *   - Tap track đang phát → toggle pause + mở sheet
    */
   const handlePlayTrack = useCallback(
     async (item: RadioPlaylistItem, index: number) => {
       haptic.light();
+
+      // Luôn mở sheet
+      setSheetTrackIndex(index);
+
+      if (index === currentTrackIndex) {
+        // Tap track đang phát/pause → không cần play lại, chỉ mở sheet
+        return;
+      }
+
+      // Tap track khác → play track mới
       setRadioState('playing');
-      // Đảm bảo store có playlist trước khi play
       if (playlist) {
         useRadioStore.getState().setCurrentPlaylist(playlist);
       }
       await playTrack(item, index);
     },
-    [haptic, playlist, playTrack],
+    [haptic, playlist, playTrack, currentTrackIndex],
   );
 
   /**
@@ -321,7 +337,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   );
 
   return (
-    <View className="flex-1" style={{backgroundColor: colors.background}}>
+    <GestureHandlerRootView className="flex-1" style={{backgroundColor: colors.background}}>
       {/* T-08: Glassmorphism background — chỉ dark mode dùng gradient */}
       {isDark && (
         <LinearGradient
@@ -444,7 +460,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-6"
-            contentContainerStyle={{paddingHorizontal: 4, gap: 8}}>
+            contentContainerStyle={{paddingHorizontal: 4, gap: 8, alignItems: 'center'}}>
             {CATEGORIES.map(cat => {
               const isActive = selectedCategories.includes(cat.id);
               return (
@@ -610,7 +626,18 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         </>
       )}
 
-    </View>
+    {/* RadioTrackSheet — Bottom Sheet transcript */}
+    {sheetTrackIndex !== null && playlist?.items?.[sheetTrackIndex] && (
+      <RadioTrackSheet
+        track={playlist.items[sheetTrackIndex]}
+        trackIndex={sheetTrackIndex as number}
+        isPlaying={radioState === 'playing' && !isGeneratingAudio}
+        isLoading={isGeneratingAudio}
+        onClose={() => setSheetTrackIndex(null)}
+      />
+    )}
+
+    </GestureHandlerRootView>
   );
 }
 
