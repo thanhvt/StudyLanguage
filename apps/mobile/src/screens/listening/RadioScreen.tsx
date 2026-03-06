@@ -150,6 +150,11 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             'Playlist sẵn sàng!',
             `${result.items.length} bài nghe đã được tạo 📻`,
           );
+          // Auto-play track đầu tiên
+          if (result.items.length > 0) {
+            setRadioState('playing');
+            playTrack(result.items[0], 0);
+          }
         })
         .catch(error => {
           console.error('❌ [Radio] Lỗi auto-generate:', error);
@@ -198,6 +203,12 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         `${result.items.length} bài nghe đã được tạo 📻`,
       );
       console.log('✅ [Radio] Playlist tạo xong:', result.items.length, 'tracks');
+
+      // Auto-play track đầu tiên — Radio Mode hoạt động như radio thật
+      if (result.items.length > 0) {
+        setRadioState('playing');
+        playTrack(result.items[0], 0);
+      }
     } catch (error: any) {
       console.error('❌ [Radio] Lỗi tạo playlist:', error);
       setRadioState('error');
