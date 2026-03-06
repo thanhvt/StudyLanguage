@@ -446,19 +446,15 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                     setSelectedCategories(next);
                     setPreferredCategories(next);
                   }}
-                  className="rounded-full px-3 py-1.5"
+                  className="rounded-full px-4 py-2"
                   style={{
                     backgroundColor: isActive
-                      ? `${LISTENING_BLUE}25`
-                      : isDark ? 'rgba(255,255,255,0.06)' : colors.surface,
-                    borderWidth: 1,
-                    borderColor: isActive
-                      ? `${LISTENING_BLUE}50`
-                      : isDark ? 'rgba(255,255,255,0.08)' : colors.border,
+                      ? `${LISTENING_BLUE}20`
+                      : isDark ? 'rgba(255,255,255,0.08)' : `${colors.neutrals400}12`,
                   }}>
                   <AppText
-                    className="text-xs"
-                    style={{color: isActive ? LISTENING_BLUE : colors.neutrals400}}>
+                    className="text-sm font-sans-medium"
+                    style={{color: isActive ? LISTENING_BLUE : colors.foreground}}>
                     {cat.label}
                   </AppText>
                 </TouchableOpacity>
@@ -477,11 +473,11 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             disabled={radioState === 'generating'}
             accessibilityLabel="Tạo playlist Radio">
             {radioState === 'generating'
-              ? '🔄 Đang tạo playlist...'
+              ? `🔄 Đang tạo ${Math.ceil(selectedDuration / 7)} bài...`
               : '📻 Bắt đầu Radio'}
           </AppButton>
 
-          {radioState === 'generating' && (
+          {radioState === 'generating' && sseProgress && sseProgress.total > 0 && (
             <RadioSkeleton
               trackCount={Math.ceil(selectedDuration / 7)}
               progress={sseProgress}
