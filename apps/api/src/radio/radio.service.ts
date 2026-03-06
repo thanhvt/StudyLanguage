@@ -281,7 +281,7 @@ CHỈ trả JSON, không giải thích.`;
 
     // Tạo playlist trong database trước
     const now = new Date();
-    const playlistName = `📻 Radio - ${now.toLocaleDateString('vi-VN', {
+    const playlistName = `Radio - ${now.toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: 'short',
       hour: '2-digit',
@@ -293,7 +293,8 @@ CHỈ trả JSON, không giải thích.`;
       .insert({
         user_id: userId,
         name: playlistName,
-        description: `Auto-generated • ${duration} phút • ${trackCount} bài`,
+        description: `${duration} phút • ${trackCount} bài`,
+        duration: duration,
       })
       .select()
       .single();

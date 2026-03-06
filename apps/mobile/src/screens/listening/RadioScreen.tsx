@@ -270,9 +270,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
 
       return (
         <TouchableOpacity
-          className="mx-4 mb-3 rounded-2xl border px-4 py-3.5"
+          className="mx-4 rounded-2xl border px-4 py-3.5"
           style={{
-            backgroundColor: isCurrent ? `${LISTENING_BLUE}15` : undefined,
+            backgroundColor: isCurrent ? `${LISTENING_BLUE}18` : undefined,
             borderColor: isCurrent
               ? `${LISTENING_BLUE}40`
               : isDark ? 'rgba(255,255,255,0.15)' : colors.border,
@@ -544,8 +544,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 {playlist.playlist.name}
               </AppText>
               <AppText className="text-xs mt-1" style={{color: colors.neutrals400}}>
-                {playlist.items.length} bài • {playlist.playlist.duration} phút •{' '}
-                {playlist.playlist.description}
+                {playlist.playlist.description || `${playlist.items.length} bài`}
               </AppText>
               {/* T-25: Download progress */}
               {isDownloading && downloadTotal > 0 && (
@@ -575,6 +574,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             data={playlist?.items ?? []}
             keyExtractor={item => item.id}
             renderItem={renderTrackItem}
+            ItemSeparatorComponent={() => <View style={{height: 10}} />}
             contentContainerStyle={{paddingTop: 12, paddingBottom: insets.bottom + 80}}
             showsVerticalScrollIndicator={false}
           />
@@ -610,7 +610,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
               size="lg"
               className="w-full rounded-2xl"
               style={{
-                backgroundColor: `${LISTENING_BLUE}12`,
+                backgroundColor: 'transparent',
                 borderWidth: 1.5,
                 borderColor: `${LISTENING_BLUE}30`,
               }}
