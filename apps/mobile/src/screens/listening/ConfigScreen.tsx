@@ -1069,7 +1069,9 @@ export default function ListeningConfigScreen({
                             className="flex-row items-center rounded-xl border px-3 py-3"
                             style={{
                               borderColor: isSelected ? LISTENING_BLUE : colors.neutrals800,
-                              backgroundColor: isSelected ? `${LISTENING_BLUE}10` : 'rgba(255,255,255,0.03)',
+                              backgroundColor: isSelected
+                                ? (isDark ? '#1a2e4a' : '#e8f0fe')
+                                : (isDark ? colors.background : '#FFFFFF'),
                             }}
                             onPress={() => {
                               if (isSelecting) {
@@ -1152,6 +1154,7 @@ export default function ListeningConfigScreen({
                             key={pl.id}
                             overshootRight={false}
                             friction={2}
+                            rightThreshold={40}
                             renderRightActions={
                               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                                 const scale = dragX.interpolate({
@@ -1159,12 +1162,20 @@ export default function ListeningConfigScreen({
                                   outputRange: [1, 0.5],
                                   extrapolate: 'clamp',
                                 });
+                                const opacity = dragX.interpolate({
+                                  inputRange: [-80, -20, 0],
+                                  outputRange: [1, 0.7, 0],
+                                  extrapolate: 'clamp',
+                                });
                                 return (
                                   <Pressable
-                                    className="bg-red-500 justify-center items-center rounded-r-xl"
-                                    style={{width: 72}}
+                                    className="justify-center items-center"
+                                    style={{
+                                      width: 72,
+                                      borderRadius: 12,
+                                      backgroundColor: '#DC2626',
+                                    }}
                                     onPress={() => {
-                                      // Xác nhận xóa playlist
                                       Alert.alert(
                                         'Xóa playlist',
                                         `Bạn có chắc chắn muốn xóa playlist này?`,
@@ -1186,9 +1197,18 @@ export default function ListeningConfigScreen({
                                         ],
                                       );
                                     }}>
-                                    <RNAnimated.View style={{transform: [{scale}]}}>
-                                      <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
-                                      <AppText className="text-white text-xs font-sans-medium mt-1">
+                                    <RNAnimated.View
+                                      style={{
+                                        transform: [{scale}],
+                                        opacity,
+                                        alignItems: 'center',
+                                      }}>
+                                      <View
+                                        className="w-9 h-9 rounded-full items-center justify-center mb-1"
+                                        style={{backgroundColor: 'rgba(255,255,255,0.2)'}}>
+                                        <Icon name="Trash2" className="w-4 h-4" style={{color: '#FFFFFF'}} />
+                                      </View>
+                                      <AppText className="text-white text-xs font-sans-medium">
                                         Xóa
                                       </AppText>
                                     </RNAnimated.View>

@@ -286,16 +286,20 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
 
       const trackCard = (
         <TouchableOpacity
-          className="mx-4 rounded-2xl border px-4 py-3.5"
+          className="rounded-2xl border px-4 py-3.5"
           style={{
             backgroundColor: isSelected
-              ? `${LISTENING_BLUE}20`
-              : isCurrent ? `${LISTENING_BLUE}18` : undefined,
+              ? (isDark ? '#1a2e4a' : '#e8f0fe')
+              : isCurrent
+                ? (isDark ? '#0f2440' : '#e3eefa')
+                : (isDark ? colors.background : '#FFFFFF'),
             borderColor: isSelected
               ? LISTENING_BLUE
               : isCurrent
                 ? `${LISTENING_BLUE}40`
-                : isDark ? 'rgba(255,255,255,0.15)' : colors.border,
+                : isDark ? 'rgba(255,255,255,0.10)' : colors.border,
+            marginLeft: 16,
+            marginRight: 16,
           }}
           onPress={() => {
             if (isSelectingTracks) {
@@ -408,6 +412,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         <Swipeable
           overshootRight={false}
           friction={2}
+          rightThreshold={40}
           renderRightActions={
             (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
               const scale = dragX.interpolate({
@@ -415,10 +420,20 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 outputRange: [1, 0.5],
                 extrapolate: 'clamp',
               });
+              const opacity = dragX.interpolate({
+                inputRange: [-80, -20, 0],
+                outputRange: [1, 0.7, 0],
+                extrapolate: 'clamp',
+              });
               return (
                 <Pressable
-                  className="bg-red-500 justify-center items-center rounded-r-2xl mx-4"
-                  style={{width: 72}}
+                  className="justify-center items-center"
+                  style={{
+                    width: 76,
+                    marginRight: 16,
+                    borderRadius: 16,
+                    backgroundColor: '#DC2626',
+                  }}
                   onPress={() => {
                     Alert.alert(
                       'Xóa track',
@@ -443,9 +458,18 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                       ],
                     );
                   }}>
-                  <RNAnimated.View style={{transform: [{scale}]}}>
-                    <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
-                    <AppText className="text-white text-xs font-sans-medium mt-1">
+                  <RNAnimated.View
+                    style={{
+                      transform: [{scale}],
+                      opacity,
+                      alignItems: 'center',
+                    }}>
+                    <View
+                      className="w-10 h-10 rounded-full items-center justify-center mb-1"
+                      style={{backgroundColor: 'rgba(255,255,255,0.2)'}}>
+                      <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
+                    </View>
+                    <AppText className="text-white text-xs font-sans-medium">
                       Xóa
                     </AppText>
                   </RNAnimated.View>

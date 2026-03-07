@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     // Giới hạn max width cho tablet
     maxWidth: 500,
     alignSelf: 'center',
-    width: '100%',
+    width: '85%',
   },
   touchable: {
     flexDirection: 'row',
