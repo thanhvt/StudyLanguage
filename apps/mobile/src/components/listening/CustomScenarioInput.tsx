@@ -236,7 +236,7 @@ export default function CustomScenarioInput({
       <View className="rounded-2xl p-4" style={{backgroundColor: colors.neutrals900}}>
         {/* Header có nút đóng */}
         <View className="flex-row items-center justify-between mb-3">
-          <AppText variant="heading5" weight="semibold" raw>
+          <AppText variant="heading5" weight="semibold" raw style={{color: colors.foreground}}>
             ✨ Tạo kịch bản mới
           </AppText>
           {onClose && (

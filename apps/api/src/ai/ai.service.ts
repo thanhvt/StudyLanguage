@@ -45,7 +45,7 @@ export class AiService {
    *   - systemPrompt: Context/vai trò cho AI (optional)
    * Trả về: Văn bản được sinh ra
    */
-  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+  async generateText(prompt: string, systemPrompt?: string, maxTokens: number = 4096): Promise<string> {
     this.logger.log('Đang gọi GPT để sinh văn bản...');
 
     try {
@@ -151,7 +151,7 @@ ${keywordsInstruction}
 CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
 `;
 
-    const result = await this.generateText(prompt);
+    const result = await this.generateText(prompt, undefined, maxTokens);
 
     try {
       // Parse JSON từ response
