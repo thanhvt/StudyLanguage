@@ -35,6 +35,73 @@ interface AppButtonProps extends PressableProps {
 // ========================
 
 /**
+ * Mục đích: Parse className string (TailwindCSS) → React Native ViewStyle
+ * Tham số đầu vào: className (string | undefined)
+ * Tham số đầu ra: ViewStyle
+ * Khi nào sử dụng: Backward compat — callers vẫn truyền className mà AppButton cần xử lý
+ */
+function parseClassNameToViewStyle(className?: string): ViewStyle {
+  if (!className) return {};
+  const style: ViewStyle = {};
+  const classes = className.split(/\s+/);
+  for (const cls of classes) {
+    // Width
+    if (cls === 'w-full') style.width = '100%';
+    // Border radius
+    else if (cls === 'rounded-full') style.borderRadius = 9999;
+    else if (cls === 'rounded-3xl') style.borderRadius = 24;
+    else if (cls === 'rounded-2xl') style.borderRadius = 16;
+    else if (cls === 'rounded-xl') style.borderRadius = 12;
+    else if (cls === 'rounded-lg') style.borderRadius = 8;
+    else if (cls === 'rounded-md') style.borderRadius = 6;
+    // Margin
+    else if (cls === 'mt-2') style.marginTop = 8;
+    else if (cls === 'mt-3') style.marginTop = 12;
+    else if (cls === 'mt-4') style.marginTop = 16;
+    else if (cls === 'mb-2') style.marginBottom = 8;
+    else if (cls === 'mb-3') style.marginBottom = 12;
+    else if (cls === 'mb-4') style.marginBottom = 16;
+    // Padding override
+    else if (cls === 'px-2') style.paddingHorizontal = 8;
+    else if (cls === 'px-3') style.paddingHorizontal = 12;
+    else if (cls === 'px-6') style.paddingHorizontal = 24;
+    else if (cls === 'py-2') style.paddingVertical = 8;
+    else if (cls === 'py-3') style.paddingVertical = 12;
+  }
+  return style;
+}
+
+/**
+ * Mục đích: Parse textClassname string → React Native TextStyle
+ * Tham số đầu vào: textClassname (string | undefined)
+ * Tham số đầu ra: TextStyle
+ * Khi nào sử dụng: Backward compat — callers truyền textClassname cho font weight/size
+ */
+function parseTextClassNameToStyle(textClassname?: string): TextStyle {
+  if (!textClassname) return {};
+  const style: TextStyle = {};
+  const classes = textClassname.split(/\s+/);
+  for (const cls of classes) {
+    // Font family — theo tailwind.config.js fontFamily (SourceSans3)
+    if (cls === 'font-sans-bold' || cls === 'font-bold') style.fontFamily = 'SourceSans3-Bold';
+    else if (cls === 'font-sans-extrabold') style.fontFamily = 'SourceSans3-ExtraBold';
+    else if (cls === 'font-sans-semibold' || cls === 'font-semibold') style.fontFamily = 'SourceSans3-SemiBold';
+    else if (cls === 'font-sans-medium' || cls === 'font-medium') style.fontFamily = 'SourceSans3-Medium';
+    else if (cls === 'font-sans-regular' || cls === 'font-normal') style.fontFamily = 'SourceSans3-Regular';
+    else if (cls === 'font-sans-light') style.fontFamily = 'SourceSans3-Light';
+    // Font size — theo tailwind.config.js fontSize
+    else if (cls === 'text-xs') style.fontSize = 12;
+    else if (cls === 'text-sm') style.fontSize = 13;
+    else if (cls === 'text-base') style.fontSize = 14;
+    else if (cls === 'text-md') style.fontSize = 16;
+    else if (cls === 'text-lg') style.fontSize = 18;
+    else if (cls === 'text-xl') style.fontSize = 20;
+    else if (cls === 'text-2xl') style.fontSize = 24;
+  }
+  return style;
+}
+
+/**
  * Mục đích: Tính ViewStyle cho container button dựa trên variant + size + state
  * Tham số đầu vào: variant, size, isDisabled, isLoading, colors (theme)
  * Tham số đầu ra: ViewStyle
@@ -131,27 +198,28 @@ function getTextStyle(
 ): TextStyle {
   // Base — tương đương "font-sans-medium text-foreground"
   const base: TextStyle = {
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'SourceSans3-Medium',
     color: colors.foreground,
     fontSize: 14,
   };
 
   // Size → font size
+  // fontSize theo tailwind.config.js: xs=12, sm=13, base=14, md=16, lg=18
   const sizeStyles: Record<string, TextStyle> = {
     default: {},
-    sm: {fontSize: 14},
+    sm: {fontSize: 13},
     lg: {fontSize: 18},
     icon: {fontSize: 14},
   };
 
-  // Variant → text color
+  // Variant → text color + font (SourceSans3 theo tailwind.config.js)
   const variantStyles: Record<string, TextStyle> = {
-    default: {color: colors.foreground, fontFamily: 'Inter-SemiBold'},
-    primary: {color: colors.primaryForeground, fontFamily: 'Inter-SemiBold'},
-    secondary: {color: colors.secondaryForeground, fontFamily: 'Inter-SemiBold'},
-    ghost: {color: colors.foreground, fontFamily: 'Inter-SemiBold'},
-    outline: {color: colors.foreground, fontFamily: 'Inter-SemiBold'},
-    link: {color: colors.primary, fontFamily: 'Inter-SemiBold', textDecorationLine: 'underline'},
+    default: {color: colors.foreground, fontFamily: 'SourceSans3-SemiBold'},
+    primary: {color: colors.primaryForeground, fontFamily: 'SourceSans3-SemiBold'},
+    secondary: {color: colors.secondaryForeground, fontFamily: 'SourceSans3-SemiBold'},
+    ghost: {color: colors.foreground, fontFamily: 'SourceSans3-SemiBold'},
+    outline: {color: colors.foreground, fontFamily: 'SourceSans3-SemiBold'},
+    link: {color: colors.primary, fontFamily: 'SourceSans3-SemiBold', textDecorationLine: 'underline'},
   };
 
   // Disabled state
@@ -193,13 +261,17 @@ export default function AppButton(props: AppButtonProps) {
   const isDisabled = disabled || loading;
 
   // Tính style cho container và text — memoize theo props thay đổi
+  // Merge order: base → size → variant → state → className override
+  const classNameStyle = useMemo(() => parseClassNameToViewStyle(className), [className]);
+  const textClassStyle = useMemo(() => parseTextClassNameToStyle(props.textClassname), [props.textClassname]);
+
   const buttonStyle = useMemo(
-    () => getButtonStyle(variant, size, !!isDisabled, !!loading, colors),
-    [variant, size, isDisabled, loading, colors],
+    () => ({...getButtonStyle(variant, size, !!isDisabled, !!loading, colors), ...classNameStyle}),
+    [variant, size, isDisabled, loading, colors, classNameStyle],
   );
   const textStyle = useMemo(
-    () => getTextStyle(variant, size, !!isDisabled, colors),
-    [variant, size, isDisabled, colors],
+    () => ({...getTextStyle(variant, size, !!isDisabled, colors), ...textClassStyle}),
+    [variant, size, isDisabled, colors, textClassStyle],
   );
 
   /**

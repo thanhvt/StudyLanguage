@@ -12,7 +12,7 @@
 export const AppColors = {
   primary: '#10b981',        // Obsidian Glass emerald
   secondary: '#6366f1',      // Indigo accent
-  primaryForeground: '#000000',
+  primaryForeground: '#FFFFFF',  // Trắng — text trên primary button (nền xanh/emerald) trong dark mode
   secondaryForeground: '#FFFFFF',
   foreground: '#f5f5f5',     // Hi-fi typography white
   background: '#000000',     // OLED pure black

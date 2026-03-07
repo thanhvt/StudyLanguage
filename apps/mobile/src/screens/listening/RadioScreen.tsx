@@ -139,7 +139,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
    */
   // Auto scroll tới track đang phát khi index thay đổi
   useEffect(() => {
-    if (currentTrackIndex >= 0 && playlist?.items?.length) {
+    const itemCount = playlist?.items?.length ?? 0;
+    // Guard: chỉ scroll khi index hợp lệ và nằm trong range
+    if (currentTrackIndex >= 0 && currentTrackIndex < itemCount) {
       flatListRef.current?.scrollToIndex({
         index: currentTrackIndex,
         animated: true,
@@ -435,6 +437,12 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
           }
           removeTrackFromPlaylist(item.id);
+          // Đồng bộ local playlist state sau khi xóa track
+          setPlaylist(prev => {
+            if (!prev) return prev;
+            const updatedItems = prev.items.filter(i => i.id !== item.id);
+            return {...prev, items: updatedItems};
+          });
           showSuccess('Đã xóa track');
         } catch (err: any) {
           showError('Lỗi xóa: ' + (err?.message || ''));
@@ -744,7 +752,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 {playlist.playlist.name}
               </AppText>
               <AppText className="text-xs mt-1" style={{color: colors.neutrals400}}>
-                {playlist.playlist.description || `${playlist.items.length} bài`}
+                {`${playlist.items.length} bài`}
               </AppText>
               {/* T-25: Download progress */}
               {isDownloading && downloadTotal > 0 && (
@@ -778,9 +786,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             contentContainerStyle={{paddingTop: 12, paddingBottom: insets.bottom + 80}}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={() => {
-              // Xử lý khi scroll tới index chưa render
+              // Xử lý khi scroll tới index chưa render — guard range
               setTimeout(() => {
-                if (currentTrackIndex >= 0) {
+                const itemCount = playlist?.items?.length ?? 0;
+                if (currentTrackIndex >= 0 && currentTrackIndex < itemCount) {
                   flatListRef.current?.scrollToIndex({
                     index: currentTrackIndex,
                     animated: true,
@@ -809,6 +818,13 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                                 await radioApi.deletePlaylistItems(playlist.playlist.id, ids);
                               }
                               removeTracksFromPlaylist(ids);
+                              // Đồng bộ local playlist state sau khi batch xóa
+                              const idsSet = new Set(ids);
+                              setPlaylist(prev => {
+                                if (!prev) return prev;
+                                const updatedItems = prev.items.filter(i => !idsSet.has(i.id));
+                                return {...prev, items: updatedItems};
+                              });
                               setSelectedTrackIds(new Set());
                               showSuccess(`Đã xóa ${ids.length} bài`);
                             } catch (err: any) {

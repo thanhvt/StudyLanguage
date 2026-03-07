@@ -176,8 +176,10 @@ export function CreateCategorySheet({
         onPress={() => { resetForm(); onClose(); }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          {/* onStartShouldSetResponder chặn touch event bubble lên Pressable backdrop → tránh close sheet */}
           <View
             className="rounded-t-3xl p-6 pb-10"
+            onStartShouldSetResponder={() => true}
             style={{
               backgroundColor: colors.background,
               borderTopWidth: 1,

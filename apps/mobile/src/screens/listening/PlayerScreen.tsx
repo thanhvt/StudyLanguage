@@ -729,7 +729,7 @@ export default function ListeningPlayerScreen({
       </View>
 
       <View
-        className="mx-4 mb-safe-offset-3 mt-2 rounded-2xl px-5 pt-4 pb-5 mb-2"
+        className="mx-4 mb-safe-offset-1 mt-2 rounded-2xl px-5 pt-4 pb-3"
         style={{
           backgroundColor: 'transparent',
         }}>

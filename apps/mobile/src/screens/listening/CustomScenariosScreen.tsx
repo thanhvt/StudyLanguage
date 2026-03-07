@@ -2,6 +2,7 @@ import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -267,10 +268,14 @@ export default function CustomScenariosScreen({
       {/* Create form modal (mở từ bottom) */}
       {showCreate && (
         <View className="absolute inset-0 bg-black/50 justify-end">
+          {/* Chạm vùng ngoài bottom sheet để đóng */}
+          <TouchableWithoutFeedback onPress={() => setShowCreate(false)}>
+            <View className="flex-1" />
+          </TouchableWithoutFeedback>
           <View
             className="rounded-t-3xl p-6"
             style={{paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
-            <AppText variant="heading3" weight="bold" raw>
+            <AppText variant="heading3" weight="bold" raw style={{textAlign: 'center', marginBottom: 16, color: colors.foreground}}>
               Tạo kịch bản mới
             </AppText>
             <AppInput

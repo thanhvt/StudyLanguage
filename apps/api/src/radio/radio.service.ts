@@ -327,7 +327,6 @@ CHỈ trả JSON, không giải thích.`;
         user_id: userId,
         name: playlistName,
         description: `${duration} phút • ${trackCount} bài`,
-        duration: duration,
       })
       .select()
       .single();

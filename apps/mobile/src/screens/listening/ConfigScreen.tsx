@@ -1,4 +1,5 @@
 import React, {useRef, useState, useCallback, useMemo, useEffect} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   Alert,
   Keyboard,
@@ -189,22 +190,26 @@ export default function ListeningConfigScreen({
     }
   }, [selectedTopic]);
 
-  // T-01: Fetch radio playlists khi chuyển sang radio tab
-  useEffect(() => {
-    if (mode === 'radio') {
-      setIsLoadingPlaylists(true);
-      radioApi
-        .getPlaylists()
-        .then(playlists => {
-          console.log('📻 [Config] Nhận', playlists.length, 'playlists');
-          setRadioPlaylists(playlists);
-        })
-        .catch(err => {
-          console.warn('⚠️ [Config] Không thể tải playlists:', err?.message);
-        })
-        .finally(() => setIsLoadingPlaylists(false));
-    }
-  }, [mode]);
+  // T-01: Fetch radio playlists khi screen focus + mode = radio
+  // Dùng useFocusEffect để re-fetch mỗi khi quay lại từ RadioScreen
+  // → cập nhật itemCount sau khi xóa track, và loại bỏ playlist đã xóa
+  useFocusEffect(
+    useCallback(() => {
+      if (mode === 'radio') {
+        setIsLoadingPlaylists(true);
+        radioApi
+          .getPlaylists()
+          .then(playlists => {
+            console.log('📻 [Config] Nhận', playlists.length, 'playlists');
+            setRadioPlaylists(playlists);
+          })
+          .catch(err => {
+            console.warn('⚠️ [Config] Không thể tải playlists:', err?.message);
+          })
+          .finally(() => setIsLoadingPlaylists(false));
+      }
+    }, [mode]),
+  );
 
   /**
    * Mục đích: Load playlist cũ và navigate sang RadioScreen để replay
@@ -1143,7 +1148,7 @@ export default function ListeningConfigScreen({
                               <AppText
                                 className="text-xs mt-0.5"
                                 style={{color: colors.neutrals400}}>
-                                {pl.description || `${pl.itemCount ?? 0} bài`}
+                                {`${pl.itemCount ?? 0} bài`}
                               </AppText>
                             </View>
                             <Icon
