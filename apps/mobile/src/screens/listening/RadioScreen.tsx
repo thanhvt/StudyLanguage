@@ -116,12 +116,16 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   } = useRadioPredownload(
     // Chỉ pre-download khi playlist ready hoặc đang play
     (radioState === 'ready' || radioState === 'playing') ? playlist : null,
-    // Callback: cập nhật audioUrl trong local state khi download xong
-    (index, audioUrl) => {
+    // Callback: cập nhật audioUrl + audioTimestamps trong local state khi download xong
+    (index, audioUrl, audioTimestamps) => {
       setPlaylist(prev => {
         if (!prev) return prev;
         const updatedItems = [...prev.items];
-        updatedItems[index] = {...updatedItems[index], audioUrl};
+        updatedItems[index] = {
+          ...updatedItems[index],
+          audioUrl,
+          ...(audioTimestamps ? {audioTimestamps} : {}),
+        };
         return {...prev, items: updatedItems};
       });
     },

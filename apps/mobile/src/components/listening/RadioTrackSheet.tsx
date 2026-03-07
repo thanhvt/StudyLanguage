@@ -225,6 +225,7 @@ export default function RadioTrackSheet({
       ref={sheetRef}
       index={0}
       snapPoints={snapPoints}
+      enableDynamicSizing={false}
       enablePanDownToClose
       onClose={handleClose}
       handleIndicatorStyle={{backgroundColor: colors.neutrals400, width: 40}}
@@ -259,7 +260,13 @@ export default function RadioTrackSheet({
           {/* Nút VI toggle */}
           <TouchableOpacity
             onPress={() => {
-              setShowTranslation(prev => !prev);
+              if (showTranslation) {
+                setShowTranslation(false);
+              } else {
+                // Radio conversation không có trường vietnamese
+                // Hiện toast thông báo
+                showInfo('Chưa hỗ trợ', 'Bản dịch chưa khả dụng cho Radio Mode');
+              }
               haptic.light();
             }}
             className="p-2"
@@ -281,6 +288,15 @@ export default function RadioTrackSheet({
             <Icon name="X" className="w-5 h-5" style={{color: colors.neutrals400}} />
           </TouchableOpacity>
         </View>
+
+        {/* Bookmark + Vocabulary count indicators */}
+        {bookmarkedIndexes.length > 0 && (
+          <View className="flex-row items-center gap-3 mt-1.5">
+            <AppText className="text-xs" style={{color: LISTENING_BLUE}}>
+              ⭐ {bookmarkedIndexes.length} bookmark
+            </AppText>
+          </View>
+        )}
       </View>
 
       {/* Transcript — dùng ExchangeItem component */}

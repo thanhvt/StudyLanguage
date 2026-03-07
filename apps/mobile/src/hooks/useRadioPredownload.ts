@@ -33,7 +33,7 @@ interface PredownloadState {
  */
 export function useRadioPredownload(
   playlist: RadioPlaylistResult | null,
-  onTrackDownloaded?: (index: number, audioUrl: string) => void,
+  onTrackDownloaded?: (index: number, audioUrl: string, audioTimestamps?: {startTime: number; endTime: number}[]) => void,
 ) {
   const [state, setState] = useState<PredownloadState>({
     downloadedCount: 0,
@@ -64,10 +64,10 @@ export function useRadioPredownload(
    * Khi nào sử dụng: downloadAllTracks() gọi tuần tự cho mỗi track
    */
   const downloadTrackAudio = useCallback(
-    async (item: RadioPlaylistItem, playlistId: string): Promise<string | null> => {
+    async (item: RadioPlaylistItem, playlistId: string): Promise<{audioUrl: string; audioTimestamps?: {startTime: number; endTime: number}[]} | null> => {
       // Đã có audio → skip
       if (item.audioUrl) {
-        return item.audioUrl;
+        return {audioUrl: item.audioUrl, audioTimestamps: item.audioTimestamps};
       }
 
       try {
@@ -101,7 +101,14 @@ export function useRadioPredownload(
           console.warn('⚠️ [Pre-download] Lỗi cache audio URL:', err?.message);
         });
 
-        return audioResult.audioUrl;
+        // Trả về cả audioUrl và timestamps
+        return {
+          audioUrl: audioResult.audioUrl,
+          audioTimestamps: audioResult.timestamps?.map((t: any) => ({
+            startTime: t.startTime,
+            endTime: t.endTime,
+          })),
+        };
       } catch (error: any) {
         console.warn(`⚠️ [Pre-download] Lỗi track "${item.topic}":`, error?.message);
         return null; // Skip track lỗi, tiếp tục track khác
@@ -165,18 +172,18 @@ export function useRadioPredownload(
         }
 
         console.log(`📥 [Pre-download] Track ${i + 1}/${playlist.items.length}: ${item.topic}`);
-        const audioUrl = await downloadTrackAudio(item, playlistId);
+        const audioResult = await downloadTrackAudio(item, playlistId);
 
         if (controller.signal.aborted) break;
 
-        if (audioUrl) {
+        if (audioResult) {
           alreadyCached.add(item.id);
           setState(prev => ({
             ...prev,
             downloadedCount: alreadyCached.size,
             downloadedIds: new Set(alreadyCached),
           }));
-          onTrackDownloaded?.(i, audioUrl);
+          onTrackDownloaded?.(i, audioResult.audioUrl, audioResult.audioTimestamps);
         }
       }
 
