@@ -275,6 +275,7 @@ export default function CustomScenariosScreen({
             </AppText>
             <AppInput
               label="Tên kịch bản"
+              className="bg-neutrals900"
               placeholder="Nhập tên kịch bản..."
               value={newName}
               onChangeText={setNewName}
@@ -285,6 +286,7 @@ export default function CustomScenariosScreen({
             <AppInput
               label="Mô tả"
               variant="textarea"
+              className="bg-neutrals900"
               placeholder="Mô tả chi tiết kịch bản (tuỳ chọn)..."
               value={newDesc}
               onChangeText={setNewDesc}
@@ -293,23 +295,25 @@ export default function CustomScenariosScreen({
               containerClassName="mb-4"
             />
             <View className="flex-row gap-3">
-              <AppButton
-                variant="outline"
-                size="default"
-                className="flex-1"
-                onPress={() => setShowCreate(false)}>
-                Hủy
-              </AppButton>
-              <AppButton
-                variant="primary"
-                size="default"
-                className="flex-1"
-                style={{backgroundColor: LISTENING_BLUE}}
-                onPress={handleCreate}
-                disabled={!newName.trim() || isSaving}
-                loading={isSaving}>
-                Tạo
-              </AppButton>
+              <View style={{flex: 1}}>
+                <AppButton
+                  variant="outline"
+                  size="default"
+                  onPress={() => setShowCreate(false)}>
+                  Hủy
+                </AppButton>
+              </View>
+              <View style={{flex: 1}}>
+                <AppButton
+                  variant="primary"
+                  size="default"
+                  style={{backgroundColor: LISTENING_BLUE}}
+                  onPress={handleCreate}
+                  disabled={!newName.trim() || isSaving}
+                  loading={isSaving}>
+                  Tạo
+                </AppButton>
+              </View>
             </View>
           </View>
         </View>

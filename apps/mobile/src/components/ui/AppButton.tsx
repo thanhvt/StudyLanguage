@@ -94,7 +94,7 @@ function getButtonStyle(
     outline: {
       backgroundColor: 'transparent',
       borderWidth: 1,
-      borderColor: colors.neutrals700,
+      borderColor: colors.neutrals600, // neutrals600 thay vì 700 — tăng contrast trên OLED dark
     },
     link: {
       backgroundColor: 'transparent',

@@ -618,6 +618,99 @@ const duration = reduceMotion ? 0 : 300;
 - ❌ Don't use `variant="outline"` buttons (invisible on OLED)
 - ❌ Don't use `text-destructive` token for icons (too dim)
 
+### 10.3 Dark Mode Developer Checklist (MANDATORY trước khi merge)
+
+> [!IMPORTANT]
+> **Mọi component/screen MỚI hoặc SỬA phải pass 6 checks này:**
+
+```
+□ 1. TEXT COLOR: Mọi text PHẢI dùng `text-foreground` (NativeWind)
+     hoặc `color: colors.foreground` (JS style)
+     → TUYỆT ĐỐI KHÔNG hardcode #000, #333, #171717 mà không check theme
+
+□ 2. BACKGROUND: Card/container PHẢI dùng `bg-surface` hoặc `bg-surface-raised`
+     hoặc `backgroundColor: colors.surface` / `colors.surfaceRaised`
+     → KHÔNG hardcode #fff, #f5f5f5
+
+□ 3. BORDER: Dùng `border-border` token hoặc `borderColor: colors.border`
+     → KHÔNG hardcode #e5e5e5
+
+□ 4. ICONS: Dùng `colors.foreground` hoặc `colors.neutrals400`
+     → KHÔNG dùng fixed dark colors cho icon
+
+□ 5. CONTRAST CHECK: Verify text trên background ≥ 4.5:1
+     Dark:  text #f5f5f5 trên #000000 = 19.3:1 ✅
+     Dark:  text #737373 trên #000000 = 4.8:1  ✅ (secondary)
+     Light: text #171717 trên #ffffff = 18.1:1 ✅
+
+□ 6. DUAL SCREENSHOT: Chụp CẢ dark + light trước khi tạo PR
+```
+
+### 10.4 Light Mode Developer Checklist
+
+```
+□ 1. TEXT: Text chính dùng `foreground` (#171717) — ĐỦ TỐI trên nền trắng
+     → KHÔNG dùng #9e9e9e, #b4b4b4 cho body text (fail WCAG)
+
+□ 2. SECONDARY TEXT: Dùng `neutrals400` (#9ca3af) hoặc đậm hơn
+     → Contrast tối thiểu 4.5:1 với #ffffff background
+
+□ 3. BORDER CONTRAST: `border` token (#e5e5e5) — đủ phân biệt trên #fff
+     → KHÔNG dùng #f5f5f5 làm border (quá nhẹ, invisible)
+
+□ 4. BUTTON TEXT trên primary: PHẢI dùng `primaryForeground` (#FFFFFF)
+     → KHÔNG dùng `foreground` (#171717) trên nền xanh (#22c55e)
+
+□ 5. DISABLED STATE: Dùng opacity 0.5 hoặc tint color
+     → Light disabled KHÁC dark disabled (xem §6.1.1 Disabled State)
+
+□ 6. SHADOW VISIBILITY: Light mode dùng gray shadows (#000 low opacity)
+     → Dark mode shadows không thấy → dùng surface layers thay thế
+```
+
+### 10.5 Text Color Reference Table
+
+| Vai trò | Dark Mode | Light Mode | Token / Cách dùng |
+|---------|-----------|------------|-------------------|
+| **Primary** (tiêu đề, nội dung) | `#f5f5f5` | `#171717` | `text-foreground` hoặc `colors.foreground` |
+| **Secondary** (mô tả, subtitle) | `#737373` | `#9ca3af` | `text-neutrals400` hoặc `colors.neutrals400` |
+| **Placeholder** | `#525252` | `#6b7280` | `text-neutrals500` hoặc `colors.neutrals500` |
+| **Disabled** | `#404040` | `#d1d5db` | `text-neutrals600` hoặc `colors.neutrals600` |
+| **Accent** (selected, CTA) | Skill color dark | Skill color light | `useSkillColor()` hook |
+| **Error** | `#f43f5e` | `#ef4444` | `text-error` hoặc `colors.error` |
+| **Success** | `#10b981` | `#22c55e` | `text-success` hoặc `colors.success` |
+
+### 10.6 Skill Color Usage Rules
+
+> [!WARNING]
+> **KHÔNG BAO GIỜ** hardcode `SKILL_COLORS.speaking.dark` hoặc `SKILL_COLORS.reading.dark`.
+> Luôn dùng hook `useSkillColor()` để lấy màu theo theme hiện tại.
+
+```typescript
+// ❌ SAI — hardcode dark, light mode sẽ sai màu
+const speakingColor = SKILL_COLORS.speaking.dark;
+
+// ✅ ĐÚNG — tự động chọn light/dark theo theme
+const speakingColor = useSkillColor('speaking');
+```
+
+| Skill | Dark | Light | Usage |
+|-------|------|-------|-------|
+| Listening | `#6366F1` (Indigo) | `#4F46E5` (Dark Indigo) | Borders, tints, CTA |
+| Speaking | `#4ade80` (Green 400) | `#16A34A` (Green 600) | Borders, tints, CTA |
+| Reading | `#fbbf24` (Amber 300) | `#D97706` (Amber 600) | Borders, tints, CTA |
+
+### 10.7 Dark/Light Mode Anti-Patterns
+
+| ❌ Anti-pattern | Tại sao sai | ✅ Đúng |
+|----------------|------------|---------|
+| `variant="outline"` button trên dark | Border `neutrals700` (#303030) gần invisible trên #000 | Dùng tint style: `bg: color+12`, `border: color+30` |
+| Hardcode `SKILL_COLORS.*.dark` | Light mode nhận dark color → contrast sai | `useSkillColor()` hook |
+| Text không set `color: colors.foreground` | Mặc định có thể sai theme | Luôn explicit set `text-foreground` hoặc `color: colors.foreground` |
+| `colors.css` edit tay | Sẽ bị overwrite khi regenerate | Edit `colors.ts` → chạy `node scripts/generate-colors-css.js` |
+| Dùng `#ffffff` text trên dark mode | Quá sáng, chói mắt | Dùng `#f5f5f5` (`foreground` token) |
+| Dùng opacity cho disabled button | Khó đọc trên cả 2 mode | Đổi `backgroundColor` + `textColor` riêng |
+
 ---
 
 ## 11. Platform Specifics 📱

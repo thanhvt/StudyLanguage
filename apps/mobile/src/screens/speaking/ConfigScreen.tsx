@@ -15,7 +15,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl';
 import {useColors} from '@/hooks/useColors';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {speakingApi} from '@/services/api/speaking';
-import {SKILL_COLORS} from '@/config/skillColors';
+import {useSkillColor} from '@/hooks/useSkillColor';
 import Icon from '@/components/ui/Icon';
 import SpeakingTtsSheet from '@/components/speaking/SpeakingTtsSheet';
 
@@ -49,7 +49,7 @@ const TOPIC_SUGGESTIONS = [
 export default function SpeakingConfigScreen() {
   const navigation = useNavigation<any>();
   const colors = useColors();
-  const speakingColor = SKILL_COLORS.speaking.dark;
+  const speakingColor = useSkillColor('speaking');
 
   // Zustand store
   const {
@@ -153,7 +153,7 @@ export default function SpeakingConfigScreen() {
               required
             />
 
-            {/* Chip gợi ý */}
+            {/* Chip gợi ý — dùng tint style thay outline (outline invisible trên dark OLED) */}
             <View className="flex-row flex-wrap gap-2 mt-3">
               {TOPIC_SUGGESTIONS.map(suggestion => {
                 const cleanText = suggestion
@@ -163,13 +163,17 @@ export default function SpeakingConfigScreen() {
                 return (
                   <AppButton
                     key={suggestion}
-                    variant={isSelected ? 'primary' : 'outline'}
+                    variant={isSelected ? 'primary' : 'default'}
                     size="sm"
                     onPress={() => handleTopicSuggestion(suggestion)}
                     style={
                       isSelected
                         ? {backgroundColor: speakingColor}
-                        : undefined
+                        : {
+                            backgroundColor: `${speakingColor}12`,
+                            borderWidth: 1,
+                            borderColor: `${speakingColor}30`,
+                          }
                     }
                   >
                     {suggestion}
@@ -230,10 +234,14 @@ export default function SpeakingConfigScreen() {
               Trò chuyện tự do với AI Coach. AI sẽ sửa lỗi phát âm và ngữ pháp realtime.
             </AppText>
             <AppButton
-              variant="outline"
+              variant="default"
               size="sm"
               onPress={() => navigation.navigate('CoachSetup')}
-              style={{borderColor: speakingColor}}>
+              style={{
+                backgroundColor: `${speakingColor}12`,
+                borderWidth: 1,
+                borderColor: `${speakingColor}30`,
+              }}>
               Bắt đầu Coach Mode →
             </AppButton>
           </View>
@@ -250,7 +258,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               📋 Kịch bản tùy chỉnh
             </AppText>
             <Icon
@@ -272,7 +280,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               ⚙️ Cài đặt giọng AI
             </AppText>
             <Icon
@@ -294,7 +302,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               🎧 Chế độ Shadowing
             </AppText>
             <Icon
@@ -316,7 +324,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               🎭 Chế độ Roleplay
             </AppText>
             <Icon
@@ -338,7 +346,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               👅 Tongue Twister Challenge
             </AppText>
             <Icon
@@ -360,7 +368,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               📈 Tiến độ & Thành tích
             </AppText>
             <Icon
@@ -382,7 +390,7 @@ export default function SpeakingConfigScreen() {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <AppText variant="body" raw style={{flex: 1}}>
+            <AppText variant="body" raw style={{flex: 1, color: colors.foreground}}>
               📂 Lịch sử ghi âm
             </AppText>
             <Icon

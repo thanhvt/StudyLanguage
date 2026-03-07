@@ -14,7 +14,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl';
 import {useColors} from '@/hooks/useColors';
 import {useReadingStore} from '@/store/useReadingStore';
 import {readingApi} from '@/services/api/reading';
-import {SKILL_COLORS} from '@/config/skillColors';
+import {useSkillColor} from '@/hooks/useSkillColor';
 import Icon from '@/components/ui/Icon';
 
 // =======================
@@ -52,7 +52,7 @@ const TOPIC_SUGGESTIONS = [
 export default function ReadingConfigScreen() {
   const navigation = useNavigation<any>();
   const colors = useColors();
-  const readingColor = SKILL_COLORS.reading.dark;
+  const readingColor = useSkillColor('reading');
 
   // Zustand store
   const {config, setConfig, setArticle, setGenerating, setError, isGenerating} =
@@ -146,7 +146,7 @@ export default function ReadingConfigScreen() {
               required
             />
 
-            {/* Chip gợi ý */}
+            {/* Chip gợi ý — dùng tint style thay outline (outline invisible trên dark OLED) */}
             <View className="flex-row flex-wrap gap-2 mt-3">
               {TOPIC_SUGGESTIONS.map(suggestion => {
                 const isSelected =
@@ -155,13 +155,17 @@ export default function ReadingConfigScreen() {
                 return (
                   <AppButton
                     key={suggestion}
-                    variant={isSelected ? 'primary' : 'outline'}
+                    variant={isSelected ? 'primary' : 'default'}
                     size="sm"
                     onPress={() => handleTopicSuggestion(suggestion)}
                     style={
                       isSelected
                         ? {backgroundColor: readingColor}
-                        : undefined
+                        : {
+                            backgroundColor: `${readingColor}12`,
+                            borderWidth: 1,
+                            borderColor: `${readingColor}30`,
+                          }
                     }
                   >
                     {suggestion}

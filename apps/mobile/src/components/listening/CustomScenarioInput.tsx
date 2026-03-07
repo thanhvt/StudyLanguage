@@ -254,6 +254,7 @@ export default function CustomScenarioInput({
 
         <AppInput
           placeholder="Tên kịch bản..."
+          className="bg-neutrals900"
           value={name}
           onChangeText={setName}
           editable={!disabled && !isSaving}
@@ -264,6 +265,7 @@ export default function CustomScenarioInput({
 
         <AppInput
           variant="textarea"
+          className="bg-neutrals900"
           placeholder="Mô tả chi tiết kịch bản..."
           value={description}
           onChangeText={setDescription}
@@ -275,23 +277,27 @@ export default function CustomScenarioInput({
         />
 
         <View className="flex-row gap-2">
-          <AppButton
-            variant="primary"
-            size="default"
-            style={{flex: 1, backgroundColor: LISTENING_BLUE}}
-            onPress={handleQuickUse}
-            disabled={disabled || !name.trim() || isSaving}>
-            ⚡ Sử dụng ngay
-          </AppButton>
-          <AppButton
-            variant="outline"
-            size="default"
-            style={{flex: 1, borderColor: LISTENING_BLUE}}
-            onPress={handleSave}
-            disabled={disabled || !name.trim() || isSaving}
-            loading={isSaving}>
-            💾 Lưu lại
-          </AppButton>
+          <View style={{flex: 1}}>
+            <AppButton
+              variant="primary"
+              size="default"
+              style={{backgroundColor: LISTENING_BLUE}}
+              onPress={handleQuickUse}
+              disabled={disabled || !name.trim() || isSaving}>
+              ⚡ Sử dụng ngay
+            </AppButton>
+          </View>
+          <View style={{flex: 1}}>
+            <AppButton
+              variant="outline"
+              size="default"
+              style={{borderColor: LISTENING_BLUE}}
+              onPress={handleSave}
+              disabled={disabled || !name.trim() || isSaving}
+              loading={isSaving}>
+              💾 Lưu lại
+            </AppButton>
+          </View>
         </View>
       </View>
     </View>
