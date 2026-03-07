@@ -15,7 +15,7 @@ export interface RadioPreview {
 export interface RadioPlaylistItem {
   id: string;
   topic: string;
-  conversation: {speaker: string; text: string}[];
+  conversation: {speaker: string; text: string; vietnamese?: string}[];
   duration: number;
   numSpeakers: number;
   category: string;

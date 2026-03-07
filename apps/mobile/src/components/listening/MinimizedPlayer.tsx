@@ -15,6 +15,7 @@ import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useRadioStore} from '@/store/useRadioStore';
 import TrackPlayer, {usePlaybackState, useProgress, State} from 'react-native-track-player';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import {useColors} from '@/hooks/useColors';
 import {formatTime} from '@/utils/formatTime';
 
 const LISTENING_BLUE = '#2563EB';
+const RADIO_ACCENT = '#2563EB'; // Cùng màu xanh cho consistency
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 // Chiều rộng pill — tối thiểu 200, tối đa 65% màn hình
 const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.65, 280);
@@ -42,10 +44,11 @@ const WAVEFORM_BARS = [
  * Mục đích: Floating pill MinimizedPlayer — hiện khi player thu nhỏ
  *   Pill hình viên thuốc, position absolute, góc phải dưới, draggable
  *   Nội dung: waveform (animated) + tên bài + speaker + thời gian + nút play + nút close
+ *   Hỗ trợ dual-mode: Listening (podcast) VÀ Radio — dựa trên activeSource
  * Tham số đầu vào: không (đọc từ stores)
  * Tham số đầu ra: JSX.Element | null
  * Khi nào sử dụng: RootNavigator render component này khi playerMode === 'minimized'
- *   Tap body = mở full PlayerScreen, Tap play = toggle, Tap X = đóng, Kéo = di chuyển
+ *   Tap body = mở full screen tương ứng, Tap play = toggle, Tap X = đóng, Kéo = di chuyển
  */
 export default function MinimizedPlayer() {
   const haptic = useHaptic();
@@ -54,16 +57,26 @@ export default function MinimizedPlayer() {
   const insets = useSafeAreaInsets();
 
   const playerMode = useAudioPlayerStore(state => state.playerMode);
+  const activeSource = useAudioPlayerStore(state => state.activeSource);
   const setPlayerMode = useAudioPlayerStore(state => state.setPlayerMode);
   const setGlobalPlaying = useAudioPlayerStore(state => state.setIsPlaying);
 
-  const config = useListeningStore(state => state.config);
-  const selectedTopic = useListeningStore(state => state.selectedTopic);
-  const conversation = useListeningStore(state => state.conversation);
-  const currentExchangeIndex = useListeningStore(state => state.currentExchangeIndex);
-  const setCurrentExchangeIndex = useListeningStore(state => state.setCurrentExchangeIndex);
-  const timestamps = useListeningStore(state => state.timestamps);
-  const numSpeakers = config.numSpeakers ?? 2;
+  // === Listening store selectors ===
+  const listeningConfig = useListeningStore(state => state.config);
+  const listeningSelectedTopic = useListeningStore(state => state.selectedTopic);
+  const listeningConversation = useListeningStore(state => state.conversation);
+  const listeningCurrentExchangeIndex = useListeningStore(state => state.currentExchangeIndex);
+  const setListeningExchangeIndex = useListeningStore(state => state.setCurrentExchangeIndex);
+  const listeningTimestamps = useListeningStore(state => state.timestamps);
+  const listeningNumSpeakers = listeningConfig.numSpeakers ?? 2;
+
+  // === Radio store selectors ===
+  const radioPlaylist = useRadioStore(state => state.currentPlaylist);
+  const radioTrackIndex = useRadioStore(state => state.currentTrackIndex);
+  const radioPlaybackState = useRadioStore(state => state.playbackState);
+
+  // Xác định source hiện tại
+  const isRadio = activeSource === 'radio';
 
   const playbackState = usePlaybackState();
   const isTrackPlaying = playbackState.state === State.Playing;
@@ -138,44 +151,60 @@ export default function MinimizedPlayer() {
    * Tham số đầu vào: progress.position, timestamps, isTrackPlaying
    * Tham số đầu ra: void (cập nhật store)
    * Khi nào sử dụng: Khi PlayerScreen unmount, MinimizedPlayer tiếp quản sync
+   *   Chỉ sync cho Listening mode — Radio dùng track-level navigation
    */
   useEffect(() => {
-    if (!timestamps?.length || !isTrackPlaying) {return;}
+    // Chỉ sync transcript cho Listening mode
+    if (isRadio) {return;}
+    if (!listeningTimestamps?.length || !isTrackPlaying) {return;}
     const currentTime = progress.position;
-    const activeIndex = timestamps.findIndex(
+    const activeIndex = listeningTimestamps.findIndex(
       ts => currentTime >= ts.startTime && currentTime < ts.endTime,
     );
     // Dùng getState() thay vì reactive dep để tránh infinite loop
     const currentIdx = useListeningStore.getState().currentExchangeIndex;
     if (activeIndex !== -1 && activeIndex !== currentIdx) {
-      setCurrentExchangeIndex(activeIndex);
+      setListeningExchangeIndex(activeIndex);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress.position, timestamps, isTrackPlaying]);
+  }, [progress.position, listeningTimestamps, isTrackPlaying, isRadio]);
 
   // Chỉ hiện khi mode = minimized — đặt SAU tất cả hooks
   if (playerMode !== 'minimized') {
     return null;
   }
 
-  // Tên chủ đề — truncate
-  const topicName = selectedTopic?.name || config.topic || 'Bài nghe';
+  // Tên chủ đề — khác nhau giữa Listening và Radio
+  const topicName = isRadio
+    ? (radioPlaylist?.items[radioTrackIndex]?.topic || 'Radio')
+    : (listeningSelectedTopic?.name || listeningConfig.topic || 'Bài nghe');
 
-  // Lấy tên speaker đang nói hiện tại
-  const exchanges = conversation?.conversation || [];
-  const currentExchange = exchanges[currentExchangeIndex];
+  // Lấy tên speaker đang nói hiện tại (chỉ Listening có transcript-level tracking)
+  const exchanges = isRadio ? [] : (listeningConversation?.conversation || []);
+  const currentExchange = isRadio ? null : exchanges[listeningCurrentExchangeIndex];
   const speakerName = currentExchange?.speaker || '';
 
+  // Số speakers
+  const numSpeakers = isRadio
+    ? (radioPlaylist?.items[radioTrackIndex]?.numSpeakers ?? 0)
+    : listeningNumSpeakers;
+
   /**
-   * Mục đích: Tap body pill → mở full PlayerScreen
+   * Mục đích: Tap body pill → mở full screen tương ứng
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap vào phần body của pill (trừ nút play/close)
+   *   Listening → navigate tới Player screen
+   *   Radio → navigate tới Radio screen
    */
   const handleExpand = () => {
     haptic.light();
     setPlayerMode('full');
-    navigation.navigate('Listening', {screen: 'Player'});
+    if (isRadio) {
+      navigation.navigate('Listening', {screen: 'Radio'});
+    } else {
+      navigation.navigate('Listening', {screen: 'Player'});
+    }
   };
 
   /**
@@ -200,12 +229,17 @@ export default function MinimizedPlayer() {
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap nút X trên pill
+   *   Reset cả TrackPlayer + global store + source-specific store
    */
   const handleClose = async () => {
     haptic.light();
     await TrackPlayer.reset();
     setGlobalPlaying(false);
-    setPlayerMode('hidden');
+    // Reset Radio store nếu đang là Radio source
+    if (isRadio) {
+      useRadioStore.getState().setPlaybackState('idle');
+    }
+    useAudioPlayerStore.getState().resetPlayer();
   };
 
   // Drag gesture — chỉ activate khi kéo > 10px, tap ngắn pass-through ngay

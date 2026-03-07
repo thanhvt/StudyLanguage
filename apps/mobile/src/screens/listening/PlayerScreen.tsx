@@ -196,6 +196,8 @@ export default function ListeningPlayerScreen({
       setPlaybackSpeed(persistedSpeed);
     }
     setPlayerMode('full');
+    // Đánh dấu nguồn audio là Listening — để MinimizedPlayer biết đọc data từ useListeningStore
+    useAudioPlayerStore.getState().setActiveSource('listening');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -174,6 +174,8 @@ export function useRadioPlayer() {
         setPlaybackState('playing');
         setGlobalPlaying(true);
         setPlayerMode('full');
+        // Đánh dấu nguồn audio là Radio — để MinimizedPlayer biết đọc data từ useRadioStore
+        useAudioPlayerStore.getState().setActiveSource('radio');
 
         // Cập nhật streak
         checkAndUpdateStreak();

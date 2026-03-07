@@ -22,7 +22,7 @@ export interface RadioPlaylistResult {
 export interface RadioPlaylistItem {
   id: string;
   topic: string;
-  conversation: { speaker: string; text: string }[];
+  conversation: { speaker: string; text: string; vietnamese?: string }[];
   duration: number;
   numSpeakers: number;
   category: string;
@@ -351,10 +351,13 @@ CHỈ trả JSON, không giải thích.`;
         this.logger.log(`Generating track ${globalIdx + 1}/${trackCount}: ${scenario.topic} (${numSpeakers} speakers)`);
 
         // T-05: Level = intermediate (implicit trong prompt AI)
+        // Luôn includeVietnamese cho Radio Mode → hiện translation trong RadioTrackSheet
         const result = await this.aiService.generateConversation(
           scenario.topic,
           trackDuration,
           numSpeakers,
+          undefined, // keywords
+          true,      // includeVietnamese
         );
 
         return { scenario, result, numSpeakers, position: globalIdx };
@@ -371,13 +374,20 @@ CHỈ trả JSON, không giải thích.`;
 
         const { scenario, result, numSpeakers, position } = outcome.value;
 
+        // Map translation → vietnamese cho mobile
+        const mappedConversation = result.script.map(line => ({
+          speaker: line.speaker,
+          text: line.text,
+          ...(line.translation ? { vietnamese: line.translation } : {}),
+        }));
+
         // Lưu vào playlist_items
         const { data: item, error: itemError } = await this.supabase
           .from('playlist_items')
           .insert({
             playlist_id: playlist.id,
             topic: scenario.topic,
-            conversation: result.script,
+            conversation: mappedConversation,
             duration: trackDuration,
             num_speakers: numSpeakers,
             category: scenario.category,
@@ -395,7 +405,7 @@ CHỈ trả JSON, không giải thích.`;
         items.push({
           id: item.id,
           topic: scenario.topic,
-          conversation: result.script,
+          conversation: mappedConversation,
           duration: trackDuration,
           numSpeakers,
           category: scenario.category,

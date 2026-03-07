@@ -27,6 +27,9 @@ import type {ConversationTimestamp, ConversationResult} from '@/services/api/lis
 /** Chế độ hiển thị player */
 export type PlayerMode = 'full' | 'minimized' | 'hidden';
 
+/** Nguồn audio đang phát — Listening (podcast) hay Radio */
+export type AudioSource = 'listening' | 'radio' | null;
+
 /** Thông tin session audio đang phát / gần nhất */
 export interface AudioSession {
   /** URL audio */
@@ -54,6 +57,8 @@ export interface AudioSession {
 interface AudioPlayerState {
   /** Chế độ hiển thị player hiện tại */
   playerMode: PlayerMode;
+  /** Nguồn audio đang phát — để MinimizedPlayer biết đọc data từ store nào */
+  activeSource: AudioSource;
   /** Tốc độ phát (persist qua lần mở app tiếp) */
   playbackSpeed: number;
   /** Âm lượng (0-1, persist) */
@@ -67,6 +72,8 @@ interface AudioPlayerState {
 interface AudioPlayerActions {
   /** Set chế độ player (full → minimized → hidden) */
   setPlayerMode: (mode: PlayerMode) => void;
+  /** Set nguồn audio đang phát (listening / radio) */
+  setActiveSource: (source: AudioSource) => void;
   /** Set tốc độ phát (được persist) */
   setPlaybackSpeed: (speed: number) => void;
   /** Set âm lượng (được persist) */
@@ -83,6 +90,7 @@ interface AudioPlayerActions {
 
 const initialState: AudioPlayerState = {
   playerMode: 'hidden',
+  activeSource: null,
   playbackSpeed: 1,
   volume: 1,
   lastSession: null,
@@ -94,12 +102,12 @@ const initialState: AudioPlayerState = {
  * Tham số đầu vào: không (global store)
  * Tham số đầu ra: state + actions
  * Khi nào sử dụng:
- *   - MinimizedPlayer: đọc playerMode, isPlaying, lastSession
+ *   - MinimizedPlayer: đọc playerMode, activeSource, isPlaying, lastSession
  *   - PlayerScreen: đọc/ghi playbackSpeed, volume; gọi saveSession khi có audio
  *   - ConfigScreen: đọc lastSession để hiện "Tiếp tục nghe" button
  *   - MainStack: đọc playerMode để quyết định render MinimizedPlayer
  *   - PERSIST: playbackSpeed, volume, lastSession được lưu qua MMKV
- * KHÔNG PERSIST: playerMode, isPlaying (runtime-only)
+ * KHÔNG PERSIST: playerMode, activeSource, isPlaying (runtime-only)
  */
 export const useAudioPlayerStore = create<
   AudioPlayerState & AudioPlayerActions
@@ -109,6 +117,8 @@ export const useAudioPlayerStore = create<
       ...initialState,
 
       setPlayerMode: mode => set({playerMode: mode}),
+
+      setActiveSource: source => set({activeSource: source}),
 
       // EC-M04 fix: Clamp speed trong [0.25, 4.0]
       setPlaybackSpeed: speed => set({playbackSpeed: Math.max(0.25, Math.min(4.0, speed))}),
@@ -124,6 +134,7 @@ export const useAudioPlayerStore = create<
       resetPlayer: () =>
         set({
           playerMode: 'hidden',
+          activeSource: null,
           isPlaying: false,
           lastSession: null,
         }),

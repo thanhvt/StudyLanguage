@@ -10,6 +10,7 @@
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import TrackPlayer, {State as TrackPlayerState} from 'react-native-track-player';
 import {AppText} from '@/components/ui';
@@ -71,6 +72,7 @@ export default function RadioTrackSheet({
   const addSavedWord = useListeningStore(s => s.addSavedWord);
   const sheetRef = useRef<BottomSheet>(null);
   const scrollViewRef = useRef<any>(null);
+  const navigation = useNavigation<any>();
 
   // Trạng thái local
   const [showTranslation, setShowTranslation] = useState(false);
@@ -196,6 +198,7 @@ export default function RadioTrackSheet({
             sentenceIndex: index,
             speaker: exchange.speaker,
             sentenceText: exchange.text,
+            sentenceTranslation: exchange.vietnamese,
             topic: track?.topic,
           });
           showSuccess('Đã lưu bookmark ⭐', exchange.text.substring(0, 40) + '...');
@@ -260,12 +263,12 @@ export default function RadioTrackSheet({
           {/* Nút VI toggle */}
           <TouchableOpacity
             onPress={() => {
-              if (showTranslation) {
-                setShowTranslation(false);
+              // Kiểm tra xem data có vietnamese không
+              const hasVietnamese = exchanges.some(e => !!e.vietnamese);
+              if (hasVietnamese) {
+                setShowTranslation(prev => !prev);
               } else {
-                // Radio conversation không có trường vietnamese
-                // Hiện toast thông báo
-                showInfo('Chưa hỗ trợ', 'Bản dịch chưa khả dụng cho Radio Mode');
+                showInfo('Chưa có bản dịch', 'Playlist này chưa có bản dịch. Hãy tạo playlist mới!');
               }
               haptic.light();
             }}
@@ -291,11 +294,21 @@ export default function RadioTrackSheet({
 
         {/* Bookmark + Vocabulary count indicators */}
         {bookmarkedIndexes.length > 0 && (
-          <View className="flex-row items-center gap-3 mt-1.5">
+          <TouchableOpacity
+            className="flex-row items-center gap-3 mt-1.5"
+            onPress={() => {
+              // Navigate to BookmarksVocabulary screen
+              handleClose();
+              setTimeout(() => {
+                navigation.navigate('BookmarksVocabulary');
+              }, 300);
+            }}
+            accessibilityLabel="Xem danh sách bookmark"
+            accessibilityRole="button">
             <AppText className="text-xs" style={{color: LISTENING_BLUE}}>
-              ⭐ {bookmarkedIndexes.length} bookmark
+              ⭐ {bookmarkedIndexes.length} bookmark • Xem tất cả ›
             </AppText>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
 
