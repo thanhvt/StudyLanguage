@@ -218,9 +218,17 @@ export default function MinimizedPlayer() {
     if (isTrackPlaying) {
       await TrackPlayer.pause();
       setGlobalPlaying(false);
+      // DESYNC fix: Đồng bộ radioStore khi pause từ pill
+      if (isRadio) {
+        useRadioStore.getState().setPlaybackState('paused');
+      }
     } else {
       await TrackPlayer.play();
       setGlobalPlaying(true);
+      // DESYNC fix: Đồng bộ radioStore khi resume từ pill
+      if (isRadio) {
+        useRadioStore.getState().setPlaybackState('playing');
+      }
     }
   };
 

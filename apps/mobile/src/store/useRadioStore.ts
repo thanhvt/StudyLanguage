@@ -267,10 +267,11 @@ export const useRadioStore = create<RadioState & RadioActions>()(
         const deletedIndex = currentPlaylist.items.findIndex(i => i.id === itemId);
 
         let newIndex = currentTrackIndex;
-        if (deletedIndex < currentTrackIndex) {
+        // Guard: deletedIndex = -1 nghĩa là track không tồn tại → không thay đổi index
+        if (deletedIndex >= 0 && deletedIndex < currentTrackIndex) {
           // Track trước vị trí hiện tại bị xóa → giảm index
           newIndex = currentTrackIndex - 1;
-        } else if (deletedIndex === currentTrackIndex) {
+        } else if (deletedIndex >= 0 && deletedIndex === currentTrackIndex) {
           // Track đang phát bị xóa → reset
           newIndex = -1;
         }

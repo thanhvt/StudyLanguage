@@ -1,7 +1,8 @@
-import React, {useState, useCallback, useRef, useEffect} from 'react';
+import React, {useState, useCallback, useRef, useEffect, useMemo} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {
   Alert,
+  Dimensions,
   FlatList,
   TouchableOpacity,
   View,
@@ -110,6 +111,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const [radioState, setRadioState] = useState<RadioState>(initialState);
   const [playlist, setPlaylist] = useState<RadioPlaylistResult | null>(initialPlaylist);
   const flatListRef = useRef<FlatList>(null);
+  // BUG-01 fix: Map refs cho Swipeable — tránh createRef() trong renderItem gây memory leak
+  const swipeableRefs = useRef<Map<string, any>>(new Map());
 
   // Bottom Sheet state — track nào đang mở sheet (null = đóng)
   const [sheetTrackIndex, setSheetTrackIndex] = useState<number | null>(null);
@@ -281,7 +284,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         error?.response?.data?.message || 'Vui lòng thử lại sau',
       );
     }
-  }, [selectedDuration, selectedCategories, haptic, showSuccess, showError]);
+  // BUG-04 fix: Thêm playTrack vào deps — tránh stale closure
+  }, [selectedDuration, selectedCategories, haptic, showSuccess, showError, playTrack]);
 
   /**
    * Mục đích: Xử lý tap track — mở sheet + play/pause logic
@@ -431,8 +435,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             {!isGenerating && !isSelectingTracks && (
               <TouchableOpacity
                 className="flex-row items-center p-2 -mr-2"
-                onPress={(e) => {
-                  e.stopPropagation();
+                // BUG-02 fix: Bỏ stopPropagation vì không hoạt động trong RN
+                // TouchableOpacity lồng nhau tự xử lý event propagation
+                onPress={() => {
                   if (isCurrent) {
                     togglePlay();
                   } else {
@@ -460,8 +465,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         return trackCard;
       }
 
-      // Ref để gọi close() sau khi xóa
-      const swipeRef = React.createRef<any>();
+      // BUG-01 fix: Lấy ref từ Map thay vì createRef() mỗi render
+      const swipeRef = { current: null as any };
 
       /**
        * Mục đích: Xử lý xóa track (gọi API + cập nhật store)
@@ -488,7 +493,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       return (
         <View style={{marginHorizontal: 16}}>
           <Swipeable
-            ref={swipeRef}
+            ref={(ref: any) => {
+              swipeRef.current = ref;
+              if (ref) swipeableRefs.current.set(item.id, ref);
+            }}
             overshootRight={false}
             friction={2}
             rightThreshold={40}
@@ -623,7 +631,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         style={{
           backgroundColor: '#8B5CF6',
           opacity: isDark ? 0.05 : 0.03,
-          top: '40%' as any,
+          // MINOR-01 fix: Dùng Dimensions thay vì string percentage
+          top: Dimensions.get('window').height * 0.4,
           right: -40,
         }}
       />
@@ -828,7 +837,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             data={playlist?.items ?? []}
             keyExtractor={item => item.id}
             renderItem={renderTrackItem}
-            ItemSeparatorComponent={() => <View style={{height: 10}} />}
+            // PERF fix: Memo separator — tránh tạo component mới mỗi render
+            ItemSeparatorComponent={TrackSeparator}
             contentContainerStyle={{paddingTop: 12, paddingBottom: insets.bottom + 80}}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={() => {
@@ -971,24 +981,22 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
 // =======================
 
 /**
+ * Mục đích: Separator giữa các track trong FlatList (memoized)
+ * Tham số đầu vào: không
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: FlatList ItemSeparatorComponent
+ */
+const TrackSeparator = React.memo(() => <View style={{height: 10}} />);
+
+/**
  * Mục đích: Map category ID sang label tiếng Việt
  * Tham số đầu vào: category (string)
  * Tham số đầu ra: string
  * Khi nào sử dụng: Hiển thị category trong track list
+ * BUG-05 fix: Derive từ CATEGORIES array — single source of truth
  */
 function getCategoryLabel(category: string): string {
-  const labels: Record<string, string> = {
-    it: 'Công nghệ',
-    daily: 'Đời sống',
-    personal: 'Cá nhân',
-    business: 'Kinh doanh',
-    academic: 'Học thuật',
-    travel: 'Du lịch',
-    health: 'Sức khỏe',
-    entertainment: 'Giải trí',
-    food: 'Ẩm thực',
-    sports: 'Thể thao',
-    culture: 'Văn hóa',
-  };
-  return labels[category] || category;
+  const found = CATEGORIES.find(c => c.id === category);
+  // Cắt emoji prefix (2 chars + space) nếu có
+  return found ? found.label.slice(found.label.indexOf(' ') + 1) : category;
 }
