@@ -76,6 +76,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
     togglePlay,
     currentTrackIndex,
     isGeneratingAudio,
+    playbackState,
   } = useRadioPlayer();
 
   // Local state
@@ -272,6 +273,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
     ({item, index}: {item: RadioPlaylistItem; index: number}) => {
       const isCurrent = index === currentTrackIndex;
       const isGenerating = isCurrent && isGeneratingAudio;
+      const isActuallyPlaying = isCurrent && playbackState === 'playing';
 
       return (
         <TouchableOpacity
@@ -295,8 +297,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 style={{backgroundColor: isCurrent ? LISTENING_BLUE : colors.surface}}>
                 {isGenerating ? (
                   <ActivityIndicator size="small" color="#fff" />
-                ) : isCurrent ? (
+                ) : isActuallyPlaying ? (
                   <Icon name="Volume2" className="w-3.5 h-3.5" style={{color: '#FFFFFF'}} />
+                ) : isCurrent ? (
+                  <Icon name="Pause" className="w-3.5 h-3.5" style={{color: '#FFFFFF'}} />
                 ) : (
                   <AppText
                     className={`text-xs font-sans-bold`}
@@ -343,7 +347,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                   <Icon name="Check" className="w-3.5 h-3.5 mr-1" style={{color: '#22C55E'}} />
                 )}
                 <Icon
-                  name={isCurrent ? 'Pause' : 'Play'}
+                  name={isActuallyPlaying ? 'Pause' : 'Play'}
                   className="w-6 h-6"
                   style={{color: isCurrent ? LISTENING_BLUE : colors.neutrals500}}
                 />
@@ -353,7 +357,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         </TouchableOpacity>
       );
     },
-    [currentTrackIndex, isGeneratingAudio, handlePlayTrack, colors, isDark, isTrackDownloaded],
+    [currentTrackIndex, isGeneratingAudio, playbackState, handlePlayTrack, togglePlay, colors, isDark, isTrackDownloaded],
   );
 
   return (
