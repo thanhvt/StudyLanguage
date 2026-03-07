@@ -82,14 +82,28 @@ const buttonTextVariants = cva("font-sans-medium text-foreground", {
   }
 });
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
+/**
+ * Mục đích: Button component dùng chung cho toàn app với animation scale + opacity
+ * Tham số đầu vào: AppButtonProps (variant, size, disabled, loading, icon, children, ...)
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: Mọi nơi cần button — chip gợi ý, CTA, header back, v.v.
+ *
+ * Lưu ý: Tách Animated.View (animation) khỏi Pressable (press handling)
+ * để tránh lỗi NativeWind CssInterop bọc Pressable mất navigation context.
+ * Xem thêm: https://github.com/marklawlor/nativewind/issues/
+ */
 export default function AppButton(props: AppButtonProps) {
-  const {variant, size, className, disabled, loading, onPress, ...rest} = props;
+  const {variant, size, className, disabled, loading, onPress, style, ...rest} = props;
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const colors = useColors();
 
+  /**
+   * Mục đích: Lấy màu icon theo variant
+   * Tham số đầu vào: không có (dùng variant từ closure)
+   * Tham số đầu ra: string (hex color)
+   * Khi nào sử dụng: Render icon bên trong button
+   */
   const getIconColor = () => {
     switch (variant) {
       case 'primary':
@@ -105,6 +119,12 @@ export default function AppButton(props: AppButtonProps) {
     }
   };
 
+  /**
+   * Mục đích: Lấy kích thước icon theo size variant
+   * Tham số đầu vào: size (AppButtonProps['size'])
+   * Tham số đầu ra: number (px)
+   * Khi nào sử dụng: Render icon bên trong button
+   */
   const getIconSize = (size: AppButtonProps['size']): number => {
     switch (size) {
       case 'sm':
@@ -144,35 +164,39 @@ export default function AppButton(props: AppButtonProps) {
 
   const isDisabled = disabled || loading;
 
+  // Tách Animated.View (animation) và Pressable (press) để tránh
+  // NativeWind CssInterop bọc AnimatedPressable → mất NavigationContainer context
   return (
-    <AnimatedPressable
-      style={animatedStyle}
-      className={cn(
-        buttonVariants({variant, size, disabled: isDisabled, loading}),
-        className
-      )}
-      disabled={isDisabled}
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      {...rest}
-    >
-      {loading && (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'ghost' || variant === 'outline' || variant === 'link' ? '#e85a5a' : '#ffffff'}
-        />
-      )}
-      {!loading && props.icon && React.cloneElement(props.icon as any, {
-        size: getIconSize(size),
-        color: getIconColor(),
-      })}
-      <Text className={cn(
-        buttonTextVariants({variant, disabled: isDisabled, size}),
-        props.textClassname
-      )}>
-        {props.children}
-      </Text>
-    </AnimatedPressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        className={cn(
+          buttonVariants({variant, size, disabled: isDisabled, loading}),
+          className
+        )}
+        style={style}
+        disabled={isDisabled}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...rest}
+      >
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color={variant === 'ghost' || variant === 'outline' || variant === 'link' ? '#e85a5a' : '#ffffff'}
+          />
+        )}
+        {!loading && props.icon && React.cloneElement(props.icon as any, {
+          size: getIconSize(size),
+          color: getIconColor(),
+        })}
+        <Text className={cn(
+          buttonTextVariants({variant, disabled: isDisabled, size}),
+          props.textClassname
+        )}>
+          {props.children}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }

@@ -156,6 +156,75 @@ export class PlaylistsController {
   }
 
   /**
+   * Xóa nhiều playlists (batch)
+   *
+   * Mục đích: Xóa lô nhiều playlists cùng lúc
+   * Tham số đầu vào: req.user.id, body.ids
+   * Tham số đầu ra: { success, message, deletedCount }
+   * Khi nào sử dụng: User multi-select → batch delete
+   *
+   * DELETE /playlists/batch
+   */
+  @Delete('batch')
+  @ApiOperation({ summary: 'Xóa nhiều playlists (batch)' })
+  async deletePlaylists(@Req() req: any, @Body() body: { ids: string[] }) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
+      }
+      if (!body.ids?.length) {
+        throw new HttpException('Danh sách IDs trống', HttpStatus.BAD_REQUEST);
+      }
+
+      return await this.playlistsService.deletePlaylists(userId, body.ids);
+    } catch (error) {
+      console.error('[PlaylistsController] DELETE batch error:', error);
+      throw new HttpException(
+        error.message || 'Lỗi xóa batch playlists',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Xóa nhiều items khỏi playlist (batch)
+   *
+   * Mục đích: Xóa lô nhiều items trong 1 playlist
+   * Tham số đầu vào: req.user.id, playlistId, body.itemIds
+   * Tham số đầu ra: { success, message, deletedCount }
+   * Khi nào sử dụng: User multi-select items → batch delete
+   *
+   * DELETE /playlists/:id/items/batch
+   */
+  @Delete(':id/items/batch')
+  @ApiOperation({ summary: 'Xóa nhiều items khỏi playlist (batch)' })
+  @ApiParam({ name: 'id', description: 'ID của playlist' })
+  async removeItemsFromPlaylist(
+    @Req() req: any,
+    @Param('id') playlistId: string,
+    @Body() body: { itemIds: string[] },
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new HttpException('Không tìm thấy user', HttpStatus.UNAUTHORIZED);
+      }
+      if (!body.itemIds?.length) {
+        throw new HttpException('Danh sách item IDs trống', HttpStatus.BAD_REQUEST);
+      }
+
+      return await this.playlistsService.removeItemsFromPlaylist(userId, playlistId, body.itemIds);
+    } catch (error) {
+      console.error('[PlaylistsController] DELETE batch items error:', error);
+      throw new HttpException(
+        error.message || 'Lỗi xóa batch items',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
    * Xóa playlist
    *
    * DELETE /playlists/:id

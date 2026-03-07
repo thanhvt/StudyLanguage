@@ -191,6 +191,80 @@ export class PlaylistsService {
   }
 
   /**
+   * Xóa nhiều playlists (batch)
+   *
+   * Mục đích: Xóa lô nhiều playlists cùng lúc
+   * Tham số đầu vào: userId — chủ sở hữu, ids — mảng ID playlists cần xóa
+   * Tham số đầu ra: Kết quả xóa
+   * Khi nào sử dụng: User chọn multi-select → xóa lô
+   */
+  async deletePlaylists(userId: string, ids: string[]) {
+    if (!ids.length) {
+      return { success: true, message: 'Không có playlist nào để xóa', deletedCount: 0 };
+    }
+
+    const { error, count } = await this.supabase
+      .from('playlists')
+      .delete({ count: 'exact' })
+      .in('id', ids)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[PlaylistsService] Lỗi xóa batch playlists:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: `Đã xóa ${count} playlist`,
+      deletedCount: count,
+    };
+  }
+
+  /**
+   * Xóa nhiều items khỏi playlist (batch)
+   *
+   * Mục đích: Xóa lô nhiều items trong 1 playlist
+   * Tham số đầu vào: userId, playlistId, itemIds — mảng ID items cần xóa
+   * Tham số đầu ra: Kết quả xóa
+   * Khi nào sử dụng: User chọn multi-select items → xóa lô
+   */
+  async removeItemsFromPlaylist(userId: string, playlistId: string, itemIds: string[]) {
+    if (!itemIds.length) {
+      return { success: true, message: 'Không có item nào để xóa', deletedCount: 0 };
+    }
+
+    // Xác minh playlist thuộc về user
+    const { data: playlist, error: checkError } = await this.supabase
+      .from('playlists')
+      .select('id')
+      .eq('id', playlistId)
+      .eq('user_id', userId)
+      .single();
+
+    if (checkError || !playlist) {
+      throw new Error('Playlist không tồn tại hoặc không thuộc về bạn');
+    }
+
+    const { error, count } = await this.supabase
+      .from('playlist_items')
+      .delete({ count: 'exact' })
+      .in('id', itemIds)
+      .eq('playlist_id', playlistId);
+
+    if (error) {
+      console.error('[PlaylistsService] Lỗi xóa batch items:', error);
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: `Đã xóa ${count} item`,
+      deletedCount: count,
+    };
+  }
+
+  /**
    * Lấy chi tiết playlist kèm items
    *
    * @param userId - ID của user hiện tại

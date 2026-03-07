@@ -1,5 +1,6 @@
 import React, {useRef, useState, useCallback, useMemo, useEffect} from 'react';
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -8,9 +9,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Animated,
+  Animated as RNAnimated,
   Pressable,
 } from 'react-native';
+import {Swipeable} from 'react-native-gesture-handler';
 import {AppButton, AppText, Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
@@ -113,11 +115,12 @@ export default function ListeningConfigScreen({
   const [radioPlaylists, setRadioPlaylists] = useState<PlaylistSummary[]>([]);
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [showAllPlaylists, setShowAllPlaylists] = useState(false);
+  const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
 
   // ========================
   // Hooks
   // ========================
-  const {showError, showWarning} = useToast();
+  const {showError, showWarning, showSuccess} = useToast();
   const {showLoading, hideLoading, showConfirm} = useDialog();
   const colors = useColors();
   const haptic = useHaptic();
@@ -376,7 +379,7 @@ export default function ListeningConfigScreen({
   const canStart = mode === 'radio' || hasValidTopic;
 
   // #8: Parallax scroll value cho floating blobs
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
   // Detect light/dark cho floating blobs opacity
   const theme = useAppStore(state => state.theme);
   const isDark = theme !== 'light';
@@ -419,7 +422,7 @@ export default function ListeningConfigScreen({
           />
           {/* Floating blobs — đốm sáng tạo depth (P2: multi-layer) */}
           {/* #8: Parallax — blobs di chuyển chậm hơn content */}
-          <Animated.View style={{
+          <RNAnimated.View style={{
             position: 'absolute', top: '12%', left: '10%',
             width: 180, height: 180, borderRadius: 90,
             backgroundColor: isDark ? 'rgba(37,99,235,0.25)' : 'rgba(37,99,235,0.12)',
@@ -429,7 +432,7 @@ export default function ListeningConfigScreen({
               extrapolate: 'clamp',
             })}],
           }} />
-          <Animated.View style={{
+          <RNAnimated.View style={{
             position: 'absolute', top: '40%', right: '5%',
             width: 140, height: 140, borderRadius: 70,
             backgroundColor: isDark ? 'rgba(13,148,136,0.20)' : 'rgba(13,148,136,0.10)',
@@ -439,7 +442,7 @@ export default function ListeningConfigScreen({
               extrapolate: 'clamp',
             })}],
           }} />
-          <Animated.View style={{
+          <RNAnimated.View style={{
             position: 'absolute', bottom: '20%', left: '20%',
             width: 120, height: 120, borderRadius: 60,
             backgroundColor: isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.10)',
@@ -455,13 +458,13 @@ export default function ListeningConfigScreen({
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
-        <Animated.ScrollView
+        <RNAnimated.ScrollView
           ref={scrollViewRef}
           className="flex-1"
           contentContainerStyle={{paddingBottom: footerHeight + 20}}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
+          onScroll={RNAnimated.event(
             [{nativeEvent: {contentOffset: {y: scrollY}}}],
             {useNativeDriver: true},
           )}
@@ -1057,53 +1060,192 @@ export default function ListeningConfigScreen({
                   {/* Playlist cards */}
                   {!isLoadingPlaylists && radioPlaylists.length > 0 && (
                     <View className="gap-2">
-                      {(showAllPlaylists ? radioPlaylists : radioPlaylists.slice(0, 5)).map(pl => (
-                        <TouchableOpacity
-                          key={pl.id}
-                          className="flex-row items-center rounded-xl border px-3 py-3"
-                          style={{
-                            borderColor: colors.neutrals800,
-                            backgroundColor: 'rgba(255,255,255,0.03)',
-                          }}
-                          onPress={() => handleLoadPlaylist(pl.id)}
-                          activeOpacity={0.7}
-                          accessibilityLabel={`Mở playlist ${pl.name}`}
-                          accessibilityRole="button">
-                          {/* Play icon */}
-                          <View
-                            className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                            style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+                      {(showAllPlaylists ? radioPlaylists : radioPlaylists.slice(0, 5)).map(pl => {
+                        const isSelecting = selectedPlaylistIds.size > 0;
+                        const isSelected = selectedPlaylistIds.has(pl.id);
+
+                        const cardContent = (
+                          <TouchableOpacity
+                            className="flex-row items-center rounded-xl border px-3 py-3"
+                            style={{
+                              borderColor: isSelected ? LISTENING_BLUE : colors.neutrals800,
+                              backgroundColor: isSelected ? `${LISTENING_BLUE}10` : 'rgba(255,255,255,0.03)',
+                            }}
+                            onPress={() => {
+                              if (isSelecting) {
+                                // Multi-select mode: toggle
+                                haptic.light();
+                                setSelectedPlaylistIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(pl.id)) next.delete(pl.id);
+                                  else next.add(pl.id);
+                                  return next;
+                                });
+                              } else {
+                                handleLoadPlaylist(pl.id);
+                              }
+                            }}
+                            onLongPress={() => {
+                              // Vào multi-select mode
+                              haptic.medium();
+                              setSelectedPlaylistIds(new Set([pl.id]));
+                            }}
+                            activeOpacity={0.7}
+                            accessibilityLabel={`Mở playlist ${pl.name}`}
+                            accessibilityRole="button">
+                            {/* Checkbox khi đang multi-select */}
+                            {isSelecting && (
+                              <View
+                                className={`w-6 h-6 rounded-lg border-2 items-center justify-center mr-2`}
+                                style={{
+                                  borderColor: isSelected ? LISTENING_BLUE : colors.neutrals500,
+                                  backgroundColor: isSelected ? LISTENING_BLUE : 'transparent',
+                                }}>
+                                {isSelected && (
+                                  <AppText className="text-white text-xs font-sans-bold">✓</AppText>
+                                )}
+                              </View>
+                            )}
+                            {/* Play icon */}
+                            <View
+                              className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                              style={{backgroundColor: `${LISTENING_BLUE}20`}}>
+                              <Icon
+                                name="Play"
+                                className="w-5 h-5"
+                                style={{color: LISTENING_BLUE}}
+                              />
+                            </View>
+                            {/* Info */}
+                            <View className="flex-1">
+                              <AppText
+                                className="font-sans-medium text-sm"
+                                style={{color: colors.foreground}}
+                                numberOfLines={1}>
+                                Radio • {new Date(pl.created_at).toLocaleDateString('vi-VN', {
+                                  day: '2-digit', month: '2-digit',
+                                })} {new Date(pl.created_at).toLocaleTimeString('vi-VN', {
+                                  hour: '2-digit', minute: '2-digit', hour12: false,
+                                })}
+                              </AppText>
+                              <AppText
+                                className="text-xs mt-0.5"
+                                style={{color: colors.neutrals400}}>
+                                {pl.description || `${pl.itemCount ?? 0} bài`}
+                              </AppText>
+                            </View>
                             <Icon
-                              name="Play"
-                              className="w-5 h-5"
-                              style={{color: LISTENING_BLUE}}
+                              name="ChevronRight"
+                              className="w-4 h-4"
+                              style={{color: colors.neutrals500}}
                             />
-                          </View>
-                          {/* Info */}
-                          <View className="flex-1">
-                            <AppText
-                              className="font-sans-medium text-sm"
-                              style={{color: colors.foreground}}
-                              numberOfLines={1}>
-                              {pl.name}
+                          </TouchableOpacity>
+                        );
+
+                        // Khi đang multi-select thì không cần swipe
+                        if (isSelecting) {
+                          return <View key={pl.id}>{cardContent}</View>;
+                        }
+
+                        return (
+                          <Swipeable
+                            key={pl.id}
+                            overshootRight={false}
+                            friction={2}
+                            renderRightActions={
+                              (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
+                                const scale = dragX.interpolate({
+                                  inputRange: [-80, 0],
+                                  outputRange: [1, 0.5],
+                                  extrapolate: 'clamp',
+                                });
+                                return (
+                                  <Pressable
+                                    className="bg-red-500 justify-center items-center rounded-r-xl"
+                                    style={{width: 72}}
+                                    onPress={() => {
+                                      // Xác nhận xóa playlist
+                                      Alert.alert(
+                                        'Xóa playlist',
+                                        `Bạn có chắc chắn muốn xóa playlist này?`,
+                                        [
+                                          {text: 'Hủy', style: 'cancel'},
+                                          {
+                                            text: 'Xóa',
+                                            style: 'destructive',
+                                            onPress: async () => {
+                                              try {
+                                                await radioApi.deletePlaylist(pl.id);
+                                                setRadioPlaylists(prev => prev.filter(p => p.id !== pl.id));
+                                                showSuccess('Đã xóa playlist');
+                                              } catch (err: any) {
+                                                showError('Lỗi xóa playlist: ' + (err?.message || ''));
+                                              }
+                                            },
+                                          },
+                                        ],
+                                      );
+                                    }}>
+                                    <RNAnimated.View style={{transform: [{scale}]}}>
+                                      <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
+                                      <AppText className="text-white text-xs font-sans-medium mt-1">
+                                        Xóa
+                                      </AppText>
+                                    </RNAnimated.View>
+                                  </Pressable>
+                                );
+                              }
+                            }>
+                            {cardContent}
+                          </Swipeable>
+                        );
+                      })}
+
+                      {/* Nút xóa lô khi đang multi-select */}
+                      {selectedPlaylistIds.size > 0 && (
+                        <View className="flex-row items-center gap-2 mt-2">
+                          <TouchableOpacity
+                            className="flex-1 flex-row items-center justify-center py-3 rounded-xl"
+                            style={{backgroundColor: '#EF4444'}}
+                            onPress={() => {
+                              Alert.alert(
+                                'Xóa playlist',
+                                `Bạn có chắc chắn muốn xóa ${selectedPlaylistIds.size} playlist?`,
+                                [
+                                  {text: 'Hủy', style: 'cancel'},
+                                  {
+                                    text: 'Xóa',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                      try {
+                                        const ids = Array.from(selectedPlaylistIds);
+                                        await radioApi.deletePlaylists(ids);
+                                        setRadioPlaylists(prev => prev.filter(p => !selectedPlaylistIds.has(p.id)));
+                                        setSelectedPlaylistIds(new Set());
+                                        showSuccess(`Đã xóa ${ids.length} playlist`);
+                                      } catch (err: any) {
+                                        showError('Lỗi xóa: ' + (err?.message || ''));
+                                      }
+                                    },
+                                  },
+                                ],
+                              );
+                            }}>
+                            <Icon name="Trash2" className="w-4 h-4 mr-2" style={{color: '#FFFFFF'}} />
+                            <AppText className="text-white font-sans-semibold text-sm">
+                              Xóa {selectedPlaylistIds.size} playlist
                             </AppText>
-                            <AppText
-                              className="text-xs mt-0.5"
-                              style={{color: colors.neutrals400}}>
-                              {pl.itemCount ?? 0} bài •{' '}
-                              {new Date(pl.created_at).toLocaleDateString('vi-VN', {
-                                day: '2-digit',
-                                month: 'short',
-                              })}
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            className="py-3 px-4 rounded-xl"
+                            style={{backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : colors.surface}}
+                            onPress={() => setSelectedPlaylistIds(new Set())}>
+                            <AppText className="font-sans-medium text-sm" style={{color: colors.foreground}}>
+                              Hủy
                             </AppText>
-                          </View>
-                          <Icon
-                            name="ChevronRight"
-                            className="w-4 h-4"
-                            style={{color: colors.neutrals500}}
-                          />
-                        </TouchableOpacity>
-                      ))}
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
                   )}
 
@@ -1123,7 +1265,7 @@ export default function ListeningConfigScreen({
             </>
           )}
 
-        </Animated.ScrollView>
+        </RNAnimated.ScrollView>
       </KeyboardAvoidingView>
 
       {/* T-09: NowPlayingBar — mini player cho Radio khi đang ở ConfigScreen */}

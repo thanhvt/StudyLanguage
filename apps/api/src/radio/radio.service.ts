@@ -281,12 +281,9 @@ CHỈ trả JSON, không giải thích.`;
 
     // Tạo playlist trong database trước
     const now = new Date();
-    const playlistName = `Radio - ${now.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`;
+    const dateStr = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const playlistName = `Radio ${dateStr} ${timeStr}`;
 
     const { data: playlist, error: playlistError } = await this.supabase
       .from('playlists')

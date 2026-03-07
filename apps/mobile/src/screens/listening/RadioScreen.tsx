@@ -1,12 +1,15 @@
 import React, {useState, useCallback, useRef, useEffect} from 'react';
 import {
+  Alert,
   FlatList,
   TouchableOpacity,
   View,
   ActivityIndicator,
   ScrollView,
+  Animated as RNAnimated,
+  Pressable,
 } from 'react-native';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {GestureHandlerRootView, Swipeable} from 'react-native-gesture-handler';
 import {AppText, AppButton} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
@@ -80,6 +83,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   } = useRadioPlayer();
 
   // Local state
+  const removeTrackFromPlaylist = useRadioStore(s => s.removeTrackFromPlaylist);
+  const removeTracksFromPlaylist = useRadioStore(s => s.removeTracksFromPlaylist);
   const [selectedDuration, setSelectedDuration] = useState(routeDuration ?? 30);
   const [radioState, setRadioState] = useState<RadioState>(
     loadedPlaylist ? 'ready' : autoGenerate ? 'generating' : 'idle',
@@ -120,6 +125,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const preferredCategories = useRadioStore(s => s.preferredCategories);
   const setPreferredCategories = useRadioStore(s => s.setPreferredCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(preferredCategories);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
 
   /**
    * Mục đích: Auto chuyển sang track tiếp theo khi track hiện tại kết thúc
@@ -275,21 +281,60 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       const isGenerating = isCurrent && isGeneratingAudio;
       const isActuallyPlaying = isCurrent && playbackState === 'playing';
 
-      return (
+      const isSelectingTracks = selectedTrackIds.size > 0;
+      const isSelected = selectedTrackIds.has(item.id);
+
+      const trackCard = (
         <TouchableOpacity
           className="mx-4 rounded-2xl border px-4 py-3.5"
           style={{
-            backgroundColor: isCurrent ? `${LISTENING_BLUE}18` : undefined,
-            borderColor: isCurrent
-              ? `${LISTENING_BLUE}40`
-              : isDark ? 'rgba(255,255,255,0.15)' : colors.border,
+            backgroundColor: isSelected
+              ? `${LISTENING_BLUE}20`
+              : isCurrent ? `${LISTENING_BLUE}18` : undefined,
+            borderColor: isSelected
+              ? LISTENING_BLUE
+              : isCurrent
+                ? `${LISTENING_BLUE}40`
+                : isDark ? 'rgba(255,255,255,0.15)' : colors.border,
           }}
-          onPress={() => handlePlayTrack(item, index)}
+          onPress={() => {
+            if (isSelectingTracks) {
+              // Multi-select mode: toggle
+              haptic.light();
+              setSelectedTrackIds(prev => {
+                const next = new Set(prev);
+                if (next.has(item.id)) next.delete(item.id);
+                else next.add(item.id);
+                return next;
+              });
+            } else {
+              handlePlayTrack(item, index);
+            }
+          }}
+          onLongPress={() => {
+            // Vào multi-select mode
+            haptic.medium();
+            setSelectedTrackIds(new Set([item.id]));
+          }}
           disabled={isGenerating}
           activeOpacity={0.7}
           accessibilityLabel={`Track ${index + 1}: ${item.topic}`}
           accessibilityRole="button">
           <View className="flex-row items-center">
+            {/* Checkbox khi đang multi-select */}
+            {isSelectingTracks && (
+              <View
+                className="w-6 h-6 rounded-lg border-2 items-center justify-center mr-2"
+                style={{
+                  borderColor: isSelected ? LISTENING_BLUE : colors.neutrals500,
+                  backgroundColor: isSelected ? LISTENING_BLUE : 'transparent',
+                }}>
+                {isSelected && (
+                  <AppText className="text-white text-xs font-sans-bold">✓</AppText>
+                )}
+              </View>
+            )}
+
             {/* Track number / Playing indicator */}
             <TrackPulse isActive={isCurrent && !isGenerating} size={28}>
               <View
@@ -326,17 +371,14 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             </View>
 
             {/* Play icon / Downloaded badge */}
-            {!isGenerating && (
+            {!isGenerating && !isSelectingTracks && (
               <TouchableOpacity
                 className="flex-row items-center p-2 -mr-2"
                 onPress={(e) => {
-                  // Ngăn chặn event lan tới parent TouchableOpacity
                   e.stopPropagation();
                   if (isCurrent) {
-                    // Toggle play/pause cho track đang phát
                     togglePlay();
                   } else {
-                    // Phát track mới
                     handlePlayTrack(item, index);
                   }
                 }}
@@ -356,8 +398,66 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           </View>
         </TouchableOpacity>
       );
+
+      // Khi đang multi-select thì không cần swipe
+      if (isSelectingTracks) {
+        return trackCard;
+      }
+
+      return (
+        <Swipeable
+          overshootRight={false}
+          friction={2}
+          renderRightActions={
+            (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
+              const scale = dragX.interpolate({
+                inputRange: [-80, 0],
+                outputRange: [1, 0.5],
+                extrapolate: 'clamp',
+              });
+              return (
+                <Pressable
+                  className="bg-red-500 justify-center items-center rounded-r-2xl mx-4"
+                  style={{width: 72}}
+                  onPress={() => {
+                    Alert.alert(
+                      'Xóa track',
+                      `Xóa "${item.topic}" khỏi playlist?`,
+                      [
+                        {text: 'Hủy', style: 'cancel'},
+                        {
+                          text: 'Xóa',
+                          style: 'destructive',
+                          onPress: async () => {
+                            try {
+                              if (playlist?.playlist?.id) {
+                                await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
+                              }
+                              removeTrackFromPlaylist(item.id);
+                              showSuccess('Đã xóa track');
+                            } catch (err: any) {
+                              showError('Lỗi xóa: ' + (err?.message || ''));
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  }}>
+                  <RNAnimated.View style={{transform: [{scale}]}}>
+                    <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
+                    <AppText className="text-white text-xs font-sans-medium mt-1">
+                      Xóa
+                    </AppText>
+                  </RNAnimated.View>
+                </Pressable>
+              );
+            }
+          }>
+          {trackCard}
+        </Swipeable>
+      );
     },
-    [currentTrackIndex, isGeneratingAudio, playbackState, handlePlayTrack, togglePlay, colors, isDark, isTrackDownloaded],
+    [currentTrackIndex, isGeneratingAudio, playbackState, selectedTrackIds, handlePlayTrack, togglePlay, removeTrackFromPlaylist, colors, isDark, isTrackDownloaded, playlist, haptic, showSuccess, showError],
   );
 
   return (
@@ -612,6 +712,52 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 }
               }, 300);
             }}
+            ListFooterComponent={selectedTrackIds.size > 0 ? (
+              <View className="flex-row items-center gap-2 mx-4 mt-3">
+                <TouchableOpacity
+                  className="flex-1 flex-row items-center justify-center py-3 rounded-xl"
+                  style={{backgroundColor: '#EF4444'}}
+                  onPress={() => {
+                    Alert.alert(
+                      'Xóa tracks',
+                      `Bạn có chắc chắn muốn xóa ${selectedTrackIds.size} bài?`,
+                      [
+                        {text: 'Hủy', style: 'cancel'},
+                        {
+                          text: 'Xóa',
+                          style: 'destructive',
+                          onPress: async () => {
+                            try {
+                              const ids = Array.from(selectedTrackIds);
+                              if (playlist?.playlist?.id) {
+                                await radioApi.deletePlaylistItems(playlist.playlist.id, ids);
+                              }
+                              removeTracksFromPlaylist(ids);
+                              setSelectedTrackIds(new Set());
+                              showSuccess(`Đã xóa ${ids.length} bài`);
+                            } catch (err: any) {
+                              showError('Lỗi xóa: ' + (err?.message || ''));
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  }}>
+                  <Icon name="Trash2" className="w-4 h-4 mr-2" style={{color: '#FFFFFF'}} />
+                  <AppText className="text-white font-sans-semibold text-sm">
+                    Xóa {selectedTrackIds.size} bài
+                  </AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="py-3 px-4 rounded-xl"
+                  style={{backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : colors.surface}}
+                  onPress={() => setSelectedTrackIds(new Set())}>
+                  <AppText className="font-sans-medium text-sm" style={{color: colors.foreground}}>
+                    Hủy
+                  </AppText>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           />
 
           {/* T-19/T-20/T-21/T-24: RadioControlsBar */}

@@ -146,6 +146,46 @@ export const radioApi = {
     await apiClient.delete(`/playlists/${playlistId}`);
   },
 
+  /**
+   * Mục đích: Xóa 1 item khỏi playlist
+   * Tham số đầu vào: playlistId, itemId
+   * Tham số đầu ra: Promise<void>
+   * Khi nào sử dụng: User swipe xóa 1 track
+   */
+  deletePlaylistItem: async (playlistId: string, itemId: string): Promise<void> => {
+    console.log('📻 [Radio] Xóa item:', itemId, 'khỏi playlist:', playlistId);
+    await apiClient.delete(`/playlists/${playlistId}/items/${itemId}`);
+  },
+
+  /**
+   * Mục đích: Xóa nhiều playlists cùng lúc (batch)
+   * Tham số đầu vào: playlistIds — mảng ID cần xóa
+   * Tham số đầu ra: Promise<{ deletedCount: number }>
+   * Khi nào sử dụng: User multi-select → xóa lô playlists
+   */
+  deletePlaylists: async (playlistIds: string[]): Promise<{ deletedCount: number }> => {
+    console.log('📻 [Radio] Xóa batch playlists:', playlistIds.length);
+    const response = await apiClient.delete('/playlists/batch', { data: { ids: playlistIds } });
+    return response.data;
+  },
+
+  /**
+   * Mục đích: Xóa nhiều items khỏi playlist cùng lúc (batch)
+   * Tham số đầu vào: playlistId, itemIds — mảng ID items cần xóa
+   * Tham số đầu ra: Promise<{ deletedCount: number }>
+   * Khi nào sử dụng: User multi-select items → xóa lô
+   */
+  deletePlaylistItems: async (
+    playlistId: string,
+    itemIds: string[],
+  ): Promise<{ deletedCount: number }> => {
+    console.log('📻 [Radio] Xóa batch items:', itemIds.length, 'từ playlist:', playlistId);
+    const response = await apiClient.delete(`/playlists/${playlistId}/items/batch`, {
+      data: { itemIds },
+    });
+    return response.data;
+  },
+
   // =======================
   // Audio Caching (T-03, T-04)
   // =======================

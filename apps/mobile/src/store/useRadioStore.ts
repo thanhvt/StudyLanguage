@@ -106,6 +106,10 @@ interface RadioActions {
   nextTrack: () => number;
   /** Quay lại track trước */
   previousTrack: () => number;
+  /** Xóa 1 track khỏi playlist hiện tại */
+  removeTrackFromPlaylist: (itemId: string) => void;
+  /** Xóa nhiều tracks khỏi playlist hiện tại */
+  removeTracksFromPlaylist: (itemIds: string[]) => void;
   /** Reset về trạng thái ban đầu */
   reset: () => void;
 }
@@ -248,6 +252,58 @@ export const useRadioStore = create<RadioState & RadioActions>()(
         const prev = currentTrackIndex - 1;
         set({currentTrackIndex: prev});
         return prev;
+      },
+
+      /**
+       * Mục đích: Xóa 1 track khỏi playlist hiện tại (local state)
+       * Tham số đầu vào: itemId — ID của track cần xóa
+       * Khi nào sử dụng: Sau khi gọi API xóa item thành công → cập nhật local state
+       */
+      removeTrackFromPlaylist: (itemId: string) => {
+        const {currentPlaylist, currentTrackIndex} = get();
+        if (!currentPlaylist) return;
+
+        const items = currentPlaylist.items.filter(i => i.id !== itemId);
+        const deletedIndex = currentPlaylist.items.findIndex(i => i.id === itemId);
+
+        let newIndex = currentTrackIndex;
+        if (deletedIndex < currentTrackIndex) {
+          // Track trước vị trí hiện tại bị xóa → giảm index
+          newIndex = currentTrackIndex - 1;
+        } else if (deletedIndex === currentTrackIndex) {
+          // Track đang phát bị xóa → reset
+          newIndex = -1;
+        }
+
+        set({
+          currentPlaylist: {...currentPlaylist, items},
+          currentTrackIndex: items.length === 0 ? -1 : newIndex,
+          ...(deletedIndex === currentTrackIndex ? {playbackState: 'idle' as const} : {}),
+        });
+      },
+
+      /**
+       * Mục đích: Xóa nhiều tracks khỏi playlist hiện tại (local state)
+       * Tham số đầu vào: itemIds — mảng ID tracks cần xóa
+       * Khi nào sử dụng: Sau khi gọi API batch delete thành công → cập nhật local state
+       */
+      removeTracksFromPlaylist: (itemIds: string[]) => {
+        const {currentPlaylist, currentTrackIndex} = get();
+        if (!currentPlaylist) return;
+
+        const idsSet = new Set(itemIds);
+        const items = currentPlaylist.items.filter(i => !idsSet.has(i.id));
+
+        // Tính lại index: đếm số items trước vị trí hiện tại bị xóa
+        const currentItem = currentPlaylist.items[currentTrackIndex];
+        const isCurrentDeleted = currentItem && idsSet.has(currentItem.id);
+        let newIndex = isCurrentDeleted ? -1 : items.findIndex(i => i.id === currentItem?.id);
+
+        set({
+          currentPlaylist: {...currentPlaylist, items},
+          currentTrackIndex: items.length === 0 ? -1 : newIndex,
+          ...(isCurrentDeleted ? {playbackState: 'idle' as const} : {}),
+        });
       },
 
       reset: () => set({
