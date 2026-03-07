@@ -132,6 +132,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const setPreferredCategories = useRadioStore(s => s.setPreferredCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(preferredCategories);
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
+  const [swipingTrackId, setSwipingTrackId] = useState<string | null>(null);
 
   /**
    * Mục đích: Auto chuyển sang track tiếp theo khi track hiện tại kết thúc
@@ -304,23 +305,22 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           : isDark ? 'rgba(255,255,255,0.10)' : colors.border;
 
       // Card khi đang multi-select: full border + radius
-      // Card khi trong Swipeable: bỏ border phải + radius phải → liền mạch với gradient
-      const trackCard = (swipeable = false) => (
+      // Card khi đang swipe: động bỏ border phải + radius phải → liền mạch với gradient
+      const isThisSwiping = swipingTrackId === item.id;
+      const trackCard = () => (
         <TouchableOpacity
           className="rounded-2xl px-4 py-3.5"
           style={{
             backgroundColor: cardBg,
             borderWidth: 1,
             borderColor: cardBorderColor,
-            ...(swipeable ? {
+            marginLeft: 16,
+            marginRight: isThisSwiping ? 0 : 16,
+            ...(isThisSwiping ? {
               borderRightWidth: 0,
               borderTopRightRadius: 0,
               borderBottomRightRadius: 0,
-              marginLeft: 16,
-            } : {
-              marginLeft: 16,
-              marginRight: 16,
-            }),
+            } : {}),
           }}
           onPress={() => {
             if (isSelectingTracks) {
@@ -423,7 +423,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       );
 
       if (isSelectingTracks) {
-        return trackCard(false);  // Full border + radius
+        return trackCard();
       }
 
       return (
@@ -431,6 +431,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           overshootRight={false}
           friction={2}
           rightThreshold={40}
+          onSwipeableWillOpen={() => setSwipingTrackId(item.id)}
+          onSwipeableClose={() => {
+            if (swipingTrackId === item.id) setSwipingTrackId(null);
+          }}
           renderRightActions={
             (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
               const scale = dragX.interpolate({
@@ -505,11 +509,11 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
               );
             }
           }>
-          {trackCard(true)}
+          {trackCard()}
         </Swipeable>
       );
     },
-    [currentTrackIndex, isGeneratingAudio, playbackState, selectedTrackIds, handlePlayTrack, togglePlay, removeTrackFromPlaylist, colors, isDark, isTrackDownloaded, playlist, haptic, showSuccess, showError],
+    [currentTrackIndex, isGeneratingAudio, playbackState, selectedTrackIds, swipingTrackId, handlePlayTrack, togglePlay, removeTrackFromPlaylist, colors, isDark, isTrackDownloaded, playlist, haptic, showSuccess, showError],
   );
 
   return (

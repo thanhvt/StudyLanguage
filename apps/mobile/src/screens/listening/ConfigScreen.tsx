@@ -116,6 +116,7 @@ export default function ListeningConfigScreen({
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [showAllPlaylists, setShowAllPlaylists] = useState(false);
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
+  const [swipingPlaylistId, setSwipingPlaylistId] = useState<string | null>(null);
 
   // ========================
   // Hooks
@@ -1070,15 +1071,16 @@ export default function ListeningConfigScreen({
 
                         const plCardBorder = isSelected ? LISTENING_BLUE : colors.neutrals800;
 
-                        // swipeable=true: bỏ border phải + radius phải để liền mạch gradient
-                        const cardContent = (swipeable = false) => (
+                        // Động bỏ border phải + radius phải khi đang swipe → liền mạch gradient
+                        const isThisSwiping = swipingPlaylistId === pl.id;
+                        const cardContent = () => (
                           <TouchableOpacity
                             className="flex-row items-center rounded-xl px-3 py-3"
                             style={{
                               borderWidth: 1,
                               borderColor: plCardBorder,
                               backgroundColor: plCardBg,
-                              ...(swipeable ? {
+                              ...(isThisSwiping ? {
                                 borderRightWidth: 0,
                                 borderTopRightRadius: 0,
                                 borderBottomRightRadius: 0,
@@ -1156,7 +1158,7 @@ export default function ListeningConfigScreen({
                         );
 
                         if (isSelecting) {
-                          return <View key={pl.id}>{cardContent(false)}</View>;
+                          return <View key={pl.id}>{cardContent()}</View>;
                         }
 
                         return (
@@ -1165,6 +1167,10 @@ export default function ListeningConfigScreen({
                             overshootRight={false}
                             friction={2}
                             rightThreshold={40}
+                            onSwipeableWillOpen={() => setSwipingPlaylistId(pl.id)}
+                            onSwipeableClose={() => {
+                              if (swipingPlaylistId === pl.id) setSwipingPlaylistId(null);
+                            }}
                             renderRightActions={
                               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                                 const scale = dragX.interpolate({
@@ -1234,7 +1240,7 @@ export default function ListeningConfigScreen({
                                 );
                               }
                             }>
-                            {cardContent(true)}
+                            {cardContent()}
                           </Swipeable>
                         );
                       })}
