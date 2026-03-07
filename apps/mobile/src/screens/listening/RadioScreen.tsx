@@ -73,6 +73,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   // B-02 fix: Dùng useRadioPlayer thay vì tự viết handlePlayTrack
   const {
     playTrack,
+    togglePlay,
     currentTrackIndex,
     isGeneratingAudio,
   } = useRadioPlayer();
@@ -126,7 +127,11 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   // Auto scroll tới track đang phát khi index thay đổi
   useEffect(() => {
     if (currentTrackIndex >= 0 && playlist?.items?.length) {
-      flatListRef.current?.scrollToIndex({index: currentTrackIndex, animated: true});
+      flatListRef.current?.scrollToIndex({
+        index: currentTrackIndex,
+        animated: true,
+        viewPosition: 0.3,
+      });
     }
   }, [currentTrackIndex, playlist]);
 
@@ -312,13 +317,28 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
               </AppText>
               <AppText className="text-xs mt-0.5" style={{color: colors.neutrals500}}>
                 {item.conversation.length} câu • {item.numSpeakers} người •{' '}
-                {getCategoryLabel(item.category)}
+                {getCategoryLabel(item.category)} • ~{Math.max(1, Math.round(item.conversation.length * 0.4))}'
               </AppText>
             </View>
 
             {/* Play icon / Downloaded badge */}
             {!isGenerating && (
-              <View className="flex-row items-center">
+              <TouchableOpacity
+                className="flex-row items-center p-2 -mr-2"
+                onPress={(e) => {
+                  // Ngăn chặn event lan tới parent TouchableOpacity
+                  e.stopPropagation();
+                  if (isCurrent) {
+                    // Toggle play/pause cho track đang phát
+                    togglePlay();
+                  } else {
+                    // Phát track mới
+                    handlePlayTrack(item, index);
+                  }
+                }}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                accessibilityLabel={isCurrent ? 'Tạm dừng' : 'Phát'}
+                accessibilityRole="button">
                 {isTrackDownloaded(item.id) && !isCurrent && (
                   <Icon name="Check" className="w-3.5 h-3.5 mr-1" style={{color: '#22C55E'}} />
                 )}
@@ -327,7 +347,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                   className="w-6 h-6"
                   style={{color: isCurrent ? LISTENING_BLUE : colors.neutrals500}}
                 />
-              </View>
+              </TouchableOpacity>
             )}
           </View>
         </TouchableOpacity>
@@ -497,7 +517,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             variant="primary"
             size="lg"
             className="w-full rounded-2xl"
-            style={{backgroundColor: LISTENING_BLUE}}
+            style={{backgroundColor: LISTENING_BLUE, borderWidth: 0}}
             onPress={handleGenerate}
             loading={radioState === 'generating'}
             disabled={radioState === 'generating'}
@@ -577,6 +597,17 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             ItemSeparatorComponent={() => <View style={{height: 10}} />}
             contentContainerStyle={{paddingTop: 12, paddingBottom: insets.bottom + 80}}
             showsVerticalScrollIndicator={false}
+            onScrollToIndexFailed={() => {
+              // Xử lý khi scroll tới index chưa render
+              setTimeout(() => {
+                if (currentTrackIndex >= 0) {
+                  flatListRef.current?.scrollToIndex({
+                    index: currentTrackIndex,
+                    animated: true,
+                  });
+                }
+              }, 300);
+            }}
           />
 
           {/* T-19/T-20/T-21/T-24: RadioControlsBar */}

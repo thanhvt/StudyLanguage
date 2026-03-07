@@ -112,6 +112,7 @@ export default function ListeningConfigScreen({
   // T-01: Radio playlist history state
   const [radioPlaylists, setRadioPlaylists] = useState<PlaylistSummary[]>([]);
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
+  const [showAllPlaylists, setShowAllPlaylists] = useState(false);
 
   // ========================
   // Hooks
@@ -1019,12 +1020,12 @@ export default function ListeningConfigScreen({
                       <TouchableOpacity
                         onPress={() => {
                           haptic.light();
-                          // TODO: Navigate to all playlists screen
+                          setShowAllPlaylists(prev => !prev);
                         }}>
                         <AppText
                           className="text-xs"
                           style={{color: LISTENING_BLUE}}>
-                          Xem tất cả
+                          {showAllPlaylists ? 'Thu gọn' : 'Xem tất cả'}
                         </AppText>
                       </TouchableOpacity>
                     )}
@@ -1056,7 +1057,7 @@ export default function ListeningConfigScreen({
                   {/* Playlist cards */}
                   {!isLoadingPlaylists && radioPlaylists.length > 0 && (
                     <View className="gap-2">
-                      {radioPlaylists.slice(0, 5).map(pl => (
+                      {(showAllPlaylists ? radioPlaylists : radioPlaylists.slice(0, 5)).map(pl => (
                         <TouchableOpacity
                           key={pl.id}
                           className="flex-row items-center rounded-xl border px-3 py-3"
