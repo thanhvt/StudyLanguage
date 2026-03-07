@@ -36,6 +36,12 @@ const CATEGORIES = [
   {id: 'personal', label: '👤 Cá nhân'},
   {id: 'business', label: '💼 Kinh doanh'},
   {id: 'academic', label: '🎓 Học thuật'},
+  {id: 'travel', label: '✈️ Du lịch'},
+  {id: 'health', label: '🏥 Sức khỏe'},
+  {id: 'entertainment', label: '🎬 Giải trí'},
+  {id: 'food', label: '🍜 Ẩm thực'},
+  {id: 'sports', label: '⚽ Thể thao'},
+  {id: 'culture', label: '🎭 Văn hóa'},
 ];
 
 /** Các option duration cho Radio */
@@ -869,6 +875,12 @@ function getCategoryLabel(category: string): string {
     personal: 'Cá nhân',
     business: 'Kinh doanh',
     academic: 'Học thuật',
+    travel: 'Du lịch',
+    health: 'Sức khỏe',
+    entertainment: 'Giải trí',
+    food: 'Ẩm thực',
+    sports: 'Thể thao',
+    culture: 'Văn hóa',
   };
   return labels[category] || category;
 }

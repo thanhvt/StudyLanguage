@@ -84,6 +84,42 @@ const SCENARIOS = [
   { id: 'academic-3', topic: 'University Admissions Interview', category: 'academic', subCategory: 'Admissions' },
   { id: 'academic-4', topic: 'Lab Experiment Briefing', category: 'academic', subCategory: 'Lab' },
   { id: 'academic-5', topic: 'Thesis Defense Preparation', category: 'academic', subCategory: 'Research' },
+  // Travel - Du lịch
+  { id: 'travel-1', topic: 'Booking a Hotel Room', category: 'travel', subCategory: 'Accommodation' },
+  { id: 'travel-2', topic: 'Renting a Car Abroad', category: 'travel', subCategory: 'Transport' },
+  { id: 'travel-3', topic: 'Navigating a Foreign City', category: 'travel', subCategory: 'Exploration' },
+  { id: 'travel-4', topic: 'Ordering Food in a Local Restaurant', category: 'travel', subCategory: 'Dining' },
+  { id: 'travel-5', topic: 'Dealing with Travel Insurance Claim', category: 'travel', subCategory: 'Emergencies' },
+  // Health - Sức khỏe
+  { id: 'health-1', topic: 'Visiting the Doctor for a Checkup', category: 'health', subCategory: 'Medical' },
+  { id: 'health-2', topic: 'Discussing Workout Plans at the Gym', category: 'health', subCategory: 'Fitness' },
+  { id: 'health-3', topic: 'Buying Medicine at the Pharmacy', category: 'health', subCategory: 'Medical' },
+  { id: 'health-4', topic: 'Mental Health and Stress Management', category: 'health', subCategory: 'Wellness' },
+  { id: 'health-5', topic: 'Emergency Room Visit', category: 'health', subCategory: 'Medical' },
+  // Entertainment - Giải trí
+  { id: 'entertainment-1', topic: 'Planning a Movie Night', category: 'entertainment', subCategory: 'Movies' },
+  { id: 'entertainment-2', topic: 'Discussing a New TV Series', category: 'entertainment', subCategory: 'TV' },
+  { id: 'entertainment-3', topic: 'Concert Ticket Booking', category: 'entertainment', subCategory: 'Music' },
+  { id: 'entertainment-4', topic: 'Video Game Strategy Discussion', category: 'entertainment', subCategory: 'Gaming' },
+  { id: 'entertainment-5', topic: 'Book Club Meeting', category: 'entertainment', subCategory: 'Reading' },
+  // Food - Ẩm thực
+  { id: 'food-1', topic: 'Ordering at a Restaurant', category: 'food', subCategory: 'Dining' },
+  { id: 'food-2', topic: 'Cooking Class with a Chef', category: 'food', subCategory: 'Cooking' },
+  { id: 'food-3', topic: 'Grocery Shopping for a Recipe', category: 'food', subCategory: 'Shopping' },
+  { id: 'food-4', topic: 'Food Allergy Discussion', category: 'food', subCategory: 'Health' },
+  { id: 'food-5', topic: 'Street Food Tour Guide', category: 'food', subCategory: 'Travel' },
+  // Sports - Thể thao
+  { id: 'sports-1', topic: 'Discussing a Football Match', category: 'sports', subCategory: 'Football' },
+  { id: 'sports-2', topic: 'Joining a Running Club', category: 'sports', subCategory: 'Running' },
+  { id: 'sports-3', topic: 'Tennis Lesson with a Coach', category: 'sports', subCategory: 'Tennis' },
+  { id: 'sports-4', topic: 'Olympic Games Predictions', category: 'sports', subCategory: 'Events' },
+  { id: 'sports-5', topic: 'Yoga and Meditation Class', category: 'sports', subCategory: 'Wellness' },
+  // Culture - Văn hóa
+  { id: 'culture-1', topic: 'Visiting a Museum Exhibition', category: 'culture', subCategory: 'Art' },
+  { id: 'culture-2', topic: 'Cultural Differences in Workplace', category: 'culture', subCategory: 'Work' },
+  { id: 'culture-3', topic: 'Traditional Festival Celebration', category: 'culture', subCategory: 'Festivals' },
+  { id: 'culture-4', topic: 'Language Exchange Meetup', category: 'culture', subCategory: 'Language' },
+  { id: 'culture-5', topic: 'Discussing History and Heritage', category: 'culture', subCategory: 'History' },
 ];
 
 /**
