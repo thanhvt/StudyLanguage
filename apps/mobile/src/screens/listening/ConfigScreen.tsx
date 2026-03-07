@@ -1064,14 +1064,25 @@ export default function ListeningConfigScreen({
                         const isSelecting = selectedPlaylistIds.size > 0;
                         const isSelected = selectedPlaylistIds.has(pl.id);
 
-                        const cardContent = (
+                        const plCardBg = isSelected
+                          ? (isDark ? '#1a2e4a' : '#e8f0fe')
+                          : (isDark ? colors.background : '#FFFFFF');
+
+                        const plCardBorder = isSelected ? LISTENING_BLUE : colors.neutrals800;
+
+                        // swipeable=true: bỏ border phải + radius phải để liền mạch gradient
+                        const cardContent = (swipeable = false) => (
                           <TouchableOpacity
-                            className="flex-row items-center rounded-xl border px-3 py-3"
+                            className="flex-row items-center rounded-xl px-3 py-3"
                             style={{
-                              borderColor: isSelected ? LISTENING_BLUE : colors.neutrals800,
-                              backgroundColor: isSelected
-                                ? (isDark ? '#1a2e4a' : '#e8f0fe')
-                                : (isDark ? colors.background : '#FFFFFF'),
+                              borderWidth: 1,
+                              borderColor: plCardBorder,
+                              backgroundColor: plCardBg,
+                              ...(swipeable ? {
+                                borderRightWidth: 0,
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                              } : {}),
                             }}
                             onPress={() => {
                               if (isSelecting) {
@@ -1144,9 +1155,8 @@ export default function ListeningConfigScreen({
                           </TouchableOpacity>
                         );
 
-                        // Khi đang multi-select thì không cần swipe
                         if (isSelecting) {
-                          return <View key={pl.id}>{cardContent}</View>;
+                          return <View key={pl.id}>{cardContent(false)}</View>;
                         }
 
                         return (
@@ -1158,23 +1168,18 @@ export default function ListeningConfigScreen({
                             renderRightActions={
                               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                                 const scale = dragX.interpolate({
-                                  inputRange: [-80, 0],
-                                  outputRange: [1, 0.5],
+                                  inputRange: [-100, 0],
+                                  outputRange: [1, 0.3],
                                   extrapolate: 'clamp',
                                 });
                                 const opacity = dragX.interpolate({
-                                  inputRange: [-80, -20, 0],
-                                  outputRange: [1, 0.7, 0],
+                                  inputRange: [-100, -30, 0],
+                                  outputRange: [1, 0.8, 0],
                                   extrapolate: 'clamp',
                                 });
                                 return (
                                   <Pressable
-                                    className="justify-center items-center"
-                                    style={{
-                                      width: 72,
-                                      borderRadius: 12,
-                                      backgroundColor: '#DC2626',
-                                    }}
+                                    style={{width: 80}}
                                     onPress={() => {
                                       Alert.alert(
                                         'Xóa playlist',
@@ -1197,26 +1202,39 @@ export default function ListeningConfigScreen({
                                         ],
                                       );
                                     }}>
-                                    <RNAnimated.View
+                                    <LinearGradient
+                                      colors={[plCardBg, '#DC262680', '#DC2626']}
+                                      start={{x: 0, y: 0}}
+                                      end={{x: 1, y: 0}}
+                                      locations={[0, 0.35, 1]}
                                       style={{
-                                        transform: [{scale}],
-                                        opacity,
+                                        flex: 1,
+                                        justifyContent: 'center',
                                         alignItems: 'center',
+                                        borderTopRightRadius: 12,
+                                        borderBottomRightRadius: 12,
                                       }}>
-                                      <View
-                                        className="w-9 h-9 rounded-full items-center justify-center mb-1"
-                                        style={{backgroundColor: 'rgba(255,255,255,0.2)'}}>
-                                        <Icon name="Trash2" className="w-4 h-4" style={{color: '#FFFFFF'}} />
-                                      </View>
-                                      <AppText className="text-white text-xs font-sans-medium">
-                                        Xóa
-                                      </AppText>
-                                    </RNAnimated.View>
+                                      <RNAnimated.View
+                                        style={{
+                                          transform: [{scale}],
+                                          opacity,
+                                          alignItems: 'center',
+                                        }}>
+                                        <View
+                                          className="w-9 h-9 rounded-full items-center justify-center mb-1"
+                                          style={{backgroundColor: 'rgba(255,255,255,0.25)'}}>
+                                          <Icon name="Trash2" className="w-4 h-4" style={{color: '#FFFFFF'}} />
+                                        </View>
+                                        <AppText className="text-white text-xs font-sans-semibold">
+                                          Xóa
+                                        </AppText>
+                                      </RNAnimated.View>
+                                    </LinearGradient>
                                   </Pressable>
                                 );
                               }
                             }>
-                            {cardContent}
+                            {cardContent(true)}
                           </Swipeable>
                         );
                       })}

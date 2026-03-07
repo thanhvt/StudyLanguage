@@ -290,26 +290,40 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       const isSelectingTracks = selectedTrackIds.size > 0;
       const isSelected = selectedTrackIds.has(item.id);
 
-      const trackCard = (
+      // Màu nền card dùng cho gradient
+      const cardBg = isSelected
+        ? (isDark ? '#1a2e4a' : '#e8f0fe')
+        : isCurrent
+          ? (isDark ? '#0f2440' : '#e3eefa')
+          : (isDark ? colors.background : '#FFFFFF');
+
+      const cardBorderColor = isSelected
+        ? LISTENING_BLUE
+        : isCurrent
+          ? `${LISTENING_BLUE}40`
+          : isDark ? 'rgba(255,255,255,0.10)' : colors.border;
+
+      // Card khi đang multi-select: full border + radius
+      // Card khi trong Swipeable: bỏ border phải + radius phải → liền mạch với gradient
+      const trackCard = (swipeable = false) => (
         <TouchableOpacity
-          className="rounded-2xl border px-4 py-3.5"
+          className="rounded-2xl px-4 py-3.5"
           style={{
-            backgroundColor: isSelected
-              ? (isDark ? '#1a2e4a' : '#e8f0fe')
-              : isCurrent
-                ? (isDark ? '#0f2440' : '#e3eefa')
-                : (isDark ? colors.background : '#FFFFFF'),
-            borderColor: isSelected
-              ? LISTENING_BLUE
-              : isCurrent
-                ? `${LISTENING_BLUE}40`
-                : isDark ? 'rgba(255,255,255,0.10)' : colors.border,
-            marginLeft: 16,
-            marginRight: 16,
+            backgroundColor: cardBg,
+            borderWidth: 1,
+            borderColor: cardBorderColor,
+            ...(swipeable ? {
+              borderRightWidth: 0,
+              borderTopRightRadius: 0,
+              borderBottomRightRadius: 0,
+              marginLeft: 16,
+            } : {
+              marginLeft: 16,
+              marginRight: 16,
+            }),
           }}
           onPress={() => {
             if (isSelectingTracks) {
-              // Multi-select mode: toggle
               haptic.light();
               setSelectedTrackIds(prev => {
                 const next = new Set(prev);
@@ -322,7 +336,6 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             }
           }}
           onLongPress={() => {
-            // Vào multi-select mode
             haptic.medium();
             setSelectedTrackIds(new Set([item.id]));
           }}
@@ -409,9 +422,8 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         </TouchableOpacity>
       );
 
-      // Khi đang multi-select thì không cần swipe
       if (isSelectingTracks) {
-        return trackCard;
+        return trackCard(false);  // Full border + radius
       }
 
       return (
@@ -422,23 +434,20 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           renderRightActions={
             (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
               const scale = dragX.interpolate({
-                inputRange: [-80, 0],
-                outputRange: [1, 0.5],
+                inputRange: [-100, 0],
+                outputRange: [1, 0.3],
                 extrapolate: 'clamp',
               });
               const opacity = dragX.interpolate({
-                inputRange: [-80, -20, 0],
-                outputRange: [1, 0.7, 0],
+                inputRange: [-100, -30, 0],
+                outputRange: [1, 0.8, 0],
                 extrapolate: 'clamp',
               });
               return (
                 <Pressable
-                  className="justify-center items-center"
                   style={{
-                    width: 76,
+                    width: 90,
                     marginRight: 16,
-                    borderRadius: 16,
-                    backgroundColor: '#DC2626',
                   }}
                   onPress={() => {
                     Alert.alert(
@@ -464,26 +473,39 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                       ],
                     );
                   }}>
-                  <RNAnimated.View
+                  <LinearGradient
+                    colors={[cardBg, '#DC262680', '#DC2626']}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 0}}
+                    locations={[0, 0.35, 1]}
                     style={{
-                      transform: [{scale}],
-                      opacity,
+                      flex: 1,
+                      justifyContent: 'center',
                       alignItems: 'center',
+                      borderTopRightRadius: 16,
+                      borderBottomRightRadius: 16,
                     }}>
-                    <View
-                      className="w-10 h-10 rounded-full items-center justify-center mb-1"
-                      style={{backgroundColor: 'rgba(255,255,255,0.2)'}}>
-                      <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
-                    </View>
-                    <AppText className="text-white text-xs font-sans-medium">
-                      Xóa
-                    </AppText>
-                  </RNAnimated.View>
+                    <RNAnimated.View
+                      style={{
+                        transform: [{scale}],
+                        opacity,
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        className="w-10 h-10 rounded-full items-center justify-center mb-1"
+                        style={{backgroundColor: 'rgba(255,255,255,0.25)'}}>
+                        <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
+                      </View>
+                      <AppText className="text-white text-xs font-sans-semibold">
+                        Xóa
+                      </AppText>
+                    </RNAnimated.View>
+                  </LinearGradient>
                 </Pressable>
               );
             }
           }>
-          {trackCard}
+          {trackCard(true)}
         </Swipeable>
       );
     },
