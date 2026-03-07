@@ -140,7 +140,8 @@ export class RadioController {
         );
       }
 
-      const validCategories = ['it', 'daily', 'personal', 'business', 'academic'];
+      // Phải đồng bộ với SCENARIOS trong radio.service.ts
+      const validCategories = ['it', 'daily', 'personal', 'business', 'academic', 'travel', 'health', 'entertainment', 'food', 'sports', 'culture'];
       if (categories && categories.length > 0) {
         const invalidCats = categories.filter(c => !validCategories.includes(c));
         if (invalidCats.length > 0) {

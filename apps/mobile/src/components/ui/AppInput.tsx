@@ -161,6 +161,7 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
               labelVariants({size, required}),
               labelClassName
             )}
+            style={{color: colors.foreground}}
           >
             {label}
           </Text>
