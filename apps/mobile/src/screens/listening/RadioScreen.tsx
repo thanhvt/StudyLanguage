@@ -132,7 +132,6 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const setPreferredCategories = useRadioStore(s => s.setPreferredCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(preferredCategories);
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
-  const [swipingTrackId, setSwipingTrackId] = useState<string | null>(null);
 
   /**
    * Mục đích: Auto chuyển sang track tiếp theo khi track hiện tại kết thúc
@@ -304,23 +303,23 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           ? `${LISTENING_BLUE}40`
           : isDark ? 'rgba(255,255,255,0.10)' : colors.border;
 
-      // Card khi đang multi-select: full border + radius
-      // Card khi đang swipe: động bỏ border phải + radius phải → liền mạch với gradient
-      const isThisSwiping = swipingTrackId === item.id;
-      const trackCard = () => (
+      // Card: multi-select → full border + mx-4
+      // Card trong Swipeable → static không border phải, không margin (container cung cấp padding)
+      const inSwipeable = !isSelectingTracks;
+      const trackCard = (
         <TouchableOpacity
           className="rounded-2xl px-4 py-3.5"
           style={{
             backgroundColor: cardBg,
             borderWidth: 1,
             borderColor: cardBorderColor,
-            marginLeft: 16,
-            marginRight: isThisSwiping ? 0 : 16,
-            ...(isThisSwiping ? {
+            ...(inSwipeable ? {
               borderRightWidth: 0,
               borderTopRightRadius: 0,
               borderBottomRightRadius: 0,
-            } : {}),
+            } : {
+              marginHorizontal: 16,
+            }),
           }}
           onPress={() => {
             if (isSelectingTracks) {
@@ -423,97 +422,92 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
       );
 
       if (isSelectingTracks) {
-        return trackCard();
+        return trackCard;
       }
 
       return (
-        <Swipeable
-          overshootRight={false}
-          friction={2}
-          rightThreshold={40}
-          onSwipeableWillOpen={() => setSwipingTrackId(item.id)}
-          onSwipeableClose={() => {
-            if (swipingTrackId === item.id) setSwipingTrackId(null);
-          }}
-          renderRightActions={
-            (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
-              const scale = dragX.interpolate({
-                inputRange: [-100, 0],
-                outputRange: [1, 0.3],
-                extrapolate: 'clamp',
-              });
-              const opacity = dragX.interpolate({
-                inputRange: [-100, -30, 0],
-                outputRange: [1, 0.8, 0],
-                extrapolate: 'clamp',
-              });
-              return (
-                <Pressable
-                  style={{
-                    width: 90,
-                    marginRight: 16,
-                  }}
-                  onPress={() => {
-                    Alert.alert(
-                      'Xóa track',
-                      `Xóa "${item.topic}" khỏi playlist?`,
-                      [
-                        {text: 'Hủy', style: 'cancel'},
-                        {
-                          text: 'Xóa',
-                          style: 'destructive',
-                          onPress: async () => {
-                            try {
-                              if (playlist?.playlist?.id) {
-                                await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
+        <View style={{marginHorizontal: 16}}>
+          <Swipeable
+            overshootRight={false}
+            friction={2}
+            rightThreshold={40}
+            renderRightActions={
+              (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
+                const scale = dragX.interpolate({
+                  inputRange: [-100, 0],
+                  outputRange: [1, 0.3],
+                  extrapolate: 'clamp',
+                });
+                const opacity = dragX.interpolate({
+                  inputRange: [-100, -30, 0],
+                  outputRange: [1, 0.8, 0],
+                  extrapolate: 'clamp',
+                });
+                return (
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert(
+                        'Xóa track',
+                        `Xóa "${item.topic}" khỏi playlist?`,
+                        [
+                          {text: 'Hủy', style: 'cancel'},
+                          {
+                            text: 'Xóa',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                if (playlist?.playlist?.id) {
+                                  await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
+                                }
+                                removeTrackFromPlaylist(item.id);
+                                showSuccess('Đã xóa track');
+                              } catch (err: any) {
+                                showError('Lỗi xóa: ' + (err?.message || ''));
                               }
-                              removeTrackFromPlaylist(item.id);
-                              showSuccess('Đã xóa track');
-                            } catch (err: any) {
-                              showError('Lỗi xóa: ' + (err?.message || ''));
-                            }
+                            },
                           },
-                        },
-                      ],
-                    );
-                  }}>
-                  <LinearGradient
-                    colors={[cardBg, '#DC262680', '#DC2626']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 0}}
-                    locations={[0, 0.35, 1]}
-                    style={{
-                      flex: 1,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      borderTopRightRadius: 16,
-                      borderBottomRightRadius: 16,
+                        ],
+                      );
                     }}>
-                    <RNAnimated.View
+                    <LinearGradient
+                      colors={[cardBg, '#DC262680', '#DC2626']}
+                      start={{x: 0, y: 0}}
+                      end={{x: 1, y: 0}}
+                      locations={[0, 0.35, 1]}
                       style={{
-                        transform: [{scale}],
-                        opacity,
+                        width: 90,
+                        flex: 1,
+                        justifyContent: 'center',
                         alignItems: 'center',
+                        borderTopRightRadius: 16,
+                        borderBottomRightRadius: 16,
                       }}>
-                      <View
-                        className="w-10 h-10 rounded-full items-center justify-center mb-1"
-                        style={{backgroundColor: 'rgba(255,255,255,0.25)'}}>
-                        <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
-                      </View>
-                      <AppText className="text-white text-xs font-sans-semibold">
-                        Xóa
-                      </AppText>
-                    </RNAnimated.View>
-                  </LinearGradient>
-                </Pressable>
-              );
-            }
-          }>
-          {trackCard()}
-        </Swipeable>
+                      <RNAnimated.View
+                        style={{
+                          transform: [{scale}],
+                          opacity,
+                          alignItems: 'center',
+                        }}>
+                        <View
+                          className="w-10 h-10 rounded-full items-center justify-center mb-1"
+                          style={{backgroundColor: 'rgba(255,255,255,0.25)'}}>
+                          <Icon name="Trash2" className="w-5 h-5" style={{color: '#FFFFFF'}} />
+                        </View>
+                        <AppText className="text-white text-xs font-sans-semibold">
+                          Xóa
+                        </AppText>
+                      </RNAnimated.View>
+                    </LinearGradient>
+                  </Pressable>
+                );
+              }
+            }>
+            {trackCard}
+          </Swipeable>
+        </View>
       );
     },
-    [currentTrackIndex, isGeneratingAudio, playbackState, selectedTrackIds, swipingTrackId, handlePlayTrack, togglePlay, removeTrackFromPlaylist, colors, isDark, isTrackDownloaded, playlist, haptic, showSuccess, showError],
+    [currentTrackIndex, isGeneratingAudio, playbackState, selectedTrackIds, handlePlayTrack, togglePlay, removeTrackFromPlaylist, colors, isDark, isTrackDownloaded, playlist, haptic, showSuccess, showError],
   );
 
   return (

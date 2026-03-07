@@ -116,7 +116,6 @@ export default function ListeningConfigScreen({
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [showAllPlaylists, setShowAllPlaylists] = useState(false);
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
-  const [swipingPlaylistId, setSwipingPlaylistId] = useState<string | null>(null);
 
   // ========================
   // Hooks
@@ -1071,16 +1070,17 @@ export default function ListeningConfigScreen({
 
                         const plCardBorder = isSelected ? LISTENING_BLUE : colors.neutrals800;
 
-                        // Động bỏ border phải + radius phải khi đang swipe → liền mạch gradient
-                        const isThisSwiping = swipingPlaylistId === pl.id;
-                        const cardContent = () => (
+                        // Card: Swipeable → static không border phải (container cung cấp padding)
+                        // Multi-select → full border
+                        const inSwipeable = !isSelecting;
+                        const cardContent = (
                           <TouchableOpacity
                             className="flex-row items-center rounded-xl px-3 py-3"
                             style={{
                               borderWidth: 1,
                               borderColor: plCardBorder,
                               backgroundColor: plCardBg,
-                              ...(isThisSwiping ? {
+                              ...(inSwipeable ? {
                                 borderRightWidth: 0,
                                 borderTopRightRadius: 0,
                                 borderBottomRightRadius: 0,
@@ -1158,7 +1158,7 @@ export default function ListeningConfigScreen({
                         );
 
                         if (isSelecting) {
-                          return <View key={pl.id}>{cardContent()}</View>;
+                          return <View key={pl.id}>{cardContent}</View>;
                         }
 
                         return (
@@ -1167,10 +1167,6 @@ export default function ListeningConfigScreen({
                             overshootRight={false}
                             friction={2}
                             rightThreshold={40}
-                            onSwipeableWillOpen={() => setSwipingPlaylistId(pl.id)}
-                            onSwipeableClose={() => {
-                              if (swipingPlaylistId === pl.id) setSwipingPlaylistId(null);
-                            }}
                             renderRightActions={
                               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                                 const scale = dragX.interpolate({
@@ -1185,7 +1181,6 @@ export default function ListeningConfigScreen({
                                 });
                                 return (
                                   <Pressable
-                                    style={{width: 80}}
                                     onPress={() => {
                                       Alert.alert(
                                         'Xóa playlist',
@@ -1214,6 +1209,7 @@ export default function ListeningConfigScreen({
                                       end={{x: 1, y: 0}}
                                       locations={[0, 0.35, 1]}
                                       style={{
+                                        width: 80,
                                         flex: 1,
                                         justifyContent: 'center',
                                         alignItems: 'center',
@@ -1240,7 +1236,7 @@ export default function ListeningConfigScreen({
                                 );
                               }
                             }>
-                            {cardContent()}
+                            {cardContent}
                           </Swipeable>
                         );
                       })}
