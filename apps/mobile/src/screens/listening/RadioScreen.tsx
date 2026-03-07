@@ -94,12 +94,21 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
   const removeTrackFromPlaylist = useRadioStore(s => s.removeTrackFromPlaylist);
   const removeTracksFromPlaylist = useRadioStore(s => s.removeTracksFromPlaylist);
   const [selectedDuration, setSelectedDuration] = useState(routeDuration ?? 30);
-  const [radioState, setRadioState] = useState<RadioState>(
-    loadedPlaylist ? 'ready' : autoGenerate ? 'generating' : 'idle',
-  );
-  const [playlist, setPlaylist] = useState<RadioPlaylistResult | null>(
-    loadedPlaylist ?? null,
-  );
+
+  // Khôi phục state từ store khi remount (ví dụ: từ MinimizedPlayer expand)
+  // Ưu tiên: route params > store > idle
+  const storedPlaylist = useRadioStore(s => s.currentPlaylist);
+  const initialPlaylist = loadedPlaylist ?? storedPlaylist ?? null;
+  const initialState: RadioState = loadedPlaylist
+    ? 'ready'
+    : autoGenerate
+      ? 'generating'
+      : storedPlaylist
+        ? (playbackState === 'playing' || playbackState === 'loading' ? 'playing' : 'ready')
+        : 'idle';
+
+  const [radioState, setRadioState] = useState<RadioState>(initialState);
+  const [playlist, setPlaylist] = useState<RadioPlaylistResult | null>(initialPlaylist);
   const flatListRef = useRef<FlatList>(null);
 
   // Bottom Sheet state — track nào đang mở sheet (null = đóng)

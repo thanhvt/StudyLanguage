@@ -1398,10 +1398,10 @@ export default function ListeningConfigScreen({
                       : `${LISTENING_BLUE}18`,
                 // Disabled: border nhẹ để nhìn thấy nút
                 borderWidth: canStart || (mode as string) === 'radio'
-                  ? (isLiquidGlassSupported && isDark ? 1 : 0)
+                  ? 0
                   : 1.5,
                 borderColor: canStart || (mode as string) === 'radio'
-                  ? (isLiquidGlassSupported && isDark ? 'rgba(255,255,255,0.15)' : 'transparent')
+                  ? 'transparent'
                   : isDark
                     ? colors.glassBorder
                     : `${LISTENING_BLUE}30`,
