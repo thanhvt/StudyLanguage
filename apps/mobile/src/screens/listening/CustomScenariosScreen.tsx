@@ -3,11 +3,11 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
+import AppInput from '@/components/ui/AppInput';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -186,19 +186,17 @@ export default function CustomScenariosScreen({
 
       {/* Search bar */}
       <View className="px-6 mb-4">
-        <View className="flex-row items-center rounded-xl px-4 py-2.5" style={{backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}>
-          <Icon name="Search" className="w-4 h-4 mr-2" style={{color: colors.neutrals500}} />
-          <TextInput
-            className="flex-1 text-sm"
-            style={{color: colors.foreground}}
-            placeholder="Tìm kịch bản..."
-            placeholderTextColor={colors.neutrals500}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
+        <AppInput
+          size="sm"
+          placeholder="Tìm kịch bản..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+          leftIcon={
+            <Icon name="Search" className="w-4 h-4" style={{color: colors.neutrals500}} />
+          }
+        />
       </View>
 
       {/* Scenario list */}
@@ -272,27 +270,27 @@ export default function CustomScenariosScreen({
           <View
             className="rounded-t-3xl p-6"
             style={{paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border}}>
-            <AppText className="font-sans-bold text-lg mb-4" style={{color: colors.foreground}}>
+            <AppText variant="heading3" weight="bold" raw>
               Tạo kịch bản mới
             </AppText>
-            <TextInput
-              className="rounded-xl px-4 py-3 text-sm mb-3"
-              style={{color: colors.foreground, backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
-              placeholder="Tên kịch bản..."
-              placeholderTextColor={colors.neutrals500}
+            <AppInput
+              label="Tên kịch bản"
+              placeholder="Nhập tên kịch bản..."
               value={newName}
               onChangeText={setNewName}
               autoFocus
+              size="md"
+              containerClassName="mb-3"
             />
-            <TextInput
-              className="rounded-xl px-4 py-3 text-sm mb-4"
-              style={{color: colors.foreground, minHeight: 80, textAlignVertical: 'top', backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
-              placeholder="Mô tả chi tiết (tuỳ chọn)..."
-              placeholderTextColor={colors.neutrals500}
+            <AppInput
+              label="Mô tả"
+              variant="textarea"
+              placeholder="Mô tả chi tiết kịch bản (tuỳ chọn)..."
               value={newDesc}
               onChangeText={setNewDesc}
-              multiline
               numberOfLines={3}
+              size="md"
+              containerClassName="mb-4"
             />
             <View className="flex-row gap-3">
               <AppButton

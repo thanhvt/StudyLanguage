@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {TextInput, TouchableOpacity, View, ActivityIndicator, Alert} from 'react-native';
+import {TouchableOpacity, View, ActivityIndicator, Alert} from 'react-native';
 import {AppText, AppButton} from '@/components/ui';
+import AppInput from '@/components/ui/AppInput';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useToast} from '@/components/ui/ToastProvider';
@@ -235,7 +236,7 @@ export default function CustomScenarioInput({
       <View className="rounded-2xl p-4" style={{backgroundColor: colors.neutrals900}}>
         {/* Header có nút đóng */}
         <View className="flex-row items-center justify-between mb-3">
-          <AppText className="font-sans-semibold text-sm" style={{color: colors.foreground}}>
+          <AppText variant="heading5" weight="semibold" raw>
             ✨ Tạo kịch bản mới
           </AppText>
           {onClose && (
@@ -251,55 +252,46 @@ export default function CustomScenarioInput({
           )}
         </View>
 
-        <TextInput
-          className="rounded-xl px-4 py-2.5 text-base mb-2"
-          style={{color: colors.foreground, borderWidth: 1, borderColor: colors.glassBorderStrong, backgroundColor: colors.neutrals900}}
+        <AppInput
           placeholder="Tên kịch bản..."
-          placeholderTextColor={colors.neutrals500}
           value={name}
           onChangeText={setName}
           editable={!disabled && !isSaving}
           maxLength={100}
-          accessibilityLabel="Nhập tên kịch bản tuỳ chỉnh"
+          size="md"
+          containerClassName="mb-2"
         />
 
-        <TextInput
-          className="rounded-xl px-4 py-2.5 text-base mb-3 min-h-[60px]"
-          style={{color: colors.foreground, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.glassBorderStrong, backgroundColor: colors.neutrals900}}
+        <AppInput
+          variant="textarea"
           placeholder="Mô tả chi tiết kịch bản..."
-          placeholderTextColor={colors.neutrals500}
           value={description}
           onChangeText={setDescription}
           editable={!disabled && !isSaving}
-          multiline
           numberOfLines={2}
           maxLength={300}
-          accessibilityLabel="Mô tả chi tiết kịch bản tuỳ chỉnh"
+          size="md"
+          containerClassName="mb-3"
         />
 
         <View className="flex-row gap-2">
-          <TouchableOpacity
-            className="flex-1 rounded-xl py-3 items-center justify-center"
-            style={{backgroundColor: LISTENING_BLUE}}
+          <AppButton
+            variant="primary"
+            size="default"
+            style={{flex: 1, backgroundColor: LISTENING_BLUE}}
             onPress={handleQuickUse}
-            disabled={disabled || !name.trim() || isSaving}
-            activeOpacity={0.8}
-            accessibilityLabel="Sử dụng kịch bản ngay mà không lưu">
-            <AppText className="text-sm font-sans-bold" style={{color: '#FFFFFF'}}>
-              ⚡ Sử dụng ngay
-            </AppText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-1 rounded-xl py-3 items-center justify-center"
-            style={{backgroundColor: `${LISTENING_BLUE}12`, borderWidth: 1, borderColor: LISTENING_BLUE}}
+            disabled={disabled || !name.trim() || isSaving}>
+            ⚡ Sử dụng ngay
+          </AppButton>
+          <AppButton
+            variant="outline"
+            size="default"
+            style={{flex: 1, borderColor: LISTENING_BLUE}}
             onPress={handleSave}
             disabled={disabled || !name.trim() || isSaving}
-            activeOpacity={0.8}
-            accessibilityLabel="Lưu kịch bản vào bộ sưu tập">
-            <AppText className="text-sm font-sans-bold" style={{color: LISTENING_BLUE}}>
-              💾 Lưu lại
-            </AppText>
-          </TouchableOpacity>
+            loading={isSaving}>
+            💾 Lưu lại
+          </AppButton>
         </View>
       </View>
     </View>

@@ -1070,15 +1070,18 @@ export default function ListeningConfigScreen({
 
                         const plCardBorder = isSelected ? LISTENING_BLUE : colors.neutrals800;
 
-                        // Kỹ thuật overlap: Card luôn có FULL border.
-                        // Gradient dịch trái 1px (marginLeft: -1) phủ lên border phải khi swipe.
+                        // Container-based border: Border trên Swipeable containerStyle.
+                        // Card và gradient trong cùng bordered container → không gap.
                         const cardContent = (
                           <TouchableOpacity
-                            className="flex-row items-center rounded-xl px-3 py-3"
+                            className="flex-row items-center px-3 py-3"
                             style={{
-                              borderWidth: 1,
-                              borderColor: plCardBorder,
                               backgroundColor: plCardBg,
+                              ...(isSelecting ? {
+                                borderWidth: 1,
+                                borderColor: plCardBorder,
+                                borderRadius: 12,
+                              } : {}),
                             }}
                             onPress={() => {
                               if (isSelecting) {
@@ -1155,12 +1158,53 @@ export default function ListeningConfigScreen({
                           return <View key={pl.id}>{cardContent}</View>;
                         }
 
+                        const swipeRef = React.createRef<any>();
+
+                        /**
+                         * Mục đích: Xử lý xóa playlist (gọi API + cập nhật state)
+                         * Khi nào: Gọi khi user full-swipe hoặc nhấn nút Xóa
+                         */
+                        const handleDeletePlaylist = async () => {
+                          try {
+                            await radioApi.deletePlaylist(pl.id);
+                            setRadioPlaylists(prev => prev.filter(p => p.id !== pl.id));
+                            showSuccess('Đã xóa playlist');
+                          } catch (err: any) {
+                            showError('Lỗi xóa playlist: ' + (err?.message || ''));
+                          }
+                        };
+
                         return (
                           <Swipeable
                             key={pl.id}
+                            ref={swipeRef}
                             overshootRight={false}
                             friction={2}
                             rightThreshold={40}
+                            containerStyle={{
+                              borderWidth: 1,
+                              borderColor: plCardBorder,
+                              borderRadius: 12,
+                              overflow: 'hidden',
+                            }}
+                            onSwipeableOpen={() => {
+                              Alert.alert(
+                                'Xóa playlist',
+                                `Bạn có chắc chắn muốn xóa playlist này?`,
+                                [
+                                  {
+                                    text: 'Hủy',
+                                    style: 'cancel',
+                                    onPress: () => swipeRef.current?.close(),
+                                  },
+                                  {
+                                    text: 'Xóa',
+                                    style: 'destructive',
+                                    onPress: handleDeletePlaylist,
+                                  },
+                                ],
+                              );
+                            }}
                             renderRightActions={
                               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                                 const scale = dragX.interpolate({
@@ -1175,26 +1219,13 @@ export default function ListeningConfigScreen({
                                 });
                                 return (
                                   <Pressable
-                                    style={{marginLeft: -1}}
                                     onPress={() => {
                                       Alert.alert(
                                         'Xóa playlist',
                                         `Bạn có chắc chắn muốn xóa playlist này?`,
                                         [
-                                          {text: 'Hủy', style: 'cancel'},
-                                          {
-                                            text: 'Xóa',
-                                            style: 'destructive',
-                                            onPress: async () => {
-                                              try {
-                                                await radioApi.deletePlaylist(pl.id);
-                                                setRadioPlaylists(prev => prev.filter(p => p.id !== pl.id));
-                                                showSuccess('Đã xóa playlist');
-                                              } catch (err: any) {
-                                                showError('Lỗi xóa playlist: ' + (err?.message || ''));
-                                              }
-                                            },
-                                          },
+                                          {text: 'Hủy', style: 'cancel', onPress: () => swipeRef.current?.close()},
+                                          {text: 'Xóa', style: 'destructive', onPress: handleDeletePlaylist},
                                         ],
                                       );
                                     }}>
@@ -1204,12 +1235,10 @@ export default function ListeningConfigScreen({
                                       end={{x: 1, y: 0}}
                                       locations={[0, 0.35, 1]}
                                       style={{
-                                        width: 81,
+                                        width: 80,
                                         flex: 1,
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        borderTopRightRadius: 12,
-                                        borderBottomRightRadius: 12,
                                       }}>
                                       <RNAnimated.View
                                         style={{

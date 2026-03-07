@@ -303,17 +303,18 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           ? `${LISTENING_BLUE}40`
           : isDark ? 'rgba(255,255,255,0.10)' : colors.border;
 
-      // Kỹ thuật overlap: Card luôn có FULL border (bao gồm phải).
-      // Gradient dịch trái 1px (marginLeft: -1) để phủ lên border phải khi swipe.
-      // Rest: gradient ẩn → border phải hiển thị. Swipe: gradient phủ border → liền mạch.
+      // Container-based border: Border đặt trên Swipeable containerStyle, không phải card.
+      // Card và gradient đều trong cùng bordered container → không có gap.
+      // Multi-select: card có border riêng vì không trong Swipeable.
       const trackCard = (
         <TouchableOpacity
-          className="rounded-2xl px-4 py-3.5"
+          className="px-4 py-3.5"
           style={{
             backgroundColor: cardBg,
-            borderWidth: 1,
-            borderColor: cardBorderColor,
             ...(isSelectingTracks ? {
+              borderWidth: 1,
+              borderColor: cardBorderColor,
+              borderRadius: 16,
               marginHorizontal: 16,
             } : {}),
           }}
@@ -421,12 +422,57 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
         return trackCard;
       }
 
+      // Ref để gọi close() sau khi xóa
+      const swipeRef = React.createRef<any>();
+
+      /**
+       * Mục đích: Xử lý xóa track (gọi API + cập nhật store)
+       * Khi nào: Gọi khi user full-swipe hoặc nhấn nút Xóa
+       */
+      const handleDeleteTrack = async () => {
+        try {
+          if (playlist?.playlist?.id) {
+            await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
+          }
+          removeTrackFromPlaylist(item.id);
+          showSuccess('Đã xóa track');
+        } catch (err: any) {
+          showError('Lỗi xóa: ' + (err?.message || ''));
+        }
+      };
+
       return (
         <View style={{marginHorizontal: 16}}>
           <Swipeable
+            ref={swipeRef}
             overshootRight={false}
             friction={2}
             rightThreshold={40}
+            containerStyle={{
+              borderWidth: 1,
+              borderColor: cardBorderColor,
+              borderRadius: 16,
+              overflow: 'hidden',
+            }}
+            onSwipeableOpen={() => {
+              // Full-swipe-to-delete: swipe hết cỡ → auto xóa (có confirm)
+              Alert.alert(
+                'Xóa track',
+                `Xóa "${item.topic}" khỏi playlist?`,
+                [
+                  {
+                    text: 'Hủy',
+                    style: 'cancel',
+                    onPress: () => swipeRef.current?.close(),
+                  },
+                  {
+                    text: 'Xóa',
+                    style: 'destructive',
+                    onPress: handleDeleteTrack,
+                  },
+                ],
+              );
+            }}
             renderRightActions={
               (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => {
                 const scale = dragX.interpolate({
@@ -441,28 +487,13 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 });
                 return (
                   <Pressable
-                    style={{marginLeft: -1}}
                     onPress={() => {
                       Alert.alert(
                         'Xóa track',
                         `Xóa "${item.topic}" khỏi playlist?`,
                         [
-                          {text: 'Hủy', style: 'cancel'},
-                          {
-                            text: 'Xóa',
-                            style: 'destructive',
-                            onPress: async () => {
-                              try {
-                                if (playlist?.playlist?.id) {
-                                  await radioApi.deletePlaylistItem(playlist.playlist.id, item.id);
-                                }
-                                removeTrackFromPlaylist(item.id);
-                                showSuccess('Đã xóa track');
-                              } catch (err: any) {
-                                showError('Lỗi xóa: ' + (err?.message || ''));
-                              }
-                            },
-                          },
+                          {text: 'Hủy', style: 'cancel', onPress: () => swipeRef.current?.close()},
+                          {text: 'Xóa', style: 'destructive', onPress: handleDeleteTrack},
                         ],
                       );
                     }}>
@@ -472,12 +503,10 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                       end={{x: 1, y: 0}}
                       locations={[0, 0.35, 1]}
                       style={{
-                        width: 91,
+                        width: 90,
                         flex: 1,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        borderTopRightRadius: 16,
-                        borderBottomRightRadius: 16,
                       }}>
                       <RNAnimated.View
                         style={{
