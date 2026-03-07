@@ -1070,9 +1070,8 @@ export default function ListeningConfigScreen({
 
                         const plCardBorder = isSelected ? LISTENING_BLUE : colors.neutrals800;
 
-                        // Card: Swipeable → static không border phải (container cung cấp padding)
-                        // Multi-select → full border
-                        const inSwipeable = !isSelecting;
+                        // Kỹ thuật overlap: Card luôn có FULL border.
+                        // Gradient dịch trái 1px (marginLeft: -1) phủ lên border phải khi swipe.
                         const cardContent = (
                           <TouchableOpacity
                             className="flex-row items-center rounded-xl px-3 py-3"
@@ -1080,11 +1079,6 @@ export default function ListeningConfigScreen({
                               borderWidth: 1,
                               borderColor: plCardBorder,
                               backgroundColor: plCardBg,
-                              ...(inSwipeable ? {
-                                borderRightWidth: 0,
-                                borderTopRightRadius: 0,
-                                borderBottomRightRadius: 0,
-                              } : {}),
                             }}
                             onPress={() => {
                               if (isSelecting) {
@@ -1181,6 +1175,7 @@ export default function ListeningConfigScreen({
                                 });
                                 return (
                                   <Pressable
+                                    style={{marginLeft: -1}}
                                     onPress={() => {
                                       Alert.alert(
                                         'Xóa playlist',
@@ -1209,7 +1204,7 @@ export default function ListeningConfigScreen({
                                       end={{x: 1, y: 0}}
                                       locations={[0, 0.35, 1]}
                                       style={{
-                                        width: 80,
+                                        width: 81,
                                         flex: 1,
                                         justifyContent: 'center',
                                         alignItems: 'center',

@@ -303,9 +303,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
           ? `${LISTENING_BLUE}40`
           : isDark ? 'rgba(255,255,255,0.10)' : colors.border;
 
-      // Card: multi-select → full border + mx-4
-      // Card trong Swipeable → static không border phải, không margin (container cung cấp padding)
-      const inSwipeable = !isSelectingTracks;
+      // Kỹ thuật overlap: Card luôn có FULL border (bao gồm phải).
+      // Gradient dịch trái 1px (marginLeft: -1) để phủ lên border phải khi swipe.
+      // Rest: gradient ẩn → border phải hiển thị. Swipe: gradient phủ border → liền mạch.
       const trackCard = (
         <TouchableOpacity
           className="rounded-2xl px-4 py-3.5"
@@ -313,13 +313,9 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
             backgroundColor: cardBg,
             borderWidth: 1,
             borderColor: cardBorderColor,
-            ...(inSwipeable ? {
-              borderRightWidth: 0,
-              borderTopRightRadius: 0,
-              borderBottomRightRadius: 0,
-            } : {
+            ...(isSelectingTracks ? {
               marginHorizontal: 16,
-            }),
+            } : {}),
           }}
           onPress={() => {
             if (isSelectingTracks) {
@@ -445,6 +441,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                 });
                 return (
                   <Pressable
+                    style={{marginLeft: -1}}
                     onPress={() => {
                       Alert.alert(
                         'Xóa track',
@@ -475,7 +472,7 @@ export default function RadioScreen({navigation, route}: {navigation: any; route
                       end={{x: 1, y: 0}}
                       locations={[0, 0.35, 1]}
                       style={{
-                        width: 90,
+                        width: 91,
                         flex: 1,
                         justifyContent: 'center',
                         alignItems: 'center',
