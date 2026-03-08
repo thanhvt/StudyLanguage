@@ -236,6 +236,79 @@ export default function ManageCategoriesScreen({navigation, route}: any) {
   }, [haptic, refreshData]);
 
   /**
+   * Mục đích: Sửa tên và mô tả cho scenario
+   * Tham số đầu vào: scenario (CustomScenario)
+   * Tham số đầu ra: void (cập nhật local + API)
+   * Khi nào sử dụng: User nhấn [⋯] > "✏️ Sửa tên & mô tả" trên scenario
+   */
+  const handleEditScenario = useCallback((scenario: CustomScenario) => {
+    // Bước 1: Nhập tên mới
+    Alert.prompt(
+      '✏️ Sửa chủ đề',
+      'Nhập tên mới:',
+      [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Tiếp',
+          onPress: (newName?: string) => {
+            const trimmedName = newName?.trim();
+            if (!trimmedName) return;
+            // Bước 2: Nhập mô tả
+            Alert.prompt(
+              '✏️ Mô tả (tuỳ chọn)',
+              'Nhập mô tả cho chủ đề:',
+              [
+                {
+                  text: 'Bỏ qua',
+                  onPress: async () => {
+                    try {
+                      const updated = await customScenarioApi.update(scenario.id, {
+                        name: trimmedName,
+                        description: scenario.description || '',
+                      });
+                      haptic.success();
+                      setCategoryScenarios(prev =>
+                        prev.map(s => s.id === scenario.id ? {...s, name: updated.name, description: updated.description} : s),
+                      );
+                      refreshData();
+                    } catch {
+                      Alert.alert('Lỗi', 'Không thể cập nhật.');
+                    }
+                  },
+                },
+                {
+                  text: 'Lưu',
+                  onPress: async (desc?: string) => {
+                    try {
+                      const updated = await customScenarioApi.update(scenario.id, {
+                        name: trimmedName,
+                        description: desc?.trim() || '',
+                      });
+                      haptic.success();
+                      setCategoryScenarios(prev =>
+                        prev.map(s => s.id === scenario.id ? {...s, name: updated.name, description: updated.description} : s),
+                      );
+                      refreshData();
+                    } catch {
+                      Alert.alert('Lỗi', 'Không thể cập nhật.');
+                    }
+                  },
+                },
+              ],
+              'plain-text',
+              scenario.description || '',
+              'default',
+            );
+          },
+        },
+      ],
+      'plain-text',
+      scenario.name,
+      'default',
+    );
+  }, [haptic, refreshData]);
+
+  /**
    * Mục đích: Di chuyển scenario sang category khác
    * Tham số đầu vào: scenarioId
    * Khi nào sử dụng: User nhấn [⋯] > "📂 Chuyển nhóm"
@@ -356,14 +429,15 @@ export default function ManageCategoriesScreen({navigation, route}: any) {
   const showScenarioMenu = useCallback((scenario: CustomScenario) => {
     Alert.alert(
       `📝 ${scenario.name}`,
-      '',
+      scenario.description || '',
       [
         {text: 'Huỷ', style: 'cancel'},
+        {text: '✏️ Sửa tên & mô tả', onPress: () => handleEditScenario(scenario)},
         {text: '📂 Chuyển nhóm', onPress: () => handleMoveScenario(scenario.id, scenario.name)},
         {text: '🗑️ Xoá', style: 'destructive', onPress: () => handleDeleteScenario(scenario.id, scenario.name)},
       ],
     );
-  }, [handleMoveScenario, handleDeleteScenario]);
+  }, [handleEditScenario, handleMoveScenario, handleDeleteScenario]);
 
   return (
     <SafeAreaView className="flex-1" style={{backgroundColor: colors.background}}>
@@ -471,17 +545,36 @@ export default function ManageCategoriesScreen({navigation, route}: any) {
                 Sửa nhóm chủ đề
               </AppText>
 
-              {/* Icon */}
-              <View className="flex-row items-center mb-4">
-                <AppText className="text-sm font-sans-medium mr-3" style={{color: colors.neutrals500}}>Icon:</AppText>
-                <TouchableOpacity
-                  className="rounded-xl items-center justify-center"
-                  style={{width: 48, height: 48, backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorderStrong}}
-                  onPress={() => setShowEditEmojis(!showEditEmojis)}>
-                  <AppText className="text-2xl">{editIcon}</AppText>
-                </TouchableOpacity>
+              {/* Icon + Tên nhóm — cùng 1 hàng */}
+              <View className="mb-4">
+                <AppText className="text-sm font-sans-medium mb-2" style={{color: colors.neutrals300}}>Tên nhóm</AppText>
+                <View className="flex-row items-center" style={{gap: 10}}>
+                  {/* Nút chọn icon */}
+                  <TouchableOpacity
+                    className="rounded-xl items-center justify-center"
+                    style={{width: 48, height: 48, backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorderStrong}}
+                    onPress={() => setShowEditEmojis(!showEditEmojis)}>
+                    <AppText className="text-2xl">{editIcon}</AppText>
+                  </TouchableOpacity>
+                  {/* Ô nhập tên */}
+                  <View className="flex-1 flex-row items-center rounded-xl px-4" style={{backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorderStrong, height: 48}}>
+                    <TextInput
+                      className="flex-1 text-base"
+                      style={{color: colors.foreground}}
+                      value={editName}
+                      onChangeText={t => setEditName(t.slice(0, MAX_NAME_LENGTH))}
+                      maxLength={MAX_NAME_LENGTH}
+                      placeholderTextColor={colors.neutrals400}
+                      placeholder="Nhập tên nhóm..."
+                    />
+                    <AppText className="text-xs ml-2" style={{color: editName.length >= MAX_NAME_LENGTH ? '#EF4444' : colors.neutrals400}}>
+                      {editName.length}/{MAX_NAME_LENGTH}
+                    </AppText>
+                  </View>
+                </View>
               </View>
 
+              {/* Emoji grid — hiện khi bấm nút icon */}
               {showEditEmojis && (
                 <View className="flex-row flex-wrap mb-4 p-3 rounded-xl" style={{backgroundColor: colors.glassBg}}>
                   {POPULAR_EMOJIS.map((emoji, idx) => (
@@ -495,23 +588,6 @@ export default function ManageCategoriesScreen({navigation, route}: any) {
                   ))}
                 </View>
               )}
-
-              {/* Name */}
-              <View className="mb-5">
-                <AppText className="text-sm font-sans-medium mb-2" style={{color: colors.neutrals500}}>Tên nhóm:</AppText>
-                <View className="flex-row items-center rounded-xl px-4" style={{backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorderStrong, height: 48}}>
-                  <TextInput
-                    className="flex-1 text-base"
-                    style={{color: colors.foreground}}
-                    value={editName}
-                    onChangeText={t => setEditName(t.slice(0, MAX_NAME_LENGTH))}
-                    maxLength={MAX_NAME_LENGTH}
-                  />
-                  <AppText className="text-xs" style={{color: editName.length >= MAX_NAME_LENGTH ? '#EF4444' : colors.neutrals400}}>
-                    {editName.length}/{MAX_NAME_LENGTH}
-                  </AppText>
-                </View>
-              </View>
 
               {/* Buttons */}
               <View className="flex-row">

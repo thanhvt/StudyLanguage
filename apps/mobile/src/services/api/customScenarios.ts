@@ -110,4 +110,20 @@ export const customScenarioApi = {
     const result = response.data as any;
     return (result?.scenario ?? result) as CustomScenario;
   },
+
+  /**
+   * Mục đích: Cập nhật tên và mô tả cho scenario
+   * Tham số đầu vào: id (string), data (name, description)
+   * Tham số đầu ra: Promise<CustomScenario>
+   * Khi nào sử dụng: ManageCategoriesScreen > "✏️ Sửa tên & mô tả"
+   */
+  update: async (
+    id: string,
+    data: { name?: string; description?: string },
+  ): Promise<CustomScenario> => {
+    console.log('📝 [CustomScenario] Cập nhật:', id, data);
+    const response = await apiClient.patch(`/custom-scenarios/${id}`, data);
+    const result = response.data as any;
+    return (result?.scenario ?? result) as CustomScenario;
+  },
 };
