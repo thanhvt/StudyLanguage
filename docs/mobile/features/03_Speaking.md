@@ -15,28 +15,49 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 |------|-------------|----------|
 | **Practice Mode** | Đọc theo mẫu, AI chấm điểm | Luyện từng câu |
 | **Shadowing Mode** | Nhại theo AI đồng thời, so sánh real-time | Luyện ngữ điệu, nhịp nói |
-| **Conversation Coach** | AI coach hội thoại realtime | Luyện giao tiếp tự nhiên |
-| **Roleplay Mode** | Đóng vai tình huống | Advanced practice |
+| **AI Conversation** | Hội thoại với AI — Free Talk hoặc Roleplay | Luyện giao tiếp tự nhiên & tình huống |
 | **Tongue Twister Mode** | Luyện phát âm vui với câu nói lái | Luyện âm khó |
 
-### 1.2 AI Conversation Coach
+### 1.2 AI Conversation (Coach + Roleplay hợp nhất)
 
-Chế độ luyện nói với AI coach, tương tự web-v2. User nói hoặc gõ, AI phản hồi realtime với feedback phát âm.
+Chế độ hội thoại với AI, hợp nhất Conversation Coach và Roleplay thành 1 mode với 2 sub-mode:
+
+| Sub-mode | Mô tả | Kết thúc khi |
+|----------|-------|--------------|
+| **💬 Free Talk** | Hội thoại tự do theo topic, AI làm coach | Timer hết (3-20 phút) |
+| **🎭 Roleplay** | Đóng vai tình huống cụ thể (restaurant, interview...) | Đủ turns (5-10) hoặc AI.shouldEnd |
+
+#### Shared Features (cả 2 sub-mode)
 
 | Feature | Description |
 |---------|-------------|
-| **Voice Input** | Hold-to-record, gửi audio để transcribe |
+| **Voice Input** | Hold-to-record, gửi audio để transcribe (Groq Whisper) |
 | **Text Input** | Gõ text khi không tiện nói |
-| **Real-time Transcription** | STT via `/ai/transcribe` |
+| **Real-time Transcription** | STT via `/speaking/transcribe` |
 | **AI Response** | AI tiếp tục hội thoại qua `/conversation-generator/continue-conversation` |
 | **Pronunciation Alert** | Inline feedback khi phát âm sai |
 | **Grammar Correction** | Sửa ngữ pháp inline |
-| **Suggested Responses** | 2-3 gợi ý câu trả lời cho beginner |
 | **Voice Visualizer** | Waveform animation khi đang ghi âm |
 | **Session Transcript** | Scrollable conversation history |
-| **Session Timer** | Countdown theo duration đã chọn, auto-end |
 | **Feedback Mode** | Beginner / Intermediate / Advanced |
 | **Save to History** | Tự động lưu khi kết thúc session |
+
+#### Free Talk Only
+
+| Feature | Description |
+|---------|-------------|
+| **Session Timer** | Countdown theo duration đã chọn, auto-end |
+| **Suggested Responses** | 2-3 gợi ý câu trả lời cho beginner |
+
+#### Roleplay Only
+
+| Feature | Description |
+|---------|-------------|
+| **Scenario Selection** | 8+ scenarios với filter tabs (Daily, Work, Travel...) |
+| **Difficulty Levels** | Easy / Medium / Hard filter |
+| **AI Persona** | AI đóng vai theo context (waiter, doctor, interviewer...) |
+| **Turn Limit** | 5-10 turns per session |
+| **Overall Feedback** | Feedback tổng kết cuối session |
 
 ### 1.3 Shadowing Mode
 
@@ -49,6 +70,20 @@ Technique luyện nói hiệu quả: nghe AI → nhại lại đồng thời →
 | **Real-time Comparison** | So sánh pitch, tempo, intonation |
 | **Delay Control** | Chỉnh delay 0-2s giữa AI và user |
 | **Score Breakdown** | Điểm riêng cho rhythm, intonation, accuracy |
+
+#### Shadowing Design Guidelines
+
+> Các gợi ý thiết kế UX dựa trên phương pháp luận shadowing (Alexander Arguelles, Kadota & Tamai 2004):
+
+| # | Guideline | Lý do |
+|---|-----------|-------|
+| 1 | **Preview trước khi shadow** — Cho user nghe qua 1 lần TRƯỚC khi bắt đầu shadow | Não cần "preview" audio pattern → shadow hiệu quả hơn |
+| 2 | **Start slow (0.7x-0.8x)** — Tốc độ mặc định bắt đầu chậm, KHÔNG full speed | Full speed ngay = frustration = bỏ app. Tăng dần theo progress |
+| 3 | **Mumble Shadowing mode** — Thêm chế độ dễ: chỉ chấm rhythm + intonation, bỏ qua accuracy | Hạ rào cản cho beginner, tập trung vào "cảm nhận nhịp" trước |
+| 4 | **Text + highlight sync** — Hiển thị text và highlight từ đang phát real-time | Giúp user theo dõi vị trí, đặc biệt quan trọng cho người mới |
+| 5 | **Progressive difficulty** — Câu ngắn (3-5 từ) → câu dài (10-15 từ) → đoạn văn | Tránh overload, xây dựng confidence dần dần |
+| 6 | **Delay control rất quan trọng** — Beginner: 1.5-2s delay, Advanced: 0-0.5s | Delay là tham số quan trọng nhất ảnh hưởng trải nghiệm shadow |
+| 7 | **Feedback nhẹ nhàng lúc đầu** — Chấm rhythm + intonation trước, chỉ chấm accuracy khi user đã quen | Tránh feedback quá khắt khe → nản → bỏ luyện |
 
 ### 1.4 Tongue Twister Mode
 
@@ -136,42 +171,36 @@ Hệ thống gamification nâng cao cho Speaking:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Conversation Coach Flow
+### 2.2 AI Conversation Flow (Free Talk + Roleplay)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│ [Setup Screen]  →  [AI Greeting]  →  [Conversation Loop]   │
-│  Topic, Duration     (First msg)       │                    │
-│  Feedback Mode                    [Voice/Text Input]        │
-│                                        │                    │
-│                                   [AI Transcribe]           │
-│                                        │                    │
-│                                   [AI Response]             │
-│                                        │                    │
-│                                   [Pronunciation Alert?]    │
-│                                        │                    │
-│                                   [Loop until timer ends]   │
-│                                        │                    │
-│                                   [Save to History]         │
+│ [Setup Screen]                                              │
+│  ├─ Chọn sub-mode: [Free Talk] / [Roleplay]                │
+│  ├─ Free Talk: Topic + Duration + Feedback Mode             │
+│  └─ Roleplay:  Scenario + Difficulty                        │
+│         │                                                   │
+│         ▼                                                   │
+│ [AI Greeting / Context Intro]                               │
+│         │                                                   │
+│         ▼                                                   │
+│ [Conversation Loop] ◄──────────────────────┐                │
+│  ├── [Voice/Text Input]                    │                │
+│  ├── [AI Transcribe (Groq Whisper)]        │                │
+│  ├── [AI Response]                         │                │
+│  ├── [Pronunciation Alert? Grammar Fix?]   │                │
+│  └── [Continue? ────────────────────────────┘                │
+│         │                                                   │
+│         ▼ (Timer ends / Turns đủ / User kết thúc)           │
+│ [Session Summary + Overall Feedback]                        │
+│         │                                                   │
+│ [Save to History]                                           │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.3 Roleplay Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Select Scenario]  →  [AI Intro]  →  [Conversation]        │
-│  (Restaurant, etc)     (Context)      (5-10 turns)         │
-│                                           │                 │
-│                                     [Overall Feedback]      │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.4 Shadowing Flow
+### 2.3 Shadowing Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -189,7 +218,7 @@ Hệ thống gamification nâng cao cho Speaking:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.5 Tongue Twister Flow
+### 2.4 Tongue Twister Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -359,26 +388,36 @@ interface CustomScenario {
 }
 ```
 
-### 5.3 Conversation Coach State
+### 5.3 AI Conversation State (Coach + Roleplay hợp nhất)
 
 ```typescript
-interface ConversationCoachState {
-  // Setup
+interface AIConversationState {
+  // Setup — gộp Coach + Roleplay config
   setup: {
+    mode: 'free-talk' | 'roleplay';
     topic: string;
-    duration: number; // minutes: 3, 5, 10, 15, 20
+    scenario?: RoleplayScenario;    // Chỉ khi mode = roleplay
+    duration?: number;               // Chỉ khi mode = free-talk (phút: 3, 5, 10, 15, 20)
+    maxTurns?: number;               // Chỉ khi mode = roleplay (5-10)
     feedbackMode: 'beginner' | 'intermediate' | 'advanced';
+    difficulty?: 'easy' | 'medium' | 'hard'; // Chỉ khi mode = roleplay
+    options: {
+      showSuggestions: boolean;      // Gợi ý câu trả lời (beginner)
+      inlineGrammarFix: boolean;     // Sửa ngữ pháp inline
+      pronunciationAlert: boolean;   // Cảnh báo phát âm
+    };
   };
-  
-  // Session
+
+  // Session — CHUNG cho cả 2 sub-mode
   session: {
     isActive: boolean;
     messages: ConversationMessage[];
-    remainingTime: number; // seconds
+    remainingTime?: number;          // Free-talk timer (seconds)
+    currentTurn?: number;            // Roleplay turn counter
     inputMode: 'voice' | 'text';
   };
-  
-  // AI
+
+  // AI — CHUNG
   ai: {
     isThinking: boolean;
     isTranscribing: boolean;
@@ -428,6 +467,61 @@ async function handleRecordStop() {
 }
 ```
 
+### 5.6 Shadowing Mode — Technical Challenges
+
+> Shadowing yêu cầu **đồng thời**: phát audio AI + ghi âm user + so sánh + text highlight — trên mobile device với tài nguyên hạn chế.
+
+#### Challenge 1: Audio Echo / Feedback Loop
+
+Mic thu lại audio đang phát từ loa → AI nhận tiếng AI, không phải tiếng user.
+
+| Giải pháp | Mô tả | Khả thi? |
+|-----------|--------|----------|
+| **AEC (Acoustic Echo Cancellation)** | iOS/Android built-in AEC trong audio session | ✅ iOS `AVAudioSession.Mode.voiceChat` tự bật AEC |
+| **Headphone requirement** | Khuyến khích tai nghe | ✅ Nên là "recommended", không "required" |
+| **Volume ducking** | Giảm volume AI khi user đang nói | ⚠️ Workaround — không lý tưởng cho shadowing |
+
+**Đề xuất:** Detect headphone → dùng bình thường. Không headphone → bật voiceChat mode (AEC) + toast khuyến khích tai nghe. Fallback: volume AI giảm 30%.
+
+#### Challenge 2: Simultaneous Playback + Recording
+
+`react-native-audio-recorder-player` KHÔNG hỗ trợ phát và ghi đồng thời trên cùng instance.
+
+| Giải pháp | Trade-off |
+|-----------|-----------|
+| **TrackPlayer (play) + AudioRecorder (record)** | ✅ Đề xuất — App đã có TrackPlayer cho Listening |
+| **expo-av** | ⚠️ Khả thi nhưng cần Expo |
+| **Native Module tự viết** | ❌ Over-engineering cho MVP |
+
+**Lưu ý iOS:** Cần set audio session category = `playAndRecord` (không phải `playback`), options: `[.defaultToSpeaker, .allowBluetooth]`.
+
+#### Challenge 3: Scoring — STT Provider
+
+| Provider | Model | Latency | Dùng cho |
+|----------|-------|---------|----------|
+| **Groq Whisper** | `whisper-large-v3-turbo` | ⚡ ~500ms-1s | ✅ **Shadowing — đề xuất** |
+| **OpenAI Whisper** | `whisper-1` | 🐢 ~1-3s | Reading Practice |
+| **Azure Speech** | Chưa tích hợp STT | — | Hiện chỉ dùng TTS |
+
+**Scoring approach — 2 giai đoạn:**
+
+| Phase | Approach | Effort | Mô tả |
+|-------|----------|--------|-------|
+| **MVP** | Post-recording compare | 2-3 tuần | Ghi xong → Groq Whisper STT (`/speaking/transcribe-and-evaluate`) → score |
+| **V2** | Hybrid real-time | 3-4 tuần | On-device pitch contour extraction (FFT + autocorrelation via `react-native-audio-api`) → visual so sánh đường cong pitch AI vs User real-time. Server vẫn dùng cho final scoring. Để Phase 2 vì: complexity DSP cao, thư viện chưa stable, CPU intensive, cần validate user demand trước |
+
+#### Challenge 4: Delay Synchronization
+
+User chỉnh delay 0-2s → phải sync text highlight + playback + recording. Khi scoring, cần align user audio bằng cách trim delay offset hoặc gửi `delayMs` + `speedRate` metadata cho server.
+
+#### Challenge 5: Performance trên thiết bị yếu
+
+| Concern | Mitigation |
+|---------|------------|
+| CPU: 4 luồng đồng thời | Offload audio processing sang native thread (TrackPlayer đã làm) |
+| Memory: buffer audio lớn | Giới hạn sentence length (max 30s), stream không buffer toàn bộ |
+| Battery: mic + speaker + processing | Hiện cảnh báo, khuyến khích sạc |
+
 ---
 
 ## 6. Gestures & Interactions
@@ -473,26 +567,22 @@ async function handleRecordStop() {
 - [ ] Swipe-to-cancel — Vuốt lên để hủy recording
 - [ ] Preview before submit — Nghe lại bản ghi trước khi gửi (`RecordingPreview.tsx`)
 
-### Conversation Coach
-- [ ] Conversation Coach setup screen (`CoachSetupScreen.tsx` — topic, duration, feedback mode)
-- [ ] Conversation Coach session UI (`CoachSessionScreen.tsx` — chat UI, suggested responses, grammar fix, re-speak)
+### AI Conversation (Free Talk + Roleplay — hợp nhất)
+- [ ] Setup screen hợp nhất (`ConversationSetupScreen.tsx` — sub-mode toggle, topic/scenario, duration/turns, feedback mode, difficulty)
+- [ ] Scenario picker cho Roleplay sub-mode (tích hợp trong setup — 8+ scenarios, filter tabs, difficulty)
+- [ ] Session screen hợp nhất (`ConversationSessionScreen.tsx` — chat UI, suggested responses, grammar fix, pronunciation alert)
 - [ ] Voice/Text input toggle (voice hold + text input)
-- [ ] Real-time transcription STT (`speakingApi.transcribeAudio`)
+- [ ] Real-time transcription STT via Groq Whisper (`speakingApi.transcribeAudio`)
 - [ ] AI response generation (`speakingApi.continueConversation`)
 - [ ] Pronunciation Alert inline (`PronunciationAlert.tsx`)
 - [ ] Voice Visualizer (`VoiceVisualizer.tsx` — animated waveform bars)
 - [ ] Session Transcript (scrollable chat history)
-- [ ] Session Timer with auto-end (countdown timer)
-- [ ] Save coach session to History
+- [ ] Session Timer (Free Talk) / Turn Counter (Roleplay) with auto-end
+- [ ] Overall session feedback + summary (end screen)
+- [ ] Save session to History
 
 ### Shadowing Mode
 - [ ] Shadowing Mode (real-time compare, delay/speed control) (`ShadowingScreen.tsx` — 4-phase flow)
-
-### Roleplay Mode
-- [ ] Roleplay scenarios + Scenario Selection UI (`RoleplaySelectScreen.tsx` — 8 scenarios, filter tabs)
-- [ ] Multi-turn conversations (`RoleplaySessionScreen.tsx` — AI↔User turn-based voice)
-- [ ] Difficulty levels (Easy/Medium/Hard filter in RoleplaySelectScreen)
-- [ ] Overall session feedback (end summary)
 
 ### Tongue Twister Mode
 - [ ] Tongue Twister Mode (phoneme categories, speed challenge, leaderboard) (`TongueTwisterScreen.tsx` — 8 twisters + WPM)
