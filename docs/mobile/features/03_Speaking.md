@@ -53,9 +53,9 @@ Chế độ hội thoại với AI, hợp nhất Conversation Coach và Roleplay
 
 | Feature | Description |
 |---------|-------------|
-| **Scenario Selection** | 8+ scenarios với filter tabs (Daily, Work, Travel...) |
+| **Scenario Selection** | REUSE Listening Topic Picker (chung UI component + `customScenarioApi`). Xem Shared Components. |
 | **Difficulty Levels** | Easy / Medium / Hard filter |
-| **AI Persona** | AI đóng vai theo context (waiter, doctor, interviewer...) |
+| **AI Persona** | AI đóng vai nhân vật theo scenario. Mỗi scenario có `persona` metadata (name, role, avatar). VD: 🍽️ Restaurant → 👨‍🍳 "Tony — Waiter". Persona hiển thị trong chat bubble thay vì avatar 🤖 generic. |
 | **Turn Limit** | 5-10 turns per session |
 | **Overall Feedback** | Feedback tổng kết cuối session |
 
@@ -96,17 +96,16 @@ Luyện phát âm vui vẻ với tongue twisters, phân loại theo âm cần lu
 | **Leaderboard** | Bảng xếp hạng tốc độ + chính xác |
 | **Unlock System** | Hoàn thành level dễ → mở khóa level khó |
 
-### 1.5 Custom Speaking Scenarios
+### 1.5 Custom Scenarios (Shared với Listening)
 
-Tương tự Listening Custom Scenarios, cho phép user tạo scenario riêng để luyện nói.
+> Speaking **KHÔNG** có hệ thống Custom Scenarios riêng. Dùng chung DB, API (`customScenarioApi`), và UI component Topic Picker với Listening module.
 
-| Feature | Description |
-|---------|-------------|
-| **Create** | Tạo scenario với tên + mô tả chi tiết |
-| **Quick Use** | Dùng ngay không lưu vào database |
-| **Save** | Lưu vào database để dùng lại |
-| **Favorite** | Đánh dấu yêu thích |
-| **Delete** | Xóa scenario đã lưu |
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Data** | Chung bảng `custom_scenarios` — tạo ở Listening thấy ở Speaking và ngược lại |
+| **API** | Chung `GET/POST/PATCH/DELETE /custom-scenarios` |
+| **UI** | Reuse Listening Topic Picker (tab "✨ Tuỳ chỉnh") |
+| **CRUD** | Create, Edit, Delete, Favorite — thao tác giống hệt Listening |
 
 ### 1.6 TTS Provider Settings
 
