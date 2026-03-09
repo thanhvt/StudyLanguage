@@ -156,85 +156,488 @@ Hệ thống gamification nâng cao cho Speaking:
 
 ## 2. User Flows
 
-### 2.1 Practice Flow
+> Tổng hợp tất cả user flows trong Speaking, bao gồm core modes, cross-cutting features và navigation.
+
+### 2.0 Navigation — Entry Points
+
+> Speaking Home chỉ chọn **MODE**. Chọn **CHỦ ĐỀ** xảy ra bên trong config/setup screen của từng mode, reuse component topic picker từ Listening.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Home]  →  [Topic Select]  →  [Practice]  →  [Feedback]    │
-│                                  (Record)      (AI Score)  │
-│                                     │             │         │
-│                                     └─────────────┘         │
-│                                       [Repeat / Next]       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                      [Home / Tab Bar]                            │
+│                           │                                      │
+│                      [Speaking Tab]                               │
+│                           │                                      │
+│                  [Speaking Home Screen]                           │
+│                  ┌──────────────────┐                             │
+│                  │ ⚙️ TTS Settings  │ ← overlay bottom sheet     │
+│                  │ Daily Goal card  │ → tap "Dashboard →"        │
+│                  │ 4 Mode Cards     │                            │
+│                  └──────────────────┘                             │
+│                           │                                      │
+│           (user tap 1 trong 4 mode cards)                        │
+│                           │                                      │
+│      ┌────────┬───────────┼───────────┬──────────┐               │
+│      ▼        ▼           ▼           ▼          │               │
+│ [Practice] [AI Conv.] [Shadowing] [Tongue T.]    │               │
+│ [Config]   [Setup]    [Config]    [Screen]       │               │
+│   │          │           │           │       [Dashboard]         │
+│   │    Reuse Listening   │           │      (from Daily Goal)    │
+│   │    Topic Picker      │           │                           │
+│   ▼          ▼           ▼           ▼                           │
+│ [Session] [Session]   [Session]  [Practice]                      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 AI Conversation Flow (Free Talk + Roleplay)
+| Speaking Home hiện | Tap → Đi đâu |
+|-------|-------|
+| ⚙️ Settings (top-right) | TTS Settings Bottom Sheet (overlay, không rời Home) |
+| Daily Goal card → "Xem Dashboard →" | Progress Dashboard |
+| 🎤 Practice card | Practice Config Screen (chọn topic Listening picker ở đây) |
+| 💬 AI Conversation card | Conversation Setup (chọn topic Listening picker ở đây) |
+| 🔊 Shadowing card | Shadowing Config Screen (chọn sentences) |
+| 👅 Tongue Twister card | Tongue Twister Screen (chọn phoneme) |
+
+> ❌ Home **KHÔNG** hiện topics/scenarios. Sạch sẽ, tập trung.
+
+---
+
+### 2.1 Practice Mode — Luyện phát âm từng câu
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Setup Screen]                                              │
-│  ├─ Chọn sub-mode: [Free Talk] / [Roleplay]                │
-│  ├─ Free Talk: Topic + Duration + Feedback Mode             │
-│  └─ Roleplay:  Scenario + Difficulty                        │
-│         │                                                   │
-│         ▼                                                   │
-│ [AI Greeting / Context Intro]                               │
-│         │                                                   │
-│         ▼                                                   │
-│ [Conversation Loop] ◄──────────────────────┐                │
-│  ├── [Voice/Text Input]                    │                │
-│  ├── [AI Transcribe (Groq Whisper)]        │                │
-│  ├── [AI Response]                         │                │
-│  ├── [Pronunciation Alert? Grammar Fix?]   │                │
-│  └── [Continue? ────────────────────────────┘                │
-│         │                                                   │
-│         ▼ (Timer ends / Turns đủ / User kết thúc)           │
-│ [Session Summary + Overall Feedback]                        │
-│         │                                                   │
-│ [Save to History]                                           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.3 Shadowing Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Select Sentence]  →  [AI Plays]  →  [User Shadows]        │
-│                        (Mẫu)         (Ghi âm đồng thời)   │
-│                                           │                 │
-│                                    [Real-time Compare]      │
-│                                           │                 │
-│                                    [Score: Rhythm,          │
-│                                     Intonation, Accuracy]   │
-│                                           │                 │
-│                                    [Repeat / Next]          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.4 Tongue Twister Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│ [Chọn Phoneme]  →  [Level Select]  →  [Practice]           │
-│  (/θ/, /ʃ/...)     (Easy → Hard)     (Record + Score)      │
-│                                           │                 │
-│                                    [Speed Challenge]        │
-│                                    (Tăng tốc dần)          │
-│                                           │                 │
-│                                    [Leaderboard]            │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+[Speaking Home] → [🎤 Practice card] → [Practice Config Screen]
+                    │
+                    ├─ Chọn topic → REUSE Listening Topic Picker
+                    ├─ Chọn level (Beginner / Intermediate / Advanced)
+                    └─ [Bắt đầu]
+                         │
+                         ▼
+                  [Practice Screen]
+                    │
+                    ├─ Hiển thị câu mẫu + IPA (toggle show/hide)
+                    ├─ [Nghe mẫu] → AI TTS phát câu → highlight từ
+                    │
+                    ├─ [Ghi âm] (hold mic)
+                    │    ├─ Countdown 3→2→1→GO! (nếu bật)
+                    │    ├─ Haptic start (medium)
+                    │    ├─ Waveform animation
+                    │    ├─ Max 15s timer
+                    │    ├─ Swipe up → Hủy recording
+                    │    └─ Release mic → Haptic end (light)
+                    │         │
+                    │         ├─ (Nếu Preview bật) → [Preview Screen]
+                    │         │    ├─ Nghe lại bản ghi
+                    │         │    ├─ [Gửi] → submit
+                    │         │    └─ [Ghi lại] → quay lại ghi âm
+                    │         │
+                    │         └─ (Nếu Preview tắt) → Submit trực tiếp
+                    │              │
+                    │              ▼
+                    │       [Loading: AI đang phân tích...]
+                    │              │
+                    │              ▼
+                    │       [Feedback Screen]
+                    │         ├─ Overall Score (0-100 + grade)
+                    │         ├─ Word-by-word score (tap từ → IPA + audio)
+                    │         ├─ Phoneme Heatmap (red→green)
+                    │         ├─ AI Tips
+                    │         ├─ AI Voice Clone (Before/After)
+                    │         ├─ (nếu ≥90) Confetti animation 🎉
+                    │         ├─ [Retry] → quay lại câu (swipe left)
+                    │         ├─ [Next] → câu tiếp theo (swipe right)
+                    │         └─ [Share] → Share Card flow
+                    │
+                    └─ [Tap từ bất kỳ] → IPA popup + audio phát âm
 ```
 
 ---
 
+### 2.2 AI Conversation — Free Talk
+
+```
+[Speaking Home] → [💬 AI Conversation card] → [Conversation Setup Screen]
+                    │
+                    ├─ Chọn sub-mode: [💬 Free Talk] ← active
+                    ├─ Chọn topic → REUSE Listening Topic Picker
+                    ├─ Chọn duration: 3 / 5 / 10 / 15 / 20 phút
+                    ├─ Chọn feedback mode: Beginner / Intermediate / Advanced
+                    ├─ Tùy chọn nâng cao:
+                    │    ├─ ☑ Gợi ý câu trả lời
+                    │    ├─ ☑ Sửa ngữ pháp inline
+                    │    └─ ☑ Cảnh báo phát âm
+                    └─ [🎤 Bắt đầu hội thoại]
+                         │
+                         ▼
+                  [Conversation Session Screen]
+                    │
+                    ├─ Timer countdown (top bar)
+                    ├─ AI Greeting message (first msg)
+                    │
+                    ├─ 🔁 CONVERSATION LOOP:
+                    │    │
+                    │    ├─ User chọn input mode:
+                    │    │    ├─ [🎤 Voice] → Hold mic → Recording → Groq Whisper transcribe
+                    │    │    └─ [⌨️ Text] → Gõ text → Send
+                    │    │
+                    │    ├─ [AI thinking...]
+                    │    │    ├─ AI response → chat bubble
+                    │    │    ├─ AI audio (TTS) → auto-play
+                    │    │    └─ (nếu beginner) Suggested responses (2-3 chips)
+                    │    │
+                    │    ├─ [Pronunciation Alert?] (inline, nếu phát âm sai)
+                    │    │    ├─ Highlight từ sai + IPA + tip
+                    │    │    └─ [Nghe phát âm chuẩn] + [Thử lại]
+                    │    │
+                    │    ├─ [Grammar Fix?] (inline, nếu ngữ pháp sai)
+                    │    │    ├─ Hiển thị câu gốc vs câu sửa
+                    │    │    └─ Tap để xem giải thích
+                    │    │
+                    │    └─ Loop tiếp ← ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+                    │
+                    ├─ SESSION KẾT THÚC khi:
+                    │    ├─ Timer hết → auto-end
+                    │    └─ User bấm [Kết thúc]
+                    │
+                    ▼
+              [Session Summary Screen]
+                ├─ Thời gian luyện / Số lượt nói
+                ├─ Overall pronunciation score
+                ├─ Danh sách từ phát âm sai + sửa
+                ├─ Grammar corrections
+                ├─ AI feedback tổng kết
+                └─ [Share] → Share Card flow
+```
+
+---
+
+### 2.3 AI Conversation — Roleplay
+
+```
+[Speaking Home] → [💬 AI Conversation card] → [Conversation Setup Screen]
+                    │
+                    ├─ Chọn sub-mode: [🎭 Roleplay] ← active
+                    ├─ Chọn scenario → REUSE Listening Topic Picker
+                    ├─ Chọn difficulty: Easy / Medium / Hard
+                    ├─ Feedback mode: Beginner / Intermediate / Advanced
+                    └─ [🎤 Bắt đầu]
+                         │
+                         ▼
+                  [Conversation Session Screen]
+                    │
+                    ├─ Turn counter: "Turn 1/8" (top bar)
+                    ├─ Context banner: "You are at a restaurant..."
+                    ├─ AI persona: "Waiter — Tony"
+                    │
+                    ├─ 🔁 CONVERSATION LOOP (giống Free Talk)
+                    │    ├─ Voice/Text input → AI transcribe → AI response
+                    │    ├─ Pronunciation Alert / Grammar Fix inline
+                    │    └─ Turn counter ++
+                    │
+                    ├─ SESSION KẾT THÚC khi:
+                    │    ├─ Đủ turns (5-10) / AI.shouldEnd = true
+                    │    └─ User bấm [Kết thúc]
+                    │
+                    ▼
+              [Session Summary Screen]
+                ├─ (Giống Free Talk summary)
+                ├─ + Scenario-specific feedback
+                └─ + "Bạn đã hoàn thành tình huống: Restaurant Ordering 🍽️"
+```
+
+---
+
+### 2.4 Shadowing Mode
+
+```
+[Speaking Home] → [🔊 Shadowing card] → [Shadowing Config]
+                    │
+                    ├─ Chọn topic → REUSE Listening Topic Picker
+                    ├─ Speed: 0.5x — 0.75x — 1.0x — 1.25x — 1.5x
+                    ├─ Delay: slider 0s — 2.0s (default: 0.5s)
+                    ├─ Scoring: Post-recording / Realtime (Beta)
+                    ├─ 🎧 Headphone status
+                    └─ [Bắt đầu]
+                         │
+                         ▼
+                  [Shadowing Screen — 4 Phase Flow]
+                    │
+                    ├─ PHASE 1: Preview
+                    │    ├─ AI phát câu mẫu 1 lần (user chỉ nghe)
+                    │    ├─ Text highlight sync
+                    │    └─ [Shadow!] → vào Phase 2
+                    │
+                    ├─ PHASE 2: Shadow
+                    │    ├─ AI phát lại + User ghi âm đồng thời
+                    │    ├─ Waveform visualizer (2 track: AI purple + User green)
+                    │    ├─ Text highlight sync
+                    │    └─ AI phát xong → auto-stop recording
+                    │
+                    ├─ PHASE 3: Score
+                    │    ├─ Upload audio → Groq Whisper → evaluate
+                    │    ├─ Score breakdown:
+                    │    │    ├─ 🎵 Rhythm: __/100
+                    │    │    ├─ 🎶 Intonation: __/100
+                    │    │    └─ 🎯 Accuracy: __/100
+                    │    ├─ Waveform comparison (AI vs User overlay)
+                    │    └─ Tips
+                    │
+                    ├─ PHASE 4: Action
+                    │    ├─ [Repeat] → quay lại Phase 1 (cùng câu)
+                    │    ├─ [Next] → câu tiếp theo → Phase 1
+                    │    └─ [Share] → Share Card flow
+                    │
+                    └─ Khi hết danh sách câu → Session Summary
+```
+
+---
+
+### 2.5 Tongue Twister Mode
+
+```
+[Speaking Home] → [Tongue Twister Screen]
+                    │
+                    ├─ Chọn Phoneme Category:
+                    │    ├─ /θ/ vs /ð/ (th sounds)
+                    │    ├─ /ʃ/ vs /s/ (sh vs s)
+                    │    ├─ /r/ vs /l/
+                    │    ├─ /v/ vs /w/
+                    │    └─ ...
+                    │
+                    ├─ Chọn Level (Easy → Medium → Hard → Extreme 🔒)
+                    │    └─ Unlock: hoàn thành level trước → mở khóa sau
+                    │
+                    └─ [Practice]
+                         │
+                         ├─ Hiển thị tongue twister text
+                         ├─ [Nghe mẫu] → AI TTS (tốc độ chậm + bình thường)
+                         ├─ [Ghi âm] → Record → Score
+                         │
+                         ├─ Speed Challenge:
+                         │    ├─ Round 1: 0.8x speed → Score
+                         │    ├─ Round 2: 1.0x speed → Score
+                         │    ├─ Round 3: 1.2x speed → Score
+                         │    ├─ Round 4: 1.5x speed → Score
+                         │    └─ WPM (Words Per Minute) tracking
+                         │
+                         └─ [Leaderboard] → Bảng xếp hạng speed + accuracy
+```
+
+---
+
+### 2.6 Cross-cutting Feature Flows
+
+#### C1. Custom Scenarios (Shared với Listening)
+
+> **Không có màn riêng cho Speaking.** Custom scenarios dùng chung DB với Listening qua `customScenarioApi` (`/custom-scenarios`). User tạo/quản lý ở Listening → tự động thấy ở Speaking (trong topic picker).
+
+```
+Tạo mới:  [Mode Setup → Topic Picker → ➕ Create] → Lưu vào shared DB
+Quản lý:  [Listening → Custom Scenarios Screen] → CRUD (tạo/sửa/xóa/favorite)
+Sử dụng:  [Speaking → Mode Setup → Topic Picker → tab ✨ Tuỳ chỉnh] → chọn scenario
+```
+
+#### C2. TTS Settings (Config độc lập)
+
+```
+[Speaking Home] → [⚙️ icon top-right] → [TTS Settings Bottom Sheet]
+                    │
+                    ├─ Giọng mẫu: dropdown voices (Jenny, Sara, Guy...)
+                    │    └─ Toggle: 🎲 Random giọng
+                    ├─ Cảm xúc: Cheerful / Neutral / Friendly / Newscast
+                    │    └─ Toggle: 🎲 Auto (theo context)
+                    ├─ Tốc độ đọc (Rate): slider 0.5x — 2.0x
+                    ├─ Cao độ giọng (Pitch): slider -50% — +50%
+                    └─ [Lưu cài đặt]
+```
+
+> Config **độc lập** với Listening (Speaking cần giọng chậm/rõ ≠ Listening cần tự nhiên).
+
+#### C3. Gamification & Progress Dashboard
+
+```
+[Speaking Home] → [Progress Dashboard]
+                    │
+                    ├─ Daily Goal Card
+                    │    ├─ Progress bar: "5/10 câu hôm nay"
+                    │    ├─ Streak: "🔥 7 ngày liên tục"
+                    │    └─ [Chỉnh mục tiêu] → input (1-100 câu/ngày)
+                    │
+                    ├─ Radar Chart (Pronunciation/Fluency/Vocab/Grammar)
+                    │
+                    ├─ Calendar Heatmap (ngày xanh = luyện, ngày trắng = không)
+                    │
+                    ├─ Weak Sounds Card
+                    │    ├─ Phoneme heatmap: /θ/ 45%, /ʃ/ 72%, /r/ 88%...
+                    │    └─ [Tap âm yếu] → navigate đến Practice/Tongue Twister
+                    │
+                    ├─ Badge Grid (🎤 100 câu, 🔥 streak, 🏅 perfect, 🌟 shadower)
+                    │
+                    └─ Weekly Report (Score trend + thời gian + weak sounds tuần)
+```
+
+#### C4. Recording History & Progress Timeline
+
+```
+[Speaking Home / Dashboard] → [Recording History Screen]
+                    │
+                    ├─ Danh sách recordings (grouped by ngày)
+                    │    ├─ Câu + Score + Thời gian + Mode
+                    │    └─ [Tap] → Nghe lại recording
+                    │
+                    └─ [So sánh] (cùng câu, khác ngày)
+                         ├─ Timeline: Recording cũ ←→ Recording mới
+                         ├─ Score trend
+                         └─ Waveform comparison
+```
+
+#### C5. AI Voice Clone Replay
+
+```
+[Feedback Screen] → [AI Voice Clone]
+                    │
+                    ├─ [Bản gốc] → Nghe recording user
+                    ├─ [Bản AI sửa] → Nghe AI-corrected version
+                    └─ [So sánh A/B] → Play cả 2 xen kẽ
+```
+
+#### C6. Share Result
+
+```
+[Feedback / Session Summary] → [Share]
+                    │
+                    ├─ Generate Share Card (image):
+                    │    ├─ Score + Grade + Topic + Câu + Date + Streak
+                    │    └─ App branding + QR code
+                    │
+                    └─ [Share] → react-native-share
+                         ├─ Facebook / Instagram Story / Messenger
+                         ├─ Copy Image / Save to Photos
+                         └─ More options
+```
+
+#### C7. Onboarding (First-time User)
+
+```
+[First time vào Speaking Tab]
+                    │
+                    ▼
+              [Onboarding Overlay — 5 steps] (trên Speaking Home)
+                    │
+                    ├─ Step 1: "Chào mừng đến Speaking! 🎤"
+                    ├─ Step 2: "Giữ mic để ghi âm" (highlight mic button)
+                    ├─ Step 3: "AI sẽ chấm điểm phát âm" (highlight feedback)
+                    ├─ Step 4: "Thử các chế độ khác nhau" (highlight mode cards)
+                    └─ Step 5: "Bắt đầu nào!" → dismiss
+                         └─ [Không hiện lại] → lưu flag
+```
+
+---
+
+### 2.7 Flow Map tổng hợp
+
+| # | Flow | Trigger | Topic Picker | End State |
+|---|------|---------|--------------|-----------| 
+| B1 | Practice Mode | Home → 🎤 Practice → Config | Reuse Listening | Feedback → Retry/Next |
+| B2 | AI Conv. Free Talk | Home → 💬 AI Conv. → Setup | Reuse Listening | Summary → History |
+| B3 | AI Conv. Roleplay | Home → 💬 AI Conv. → Setup | Reuse Listening | Summary → History |
+| B4 | Shadowing | Home → 🔊 Shadowing → Config | Sentences | Score → Repeat/Next |
+| B5 | Tongue Twister | Home → 👅 Tongue T. → Screen | Phonemes | Speed Challenge → LB |
+| C1 | Custom Scenarios | Shared DB với Listening | — | Hiện trong topic picker |
+| C2 | TTS Settings | Home → ⚙️ (overlay) | — | Lưu config (độc lập) |
+| C3 | Gamification | Home → Daily Goal → Dashboard | — | View-only |
+| C4 | Recording History | Dashboard → History | — | Nghe lại + So sánh |
+| C5 | Voice Clone | Feedback → Clone | — | Before/After |
+| C6 | Share Result | Feedback/Summary → Share | — | Social share |
+| C7 | Onboarding | First visit | — | Dismiss overlay |
+
+---
+
+## 3. Edge Cases & Error Flows
+
+### 3.1 Recording Errors
+
+```
+[Ghi âm]
+    ├─ ❌ Microphone permission denied
+    │    └─ Alert: "Cần quyền micro" → [Mở Settings]
+    │
+    ├─ ❌ Recording quá ngắn (< 1s)
+    │    └─ Toast: "Hãy nói lâu hơn nhé!"
+    │
+    ├─ ❌ Không nghe được gì (silence / noise)
+    │    └─ Toast: "Không nghe rõ, thử nói to hơn!"
+    │
+    └─ ❌ Swipe-to-cancel
+         └─ Discard recording → quay lại trạng thái idle
+```
+
+### 3.2 Network Errors
+
+```
+[Submit audio / AI request]
+    ├─ ❌ Mất mạng giữa chừng
+    │    ├─ Toast: "Mất kết nối, thử lại?"
+    │    ├─ [Thử lại] → retry API call
+    │    └─ Audio được cache locally → không mất
+    │
+    ├─ ❌ Server timeout
+    │    └─ Toast + retry button
+    │
+    └─ ❌ Groq Whisper quota exceeded
+         ├─ Fallback → whisper-large-v3
+         └─ Nếu vẫn lỗi → Toast: "Hệ thống bận, thử lại sau"
+```
+
+### 3.3 AI Conversation Edge Cases
+
+```
+[Conversation Session]
+    ├─ ⚠️ User im lặng quá lâu (> 30s)
+    │    └─ AI prompt: "Bạn còn đó không? Cần gợi ý không?"
+    │
+    ├─ ⚠️ App minimize / switch app
+    │    ├─ Session persist → resume khi quay lại
+    │    ├─ Timer pause (hoặc tiếp tục — config)
+    │    └─ Notification: "AI đang chờ bạn quay lại 🎤"
+    │
+    ├─ ⚠️ Incoming call
+    │    └─ Auto-pause session → resume sau cuộc gọi
+    │
+    └─ ⚠️ Timer sắp hết (< 1 phút)
+         └─ Toast: "Còn 1 phút!" + [Gia hạn +5 phút]
+```
+
+### 3.4 Shadowing Edge Cases
+
+```
+[Shadowing Session]
+    ├─ ⚠️ Không cắm tai nghe + không có AEC
+    │    └─ Warning modal: "Nên dùng tai nghe cho Shadowing 🎧"
+    │
+    ├─ ⚠️ User nói quá nhỏ (mic không bắt được)
+    │    └─ Toast: "Hãy nói to hơn nhé!"
+    │
+    └─ ⚠️ Device nóng (thermal throttling)
+         └─ Auto-pause + warning (hiếm gặp)
+```
+
+### 3.5 Save to History
+
+```
+[Session kết thúc] (bất kỳ mode nào)
+    │
+    ├─ Auto-save → POST /api/history
+    │    ├─ type: 'speaking'
+    │    ├─ mode: 'practice' | 'conversation' | 'shadowing' | 'tongue-twister'
+    │    ├─ topic, scores, duration
+    │    └─ recordings (nếu có)
+    │
+    ├─ ✅ Success → silent (không alert)
+    │
+    └─ ❌ Fail → retry silently + cache locally
+```
+
+---
 
 ## 4. Features Detail
 
