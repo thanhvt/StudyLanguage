@@ -3,6 +3,8 @@ import TrackPlayer, {
   Capability,
   Event,
   RepeatMode,
+  IOSCategory,
+  IOSCategoryOptions,
 } from 'react-native-track-player';
 
 let isSetup = false;
@@ -25,6 +27,13 @@ export async function setupPlayer(): Promise<boolean> {
     await TrackPlayer.setupPlayer({
       // Giữ cho audio tiếp tục phát khi app ở background
       autoHandleInterruptions: true,
+      // FIX: Dùng playAndRecord thay vì default .playback
+      // Lý do: audioRecorderPlayer (recording) dùng .playAndRecord
+      // Nếu TrackPlayer dùng .playback → 2 module conflict trên cùng AVAudioSession
+      // → audioRecorder.record() trả false → "Error occurred during initiating recorder"
+      // Với .playAndRecord + defaultToSpeaker → cả playback lẫn recording đều hoạt động
+      iosCategory: IOSCategory.PlayAndRecord,
+      iosCategoryOptions: [IOSCategoryOptions.DefaultToSpeaker, IOSCategoryOptions.AllowBluetooth],
     });
 
     // Cấu hình các capability hiển thị trên notification/lock screen

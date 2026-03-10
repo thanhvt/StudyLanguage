@@ -162,6 +162,8 @@ export interface TtsSettings {
 export interface DisplaySettings {
   /** Hiện/ẩn phiên âm IPA */
   showIPA: boolean;
+  /** Hiện/ẩn stress marking */
+  showStress: boolean;
 }
 
 interface SpeakingState {
@@ -193,8 +195,12 @@ interface SpeakingState {
   ttsSettings: TtsSettings;
 
   // ===== Display Settings =====
-  /** Cài đặt hiển thị (showIPA) */
+  /** Cài đặt hiển thị (showIPA, showStress) */
   displaySettings: DisplaySettings;
+
+  // ===== Best Scores (per-sentence, local MMKV) =====
+  /** Map sentenceId → bestScore (0-100), lưu local qua MMKV */
+  bestScores: Record<string, number>;
 
   // ===== AI Conversation State =====
   /** Setup cấu hình conversation (null nếu chưa config) */
@@ -284,6 +290,12 @@ interface SpeakingActions {
   // ===== Display Settings Actions =====
   /** Toggle hiển thị IPA */
   setShowIPA: (show: boolean) => void;
+  /** Toggle hiển thị stress marking */
+  setShowStress: (show: boolean) => void;
+
+  // ===== Best Score Actions =====
+  /** Cập nhật best score cho 1 câu (chỉ update nếu score mới > cũ) */
+  setBestScore: (sentenceId: string, score: number) => void;
 }
 
 const initialConversationRecording: RecordingState = {
@@ -325,7 +337,9 @@ const initialState: SpeakingState = {
   },
   displaySettings: {
     showIPA: true,
+    showStress: false,
   },
+  bestScores: {},
   conversationSetup: null,
   conversationSession: null,
   conversationRecording: initialConversationRecording,
@@ -603,14 +617,28 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
     setShowIPA: (show) => set(state => ({
       displaySettings: {...state.displaySettings, showIPA: show},
     })),
+    setShowStress: (show) => set(state => ({
+      displaySettings: {...state.displaySettings, showStress: show},
+    })),
+
+    // ===== Best Scores =====
+    setBestScore: (sentenceId, score) => set(state => {
+      const currentBest = state.bestScores[sentenceId] ?? 0;
+      if (score <= currentBest) return {}; // Chỉ update nếu score mới cao hơn
+      return {
+        bestScores: {...state.bestScores, [sentenceId]: score},
+      };
+    }),
+
   }),
     {
       name: 'speaking-store',
       storage: createJSONStorage(() => mmkvStorage),
-      // Persist TTS settings + display settings — các state khác là session-specific
+      // Persist TTS + display settings + best scores — session state không persist
       partialize: (state) => ({
         ttsSettings: state.ttsSettings,
         displaySettings: state.displaySettings,
+        bestScores: state.bestScores,
       }),
     },
   ),

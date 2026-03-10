@@ -172,7 +172,7 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
     const response = await apiClient.post('/ai/generate-text', {
       prompt,
       systemPrompt: 'Bạn là AI tạo nội dung luyện phát âm tiếng Anh. Trả về JSON thuần túy, kèm IPA.',
-    });
+    }, {timeout: 60000}); // 60s — API AI sinh text cần thời gian xử lý
 
     const sentences = parseSentences(response.data?.text || '');
 
@@ -730,7 +730,7 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
     const response = await apiClient.post('/ai/generate-text', {
       prompt,
       systemPrompt: 'Bạn là AI tạo nội dung luyện Shadowing. Tập trung vào rhythm, intonation, connected speech. Trả về JSON thuần túy.',
-    });
+    }, {timeout: 60000}); // 60s — API AI sinh text cần thời gian xử lý
 
     const sentences = parseSentences(response.data?.text || '');
 

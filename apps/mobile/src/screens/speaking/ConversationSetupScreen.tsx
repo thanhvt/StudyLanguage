@@ -1,20 +1,25 @@
-import React, {useState, useCallback, useMemo} from 'react';
+import React, {useState, useCallback, useMemo, useRef} from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Platform,
+  Keyboard,
+  Animated as RNAnimated,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
 import {AppText, SectionCard} from '@/components/ui';
 import AppButton from '@/components/ui/AppButton';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useInsets} from '@/hooks/useInsets';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useAppStore} from '@/store/useAppStore';
 import {TopicPickerModal} from '@/components/listening';
 import {TopicSelector} from '@/components/topic';
 import {CONVERSATION_COLORS, getConversationColor} from '@/config/skillColors';
@@ -25,8 +30,14 @@ import {
   TOPIC_CATEGORIES,
   type TopicScenario,
 } from '@/data/topic-data';
+import {isLiquidGlassSupported} from '@/utils/LiquidGlass';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
+
+// =======================
+// Màu sắc Speaking-specific (Green identity)
+// =======================
+const SPEAKING_GREEN = '#16A34A';
 
 // =======================
 // Constants
@@ -80,6 +91,14 @@ export default function ConversationSetupScreen() {
   const navigation = useNavigation<NavProp>();
   const colors = useColors();
   const haptic = useHaptic();
+  const insets = useInsets();
+
+  // Theme detection
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
+
+  // Parallax scroll value
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
 
   // Store
   const {setConversationSetup} = useSpeakingStore();
@@ -102,11 +121,31 @@ export default function ConversationSetupScreen() {
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
 
+  // Keyboard tracking — ẩn sticky footer khi mở keyboard
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   // Màu accent theo mode
   const accentColor = getConversationColor(mode);
 
   // Tổng scenarios
   const totalScenarios = getTotalScenarios();
+
+  // Sticky footer height tính toán
+  const footerHeight = 56 + 32 + Math.max(insets.bottom, 16);
 
   // Lấy scenarios theo category + subcategory hiện tại (max 3)
   const currentScenarios = useMemo(() => {
@@ -204,31 +243,108 @@ export default function ConversationSetupScreen() {
   ]);
 
   return (
-    <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <AppButton
-          variant="ghost"
-          size="icon"
-          onPress={() => navigation.goBack()}
-          icon={<Icon name="ArrowLeft" className="w-5 h-5 text-foreground" />}>
-          {''}
-        </AppButton>
-        <View style={styles.headerCenter}>
-          <AppText variant="heading3" weight="bold">
-            AI Conversation
-          </AppText>
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
+      {/* ======================== */}
+      {/* GLASSMORPHISM BACKGROUND — Aurora mesh + floating blobs (Green palette) */}
+      {/* ======================== */}
+      {isLiquidGlassSupported && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {/* Lớp 1: Green-to-dark anchor gradient */}
+          <LinearGradient
+            colors={['#14532DB3', '#16A34A60', 'transparent', '#15803D30']}
+            locations={[0, 0.18, 0.5, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Lớp 2: Emerald ambient glow */}
+          <LinearGradient
+            colors={['transparent', '#05966970', '#04785740', 'transparent']}
+            locations={[0.1, 0.35, 0.55, 0.85]}
+            start={{x: 0, y: 0.2}}
+            end={{x: 1, y: 0.8}}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Lớp 3: Lime spot — góc dưới phải */}
+          <LinearGradient
+            colors={['transparent', '#22C55E50']}
+            start={{x: 0, y: 0.6}}
+            end={{x: 1, y: 1}}
+            style={[StyleSheet.absoluteFill, {top: '55%'}]}
+          />
+          {/* Lớp 4: White spotlight — top edge */}
+          <LinearGradient
+            colors={['rgba(200,255,220,0.18)', 'transparent']}
+            start={{x: 0.5, y: 0}}
+            end={{x: 0.5, y: 0.3}}
+            style={[StyleSheet.absoluteFill, {height: '30%'}]}
+          />
+          {/* Floating blobs — parallax */}
+          <RNAnimated.View style={{
+            position: 'absolute', top: '12%', left: '10%',
+            width: 180, height: 180, borderRadius: 90,
+            backgroundColor: isDark ? 'rgba(22,163,74,0.25)' : 'rgba(22,163,74,0.12)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -75],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <RNAnimated.View style={{
+            position: 'absolute', top: '40%', right: '5%',
+            width: 140, height: 140, borderRadius: 70,
+            backgroundColor: isDark ? 'rgba(5,150,105,0.20)' : 'rgba(5,150,105,0.10)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -50],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <RNAnimated.View style={{
+            position: 'absolute', bottom: '20%', left: '20%',
+            width: 120, height: 120, borderRadius: 60,
+            backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.10)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -40],
+              extrapolate: 'clamp',
+            })}],
+          }} />
         </View>
-        <View style={{width: 36}} />
-      </View>
+      )}
 
-      <ScrollView
-        style={styles.scroll}
+      <RNAnimated.ScrollView
+        className="flex-1"
+        contentContainerStyle={{paddingBottom: footerHeight + 20}}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        onScroll={RNAnimated.event(
+          [{nativeEvent: {contentOffset: {y: scrollY}}}],
+          {useNativeDriver: true},
+        )}
+        scrollEventThrottle={16}>
+
+        {/* ======================== */}
+        {/* HEADER: Title + Back button */}
+        {/* ======================== */}
+        <View className="px-6 pt-safe-offset-4 mb-2">
+          <View className="flex-row items-center justify-between">
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              accessibilityLabel="Quay lại"
+              accessibilityRole="button">
+              <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
+            </TouchableOpacity>
+            <View className="flex-1 items-center">
+              <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
+                AI Conversation
+              </AppText>
+            </View>
+            <View style={{width: 24}} />
+          </View>
+        </View>
 
         {/* Mode Toggle */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <View style={styles.modeToggle}>
             <TouchableOpacity
               style={[
@@ -272,7 +388,7 @@ export default function ConversationSetupScreen() {
         </View>
 
         {/* Section 2: Chủ đề — dùng TopicSelector dùng chung */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             <TopicSelector
               accentColor={accentColor}
@@ -296,7 +412,7 @@ export default function ConversationSetupScreen() {
         </View>
 
         {/* Section 3: Duration (Free Talk) / Difficulty (Roleplay) */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             {mode === 'free-talk' ? (
               <>
@@ -333,7 +449,7 @@ export default function ConversationSetupScreen() {
         </View>
 
         {/* Section 4: Feedback Mode */}
-        <View style={styles.section}>
+        <View className="px-6 mb-6">
           <SectionCard>
             <AppText style={styles.sectionLabel}>Mức phản hồi</AppText>
             <View style={styles.feedbackRow}>
@@ -364,28 +480,83 @@ export default function ConversationSetupScreen() {
           </SectionCard>
         </View>
 
-        <View style={{height: 100}} />
-      </ScrollView>
+      </RNAnimated.ScrollView>
 
-      {/* CTA Button */}
-      <View style={[styles.footer, {borderTopColor: colors.surface, backgroundColor: colors.background}]}>
-        <AppButton
-          variant="primary"
-          size="lg"
-          className="w-full"
-          style={{backgroundColor: canStart ? accentColor : colors.neutrals400}}
-          disabled={!canStart}
-          onPress={handleStart}>
-          {mode === 'free-talk' ? '🎤 Bắt đầu hội thoại' : '🎭 Bắt đầu Roleplay'}
-        </AppButton>
-      </View>
+      {/* ======================== */}
+      {/* STICKY FOOTER — CTA Button */}
+      {/* ======================== */}
+      {!keyboardVisible && (
+        <View
+          className="absolute bottom-0 left-0 right-0 px-6 pt-0"
+          style={{paddingBottom: 8}}>
+          {/* Footer gradient — chỉ dark mode */}
+          {isDark && (
+            <LinearGradient
+              colors={[
+                'transparent',
+                `${colors.background}20`,
+                `${colors.background}50`,
+                `${colors.background}90`,
+                `${colors.background}CC`,
+                colors.background,
+              ]}
+              locations={[0, 0.15, 0.3, 0.5, 0.7, 1]}
+              style={{
+                position: 'absolute',
+                top: -100,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          )}
+          <View
+            style={
+              canStart
+                ? {
+                    shadowColor: SPEAKING_GREEN,
+                    shadowOffset: {width: 0, height: 4},
+                    shadowOpacity: 0.35,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }
+                : undefined
+            }>
+            <AppButton
+              variant="primary"
+              size="lg"
+              className="w-full rounded-2xl"
+              textClassname="font-sans-bold"
+              style={{
+                backgroundColor: canStart
+                  ? accentColor
+                  : isDark
+                    ? colors.neutrals900
+                    : `${SPEAKING_GREEN}18`,
+                borderWidth: canStart ? 0 : 1.5,
+                borderColor: canStart
+                  ? 'transparent'
+                  : isDark
+                    ? colors.glassBorder
+                    : `${SPEAKING_GREEN}30`,
+              }}
+              disabled={!canStart}
+              onPress={handleStart}
+              accessibilityLabel={
+                canStart ? 'Bắt đầu hội thoại' : 'Chưa chọn chủ đề, không thể bắt đầu'
+              }>
+              {mode === 'free-talk' ? '🎤 Bắt đầu hội thoại' : '🎭 Bắt đầu Roleplay'}
+            </AppButton>
+          </View>
+        </View>
+      )}
 
       {/* TopicPicker Full-screen Modal */}
       <TopicPickerModal
         visible={showTopicModal}
         onClose={() => setShowTopicModal(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -394,11 +565,6 @@ export default function ConversationSetupScreen() {
 // =======================
 
 const styles = StyleSheet.create({
-  container: {flex: 1},
-  header: {flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12},
-  headerCenter: {flex: 1, alignItems: 'center'},
-  scroll: {flex: 1, paddingHorizontal: 16},
-  section: {marginBottom: 16},
   // Mode toggle
   modeToggle: {flexDirection: 'row', gap: 10},
   modeBtn: {flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: 'transparent'},
@@ -410,6 +576,4 @@ const styles = StyleSheet.create({
   // Feedback
   feedbackRow: {flexDirection: 'row', gap: 10},
   feedbackCard: {flex: 1, paddingVertical: 16, paddingHorizontal: 12, borderRadius: 16, alignItems: 'center'},
-  // Footer
-  footer: {paddingHorizontal: 16, paddingBottom: 16, paddingTop: 12, borderTopWidth: 1},
 });

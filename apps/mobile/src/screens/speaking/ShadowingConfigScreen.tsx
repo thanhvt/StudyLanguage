@@ -1,24 +1,29 @@
-import React, {useState, useCallback, useMemo} from 'react';
+import React, {useState, useCallback, useMemo, useRef} from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  Platform,
+  Keyboard,
+  Animated as RNAnimated,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
 import {AppText, SectionCard} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useInsets} from '@/hooks/useInsets';
 import {SKILL_COLORS} from '@/config/skillColors';
 import {useShadowingStore} from '@/store/useShadowingStore';
 import type {ShadowingSpeed, ScoringMode} from '@/store/useShadowingStore';
 import {useHeadphoneDetection} from '@/hooks/useHeadphoneDetection';
 import {speakingApi} from '@/services/api/speaking';
 import {useListeningStore} from '@/store/useListeningStore';
+import {useAppStore} from '@/store/useAppStore';
 import {TopicPickerModal} from '@/components/listening';
 import {TopicSelector} from '@/components/topic';
 import {
@@ -30,6 +35,12 @@ import {
   TOPIC_CATEGORIES,
   type TopicScenario,
 } from '@/data/topic-data';
+import {isLiquidGlassSupported} from '@/utils/LiquidGlass';
+
+// =======================
+// Màu sắc Speaking-specific (Green identity)
+// =======================
+const SPEAKING_GREEN = '#16A34A';
 
 // =======================
 // Constants
@@ -54,7 +65,15 @@ export default function ShadowingConfigScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const colors = useColors();
   const haptic = useHaptic();
+  const insets = useInsets();
   const speakingColor = SKILL_COLORS.speaking.dark;
+
+  // Theme detection
+  const theme = useAppStore(state => state.theme);
+  const isDark = theme !== 'light';
+
+  // Parallax scroll value
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
 
   // Store — Shadowing
   const config = useShadowingStore(s => s.config);
@@ -84,6 +103,23 @@ export default function ShadowingConfigScreen() {
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
 
+  // Keyboard tracking — ẩn sticky footer khi mở keyboard
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   // Force start ref (Fix B3: tránh circular dep)
   const forceStartRef = React.useRef(false);
 
@@ -102,6 +138,9 @@ export default function ShadowingConfigScreen() {
 
   // Tổng scenarios
   const totalScenarios = getTotalScenarios();
+
+  // Sticky footer height tính toán
+  const footerHeight = 56 + 32 + Math.max(insets.bottom, 16);
 
   // Scenarios theo category + subcategory (max 3)
   const currentScenarios = useMemo(() => {
@@ -212,28 +251,108 @@ export default function ShadowingConfigScreen() {
   }, [doStart]);
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
-        </TouchableOpacity>
-        <AppText style={{fontSize: 18, fontWeight: '700', color: speakingColor}} raw>
-          Shadowing
-        </AppText>
-        <View style={{width: 24}} />
-      </View>
+    <View className="flex-1" style={{backgroundColor: colors.background}}>
+      {/* ======================== */}
+      {/* GLASSMORPHISM BACKGROUND — Aurora mesh + floating blobs (Green palette) */}
+      {/* ======================== */}
+      {isLiquidGlassSupported && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {/* Lớp 1: Green-to-dark anchor gradient */}
+          <LinearGradient
+            colors={['#14532DB3', '#16A34A60', 'transparent', '#15803D30']}
+            locations={[0, 0.18, 0.5, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Lớp 2: Emerald ambient glow */}
+          <LinearGradient
+            colors={['transparent', '#05966970', '#04785740', 'transparent']}
+            locations={[0.1, 0.35, 0.55, 0.85]}
+            start={{x: 0, y: 0.2}}
+            end={{x: 1, y: 0.8}}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Lớp 3: Lime spot — góc dưới phải */}
+          <LinearGradient
+            colors={['transparent', '#22C55E50']}
+            start={{x: 0, y: 0.6}}
+            end={{x: 1, y: 1}}
+            style={[StyleSheet.absoluteFill, {top: '55%'}]}
+          />
+          {/* Lớp 4: White spotlight — top edge */}
+          <LinearGradient
+            colors={['rgba(200,255,220,0.18)', 'transparent']}
+            start={{x: 0.5, y: 0}}
+            end={{x: 0.5, y: 0.3}}
+            style={[StyleSheet.absoluteFill, {height: '30%'}]}
+          />
+          {/* Floating blobs — parallax */}
+          <RNAnimated.View style={{
+            position: 'absolute', top: '12%', left: '10%',
+            width: 180, height: 180, borderRadius: 90,
+            backgroundColor: isDark ? 'rgba(22,163,74,0.25)' : 'rgba(22,163,74,0.12)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -75],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <RNAnimated.View style={{
+            position: 'absolute', top: '40%', right: '5%',
+            width: 140, height: 140, borderRadius: 70,
+            backgroundColor: isDark ? 'rgba(5,150,105,0.20)' : 'rgba(5,150,105,0.10)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -50],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+          <RNAnimated.View style={{
+            position: 'absolute', bottom: '20%', left: '20%',
+            width: 120, height: 120, borderRadius: 60,
+            backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.10)',
+            transform: [{translateY: scrollY.interpolate({
+              inputRange: [0, 500],
+              outputRange: [0, -40],
+              extrapolate: 'clamp',
+            })}],
+          }} />
+        </View>
+      )}
 
-      <ScrollView
-        style={{flex: 1, paddingHorizontal: 16}}
-        contentContainerStyle={{paddingBottom: 120}}
+      <RNAnimated.ScrollView
+        className="flex-1"
+        contentContainerStyle={{paddingBottom: footerHeight + 20}}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        onScroll={RNAnimated.event(
+          [{nativeEvent: {contentOffset: {y: scrollY}}}],
+          {useNativeDriver: true},
+        )}
+        scrollEventThrottle={16}>
+
+        {/* ======================== */}
+        {/* HEADER: Title + Back button */}
+        {/* ======================== */}
+        <View className="px-6 pt-safe-offset-4 mb-2">
+          <View className="flex-row items-center justify-between">
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              accessibilityLabel="Quay lại"
+              accessibilityRole="button">
+              <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
+            </TouchableOpacity>
+            <View className="flex-1 items-center">
+              <AppText className="text-lg font-sans-bold" style={{color: speakingColor}}>
+                Shadowing
+              </AppText>
+            </View>
+            <View style={{width: 24}} />
+          </View>
+        </View>
 
         {/* ===== SECTION 1 — Chọn nội dung (dùng TopicSelector dùng chung) ===== */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             <TopicSelector
               accentColor={speakingColor}
@@ -258,7 +377,7 @@ export default function ShadowingConfigScreen() {
         </View>
 
         {/* ===== SECTION 2 — Tốc độ phát ===== */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             <AppText style={[styles.sectionLabel, {color: colors.neutrals400}]} raw>Tốc độ AI đọc</AppText>
             <View style={styles.speedRow}>
@@ -290,7 +409,7 @@ export default function ShadowingConfigScreen() {
         </View>
 
         {/* ===== SECTION 3 — Độ trễ (SLIDER) ===== */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             <AppText style={[styles.sectionLabel, {color: colors.neutrals400}]} raw>Delay giữa AI và bạn</AppText>
             <AppText style={{fontSize: 16, fontWeight: '700', color: speakingColor, textAlign: 'center', marginBottom: 8}} raw>
@@ -319,7 +438,7 @@ export default function ShadowingConfigScreen() {
         </View>
 
         {/* ===== SECTION 4 — Chế độ chấm điểm ===== */}
-        <View style={styles.section}>
+        <View className="px-6 mb-4">
           <SectionCard>
             <AppText style={[styles.sectionLabel, {color: colors.neutrals400}]} raw>Chế độ chấm điểm</AppText>
             <View style={styles.scoringRow}>
@@ -355,7 +474,7 @@ export default function ShadowingConfigScreen() {
         </View>
 
         {/* ===== SECTION 5 — Tai nghe ===== */}
-        <View style={styles.section}>
+        <View className="px-6 mb-6">
           <SectionCard>
             <AppText style={[styles.sectionLabel, {color: colors.neutrals400}]} raw>Tai nghe</AppText>
             <HeadphoneStatusCard
@@ -364,26 +483,71 @@ export default function ShadowingConfigScreen() {
             />
           </SectionCard>
         </View>
-      </ScrollView>
+      </RNAnimated.ScrollView>
 
-      {/* ===== CTA Button ===== */}
-      <View style={[styles.ctaContainer, {backgroundColor: colors.background, borderTopColor: colors.border}]}>
-        <TouchableOpacity
-          style={[
-            styles.ctaButton,
-            {
-              backgroundColor: hasValidTopic ? speakingColor : colors.neutrals700,
-              opacity: isLoading ? 0.7 : 1,
-            },
-          ]}
-          onPress={handleStart}
-          disabled={!hasValidTopic || isLoading}
-          activeOpacity={0.8}>
-          <AppText style={{fontSize: 16, fontWeight: '700', color: '#FFFFFF'}} raw>
-            {isLoading ? '⏳ Đang chuẩn bị...' : '◀)) Bắt đầu Shadowing'}
-          </AppText>
-        </TouchableOpacity>
-      </View>
+      {/* ======================== */}
+      {/* STICKY FOOTER — CTA Button */}
+      {/* ======================== */}
+      {!keyboardVisible && (
+        <View
+          className="absolute bottom-0 left-0 right-0 px-6 pt-0"
+          style={{paddingBottom: 8}}>
+          {/* Footer gradient — chỉ dark mode */}
+          {isDark && (
+            <LinearGradient
+              colors={[
+                'transparent',
+                `${colors.background}20`,
+                `${colors.background}50`,
+                `${colors.background}90`,
+                `${colors.background}CC`,
+                colors.background,
+              ]}
+              locations={[0, 0.15, 0.3, 0.5, 0.7, 1]}
+              style={{
+                position: 'absolute',
+                top: -100,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          )}
+          <View
+            style={
+              hasValidTopic
+                ? {
+                    shadowColor: SPEAKING_GREEN,
+                    shadowOffset: {width: 0, height: 4},
+                    shadowOpacity: 0.35,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }
+                : undefined
+            }>
+            <TouchableOpacity
+              style={[
+                styles.ctaButton,
+                {
+                  backgroundColor: hasValidTopic ? speakingColor : isDark ? colors.neutrals900 : `${SPEAKING_GREEN}18`,
+                  borderWidth: hasValidTopic ? 0 : 1.5,
+                  borderColor: hasValidTopic ? 'transparent' : isDark ? colors.glassBorder : `${SPEAKING_GREEN}30`,
+                  opacity: isLoading ? 0.7 : 1,
+                },
+              ]}
+              onPress={handleStart}
+              disabled={!hasValidTopic || isLoading}
+              activeOpacity={0.8}
+              accessibilityLabel={
+                hasValidTopic ? 'Bắt đầu Shadowing' : 'Chưa chọn chủ đề, không thể bắt đầu'
+              }>
+              <AppText style={{fontSize: 16, fontWeight: '700', color: '#FFFFFF'}} raw>
+                {isLoading ? '⏳ Đang chuẩn bị...' : '◀)) Bắt đầu Shadowing'}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Headphone Warning Modal */}
       <HeadphoneWarningModal
@@ -398,7 +562,7 @@ export default function ShadowingConfigScreen() {
         onClose={() => setShowTopicModal(false)}
         disabled={isLoading}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -407,8 +571,6 @@ export default function ShadowingConfigScreen() {
 // =======================
 
 const styles = StyleSheet.create({
-  header: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12},
-  section: {marginBottom: 16},
   // Labels
   sectionLabel: {fontSize: 13, fontWeight: '700', marginBottom: 10},
   // Speed
@@ -419,6 +581,5 @@ const styles = StyleSheet.create({
   scoringCard: {flex: 1, alignItems: 'center', borderRadius: 14, borderWidth: 1, padding: 14},
   betaBadge: {paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2},
   // CTA
-  ctaContainer: {padding: 16, borderTopWidth: 1},
   ctaButton: {borderRadius: 14, paddingVertical: 16, alignItems: 'center', justifyContent: 'center'},
 });

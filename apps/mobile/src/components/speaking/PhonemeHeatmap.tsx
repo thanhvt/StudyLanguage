@@ -1,5 +1,5 @@
-import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import React, {useState} from 'react';
+import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import {AppText} from '@/components/ui';
 import {useColors} from '@/hooks/useColors';
 
@@ -14,11 +14,15 @@ interface WordScore {
   score: number;
   /** Lỗi cụ thể (nếu có) */
   issue?: string;
+  /** Phonemes IPA (nếu có) */
+  phonemes?: string;
 }
 
 interface PhonemeHeatmapProps {
   /** Danh sách từ + điểm */
   words: WordScore[];
+  /** Callback khi user chạm vào từ — gọi TTS phát âm từ đó */
+  onWordTap?: (word: string) => void;
 }
 
 // =======================
@@ -26,29 +30,15 @@ interface PhonemeHeatmapProps {
 // =======================
 
 /**
- * Mục đích: Lấy màu dựa trên điểm (gradient xanh→vàng→đỏ)
+ * Mục đích: Lấy màu text/underline dựa trên điểm
  * Tham số đầu vào: score (0-100)
  * Tham số đầu ra: string — hex color
- * Khi nào sử dụng: Tô màu nền cho mỗi ô từ
+ * Khi nào sử dụng: Tô màu chữ và underline cho mỗi từ
  */
-function getHeatColor(score: number): string {
-  if (score >= 90) return '#22c55e';
-  if (score >= 80) return '#4ade80';
-  if (score >= 70) return '#a3e635';
-  if (score >= 60) return '#facc15';
-  if (score >= 50) return '#f59e0b';
-  if (score >= 40) return '#fb923c';
-  return '#ef4444';
-}
-
-/**
- * Mục đích: Lấy opacity dựa trên score
- * Tham số đầu vào: score (0-100)
- * Tham số đầu ra: number (0.3-1.0)
- * Khi nào sử dụng: Tô opacity cho ô heatmap
- */
-function getHeatOpacity(score: number): number {
-  return 0.3 + (score / 100) * 0.7;
+function getWordColor(score: number): string {
+  if (score >= 80) return '#22c55e'; // Xanh lá — tốt
+  if (score >= 60) return '#f59e0b'; // Vàng cam — trung bình
+  return '#ef4444'; // Đỏ — yếu
 }
 
 // =======================
@@ -56,64 +46,125 @@ function getHeatOpacity(score: number): number {
 // =======================
 
 /**
- * Mục đích: Hiển thị heatmap phát âm từng từ (giống bảng nhiệt)
+ * Mục đích: Hiển thị phân tích từng từ — inline words với score% bên dưới
  * Tham số đầu vào: words — {word, score, issue}[]
- * Tham số đầu ra: JSX.Element — grid heatmap
+ * Tham số đầu ra: JSX.Element — inline word grid + heatmap bar
  * Khi nào sử dụng:
- *   - FeedbackScreen: thay thế/bổ sung word-by-word section
- *   - ShadowingScreen: hiển thị kết quả shadow
+ *   - FeedbackScreen: phân tích word-by-word
+ *   - ShadowingFeedbackScreen: kết quả shadow
  */
-export default function PhonemeHeatmap({words}: PhonemeHeatmapProps) {
+export default function PhonemeHeatmap({words, onWordTap}: PhonemeHeatmapProps) {
   const colors = useColors();
+  // Từ đang được phát âm (visual feedback)
+  const [activeWord, setActiveWord] = useState<string | null>(null);
 
   if (!words || words.length === 0) return null;
 
+  /**
+   * Mục đích: Xử lý khi user chạm vào 1 từ trong heatmap
+   * Tham số đầu vào: word (string) — từ được chạm
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User tap vào từ → phát TTS
+   */
+  const handleTap = (word: string) => {
+    // Loại bỏ dấu chấm câu để TTS phát âm đúng
+    const cleanWord = word.replace(/[^a-zA-Z'\-]/g, '');
+    if (!cleanWord) return;
+
+    setActiveWord(cleanWord);
+    onWordTap?.(cleanWord);
+    // Tắt highlight sau 1.5s
+    setTimeout(() => setActiveWord(null), 1500);
+  };
+
+  // Tìm các từ có điểm thấp nhất để hiển thị trong phoneme issues
+  const lowScoreWords = words
+    .filter(w => w.score < 70)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
   return (
     <View style={[styles.container, {backgroundColor: colors.surface}]}>
-      <AppText variant="body" weight="semibold" className="mb-3 text-foreground" raw>
-        🔥 Bản đồ phát âm
+      {/* Header */}
+      <AppText variant="body" weight="semibold" style={{color: colors.foreground, marginBottom: 12}} raw>
+        Phân tích từng từ
       </AppText>
 
-      <View style={styles.grid}>
+      {/* Inline words — mỗi từ có text + score% bên dưới */}
+      <View style={styles.wordGrid}>
         {words.map((w, i) => {
-          const heatColor = getHeatColor(w.score);
+          const wordColor = getWordColor(w.score);
+          const isActive = activeWord === w.word.replace(/[^a-zA-Z'\-]/g, '');
           return (
-            <View
+            <TouchableOpacity
               key={`${w.word}-${i}`}
+              activeOpacity={0.7}
+              onPress={() => handleTap(w.word)}
               style={[
-                styles.cell,
-                {backgroundColor: `${heatColor}${Math.round(getHeatOpacity(w.score) * 255).toString(16).padStart(2, '0')}`},
+                styles.wordItem,
+                isActive && {backgroundColor: `${wordColor}15`, borderRadius: 8},
               ]}>
+              {/* Từ — underline nếu điểm < 70 (lỗi cần chú ý) */}
               <AppText
-                variant="body"
-                weight="medium"
-                style={{color: w.score >= 60 ? '#1a1a2e' : '#FFFFFF'}}
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: wordColor,
+                  textDecorationLine: w.score < 70 ? 'underline' : 'none',
+                  textDecorationColor: wordColor,
+                }}
                 raw>
                 {w.word}
               </AppText>
+              {/* Score % */}
               <AppText
-                variant="caption"
-                weight="bold"
-                style={{color: w.score >= 60 ? '#1a1a2e' : '#FFFFFF', opacity: 0.8}}
+                style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: wordColor,
+                  marginTop: 2,
+                }}
                 raw>
-                {w.score}
+                {w.score}%
               </AppText>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Color scale */}
-      <View style={styles.scale}>
-        <AppText variant="caption" className="text-neutrals400" raw>Yếu</AppText>
-        <View style={styles.gradient}>
-          {['#ef4444', '#fb923c', '#f59e0b', '#facc15', '#a3e635', '#4ade80', '#22c55e'].map(
-            (c, i) => (
-              <View key={i} style={{flex: 1, height: 6, backgroundColor: c}} />
-            ),
-          )}
+      {/* Hint text */}
+      <AppText variant="caption" style={{textAlign: 'center', color: colors.neutrals400, marginTop: 10}} raw>
+        Chạm vào từ để nghe phát âm chuẩn
+      </AppText>
+
+      {/* Phoneme Heatmap bar — gradient Yếu → Tốt */}
+      <View style={styles.heatmapSection}>
+        <AppText variant="body" weight="semibold" style={{color: colors.foreground, marginBottom: 8}} raw>
+          Phoneme Heatmap
+        </AppText>
+        <View style={styles.gradientRow}>
+          <View style={styles.gradient}>
+            {['#ef4444', '#fb923c', '#f59e0b', '#facc15', '#a3e635', '#4ade80', '#22c55e'].map(
+              (c, i) => (
+                <View key={i} style={{flex: 1, height: 8, backgroundColor: c}} />
+              ),
+            )}
+          </View>
         </View>
-        <AppText variant="caption" className="text-neutrals400" raw>Tốt</AppText>
+
+        {/* Phoneme issues — hiển thị các âm cần cải thiện */}
+        {lowScoreWords.length > 0 && (
+          <View style={styles.phonemeIssues}>
+            {lowScoreWords.map((w, i) => (
+              <View key={i} style={[styles.phonemeBadge, {backgroundColor: `${getWordColor(w.score)}20`}]}>
+                <View style={[styles.phonemeDot, {backgroundColor: getWordColor(w.score)}]} />
+                <AppText style={{fontSize: 12, fontWeight: '600', color: colors.foreground}} raw>
+                  {w.phonemes || w.word} {w.score}%
+                </AppText>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -125,34 +176,55 @@ export default function PhonemeHeatmap({words}: PhonemeHeatmapProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 14,
+    padding: 16,
     borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 12,
   },
-  grid: {
+  wordGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 4,
   },
-  cell: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+  wordItem: {
     alignItems: 'center',
-    minWidth: 50,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  scale: {
+  heatmapSection: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128,128,128,0.15)',
+  },
+  gradientRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
   },
   gradient: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     flexDirection: 'row',
     overflow: 'hidden',
+  },
+  phonemeIssues: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  phonemeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 6,
+  },
+  phonemeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

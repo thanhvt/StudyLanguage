@@ -1,7 +1,6 @@
 import React from 'react';
-import {View, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, TouchableOpacity, Pressable, StyleSheet, ActivityIndicator} from 'react-native';
 import {AppText} from '@/components/ui';
-import AppButton from '@/components/ui/AppButton';
 import Icon from '@/components/ui/Icon';
 import {VoiceVisualizer} from '@/components/speaking';
 import {useColors} from '@/hooks/useColors';
@@ -38,7 +37,6 @@ interface RecordingPreviewProps {
  * Tham số đầu ra: JSX.Element — card với waveform + 2 nút
  * Khi nào sử dụng:
  *   - PracticeScreen: sau khi user thả mic → hiện preview → chọn Ghi lại hoặc Gửi
- *   - CoachSessionScreen: có thể dùng nếu cần preview trước khi gửi
  */
 export default function RecordingPreview({
   audioUri,
@@ -93,25 +91,49 @@ export default function RecordingPreview({
         </AppText>
       </TouchableOpacity>
 
-      {/* Action buttons */}
+      {/* Action buttons — manual Pressable để đảm bảo flex layout chính xác */}
       <View style={styles.actionRow}>
-        <AppButton
-          variant="outline"
-          size="sm"
+        {/* Nút Ghi lại (outline) */}
+        <Pressable
           onPress={onReRecord}
           disabled={isSubmitting}
-          icon={<Icon name="RefreshCw" className="w-4 h-4 text-foreground" />}>
-          Ghi lại
-        </AppButton>
+          style={[
+            styles.actionBtn,
+            {
+              borderWidth: 1,
+              borderColor: colors.neutrals600,
+              backgroundColor: 'transparent',
+              opacity: isSubmitting ? 0.5 : 1,
+            },
+          ]}>
+          <Icon name="RefreshCw" className="w-4 h-4" style={{color: colors.foreground}} />
+          <AppText style={{fontSize: 14, fontWeight: '600', color: colors.foreground, marginLeft: 6}}>
+            Ghi lại
+          </AppText>
+        </Pressable>
 
-        <AppButton
-          variant="primary"
-          size="sm"
+        {/* Nút Gửi đánh giá (primary) */}
+        <Pressable
           onPress={onSubmit}
-          loading={isSubmitting}
-          style={{backgroundColor: speakingColor, flex: 1}}>
-          ✅ Gửi đánh giá
-        </AppButton>
+          disabled={isSubmitting}
+          style={[
+            styles.actionBtn,
+            {
+              backgroundColor: speakingColor,
+              opacity: isSubmitting ? 0.7 : 1,
+            },
+          ]}>
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Icon name="Send" className="w-4 h-4" style={{color: '#fff'}} />
+              <AppText style={{fontSize: 14, fontWeight: '600', color: '#fff', marginLeft: 6}}>
+                Gửi đánh giá
+              </AppText>
+            </>
+          )}
+        </Pressable>
       </View>
     </View>
   );
@@ -125,7 +147,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 12,
     borderRadius: 16,
-    marginHorizontal: 16,
   },
   waveformRow: {
     flexDirection: 'row',
@@ -146,5 +167,13 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: 10,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    borderRadius: 12,
   },
 });

@@ -28,6 +28,10 @@ interface VoiceCloneReplayProps {
   userDuration?: number;
   /** Thuộc tính audio AI (giây) */
   aiDuration?: number;
+  /** Callback gọi khi user nhấn "AI sửa" mà chưa có correctedAudioUrl */
+  onRequestClone?: () => void;
+  /** Trạng thái đang tải bản sửa */
+  isLoading?: boolean;
 }
 
 /** Type cho improvement — export cho FeedbackScreen */
@@ -60,6 +64,8 @@ export default function VoiceCloneReplay({
   aiWaveform = [],
   userDuration = 0,
   aiDuration = 0,
+  onRequestClone,
+  isLoading = false,
 }: VoiceCloneReplayProps) {
   const colors = useColors();
   const haptic = useHaptic();
@@ -97,18 +103,19 @@ export default function VoiceCloneReplay({
    */
   const playAIAudio = useCallback(() => {
     haptic.light();
+    // Nếu chưa có correctedAudioUrl → gọi onRequestClone để fetch
+    if (!correctedAudioUrl && onRequestClone) {
+      onRequestClone();
+      return;
+    }
     if (playback === 'ai') {
       setPlayback('idle');
       console.log('⏸️ [VoiceClone] Dừng audio AI');
-      // TODO: AudioRecorderPlayer.stopPlayer()
       return;
     }
-    // Edge: Dừng audio khác trước khi phát
-    // TODO: AudioRecorderPlayer.stopPlayer() trước khi play mới
     setPlayback('ai');
     console.log('🔊 [VoiceClone] Phát bản AI:', correctedAudioUrl);
-    // TODO: AudioRecorderPlayer.startPlayer(correctedAudioUrl)
-  }, [playback, correctedAudioUrl, haptic]);
+  }, [playback, correctedAudioUrl, haptic, onRequestClone]);
 
   /**
    * Mục đích: Phát so sánh A/B (xen kẽ user → AI → user → AI)
