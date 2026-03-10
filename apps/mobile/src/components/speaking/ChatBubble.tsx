@@ -24,6 +24,16 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+/** Persona info — truyền vào khi Roleplay mode */
+export interface PersonaInfo {
+  /** Tên persona (vd: "Dr. Smith") */
+  name: string;
+  /** Role (vd: "Bác sĩ") */
+  role: string;
+  /** Emoji avatar */
+  avatar?: string;
+}
+
 interface ChatBubbleProps {
   /** Tin nhắn cần hiển thị */
   message: ChatMessage;
@@ -33,6 +43,10 @@ interface ChatBubbleProps {
   onReSpeak?: (message: ChatMessage) => void;
   /** Đang phát audio của bubble này */
   isPlaying?: boolean;
+  /** Persona info — khi Roleplay mode, hiển thị avatar + name cho AI */
+  persona?: PersonaInfo | null;
+  /** Accent color tuỳ chỉnh — mặc định speaking.dark */
+  accentColor?: string;
 }
 
 // =======================
@@ -40,21 +54,24 @@ interface ChatBubbleProps {
 // =======================
 
 /**
- * Mục đích: Hiển thị 1 tin nhắn chat trong Coach Session
- * Tham số đầu vào: message, onPlayAudio, onReSpeak, isPlaying
- * Tham số đầu ra: JSX.Element — bubble chat AI hoặc User
+ * Mục đích: Hiển thị 1 tin nhắn chat trong AI Conversation
+ * Tham số đầu vào: message, onPlayAudio, onReSpeak, isPlaying, persona, accentColor
+ * Tham số đầu ra: JSX.Element — bubble chat AI (có thể có persona) hoặc User
  * Khi nào sử dụng:
- *   - CoachSessionScreen: render mỗi message trong FlatList
- *   - RoleplaySessionScreen: render dialogue AI/User
+ *   - ConversationScreen: render mỗi message trong FlatList
+ *   - Roleplay: hiển thị thêm persona avatar/name header
+ *   - Free Talk: hiển thị AI bubble bình thường
  */
 export default function ChatBubble({
   message,
   onPlayAudio,
   onReSpeak,
   isPlaying = false,
+  persona,
+  accentColor,
 }: ChatBubbleProps) {
   const colors = useColors();
-  const speakingColor = SKILL_COLORS.speaking.dark;
+  const accent = accentColor || SKILL_COLORS.speaking.dark;
   const isAI = message.role === 'ai';
   const isUser = message.role === 'user';
 
@@ -78,13 +95,42 @@ export default function ChatBubble({
         styles.bubbleRow,
         isUser ? styles.rowRight : styles.rowLeft,
       ]}>
+
+      {/* Persona Avatar — Roleplay AI only */}
+      {isAI && persona && (
+        <View style={styles.avatarContainer}>
+          <View style={[styles.avatar, {backgroundColor: `${accent}20`}]}>
+            <AppText style={{fontSize: 16}} raw>
+              {persona.avatar || '🎭'}
+            </AppText>
+          </View>
+        </View>
+      )}
+
       <View
         style={[
           styles.bubble,
           isAI
             ? [styles.aiBubble, {backgroundColor: colors.surface}]
-            : [styles.userBubble, {backgroundColor: `${speakingColor}25`}],
+            : [styles.userBubble, {backgroundColor: `${accent}25`}],
+          // Khi có persona, bubble cần shift sang phải
+          isAI && persona && {maxWidth: '72%'},
         ]}>
+
+        {/* Persona Name Header — Roleplay AI only */}
+        {isAI && persona && (
+          <AppText
+            variant="caption"
+            weight="bold"
+            style={{color: accent, marginBottom: 4}}
+            raw>
+            {persona.name}
+            <AppText variant="caption" style={{color: colors.neutrals400, fontWeight: 'normal'}} raw>
+              {' '}• {persona.role}
+            </AppText>
+          </AppText>
+        )}
+
         {/* Nội dung text */}
         <AppText
           variant="body"
@@ -99,12 +145,12 @@ export default function ChatBubble({
           {isAI && message.audioUrl && onPlayAudio && (
             <TouchableOpacity
               onPress={() => onPlayAudio(message.audioUrl!)}
-              style={[styles.actionBtn, {backgroundColor: `${speakingColor}20`}]}
+              style={[styles.actionBtn, {backgroundColor: `${accent}20`}]}
               activeOpacity={0.7}>
               <Icon
                 name={isPlaying ? 'Pause' : 'Volume2'}
                 className="w-4 h-4"
-                style={{color: speakingColor}}
+                style={{color: accent}}
               />
             </TouchableOpacity>
           )}
@@ -113,16 +159,16 @@ export default function ChatBubble({
           {isUser && onReSpeak && (
             <TouchableOpacity
               onPress={() => onReSpeak(message)}
-              style={[styles.actionBtn, {backgroundColor: `${speakingColor}15`}]}
+              style={[styles.actionBtn, {backgroundColor: `${accent}15`}]}
               activeOpacity={0.7}>
               <Icon
                 name="RefreshCw"
                 className="w-3.5 h-3.5"
-                style={{color: speakingColor}}
+                style={{color: accent}}
               />
               <AppText
                 variant="caption"
-                style={{color: speakingColor, marginLeft: 4}}
+                style={{color: accent, marginLeft: 4}}
                 raw>
                 Nói lại
               </AppText>
@@ -142,12 +188,24 @@ const styles = StyleSheet.create({
   bubbleRow: {
     marginVertical: 4,
     paddingHorizontal: 12,
+    flexDirection: 'row',
   },
   rowLeft: {
     alignItems: 'flex-start',
   },
   rowRight: {
-    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+  },
+  avatarContainer: {
+    marginRight: 8,
+    marginTop: 4,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bubble: {
     maxWidth: '80%',

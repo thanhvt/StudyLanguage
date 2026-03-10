@@ -33,6 +33,20 @@ import {customCategoryApi} from '@/services/api/customCategories';
 
 const LISTENING_BLUE = '#2563EB';
 
+// Context để truyền accent color cho sub-components (ScenarioItem, SubCategoryAccordion)
+// Mặc định là LISTENING_BLUE — Speaking sẽ truyền green/orange qua prop
+const AccentColorContext = React.createContext(LISTENING_BLUE);
+
+/**
+ * Mục đích: Hook lấy accent color hiện tại từ context
+ * Tham số đầu vào: không
+ * Tham số đầu ra: string (hex color)
+ * Khi nào sử dụng: Sub-components (ScenarioItem, SubCategoryAccordion) cần accent color
+ */
+function useAccentColor(): string {
+  return React.useContext(AccentColorContext);
+}
+
 // ========================
 // Custom hook: useDebounce — tránh search mỗi keystroke
 // ========================
@@ -66,6 +80,8 @@ interface TopicPickerProps {
   showCategoryBadge?: boolean;
   /** Callback khi user nhấn "Quản lý nhóm" — parent đóng modal và navigate */
   onManageCategory?: (categoryId: string) => void;
+  /** Accent color tuỳ chỉnh — mặc định LISTENING_BLUE. Speaking truyền green/orange */
+  accentColor?: string;
 }
 
 // ========================
@@ -109,6 +125,7 @@ const ScenarioItem = React.memo(function ScenarioItem({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const haptic = useHaptic();
   const colors = useColors();
+  const accent = useAccentColor();
 
   /**
    * Mục đích: Animation press in (scale 0.97)
@@ -156,11 +173,11 @@ const ScenarioItem = React.memo(function ScenarioItem({
       <TouchableOpacity
         className="flex-row items-center justify-between px-4 py-3.5 rounded-2xl mb-2"
         style={{
-          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : colors.neutrals900,
+          backgroundColor: isSelected ? `${accent}15` : colors.neutrals900,
           borderWidth: 1,
-          borderColor: isSelected ? LISTENING_BLUE : colors.glassBorder,
+          borderColor: isSelected ? accent : colors.glassBorder,
           ...(isSelected && {
-            shadowColor: LISTENING_BLUE,
+            shadowColor: accent,
             shadowOffset: {width: 0, height: 2},
             shadowOpacity: 0.08,
             shadowRadius: 8,
@@ -177,14 +194,14 @@ const ScenarioItem = React.memo(function ScenarioItem({
         {isSelected && (
           <View
             className="w-5 h-5 items-center justify-center rounded-full"
-            style={{backgroundColor: LISTENING_BLUE, marginRight: 14}}>
+            style={{backgroundColor: accent, marginRight: 14}}>
             <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
           </View>
         )}
         <View className="flex-1 mr-3">
           <AppText
             className={`text-sm ${isSelected ? 'font-sans-bold' : 'font-sans-medium'}`}
-            style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
+            style={{color: isSelected ? accent : colors.foreground}}>
             {scenario.name}
           </AppText>
           <AppText className="text-xs mt-0.5" style={{color: colors.neutrals400}} numberOfLines={2}>
@@ -247,6 +264,7 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
 }: SubCategoryAccordionProps) {
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
   const colors = useColors();
+  const accent = useAccentColor();
 
   // Kiểm tra subcategory này có chứa scenario đang chọn không
   const hasSelectedScenario = selectedTopicId
@@ -284,8 +302,8 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
                 right: -14,
                 bottom: -14,
                 borderRadius: 24,
-                backgroundColor: `${LISTENING_BLUE}08`,
-                shadowColor: LISTENING_BLUE,
+                backgroundColor: `${accent}08`,
+                shadowColor: accent,
                 shadowOffset: {width: 0, height: 0},
                 shadowOpacity: 0.2,
                 shadowRadius: 24,
@@ -301,8 +319,8 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
                 right: -10,
                 bottom: -10,
                 borderRadius: 20,
-                backgroundColor: `${LISTENING_BLUE}15`,
-                shadowColor: LISTENING_BLUE,
+                backgroundColor: `${accent}15`,
+                shadowColor: accent,
                 shadowOffset: {width: 0, height: 0},
                 shadowOpacity: 0.4,
                 shadowRadius: 16,
@@ -318,8 +336,8 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
                 right: -6,
                 bottom: -6,
                 borderRadius: 18,
-                backgroundColor: `${LISTENING_BLUE}28`,
-                shadowColor: LISTENING_BLUE,
+                backgroundColor: `${accent}28`,
+                shadowColor: accent,
                 shadowOffset: {width: 0, height: 0},
                 shadowOpacity: 0.65,
                 shadowRadius: 20,
@@ -335,14 +353,14 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
             ...(hasSelectedScenario
               ? {
                   borderWidth: 1.5,
-                  borderColor: `${LISTENING_BLUE}CC`,
+                  borderColor: `${accent}CC`,
                 }
               : {
                   borderBottomWidth: 1,
                   borderBottomColor: colors.glassDivider,
                 }),
             backgroundColor: hasSelectedScenario
-              ? `${LISTENING_BLUE}15`
+              ? `${accent}15`
               : isExpanded
                 ? colors.glassHover
                 : undefined,
@@ -355,10 +373,10 @@ const SubCategoryAccordion = React.memo(function SubCategoryAccordion({
           <View className="flex-row items-center flex-1">
             {/* Chấm tròn indicator khi subcategory chứa scenario đang chọn */}
             {hasSelectedScenario && (
-              <View className="w-2 h-2 rounded-full" style={{backgroundColor: LISTENING_BLUE, marginRight: 8}} />
+              <View className="w-2 h-2 rounded-full" style={{backgroundColor: accent, marginRight: 8}} />
             )}
             <AppText className="font-sans-medium text-xs uppercase tracking-wider"
-              style={{color: hasSelectedScenario ? LISTENING_BLUE : colors.neutrals300}}>
+              style={{color: hasSelectedScenario ? accent : colors.neutrals300}}>
               {subCategory.name}
             </AppText>
             <View className="rounded-full px-2.5 py-1" style={{backgroundColor: colors.neutrals700, marginLeft: 8}}>
@@ -494,7 +512,10 @@ export default function TopicPicker({
   onScenarioSelected,
   showCategoryBadge = true,
   onManageCategory,
+  accentColor,
 }: TopicPickerProps) {
+  // Dùng accent color từ prop nếu có, fallback về LISTENING_BLUE
+  const resolvedAccentColor = accentColor || LISTENING_BLUE;
   const colors = useColors();
   const haptic = useHaptic();
   const [searchQuery, setSearchQuery] = useState('');
@@ -671,12 +692,12 @@ export default function TopicPicker({
         <TouchableOpacity
           className="px-4 py-2.5 rounded-full mr-2"
           style={{
-            backgroundColor: isActive ? `${LISTENING_BLUE}12` : colors.glassBg,
+            backgroundColor: isActive ? `${resolvedAccentColor}12` : colors.glassBg,
             borderWidth: 1,
-            borderColor: isActive ? LISTENING_BLUE : colors.glassBorderStrong,
+            borderColor: isActive ? resolvedAccentColor : colors.glassBorderStrong,
             // Glassmorphism: subtle glow khi active
             ...(isActive && {
-              shadowColor: LISTENING_BLUE,
+              shadowColor: resolvedAccentColor,
               shadowOffset: {width: 0, height: 2},
               shadowOpacity: 0.15,
               shadowRadius: 8,
@@ -694,13 +715,13 @@ export default function TopicPicker({
           <View className="flex-row items-center">
             <AppText
               className={`text-sm ${isActive ? 'font-sans-bold' : 'font-sans-medium'}`}
-              style={{color: isActive ? LISTENING_BLUE : colors.foreground}}>
+              style={{color: isActive ? resolvedAccentColor : colors.foreground}}>
               {item.icon} {item.name}
             </AppText>
             {/* Badge count cho tab Yêu thích */}
             {badgeCount !== null && badgeCount > 0 && (
-              <View className="rounded-full px-1.5 py-0.5" style={{backgroundColor: `${LISTENING_BLUE}20`, marginLeft: 6}}>
-                <AppText className="text-[10px] font-sans-bold" style={{color: LISTENING_BLUE}}>
+              <View className="rounded-full px-1.5 py-0.5" style={{backgroundColor: `${resolvedAccentColor}20`, marginLeft: 6}}>
+                <AppText className="text-[10px] font-sans-bold" style={{color: resolvedAccentColor}}>
                   {badgeCount}
                 </AppText>
               </View>
@@ -718,6 +739,7 @@ export default function TopicPicker({
   );
 
   return (
+    <AccentColorContext.Provider value={resolvedAccentColor}>
     <View className="flex-1">
       {/* Search Bar với debounce */}
       {/* Search Bar — Glassmorphism panel */}
@@ -772,9 +794,9 @@ export default function TopicPicker({
             <TouchableOpacity
               className="px-4 py-2.5 rounded-full mr-2"
               style={{
-                backgroundColor: `${LISTENING_BLUE}10`,
+                backgroundColor: `${resolvedAccentColor}10`,
                 borderWidth: 1.5,
-                borderColor: `${LISTENING_BLUE}40`,
+                borderColor: `${resolvedAccentColor}40`,
                 borderStyle: 'dashed',
               }}
               onPress={() => {
@@ -787,8 +809,8 @@ export default function TopicPicker({
               accessibilityLabel="Thêm nhóm chủ đề mới"
               accessibilityRole="button">
               <View className="flex-row items-center">
-                <Icon name="Plus" className="w-4 h-4 mr-1" style={{color: LISTENING_BLUE}} />
-                <AppText className="text-sm font-sans-medium" style={{color: LISTENING_BLUE}}>
+                <Icon name="Plus" className="w-4 h-4 mr-1" style={{color: resolvedAccentColor}} />
+                <AppText className="text-sm font-sans-medium" style={{color: resolvedAccentColor}}>
                   Thêm
                 </AppText>
               </View>
@@ -886,10 +908,10 @@ export default function TopicPicker({
 
       {/* Hiển thị topic đang chọn — sticky bottom indicator */}
       {selectedTopic && (
-        <View className="mt-3 rounded-2xl px-4 py-2.5 flex-row items-center" style={{backgroundColor: `${LISTENING_BLUE}15`, borderWidth: 1, borderColor: `${LISTENING_BLUE}30`}}>
-          <Icon name="Check" className="w-4 h-4" style={{color: LISTENING_BLUE, marginRight: 8}} />
+        <View className="mt-3 rounded-2xl px-4 py-2.5 flex-row items-center" style={{backgroundColor: `${resolvedAccentColor}15`, borderWidth: 1, borderColor: `${resolvedAccentColor}30`}}>
+          <Icon name="Check" className="w-4 h-4" style={{color: resolvedAccentColor, marginRight: 8}} />
           <AppText className="text-sm flex-1" style={{color: colors.foreground}}>
-            Đã chọn: <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>{selectedTopic.name}</AppText>
+            Đã chọn: <AppText className="font-sans-bold" style={{color: resolvedAccentColor}}>{selectedTopic.name}</AppText>
           </AppText>
           <TouchableOpacity
             onPress={() => {
@@ -914,6 +936,7 @@ export default function TopicPicker({
         }}
       />
     </View>
+    </AccentColorContext.Provider>
   );
 }
 

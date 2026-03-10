@@ -1,31 +1,61 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import SpeakingHomeScreen from '@/screens/speaking/SpeakingHomeScreen';
 import SpeakingConfigScreen from '@/screens/speaking/ConfigScreen';
 import PracticeScreen from '@/screens/speaking/PracticeScreen';
 import FeedbackScreen from '@/screens/speaking/FeedbackScreen';
+import ConversationSetupScreen from '@/screens/speaking/ConversationSetupScreen';
 import CoachSetupScreen from '@/screens/speaking/CoachSetupScreen';
 import CoachSessionScreen from '@/screens/speaking/CoachSessionScreen';
+import ConversationScreen from '@/screens/speaking/ConversationScreen';
+import SessionSummaryScreen from '@/screens/speaking/SessionSummaryScreen';
 import CustomScenariosScreen from '@/screens/speaking/CustomScenariosScreen';
-import ShadowingScreen from '@/screens/speaking/ShadowingScreen';
+import ShadowingConfigScreen from '@/screens/speaking/ShadowingConfigScreen';
+import ShadowingSessionScreen from '@/screens/speaking/ShadowingSessionScreen';
+import ShadowingFeedbackScreen from '@/screens/speaking/ShadowingFeedbackScreen';
+import ShadowingSessionSummaryScreen from '@/screens/speaking/ShadowingSessionSummaryScreen';
 import RoleplaySelectScreen from '@/screens/speaking/RoleplaySelectScreen';
 import RoleplaySessionScreen from '@/screens/speaking/RoleplaySessionScreen';
-import TongueTwisterScreen from '@/screens/speaking/TongueTwisterScreen';
+import TongueTwisterSelectScreen from '@/screens/speaking/TongueTwisterSelectScreen';
+import TongueTwisterPracticeScreen from '@/screens/speaking/TongueTwisterPracticeScreen';
+import SpeedChallengeScreen from '@/screens/speaking/SpeedChallengeScreen';
 import ProgressDashboardScreen from '@/screens/speaking/ProgressDashboardScreen';
 import RecordingHistoryScreen from '@/screens/speaking/RecordingHistoryScreen';
+import type {PhonemeCategory, TwisterLevel} from '@/types/tongueTwister.types';
 
 export type SpeakingStackParamList = {
-  Config: undefined;
-  Practice: undefined;
+  // === Màn hình chính ===
+  SpeakingHome: undefined;
+
+  // === Practice Mode Flow ===
+  PracticeConfig: undefined;
+  PracticeSession: undefined;
   Feedback: undefined;
-  CoachSetup: undefined;
-  CoachSession: undefined;
+
+  // === AI Conversation Flow ===
+  ConversationSetup: undefined;
+  ConversationSession: undefined;
+  SessionSummary: undefined;
+
+  // === Cac mode khác ===
   CustomScenarios: undefined;
-  Shadowing: undefined;
+  ShadowingConfig: undefined;
+  ShadowingSession: undefined;
+  ShadowingFeedback: undefined;
+  ShadowingSessionSummary: undefined;
   RoleplaySelect: undefined;
   RoleplaySession: {title: string; totalTurns: number; emoji: string};
-  TongueTwister: undefined;
+  TongueTwisterSelect: undefined;
+  TongueTwisterPractice: {phonemeCategory: PhonemeCategory; level: TwisterLevel};
+  SpeedChallenge: {twisterId: string; phonemeCategory: PhonemeCategory};
   ProgressDashboard: undefined;
   RecordingHistory: undefined;
+
+  // === Backward-compatible aliases ===
+  Config: undefined;
+  Practice: undefined;
+  CoachSetup: undefined;
+  CoachSession: undefined;
 };
 
 const Stack = createNativeStackNavigator<SpeakingStackParamList>();
@@ -35,27 +65,48 @@ const Stack = createNativeStackNavigator<SpeakingStackParamList>();
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Được navigate tới từ Dashboard QuickActions hoặc MainStack
- *   - Config → Practice (sau khi generate sentences thành công)
- *   - Practice → Feedback (sau khi ghi âm + AI đánh giá)
- *   - Feedback → Practice (luyện lại / câu tiếp)
- *   - Config → CoachSetup → CoachSession (coach mode flow)
+ *   - SpeakingHome → PracticeConfig → PracticeSession → Feedback
+ *   - SpeakingHome → ConversationSetup → ConversationSession → SessionSummary
+ *   - SpeakingHome → ShadowingConfig → ShadowingSession → ShadowingFeedback → ShadowingSessionSummary
+ *   - SpeakingHome → TongueTwisterSelect → TongueTwisterPractice → SpeedChallenge
  */
 export default function SpeakingStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Config" component={SpeakingConfigScreen} />
-      <Stack.Screen name="Practice" component={PracticeScreen} />
+    <Stack.Navigator
+      initialRouteName="SpeakingHome"
+      screenOptions={{headerShown: false}}>
+      {/* Màn hình chính */}
+      <Stack.Screen name="SpeakingHome" component={SpeakingHomeScreen} />
+
+      {/* Practice Mode */}
+      <Stack.Screen name="PracticeConfig" component={SpeakingConfigScreen} />
+      <Stack.Screen name="PracticeSession" component={PracticeScreen} />
       <Stack.Screen name="Feedback" component={FeedbackScreen} />
+
+      {/* AI Conversation */}
+      <Stack.Screen name="ConversationSetup" component={ConversationSetupScreen} />
       <Stack.Screen name="CoachSetup" component={CoachSetupScreen} />
       <Stack.Screen name="CoachSession" component={CoachSessionScreen} />
+      <Stack.Screen name="ConversationSession" component={ConversationScreen} />
+      <Stack.Screen name="SessionSummary" component={SessionSummaryScreen} />
+
+      {/* Các mode khác */}
       <Stack.Screen name="CustomScenarios" component={CustomScenariosScreen} />
-      <Stack.Screen name="Shadowing" component={ShadowingScreen} />
+      <Stack.Screen name="ShadowingConfig" component={ShadowingConfigScreen} />
+      <Stack.Screen name="ShadowingSession" component={ShadowingSessionScreen} />
+      <Stack.Screen name="ShadowingFeedback" component={ShadowingFeedbackScreen} />
+      <Stack.Screen name="ShadowingSessionSummary" component={ShadowingSessionSummaryScreen} />
       <Stack.Screen name="RoleplaySelect" component={RoleplaySelectScreen} />
       <Stack.Screen name="RoleplaySession" component={RoleplaySessionScreen} />
-      <Stack.Screen name="TongueTwister" component={TongueTwisterScreen} />
+      <Stack.Screen name="TongueTwisterSelect" component={TongueTwisterSelectScreen} />
+      <Stack.Screen name="TongueTwisterPractice" component={TongueTwisterPracticeScreen} />
+      <Stack.Screen name="SpeedChallenge" component={SpeedChallengeScreen} />
       <Stack.Screen name="ProgressDashboard" component={ProgressDashboardScreen} />
       <Stack.Screen name="RecordingHistory" component={RecordingHistoryScreen} />
+
+      {/* Legacy routes — backward compat (sẽ xóa sau khi migration xong) */}
+      <Stack.Screen name="Config" component={SpeakingConfigScreen} />
+      <Stack.Screen name="Practice" component={PracticeScreen} />
     </Stack.Navigator>
   );
 }
-

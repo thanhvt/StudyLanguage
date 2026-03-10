@@ -30,3 +30,24 @@ export {default as OnboardingOverlay} from './OnboardingOverlay';
 export {default as SpeakingTtsSheet} from './SpeakingTtsSheet';
 export {default as VoiceCloneReplay} from './VoiceCloneReplay';
 
+// Tongue Twister components
+export {default as PhonemeCard} from './PhonemeCard';
+export {default as LevelPill} from './LevelPill';
+export {default as RoundCard} from './RoundCard';
+export {default as StatChip} from './StatChip';
+export {default as PhonemeHighlightText} from './PhonemeHighlightText';
+
+// Shadowing components
+export {default as ScoreRing} from './ScoreRing';
+export {default as HeadphoneStatusCard} from './HeadphoneStatusCard';
+export {default as DualWaveformVisualizer} from './DualWaveformVisualizer';
+export {default as HeadphoneWarningModal} from './HeadphoneWarningModal';
+export {default as SentenceHighlightCard} from './SentenceHighlightCard';
+export {default as ShadowingTopicPicker} from './ShadowingTopicPicker';
+
+// AI Conversation components
+export {default as AIThinkingIndicator} from './AIThinkingIndicator';
+export {default as ContextBanner} from './ContextBanner';
+export {default as RecordingOverlay} from './RecordingOverlay';
+export type {PersonaInfo} from './ChatBubble';
+

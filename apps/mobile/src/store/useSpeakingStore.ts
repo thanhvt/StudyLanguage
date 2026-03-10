@@ -9,33 +9,131 @@ import type {
 import type {ChatMessage} from '@/components/speaking/ChatBubble';
 
 // =======================
-// Coach Types
+// AI Conversation Types
 // =======================
 
-/** Cấu hình Conversation Coach mode */
-export interface CoachSetup {
-  /** Chủ đề hội thoại */
-  topic: string;
-  /** Thời lượng session (phút) */
-  durationMinutes: number;
-  /** Mức độ sửa lỗi */
-  feedbackMode: 'beginner' | 'intermediate' | 'advanced';
+/** Persona AI cho Roleplay mode */
+export interface ScenarioPersona {
+  /** Tên persona: "Tony" */
+  name: string;
+  /** Vai trò: "Waiter" */
+  role: string;
+  /** Avatar emoji hoặc URL: "👨‍🍳" */
+  avatar: string;
+  /** Câu chào: "Welcome to Bella Italia!" */
+  greeting: string;
+  /** System prompt cho AI behavior */
+  systemPrompt: string;
 }
 
-/** Trạng thái 1 coach session */
-export interface CoachSession {
-  /** Cấu hình setup ban đầu */
-  setup: CoachSetup;
+/** Tin nhắn hội thoại AI — mở rộng từ ChatMessage */
+export interface ConversationMessage extends ChatMessage {
+  /** Feedback phát âm inline (nếu có) */
+  pronunciationFeedback?: {
+    word: string;
+    ipa: string;
+    tip: string;
+  };
+  /** Sửa ngữ pháp inline (nếu có) */
+  grammarCorrections?: {
+    original: string;
+    correction: string;
+    explanation: string;
+  }[];
+}
+
+/** Setup cấu hình cho AI Conversation */
+export interface ConversationSetup {
+  /** Mode: Free Talk (timer) hoặc Roleplay (turns) */
+  mode: 'free-talk' | 'roleplay';
+  /** Topic/Scenario đã chọn (reuse TopicPicker) */
+  topicId: string | null;
+  /** Tên topic hiển thị */
+  topicName: string;
+  /** Mô tả topic */
+  topicDescription: string;
+  /** Persona cho Roleplay (null cho Free Talk) */
+  persona: ScenarioPersona | null;
+  /** Độ khó — chỉ cho Roleplay */
+  difficulty: 'easy' | 'medium' | 'hard';
+  /** Thời lượng phút — chỉ cho Free Talk */
+  durationMinutes: number;
+  /** Số turns tối đa — chỉ cho Roleplay */
+  maxTurns: number;
+  /** Mức phản hồi */
+  feedbackMode: 'beginner' | 'intermediate' | 'advanced';
+  /** Tuỳ chọn */
+  options: {
+    /** Gợi ý câu trả lời (Free Talk + beginner) */
+    showSuggestions: boolean;
+    /** Sửa ngữ pháp inline */
+    inlineGrammarFix: boolean;
+    /** Cảnh báo phát âm inline */
+    pronunciationAlert: boolean;
+  };
+}
+
+/** Trạng thái session AI Conversation */
+export interface ConversationSession {
+  /** Session đang hoạt động */
+  isActive: boolean;
   /** Danh sách tin nhắn */
-  messages: ChatMessage[];
-  /** Thời gian còn lại (seconds) */
-  remainingSeconds: number;
+  messages: ConversationMessage[];
+  /** Thời gian còn lại — Free Talk (seconds) */
+  remainingTime: number;
+  /** Turn hiện tại — Roleplay */
+  currentTurn: number;
   /** Chế độ input: voice hoặc text */
   inputMode: 'voice' | 'text';
-  /** Đang chờ AI trả lời */
-  isAIResponding: boolean;
-  /** Session đã kết thúc */
-  isEnded: boolean;
+}
+
+/** Trạng thái ghi âm */
+export interface RecordingState {
+  /** Đang ghi âm */
+  isRecording: boolean;
+  /** Thời gian ghi (seconds) */
+  duration: number;
+  /** URI file audio */
+  audioUri: string | null;
+  /** Dữ liệu waveform realtime */
+  waveformData: number[];
+}
+
+/** Trạng thái AI */
+export interface AIState {
+  /** AI đang generate response */
+  isThinking: boolean;
+  /** Đang transcribe audio → text */
+  isTranscribing: boolean;
+  /** Gợi ý câu trả lời (cho Free Talk beginner) */
+  suggestedResponses: string[];
+}
+
+/** Kết quả tổng kết session */
+export interface SessionSummary {
+  /** Tổng thời gian session (seconds) */
+  totalTime: number;
+  /** Tổng lượt nói */
+  totalTurns: number;
+  /** Điểm tổng 0-100 */
+  overallScore: number;
+  /** Xếp loại */
+  grade: string;
+  /** Từ phát âm cần cải thiện */
+  pronunciationIssues: {
+    word: string;
+    accuracy: number;
+    ipa: string;
+  }[];
+  /** Lỗi ngữ pháp đã sửa */
+  grammarFixes: {
+    original: string;
+    correction: string;
+  }[];
+  /** Nhận xét AI */
+  aiFeedback: string;
+  /** Badge scenario (Roleplay only) */
+  scenarioBadge: string | null;
 }
 
 // =======================
@@ -50,6 +148,20 @@ export interface TtsSettings {
   voiceId: string;
   /** Tốc độ đọc (0.5 → 2.0) */
   speed: number;
+  /** Cảm xúc giọng đọc: cheerful / neutral / friendly / newscast */
+  emotion: 'cheerful' | 'neutral' | 'friendly' | 'newscast';
+  /** Tự động chọn cảm xúc theo context */
+  autoEmotion: boolean;
+  /** Cao độ giọng (-50 → +50 %) */
+  pitch: number;
+  /** Random giọng đọc mỗi câu */
+  randomVoice: boolean;
+}
+
+/** Cài đạt hiển thị cho Practice Session */
+export interface DisplaySettings {
+  /** Hiện/ẩn phiên âm IPA */
+  showIPA: boolean;
 }
 
 interface SpeakingState {
@@ -77,12 +189,24 @@ interface SpeakingState {
   error: string | null;
 
   // ===== TTS Settings =====
-  /** Cài đặt TTS provider + voice + speed */
+  /** Cài đặt TTS provider + voice + speed + pitch + emotion */
   ttsSettings: TtsSettings;
 
-  // ===== Coach Mode State =====
-  /** Coach session hiện tại (null nếu chưa bắt đầu) */
-  coachSession: CoachSession | null;
+  // ===== Display Settings =====
+  /** Cài đặt hiển thị (showIPA) */
+  displaySettings: DisplaySettings;
+
+  // ===== AI Conversation State =====
+  /** Setup cấu hình conversation (null nếu chưa config) */
+  conversationSetup: ConversationSetup | null;
+  /** Session conversation hiện tại (null nếu chưa bắt đầu) */
+  conversationSession: ConversationSession | null;
+  /** Trạng thái ghi âm conversation */
+  conversationRecording: RecordingState;
+  /** Trạng thái AI conversation */
+  conversationAI: AIState;
+  /** Kết quả tổng kết (null nếu chưa có) */
+  conversationSummary: SessionSummary | null;
 }
 
 interface SpeakingActions {
@@ -117,30 +241,67 @@ interface SpeakingActions {
   /** Reset toàn bộ store */
   reset: () => void;
 
-  // ===== Coach Mode Actions =====
-  /** Bắt đầu coach session mới */
-  startCoachSession: (setup: CoachSetup) => void;
-  /** Thêm 1 message vào hội thoại */
-  addCoachMessage: (message: ChatMessage) => void;
-  /** Chuyển chế độ input (voice/text) */
-  setCoachInputMode: (mode: 'voice' | 'text') => void;
-  /** Giảm timer 1 giây */
-  tickCoachTimer: () => void;
-  /** Set AI đang trả lời */
-  setCoachAIResponding: (value: boolean) => void;
-  /** Kết thúc coach session */
-  endCoachSession: () => void;
-  /** Reset coach session */
-  resetCoach: () => void;
+  // ===== AI Conversation Actions =====
+  /** Lưu setup cấu hình conversation */
+  setConversationSetup: (setup: ConversationSetup) => void;
+  /** Bắt đầu conversation session mới */
+  startConversation: () => void;
+  /** Thêm tin nhắn vào hội thoại */
+  addConversationMessage: (message: ConversationMessage) => void;
+  /** Cập nhật tin nhắn cuối (streaming) */
+  updateLastMessage: (update: Partial<ConversationMessage>) => void;
+  /** Chuyển input mode (voice/text) */
+  setConversationInputMode: (mode: 'voice' | 'text') => void;
+  /** Giảm timer 1 giây (Free Talk) */
+  tickConversationTimer: () => void;
+  /** Tăng turn counter (Roleplay) */
+  incrementTurn: () => void;
+  /** Set AI đang thinking */
+  setAIThinking: (value: boolean) => void;
+  /** Set đang transcribing */
+  setAITranscribing: (value: boolean) => void;
+  /** Set gợi ý câu trả lời */
+  setSuggestedResponses: (suggestions: string[]) => void;
+  /** Bắt đầu ghi âm conversation */
+  startConversationRecording: () => void;
+  /** Dừng ghi âm conversation */
+  stopConversationRecording: (audioUri: string) => void;
+  /** Cập nhật waveform data */
+  updateWaveformData: (data: number[]) => void;
+  /** Cập nhật thời gian ghi âm conversation */
+  setConversationRecordingDuration: (seconds: number) => void;
+  /** Kết thúc conversation session */
+  endConversation: () => void;
+  /** Set kết quả tổng kết */
+  setConversationSummary: (summary: SessionSummary) => void;
+  /** Reset toàn bộ conversation state */
+  resetConversation: () => void;
 
   // ===== TTS Settings Actions =====
   /** Cập nhật TTS settings (merge partial) */
   setTtsSettings: (settings: Partial<TtsSettings>) => void;
+
+  // ===== Display Settings Actions =====
+  /** Toggle hiển thị IPA */
+  setShowIPA: (show: boolean) => void;
 }
+
+const initialConversationRecording: RecordingState = {
+  isRecording: false,
+  duration: 0,
+  audioUri: null,
+  waveformData: [],
+};
+
+const initialConversationAI: AIState = {
+  isThinking: false,
+  isTranscribing: false,
+  suggestedResponses: [],
+};
 
 const initialState: SpeakingState = {
   config: {
-    topic: '',
+    topic: null,
     level: 'intermediate',
   },
   sentences: [],
@@ -154,21 +315,33 @@ const initialState: SpeakingState = {
   isTranscribing: false,
   error: null,
   ttsSettings: {
-    provider: 'openai',
-    voiceId: 'alloy',
+    provider: 'azure',
+    voiceId: 'en-US-JennyNeural',
     speed: 1.0,
+    pitch: 0,
+    emotion: 'cheerful',
+    autoEmotion: true,
+    randomVoice: false,
   },
-  coachSession: null,
+  displaySettings: {
+    showIPA: true,
+  },
+  conversationSetup: null,
+  conversationSession: null,
+  conversationRecording: initialConversationRecording,
+  conversationAI: initialConversationAI,
+  conversationSummary: null,
 };
 
 /**
- * Mục đích: Zustand store cho Speaking module (Practice + Coach Mode)
+ * Mục đích: Zustand store cho Speaking module (Practice + AI Conversation)
  * Khi nào sử dụng:
  *   - ConfigScreen: đọc/ghi config, gọi generate
  *   - PracticeScreen: quản lý recording, navigate sentences
  *   - FeedbackScreen: đọc feedback, retry/next
- *   - CoachSetupScreen: tạo coach session
- *   - CoachSessionScreen: gửi/nhận messages, quản lý timer
+ *   - ConversationSetupScreen: tạo conversation setup
+ *   - ConversationScreen: gửi/nhận messages, quản lý timer/turns
+ *   - SessionSummaryScreen: hiển thị tổng kết
  *   - QuickActions: reset khi bắt đầu session mới
  */
 // ===========================
@@ -244,100 +417,200 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
 
     reset: () => set(initialState),
 
-    // ===== Coach Mode Actions =====
+    // ===== AI Conversation Actions =====
 
-    startCoachSession: setup =>
-      set({
-        coachSession: {
-          setup,
-          messages: [],
-          remainingSeconds: setup.durationMinutes * 60,
-          inputMode: 'voice',
-          isAIResponding: false,
-          isEnded: false,
-        },
-        isRecording: false,
-        audioUri: null,
-        error: null,
+    setConversationSetup: setup =>
+      set({conversationSetup: setup}),
+
+    startConversation: () =>
+      set(state => {
+        if (!state.conversationSetup) return {};
+        const setup = state.conversationSetup;
+        return {
+          conversationSession: {
+            isActive: true,
+            messages: [],
+            remainingTime: setup.mode === 'free-talk' ? setup.durationMinutes * 60 : 0,
+            currentTurn: 0,
+            inputMode: 'voice',
+          },
+          conversationRecording: initialConversationRecording,
+          conversationAI: initialConversationAI,
+          conversationSummary: null,
+          error: null,
+        };
       }),
 
-    addCoachMessage: message =>
+    addConversationMessage: message =>
       set(state => {
-        if (!state.coachSession) return {};
+        if (!state.conversationSession) return {};
         return {
-          coachSession: {
-            ...state.coachSession,
-            messages: [...state.coachSession.messages, message],
+          conversationSession: {
+            ...state.conversationSession,
+            messages: [...state.conversationSession.messages, message],
           },
         };
       }),
 
-    setCoachInputMode: mode =>
+    updateLastMessage: update =>
       set(state => {
-        if (!state.coachSession) return {};
+        if (!state.conversationSession) return {};
+        const msgs = [...state.conversationSession.messages];
+        if (msgs.length === 0) return {};
+        msgs[msgs.length - 1] = {...msgs[msgs.length - 1], ...update};
         return {
-          coachSession: {...state.coachSession, inputMode: mode},
+          conversationSession: {
+            ...state.conversationSession,
+            messages: msgs,
+          },
         };
       }),
 
-    tickCoachTimer: () =>
+    setConversationInputMode: mode =>
       set(state => {
-        if (!state.coachSession || state.coachSession.isEnded) return {};
-        const remaining = state.coachSession.remainingSeconds - 1;
+        if (!state.conversationSession) return {};
+        return {
+          conversationSession: {...state.conversationSession, inputMode: mode},
+        };
+      }),
+
+    tickConversationTimer: () =>
+      set(state => {
+        if (!state.conversationSession || !state.conversationSession.isActive) return {};
+        const remaining = state.conversationSession.remainingTime - 1;
         if (remaining <= 0) {
           return {
-            coachSession: {
-              ...state.coachSession,
-              remainingSeconds: 0,
-              isEnded: true,
+            conversationSession: {
+              ...state.conversationSession,
+              remainingTime: 0,
+              isActive: false,
             },
           };
         }
         return {
-          coachSession: {
-            ...state.coachSession,
-            remainingSeconds: remaining,
+          conversationSession: {
+            ...state.conversationSession,
+            remainingTime: remaining,
           },
         };
       }),
 
-    setCoachAIResponding: value =>
+    incrementTurn: () =>
       set(state => {
-        if (!state.coachSession) return {};
+        if (!state.conversationSession) return {};
+        const newTurn = state.conversationSession.currentTurn + 1;
+        const maxTurns = state.conversationSetup?.maxTurns ?? 8;
+        const isActive = newTurn < maxTurns;
         return {
-          coachSession: {...state.coachSession, isAIResponding: value},
+          conversationSession: {
+            ...state.conversationSession,
+            currentTurn: newTurn,
+            isActive,
+          },
         };
       }),
 
-    endCoachSession: () =>
+    setAIThinking: value =>
+      set(state => ({
+        conversationAI: {...state.conversationAI, isThinking: value},
+      })),
+
+    setAITranscribing: value =>
+      set(state => ({
+        conversationAI: {...state.conversationAI, isTranscribing: value},
+      })),
+
+    setSuggestedResponses: suggestions =>
+      set(state => ({
+        conversationAI: {...state.conversationAI, suggestedResponses: suggestions},
+      })),
+
+    startConversationRecording: () =>
+      set({
+        conversationRecording: {
+          isRecording: true,
+          duration: 0,
+          audioUri: null,
+          waveformData: [],
+        },
+      }),
+
+    stopConversationRecording: audioUri =>
+      set(state => ({
+        conversationRecording: {
+          ...state.conversationRecording,
+          isRecording: false,
+          audioUri,
+        },
+      })),
+
+    updateWaveformData: data =>
+      set(state => ({
+        conversationRecording: {
+          ...state.conversationRecording,
+          waveformData: data,
+        },
+      })),
+
+    setConversationRecordingDuration: seconds =>
+      set(state => ({
+        conversationRecording: {
+          ...state.conversationRecording,
+          duration: seconds,
+        },
+      })),
+
+    endConversation: () =>
       set(state => {
-        if (!state.coachSession) return {};
+        if (!state.conversationSession) return {};
         return {
-          coachSession: {...state.coachSession, isEnded: true},
+          conversationSession: {
+            ...state.conversationSession,
+            isActive: false,
+          },
         };
       }),
 
-    resetCoach: () => set({coachSession: null}),
+    setConversationSummary: summary =>
+      set({conversationSummary: summary}),
+
+    resetConversation: () =>
+      set({
+        conversationSetup: null,
+        conversationSession: null,
+        conversationRecording: initialConversationRecording,
+        conversationAI: initialConversationAI,
+        conversationSummary: null,
+      }),
 
     // ===== TTS Settings =====
-    // EC-M10 fix: Clamp speed trong range hợp lệ cho cả OpenAI (0.25-4.0) và Azure
+    // Clamp speed (0.5-2.0) và pitch (-50 đến +50) trong range hợp lệ
     setTtsSettings: (settings) =>
       set(state => ({
         ttsSettings: {
           ...state.ttsSettings,
           ...settings,
           speed: settings.speed !== undefined
-            ? Math.max(0.25, Math.min(4.0, settings.speed))
+            ? Math.max(0.5, Math.min(2.0, settings.speed))
             : state.ttsSettings.speed,
+          pitch: settings.pitch !== undefined
+            ? Math.max(-50, Math.min(50, settings.pitch))
+            : state.ttsSettings.pitch,
         },
       })),
+
+    // ===== Display Settings =====
+    setShowIPA: (show) => set(state => ({
+      displaySettings: {...state.displaySettings, showIPA: show},
+    })),
   }),
     {
       name: 'speaking-store',
       storage: createJSONStorage(() => mmkvStorage),
-      // Chỉ persist TTS settings — các state khác là session-specific
+      // Persist TTS settings + display settings — các state khác là session-specific
       partialize: (state) => ({
         ttsSettings: state.ttsSettings,
+        displaySettings: state.displaySettings,
       }),
     },
   ),

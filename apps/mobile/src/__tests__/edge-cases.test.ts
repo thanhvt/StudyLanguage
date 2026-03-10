@@ -570,52 +570,121 @@ describe('useVocabularyStore — Edge Cases', () => {
 });
 
 // ==============================================================
-// 12. useSpeakingStore — Coach Timer Edge Cases
+// 12. useSpeakingStore — AI Conversation Edge Cases
 // ==============================================================
 
-describe('useSpeakingStore — Coach Timer Edge Cases', () => {
+describe('useSpeakingStore — AI Conversation Edge Cases', () => {
   beforeEach(() => {
     useSpeakingStore.getState().reset();
   });
 
-  it('tickCoachTimer không tick khi session đã ended', () => {
-    useSpeakingStore.getState().startCoachSession({
-      topic: 'Test',
-      durationMinutes: 1,
-      feedbackMode: 'beginner',
+  it('startConversation khởi tạo session đúng mode', () => {
+    useSpeakingStore.getState().setConversationSetup({
+      mode: 'free-talk',
+      topicId: 'topic-1',
+      topicName: 'Travel',
+      topicDescription: 'Talking about travel',
+      persona: null,
+      difficulty: 'medium',
+      durationMinutes: 5,
+      maxTurns: 0,
+      feedbackMode: 'intermediate',
+      options: {showSuggestions: true, inlineGrammarFix: true, pronunciationAlert: true},
     });
+    useSpeakingStore.getState().startConversation();
 
-    useSpeakingStore.getState().endCoachSession();
-    const remainingBefore =
-      useSpeakingStore.getState().coachSession!.remainingSeconds;
-
-    useSpeakingStore.getState().tickCoachTimer();
-
-    expect(
-      useSpeakingStore.getState().coachSession!.remainingSeconds,
-    ).toBe(remainingBefore);
+    const session = useSpeakingStore.getState().conversationSession;
+    expect(session?.isActive).toBe(true);
+    expect(session?.messages).toEqual([]);
   });
 
-  it('nhiều tick liên tục không làm remainingSeconds âm', () => {
-    useSpeakingStore.getState().startCoachSession({
-      topic: 'Test',
-      durationMinutes: 0,
+  it('addConversationMessage thêm message đúng', () => {
+    useSpeakingStore.getState().setConversationSetup({
+      mode: 'free-talk',
+      topicId: null,
+      topicName: 'General',
+      topicDescription: '',
+      persona: null,
+      difficulty: 'easy',
+      durationMinutes: 3,
+      maxTurns: 0,
       feedbackMode: 'beginner',
+      options: {showSuggestions: true, inlineGrammarFix: true, pronunciationAlert: true},
     });
-    useSpeakingStore.setState(state => ({
-      coachSession: state.coachSession
-        ? {...state.coachSession, remainingSeconds: 2}
-        : null,
-    }));
+    useSpeakingStore.getState().startConversation();
 
-    // Tick 5 lần nhưng chỉ còn 2 giây
-    for (let i = 0; i < 5; i++) {
-      useSpeakingStore.getState().tickCoachTimer();
-    }
+    useSpeakingStore.getState().addConversationMessage({
+      id: 'msg-1',
+      role: 'user',
+      text: 'Hello!',
+      timestamp: Date.now(),
+    });
 
-    expect(
-      useSpeakingStore.getState().coachSession!.remainingSeconds,
-    ).toBe(0);
-    expect(useSpeakingStore.getState().coachSession!.isEnded).toBe(true);
+    const session = useSpeakingStore.getState().conversationSession;
+    expect(session?.messages).toHaveLength(1);
+    expect(session?.messages[0].text).toBe('Hello!');
+  });
+
+  it('endConversation đặt isActive = false', () => {
+    useSpeakingStore.getState().setConversationSetup({
+      mode: 'roleplay',
+      topicId: 'rp-1',
+      topicName: 'Doctor',
+      topicDescription: 'Visit doctor',
+      persona: {name: 'Dr. Smith', role: 'Doctor', avatar: '👨‍⚕️', greeting: 'Hello!', systemPrompt: 'Be a doctor'},
+      difficulty: 'hard',
+      durationMinutes: 0,
+      maxTurns: 10,
+      feedbackMode: 'advanced',
+      options: {showSuggestions: false, inlineGrammarFix: true, pronunciationAlert: true},
+    });
+    useSpeakingStore.getState().startConversation();
+
+    useSpeakingStore.getState().endConversation();
+    expect(useSpeakingStore.getState().conversationSession?.isActive).toBe(false);
+  });
+
+  it('incrementTurn tăng currentTurn', () => {
+    useSpeakingStore.getState().setConversationSetup({
+      mode: 'roleplay',
+      topicId: null,
+      topicName: 'Test',
+      topicDescription: '',
+      persona: null,
+      difficulty: 'easy',
+      durationMinutes: 0,
+      maxTurns: 8,
+      feedbackMode: 'beginner',
+      options: {showSuggestions: true, inlineGrammarFix: false, pronunciationAlert: false},
+    });
+    useSpeakingStore.getState().startConversation();
+
+    useSpeakingStore.getState().incrementTurn();
+    useSpeakingStore.getState().incrementTurn();
+    expect(useSpeakingStore.getState().conversationSession?.currentTurn).toBe(2);
+  });
+
+  it('resetConversation xóa hết state conversation', () => {
+    useSpeakingStore.getState().setConversationSetup({
+      mode: 'free-talk',
+      topicId: null,
+      topicName: 'Test',
+      topicDescription: '',
+      persona: null,
+      difficulty: 'easy',
+      durationMinutes: 5,
+      maxTurns: 0,
+      feedbackMode: 'beginner',
+      options: {showSuggestions: true, inlineGrammarFix: true, pronunciationAlert: true},
+    });
+    useSpeakingStore.getState().startConversation();
+    useSpeakingStore.getState().addConversationMessage({
+      id: 'msg-1', role: 'user', text: 'Hi', timestamp: Date.now(),
+    });
+
+    useSpeakingStore.getState().resetConversation();
+    expect(useSpeakingStore.getState().conversationSession).toBeNull();
+    expect(useSpeakingStore.getState().conversationSetup).toBeNull();
   });
 });
+

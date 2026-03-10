@@ -31,6 +31,22 @@ export const SKILL_LABELS: Record<SkillType, string> = {
   reading: 'Luyện Đọc',
 } as const;
 
+// Màu accent cho AI Conversation sub-modes
+export const CONVERSATION_COLORS = {
+  freeTalk: {light: '#16A34A', dark: '#4ade80'},
+  roleplay: {light: '#EA580C', dark: '#F97316'},
+} as const;
+
+/** Lấy accent color cho AI Conversation dựa trên mode */
+export function getConversationColor(
+  mode: 'free-talk' | 'roleplay',
+  theme: 'light' | 'dark' = 'dark',
+): string {
+  return mode === 'free-talk'
+    ? CONVERSATION_COLORS.freeTalk[theme]
+    : CONVERSATION_COLORS.roleplay[theme];
+}
+
 /**
  * Mục đích: Lấy màu skill dựa trên theme hiện tại
  * Tham số đầu vào: skill (SkillType), theme ('light' | 'dark')
