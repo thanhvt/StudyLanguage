@@ -1,208 +1,235 @@
-import React, {useState} from 'react';
-import {View, Pressable, Dimensions, StyleSheet} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-} from 'react-native-reanimated';
+import React, {useState, useEffect} from 'react';
+import {View, TouchableOpacity, Dimensions} from 'react-native';
+import {MMKV} from 'react-native-mmkv';
 import {AppText} from '@/components/ui';
-import AppButton from '@/components/ui/AppButton';
-import {SKILL_COLORS} from '@/config/skillColors';
+import {useColors} from '@/hooks/useColors';
+import {useHaptic} from '@/hooks/useHaptic';
 
-// =======================
-// Types
-// =======================
-
-interface OnboardingStep {
-  /** Emoji icon */
-  emoji: string;
-  /** Tiêu đề */
-  title: string;
-  /** Mô tả */
-  description: string;
-}
+// ============================================
+// TYPES & CONSTANTS
+// ============================================
 
 interface OnboardingOverlayProps {
   /** Hiển thị overlay */
   visible: boolean;
-  /** Callback khi hoàn tất */
+  /** Callback đóng overlay */
   onComplete: () => void;
 }
 
-// =======================
-// Data
-// =======================
+/** MMKV storage cho onboarding flag — wrap try/catch phòng trường hợp MMKV fail */
+let onboardingStorage: MMKV | null = null;
+try {
+  onboardingStorage = new MMKV({id: 'speaking-onboarding'});
+} catch (err) {
+  console.error('⚠️ [Onboarding] Không thể khởi tạo MMKV:', err);
+}
+const ONBOARDING_KEY = 'speaking-onboarding-completed';
 
-const STEPS: OnboardingStep[] = [
+/** 5 bước onboarding Speaking */
+const ONBOARDING_STEPS = [
   {
+    id: 'welcome',
+    emoji: '🎤',
+    title: 'Chào mừng đến Speaking!',
+    description: 'Luyện phát âm tiếng Anh với AI. Nghe mẫu, ghi âm, nhận phản hồi chi tiết.',
+  },
+  {
+    id: 'modes',
+    emoji: '📋',
+    title: 'Nhiều chế độ luyện tập',
+    description: 'Luyện câu, hội thoại AI, Shadowing, Tongue Twister — mỗi mode giúp bạn cải thiện khác nhau.',
+  },
+  {
+    id: 'recording',
     emoji: '🎙️',
-    title: 'Luyện phát âm',
-    description: 'Nghe AI đọc mẫu, nhấn giữ mic để ghi âm. AI sẽ chấm điểm từng từ của bạn.',
+    title: 'Nhấn giữ để ghi âm',
+    description: 'Nhấn giữ nút mic để bắt đầu ghi. Thả ra khi xong. AI sẽ đánh giá ngay!',
   },
   {
-    emoji: '🎧',
-    title: 'Chế độ Shadowing',
-    description: 'Nghe câu mẫu rồi lặp lại. So sánh waveform và nhận điểm chi tiết.',
+    id: 'feedback',
+    emoji: '📊',
+    title: 'Phản hồi chi tiết',
+    description: 'Xem điểm phát âm, trôi chảy, tốc độ. Heatmap phoneme cho bạn biết âm nào cần cải thiện.',
   },
   {
-    emoji: '🎭',
-    title: 'Roleplay thực tế',
-    description: 'Đóng vai trong các tình huống thực tế như đặt phòng, phỏng vấn, gọi món.',
-  },
-  {
-    emoji: '👅',
-    title: 'Tongue Twister',
-    description: 'Thử thách đọc nhanh + đúng. Xem tốc độ WPM và cải thiện mỗi ngày.',
-  },
-  {
-    emoji: '📈',
-    title: 'Theo dõi tiến độ',
-    description: 'Xem biểu đồ, huy hiệu, và điểm yếu cần cải thiện.',
+    id: 'progress',
+    emoji: '🏆',
+    title: 'Theo dõi tiến trình',
+    description: 'Dashboard, streak, badges — luyện tập mỗi ngày để đạt mục tiêu!',
   },
 ];
 
-const {width} = Dimensions.get('window');
-
-// =======================
-// Component
-// =======================
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 /**
- * Mục đích: Overlay hướng dẫn sử dụng lần đầu cho Speaking
- * Tham số đầu vào: visible, onComplete
- * Tham số đầu ra: JSX.Element — fullscreen overlay với step-by-step
- * Khi nào sử dụng:
- *   - ConfigScreen: lần đầu mở Speaking → hiện onboarding
- *   - Khi user nhấn "Hướng dẫn" trong settings
+ * Mục đích: Overlay hướng dẫn sử dụng Speaking module (5 bước)
+ * Tham số đầu vào: OnboardingOverlayProps (visible, onComplete)
+ * Tham số đầu ra: JSX.Element | null
+ * Khi nào sử dụng: Speaking Home mount lần đầu → kiểm tra MMKV flag → hiển thị
  */
 export default function OnboardingOverlay({visible, onComplete}: OnboardingOverlayProps) {
-  const speakingColor = SKILL_COLORS.speaking.dark;
+  const colors = useColors();
+  const haptic = useHaptic();
   const [currentStep, setCurrentStep] = useState(0);
 
-  if (!visible) return null;
+  // Kiểm tra đã hoàn thành onboarding chưa
+  const [shouldShow, setShouldShow] = useState(false);
 
-  const step = STEPS[currentStep];
-  const isLast = currentStep === STEPS.length - 1;
+  useEffect(() => {
+    const completed = onboardingStorage?.getBoolean(ONBOARDING_KEY);
+    if (!completed && visible) {
+      setShouldShow(true);
+    }
+  }, [visible]);
+
+  if (!shouldShow) return null;
+
+  const step = ONBOARDING_STEPS[currentStep];
+  const isLast = currentStep === ONBOARDING_STEPS.length - 1;
+  const {width: screenWidth} = Dimensions.get('window');
 
   /**
-   * Mục đích: Chuyển sang step tiếp theo hoặc hoàn tất
+   * Mục đích: Chuyển bước tiếp theo hoặc hoàn thành
    * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User tap "Tiếp" hoặc "Bắt đầu"
+   * Khi nào sử dụng: User nhấn "Tiếp theo" hoặc "Bắt đầu"
    */
   const handleNext = () => {
+    haptic.light();
     if (isLast) {
+      // Đánh dấu đã hoàn thành + đóng
+      onboardingStorage?.set(ONBOARDING_KEY, true);
+      setShouldShow(false);
       onComplete();
+      console.log('✅ [Onboarding] Hoàn thành onboarding');
     } else {
       setCurrentStep(prev => prev + 1);
     }
   };
 
   /**
-   * Mục đích: Bỏ qua onboarding
+   * Mục đích: Bỏ qua onboarding — không hiện lại
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn "Bỏ qua"
    */
   const handleSkip = () => {
+    haptic.light();
+    onboardingStorage?.set(ONBOARDING_KEY, true);
+    setShouldShow(false);
     onComplete();
+    console.log('⏩ [Onboarding] Bỏ qua onboarding');
   };
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(300)}
-      exiting={FadeOut.duration(200)}
-      style={styles.overlay}>
-      <Animated.View
-        entering={SlideInDown.springify().damping(18)}
-        style={styles.card}>
-        {/* Skip */}
-        <Pressable onPress={handleSkip} style={styles.skipBtn}>
-          <AppText variant="bodySmall" className="text-neutrals400" raw>
-            Bỏ qua
-          </AppText>
-        </Pressable>
-
-        {/* Emoji */}
-        <AppText variant="heading1" raw style={{fontSize: 56, textAlign: 'center', marginBottom: 16}}>
-          {step.emoji}
-        </AppText>
-
-        {/* Title */}
-        <AppText variant="heading2" weight="bold" raw style={{textAlign: 'center', color: '#FFFFFF', marginBottom: 8}}>
-          {step.title}
-        </AppText>
-
-        {/* Description */}
-        <AppText variant="body" raw style={{textAlign: 'center', color: 'rgba(255,255,255,0.7)', marginBottom: 24, lineHeight: 22}}>
-          {step.description}
-        </AppText>
-
-        {/* Dots */}
-        <View style={styles.dots}>
-          {STEPS.map((_, i) => (
+    <View style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.75)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 999,
+    }}>
+      <View style={{
+        width: screenWidth * 0.85,
+        backgroundColor: colors.background,
+        borderRadius: 24,
+        padding: 28,
+        alignItems: 'center',
+      }}>
+        {/* Step indicator dots */}
+        <View style={{flexDirection: 'row', gap: 6, marginBottom: 24}}>
+          {ONBOARDING_STEPS.map((_, idx) => (
             <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: i === currentStep ? speakingColor : 'rgba(255,255,255,0.2)',
-                  width: i === currentStep ? 20 : 6,
-                },
-              ]}
+              key={idx}
+              style={{
+                width: idx === currentStep ? 24 : 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: idx === currentStep ? '#22C55E' : colors.neutrals400 + '40',
+              }}
             />
           ))}
         </View>
 
-        {/* Button */}
-        <AppButton
-          variant="primary"
-          size="lg"
-          style={{backgroundColor: speakingColor, marginTop: 24, width: '100%'}}
-          onPress={handleNext}>
-          {isLast ? '🚀 Bắt đầu luyện tập!' : 'Tiếp →'}
-        </AppButton>
-      </Animated.View>
-    </Animated.View>
+        {/* Emoji icon */}
+        <View style={{
+          width: 70,
+          height: 70,
+          borderRadius: 20,
+          backgroundColor: '#22C55E15',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+        }}>
+          <AppText variant="heading1" style={{fontSize: 36}}>
+            {step.emoji}
+          </AppText>
+        </View>
+
+        {/* Title */}
+        <AppText
+          variant="heading3"
+          weight="bold"
+          style={{textAlign: 'center', marginBottom: 10}}>
+          {step.title}
+        </AppText>
+
+        {/* Description */}
+        <AppText
+          variant="body"
+          style={{color: colors.neutrals400, textAlign: 'center', lineHeight: 22, marginBottom: 28}}>
+          {step.description}
+        </AppText>
+
+        {/* Action buttons */}
+        <View style={{flexDirection: 'row', gap: 12, width: '100%'}}>
+          {/* Bỏ qua */}
+          {!isLast && (
+            <TouchableOpacity
+              onPress={handleSkip}
+              style={{
+                flex: 1,
+                padding: 14,
+                borderRadius: 14,
+                backgroundColor: colors.surface,
+                alignItems: 'center',
+              }}>
+              <AppText variant="body" weight="semibold" style={{color: colors.neutrals400}}>
+                Bỏ qua
+              </AppText>
+            </TouchableOpacity>
+          )}
+
+          {/* Tiếp theo / Bắt đầu */}
+          <TouchableOpacity
+            onPress={handleNext}
+            style={{
+              flex: isLast ? undefined : 1,
+              ...(isLast && {width: '100%'}),
+              padding: 14,
+              borderRadius: 14,
+              backgroundColor: '#22C55E',
+              alignItems: 'center',
+            }}>
+            <AppText variant="body" weight="bold" style={{color: '#FFF'}}>
+              {isLast ? '🚀 Bắt đầu!' : 'Tiếp theo →'}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+
+        {/* Step counter */}
+        <AppText
+          variant="caption"
+          style={{color: colors.neutrals400, marginTop: 16}}>
+          {currentStep + 1}/{ONBOARDING_STEPS.length}
+        </AppText>
+      </View>
+    </View>
   );
 }
-
-// =======================
-// Styles
-// =======================
-
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    padding: 24,
-  },
-  card: {
-    width: width - 48,
-    padding: 32,
-    borderRadius: 24,
-    backgroundColor: 'rgba(30,30,50,0.95)',
-    alignItems: 'center',
-  },
-  skipBtn: {
-    position: 'absolute',
-    top: 14,
-    right: 18,
-  },
-  dots: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  dot: {
-    height: 6,
-    borderRadius: 3,
-  },
-});

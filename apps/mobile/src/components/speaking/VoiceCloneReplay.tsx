@@ -1,205 +1,323 @@
 import React, {useState, useCallback} from 'react';
-import {View, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {View, TouchableOpacity, Switch} from 'react-native';
 import {AppText} from '@/components/ui';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
-import {WaveformComparison} from '@/components/speaking';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import WaveformComparison from '@/components/speaking/WaveformComparison';
 
 // ============================================
 // TYPES
 // ============================================
 
 interface VoiceCloneReplayProps {
-  /** URL audio bản ghi gốc của user */
-  userAudioUrl: string;
-  /** URL audio đã được AI sửa */
-  correctedAudioUrl: string;
-  /** Danh sách cải thiện cụ thể */
+  /** Câu gốc user đọc */
+  sentence: string;
+  /** Điểm phát âm tổng */
+  score: number;
+  /** URI file audio user ghi */
+  userAudioUri: string | null;
+  /** URL audio AI đã sửa */
+  correctedAudioUrl: string | null;
+  /** Danh sách cải tiến phoneme */
   improvements: VoiceImprovement[];
-  /** Đang loading (chờ AI xử lý) */
-  isLoading?: boolean;
+  /** Dữ liệu waveform bản gốc */
+  userWaveform?: number[];
+  /** Dữ liệu waveform bản AI */
+  aiWaveform?: number[];
+  /** Thuộc tính audio user (giây) */
+  userDuration?: number;
+  /** Thuộc tính audio AI (giây) */
+  aiDuration?: number;
 }
 
-/** Chi tiết 1 điểm cải thiện từ AI Voice Clone */
+/** Type cho improvement — export cho FeedbackScreen */
 export interface VoiceImprovement {
-  /** Âm vị cần sửa */
   phoneme: string;
-  /** Cách user phát âm */
   before: string;
-  /** Cách phát âm chuẩn */
   after: string;
 }
 
-// ============================================
-// AUDIO PLAYER INSTANCE
-// ============================================
-
-const audioPlayer = new AudioRecorderPlayer();
+/** Trạng thái playback cho A/B compare */
+type PlaybackState = 'idle' | 'user' | 'ai' | 'compare';
 
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 /**
- * Mục đích: Component hiển thị before/after audio replay cho AI Voice Clone
- *           So sánh bản ghi gốc của user vs bản được AI sửa
- * Tham số đầu vào: VoiceCloneReplayProps (userAudioUrl, correctedAudioUrl, improvements)
+ * Mục đích: Component so sánh A/B giữa bản ghi user và AI (Voice Clone Replay)
+ * Tham số đầu vào: VoiceCloneReplayProps (sentence, score, audio URLs, improvements)
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: FeedbackScreen → sau khi có feedback → hiển thị section "AI Voice Clone"
+ * Khi nào sử dụng: FeedbackScreen → tab "Voice Clone" → hiển thị so sánh A/B
  */
 export default function VoiceCloneReplay({
-  userAudioUrl,
+  sentence,
+  score,
+  userAudioUri,
   correctedAudioUrl,
   improvements,
-  isLoading = false,
+  userWaveform = [],
+  aiWaveform = [],
+  userDuration = 0,
+  aiDuration = 0,
 }: VoiceCloneReplayProps) {
   const colors = useColors();
   const haptic = useHaptic();
 
-  // Đang phát track nào: 'user' | 'ai' | null
-  const [playing, setPlaying] = useState<'user' | 'ai' | null>(null);
+  // Playback state
+  const [playback, setPlayback] = useState<PlaybackState>('idle');
+  const [autoLoop, setAutoLoop] = useState(false);
 
   /**
-   * Mục đích: Phát audio (user recording hoặc AI corrected)
-   * Tham số đầu vào: type ('user' | 'ai'), url (string)
+   * Mục đích: Phát audio bản gốc user
+   * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn nút Play trên 1 trong 2 card
+   * Khi nào sử dụng: User tap card "Bản gốc"
    */
-  const handlePlay = useCallback(async (type: 'user' | 'ai', url: string) => {
+  const playUserAudio = useCallback(() => {
     haptic.light();
-
-    // Đang phát cùng track → dừng
-    if (playing === type) {
-      await audioPlayer.stopPlayer();
-      audioPlayer.removePlayBackListener();
-      setPlaying(null);
+    if (playback === 'user') {
+      setPlayback('idle');
+      console.log('⏸️ [VoiceClone] Dừng audio user');
+      // TODO: AudioRecorderPlayer.stopPlayer()
       return;
     }
+    // Edge: Dừng audio khác trước khi phát (audio overlap prevention)
+    // TODO: AudioRecorderPlayer.stopPlayer() trước khi play mới
+    setPlayback('user');
+    console.log('🔊 [VoiceClone] Phát bản gốc:', userAudioUri);
+    // TODO: AudioRecorderPlayer.startPlayer(userAudioUri)
+  }, [playback, userAudioUri, haptic]);
 
-    // Dừng track cũ (nếu có)
-    if (playing) {
-      await audioPlayer.stopPlayer();
-      audioPlayer.removePlayBackListener();
+  /**
+   * Mục đích: Phát audio bản AI đã sửa
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User tap card "AI đã sửa"
+   */
+  const playAIAudio = useCallback(() => {
+    haptic.light();
+    if (playback === 'ai') {
+      setPlayback('idle');
+      console.log('⏸️ [VoiceClone] Dừng audio AI');
+      // TODO: AudioRecorderPlayer.stopPlayer()
+      return;
     }
+    // Edge: Dừng audio khác trước khi phát
+    // TODO: AudioRecorderPlayer.stopPlayer() trước khi play mới
+    setPlayback('ai');
+    console.log('🔊 [VoiceClone] Phát bản AI:', correctedAudioUrl);
+    // TODO: AudioRecorderPlayer.startPlayer(correctedAudioUrl)
+  }, [playback, correctedAudioUrl, haptic]);
 
-    try {
-      setPlaying(type);
-      await audioPlayer.startPlayer(url);
-      audioPlayer.addPlayBackListener((e) => {
-        if (e.currentPosition >= e.duration) {
-          setPlaying(null);
-          audioPlayer.stopPlayer();
-          audioPlayer.removePlayBackListener();
-        }
-      });
-    } catch (err) {
-      console.error('❌ [VoiceClone] Lỗi phát audio:', err);
-      setPlaying(null);
+  /**
+   * Mục đích: Phát so sánh A/B (xen kẽ user → AI → user → AI)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User tap card "So sánh A/B"
+   */
+  const playCompare = useCallback(() => {
+    haptic.medium();
+    if (playback === 'compare') {
+      setPlayback('idle');
+      console.log('⏸️ [VoiceClone] Dừng so sánh A/B');
+      return;
     }
-  }, [playing, haptic]);
+    setPlayback('compare');
+    console.log('🔄 [VoiceClone] Bắt đầu so sánh A/B | auto-loop:', autoLoop);
+    // TODO: Phát xen kẽ user audio → AI audio, lặp nếu autoLoop
+  }, [playback, autoLoop, haptic]);
 
-  // Loading skeleton
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          padding: 16,
-          borderRadius: 16,
-          backgroundColor: colors.surface,
-          alignItems: 'center',
-          gap: 8,
-        }}>
-        <ActivityIndicator size="small" color="#A855F7" />
-        <AppText variant="caption" style={{color: colors.neutrals400}}>
-          🎭 Đang phân tích giọng nói...
-        </AppText>
-      </View>
-    );
-  }
+  const scoreColor = score >= 90 ? '#22C55E' : score >= 70 ? '#F59E0B' : '#EF4444';
 
   return (
-    <View style={{gap: 12}}>
-      {/* Tiêu đề */}
-      <AppText variant="body" weight="bold">
-        🎭 AI Voice Clone
-      </AppText>
-      <AppText variant="caption" style={{color: colors.neutrals400}}>
-        So sánh bản ghi của bạn với phiên bản AI đã sửa
-      </AppText>
-
-      {/* Before / After Cards */}
-      <View style={{flexDirection: 'row', gap: 10}}>
-        {/* Your Recording */}
-        <AudioCard
-          label="🎤 Bản gốc"
-          sublabel="Your Recording"
-          isPlaying={playing === 'user'}
-          onPress={() => handlePlay('user', userAudioUrl)}
-          accentColor="#EF4444"
-          bgColor={colors.surface}
-        />
-
-        {/* AI Corrected */}
-        <AudioCard
-          label="🤖 AI đã sửa"
-          sublabel="Corrected Version"
-          isPlaying={playing === 'ai'}
-          onPress={() => handlePlay('ai', correctedAudioUrl)}
-          accentColor="#A855F7"
-          bgColor={colors.surface}
-        />
+    <View style={{gap: 16}}>
+      {/* Target sentence header */}
+      <View style={{
+        padding: 14,
+        borderRadius: 14,
+        backgroundColor: colors.surface,
+        borderLeftWidth: 3,
+        borderLeftColor: '#22C55E',
+      }}>
+        <AppText variant="caption" style={{color: colors.neutrals400, marginBottom: 4}}>
+          📝 Câu mẫu
+        </AppText>
+        <AppText variant="body" weight="semibold">
+          {sentence}
+        </AppText>
       </View>
 
-      {/* Waveform Comparison — hiển thị visual khác biệt */}
-      <WaveformComparison
-        aiWaveform={Array.from({length: 30}, () => Math.random() * 0.3 + 0.5)}
-        userWaveform={Array.from({length: 30}, () => Math.random() * 0.4 + 0.3)}
-      />
-
-      {/* Improvements List */}
-      {improvements.length > 0 && (
-        <View style={{gap: 6}}>
-          <AppText variant="caption" weight="bold" style={{color: '#A855F7'}}>
-            📝 Chi tiết cải thiện
-          </AppText>
-          {improvements.map((item, index) => (
-            <View
-              key={`imp-${index}`}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                paddingVertical: 6,
-                paddingHorizontal: 10,
-                borderRadius: 8,
-                backgroundColor: `${colors.surface}`,
-              }}>
-              {/* Âm vị */}
-              <View
-                style={{
-                  backgroundColor: '#A855F720',
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 6,
-                }}>
-                <AppText variant="caption" weight="bold" style={{color: '#A855F7'}}>
-                  {item.phoneme}
-                </AppText>
-              </View>
-
-              {/* Before → After */}
-              <AppText variant="caption" style={{color: '#EF4444'}}>
-                {item.before}
-              </AppText>
+      {/* Card 1: Bản gốc user (MỚI: thêm score badge) */}
+      <AudioCard
+        title="🎙️ Bản gốc của bạn"
+        isPlaying={playback === 'user'}
+        onPress={playUserAudio}
+        accentColor="#3B82F6"
+        surfaceColor={colors.surface}
+        rightContent={
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            {userDuration > 0 && (
               <AppText variant="caption" style={{color: colors.neutrals400}}>
-                →
+                {userDuration.toFixed(1)}s
               </AppText>
-              <AppText variant="caption" style={{color: '#22C55E'}}>
-                {item.after}
+            )}
+            <View style={{
+              paddingVertical: 3,
+              paddingHorizontal: 8,
+              borderRadius: 8,
+              backgroundColor: scoreColor + '15',
+            }}>
+              <AppText variant="caption" weight="bold" style={{color: scoreColor}}>
+                {score}/100
               </AppText>
             </View>
-          ))}
+          </View>
+        }
+      >
+        {/* Waveform user */}
+        {userWaveform.length > 0 && (
+          <WaveformComparison aiWaveform={aiWaveform} userWaveform={userWaveform} height={40} />
+        )}
+      </AudioCard>
+
+      {/* Card 2: AI đã sửa */}
+      <AudioCard
+        title="🤖 AI đã sửa phát âm"
+        isPlaying={playback === 'ai'}
+        onPress={playAIAudio}
+        accentColor="#22C55E"
+        surfaceColor={colors.surface}
+        rightContent={
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            {aiDuration > 0 && (
+              <AppText variant="caption" style={{color: colors.neutrals400}}>
+                {aiDuration.toFixed(1)}s
+              </AppText>
+            )}
+            <AppText variant="caption" style={{color: '#22C55E'}}>
+              ✨ Phát âm chuẩn — AI voice clone
+            </AppText>
+          </View>
+        }
+      >
+        {/* Waveform AI */}
+        {aiWaveform.length > 0 && (
+          <WaveformComparison aiWaveform={aiWaveform} userWaveform={userWaveform} height={40} />
+        )}
+      </AudioCard>
+
+      {/* Card 3: So sánh A/B (MỚI) */}
+      <View style={{
+        padding: 14,
+        borderRadius: 14,
+        backgroundColor: colors.surface,
+        borderWidth: playback === 'compare' ? 1.5 : 0,
+        borderColor: '#8B5CF6',
+      }}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10}}>
+          <AppText variant="body" weight="semibold">
+            🔄 So sánh A/B
+          </AppText>
+          {/* Auto-loop toggle */}
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <AppText variant="caption" style={{color: colors.neutrals400}}>
+              🔁 Loop
+            </AppText>
+            <Switch
+              value={autoLoop}
+              onValueChange={setAutoLoop}
+              trackColor={{false: colors.neutrals400 + '40', true: '#F59E0B60'}}
+              thumbColor={autoLoop ? '#F59E0B' : colors.neutrals400}
+              style={{transform: [{scale: 0.8}]}}
+            />
+          </View>
+        </View>
+
+        {/* So sánh split waveform */}
+        <View style={{flexDirection: 'row', gap: 8, marginBottom: 10}}>
+          <View style={{flex: 1, alignItems: 'center'}}>
+            <AppText variant="caption" style={{color: '#3B82F6', marginBottom: 4}}>Bạn</AppText>
+            {userWaveform.length > 0 && (
+              <WaveformComparison aiWaveform={[]} userWaveform={userWaveform} height={30} />
+            )}
+          </View>
+          <View style={{width: 1, backgroundColor: colors.neutrals400 + '30'}} />
+          <View style={{flex: 1, alignItems: 'center'}}>
+            <AppText variant="caption" style={{color: '#22C55E', marginBottom: 4}}>AI</AppText>
+            {aiWaveform.length > 0 && (
+              <WaveformComparison aiWaveform={aiWaveform} userWaveform={[]} height={30} />
+            )}
+          </View>
+        </View>
+
+        <TouchableOpacity
+          onPress={playCompare}
+          activeOpacity={0.7}
+          style={{
+            padding: 12,
+            borderRadius: 12,
+            backgroundColor: playback === 'compare' ? '#EF4444' : '#F59E0B',
+            alignItems: 'center',
+          }}>
+          <AppText variant="body" weight="bold" style={{color: '#FFF'}}>
+            {playback === 'compare' ? '⏹️ Dừng' : '▶️ Phát so sánh'}
+          </AppText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Word-level IPA Comparison (MỚI: refactored format) */}
+      {improvements.length > 0 && (
+        <View style={{
+          padding: 14,
+          borderRadius: 14,
+          backgroundColor: colors.surface,
+        }}>
+          <AppText variant="body" weight="semibold" style={{marginBottom: 10}}>
+            📖 Chi tiết phát âm từng từ
+          </AppText>
+          <View style={{gap: 8}}>
+            {improvements.map((imp, idx) => (
+              <View
+                key={idx}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 10,
+                  backgroundColor: colors.background,
+                  gap: 10,
+                }}>
+                {/* Phoneme */}
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: '#EF444415',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <AppText variant="body" weight="bold" style={{color: '#EF4444'}}>
+                    {imp.phoneme}
+                  </AppText>
+                </View>
+
+                {/* Before → After */}
+                <View style={{flex: 1}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                    <AppText variant="caption" style={{color: '#EF4444', textDecorationLine: 'line-through'}}>
+                      {imp.before}
+                    </AppText>
+                    <AppText variant="caption" style={{color: colors.neutrals400}}>→</AppText>
+                    <AppText variant="caption" weight="bold" style={{color: '#22C55E'}}>
+                      {imp.after}
+                    </AppText>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       )}
     </View>
@@ -207,61 +325,52 @@ export default function VoiceCloneReplay({
 }
 
 // ============================================
-// AudioCard — Nút play cho 1 track
+// AudioCard — Card phát audio với waveform
 // ============================================
 
 interface AudioCardProps {
-  label: string;
-  sublabel: string;
+  title: string;
   isPlaying: boolean;
   onPress: () => void;
   accentColor: string;
-  bgColor: string;
+  surfaceColor: string;
+  rightContent?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 /**
- * Mục đích: Card nhỏ có nút play/stop cho 1 audio track
- * Tham số đầu vào: label, isPlaying, onPress, accentColor
+ * Mục đích: Card chung cho playback audio (user / AI)
+ * Tham số đầu vào: title, isPlaying, onPress, accentColor, children (waveform)
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: VoiceCloneReplay → 2 cards "Bản gốc" và "AI đã sửa"
+ * Khi nào sử dụng: VoiceCloneReplay → card "Bản gốc" và "AI đã sửa"
  */
-function AudioCard({label, sublabel, isPlaying, onPress, accentColor, bgColor}: AudioCardProps) {
+function AudioCard({title, isPlaying, onPress, accentColor, surfaceColor, rightContent, children}: AudioCardProps) {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
       style={{
-        flex: 1,
         padding: 14,
         borderRadius: 14,
-        borderWidth: 1.5,
-        borderColor: isPlaying ? accentColor : 'transparent',
-        backgroundColor: isPlaying ? `${accentColor}10` : bgColor,
-        alignItems: 'center',
-        gap: 6,
+        backgroundColor: surfaceColor,
+        borderWidth: isPlaying ? 1.5 : 0,
+        borderColor: accentColor,
       }}>
-      {/* Play/Stop icon */}
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: accentColor,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <AppText variant="body" style={{color: '#FFF', fontSize: 18}}>
-          {isPlaying ? '⏹' : '▶️'}
+      <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
+        <AppText variant="body" weight="semibold">
+          {title}
         </AppText>
+        {rightContent}
       </View>
 
-      {/* Label */}
-      <AppText variant="caption" weight="bold">
-        {label}
-      </AppText>
-      <AppText variant="caption" style={{color: '#9CA3AF', fontSize: 10}}>
-        {sublabel}
-      </AppText>
+      {children}
+
+      {/* Play/Pause indicator */}
+      <View style={{alignItems: 'center', marginTop: 8}}>
+        <AppText variant="caption" style={{color: accentColor}}>
+          {isPlaying ? '⏸️ Đang phát — nhấn để dừng' : '▶️ Nhấn để phát'}
+        </AppText>
+      </View>
     </TouchableOpacity>
   );
 }

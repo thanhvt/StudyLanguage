@@ -161,4 +161,91 @@ describe('SpeakingTtsSheet — Logic & Data', () => {
       });
     });
   });
+
+  // ----- C2: Emotion Selection -----
+
+  describe('Emotion Selection (C2)', () => {
+    it('emotion mặc định là cheerful', () => {
+      expect(useSpeakingStore.getState().ttsSettings.emotion).toBe('cheerful');
+    });
+
+    it('chọn emotion neutral', () => {
+      useSpeakingStore.getState().setTtsSettings({emotion: 'neutral'});
+      expect(useSpeakingStore.getState().ttsSettings.emotion).toBe('neutral');
+    });
+
+    it('chọn emotion friendly', () => {
+      useSpeakingStore.getState().setTtsSettings({emotion: 'friendly'});
+      expect(useSpeakingStore.getState().ttsSettings.emotion).toBe('friendly');
+    });
+
+    it('chọn emotion newscast', () => {
+      useSpeakingStore.getState().setTtsSettings({emotion: 'newscast'});
+      expect(useSpeakingStore.getState().ttsSettings.emotion).toBe('newscast');
+    });
+
+    it('auto-emotion mặc định là true', () => {
+      expect(useSpeakingStore.getState().ttsSettings.autoEmotion).toBe(true);
+    });
+
+    it('tắt auto-emotion', () => {
+      useSpeakingStore.getState().setTtsSettings({autoEmotion: false});
+      expect(useSpeakingStore.getState().ttsSettings.autoEmotion).toBe(false);
+    });
+
+    it('chọn emotion tự động tắt autoEmotion khi set explicit emotion', () => {
+      useSpeakingStore.getState().setTtsSettings({autoEmotion: true});
+      useSpeakingStore.getState().setTtsSettings({emotion: 'newscast', autoEmotion: false});
+      expect(useSpeakingStore.getState().ttsSettings.emotion).toBe('newscast');
+      expect(useSpeakingStore.getState().ttsSettings.autoEmotion).toBe(false);
+    });
+  });
+
+  // ----- C2: Pitch Range -----
+
+  describe('Pitch Range (C2)', () => {
+    it('pitch mặc định là 0', () => {
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(0);
+    });
+
+    it('set pitch dương +25', () => {
+      useSpeakingStore.getState().setTtsSettings({pitch: 25});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(25);
+    });
+
+    it('set pitch âm -30', () => {
+      useSpeakingStore.getState().setTtsSettings({pitch: -30});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(-30);
+    });
+
+    it('set pitch ở biên max +50', () => {
+      useSpeakingStore.getState().setTtsSettings({pitch: 50});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(50);
+    });
+
+    it('set pitch ở biên min -50', () => {
+      useSpeakingStore.getState().setTtsSettings({pitch: -50});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(-50);
+    });
+  });
+
+  // ----- C2: Random Voice -----
+
+  describe('Random Voice (C2)', () => {
+    it('randomVoice mặc định là false', () => {
+      expect(useSpeakingStore.getState().ttsSettings.randomVoice).toBe(false);
+    });
+
+    it('bật randomVoice', () => {
+      useSpeakingStore.getState().setTtsSettings({randomVoice: true});
+      expect(useSpeakingStore.getState().ttsSettings.randomVoice).toBe(true);
+    });
+
+    it('giữ voice khi bật randomVoice', () => {
+      useSpeakingStore.getState().setTtsSettings({voiceId: 'echo'});
+      useSpeakingStore.getState().setTtsSettings({randomVoice: true});
+      expect(useSpeakingStore.getState().ttsSettings.voiceId).toBe('echo');
+      expect(useSpeakingStore.getState().ttsSettings.randomVoice).toBe(true);
+    });
+  });
 });

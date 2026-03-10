@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {Modal, Pressable, ScrollView, Switch, TouchableOpacity, View} from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, {
   useAnimatedStyle,
@@ -43,12 +43,21 @@ const AZURE_VOICES = [
   {id: 'en-AU-NatashaNeural', label: 'Natasha', emoji: '🇦🇺', desc: 'Nữ Aussie'},
 ];
 
+/** Danh sách cảm xúc TTS — label tiếng Anh theo mockup */
+const EMOTIONS = [
+  {id: 'cheerful' as const, label: 'Cheerful', emoji: '😊'},
+  {id: 'neutral' as const, label: 'Neutral', emoji: '😐'},
+  {id: 'friendly' as const, label: 'Friendly', emoji: '🤗'},
+  {id: 'newscast' as const, label: 'Newscast', emoji: '📰'},
+];
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 /**
- * Mục đích: Bottom sheet cài đặt TTS cho Speaking module (provider + voice + speed)
+ * Mục đích: Bottom sheet cài đặt TTS cho Speaking module
+ *   (provider + voice + speed + emotion + pitch + random)
  * Tham số đầu vào: SpeakingTtsSheetProps (visible, onClose)
  * Tham số đầu ra: JSX.Element (Modal bottom-sheet)
  * Khi nào sử dụng: ConfigScreen → nhấn "⚙️ Cài đặt giọng AI" → mở sheet
@@ -60,9 +69,25 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
 
   // Trạng thái preview audio
   const [isPreviewing, setIsPreviewing] = useState(false);
+  // Trạng thái đang lưu lên server
+  const [isSaving, setIsSaving] = useState(false);
 
   // Danh sách voice dựa theo provider
   const voices = ttsSettings.provider === 'openai' ? OPENAI_VOICES : AZURE_VOICES;
+  const accentColor = ttsSettings.provider === 'openai' ? '#10B981' : '#2D9CDB';
+
+  // Load settings từ server khi sheet mở
+  useEffect(() => {
+    if (visible) {
+      speakingApi.getTtsSettings().then(serverSettings => {
+        if (serverSettings) {
+          setTtsSettings(serverSettings);
+          console.log('⚙️ [TTS] Đã đồng bộ cài đặt từ server');
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   /**
    * Mục đích: Chuyển đổi TTS provider (OpenAI ↔ Azure)
@@ -102,17 +127,44 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
     }
   };
 
+  /**
+   * Mục đích: Lưu cài đặt lên server + đóng sheet
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn "Lưu cài đặt" hoặc đóng sheet
+   */
+  const handleSave = async () => {
+    setIsSaving(true);
+    haptic.light();
+    try {
+      await speakingApi.updateTtsSettings({
+        voiceId: ttsSettings.voiceId,
+        speed: ttsSettings.speed,
+        emotion: ttsSettings.emotion,
+        autoEmotion: ttsSettings.autoEmotion,
+        pitch: ttsSettings.pitch,
+        randomVoice: ttsSettings.randomVoice,
+      });
+      console.log('✅ [TTS] Lưu cài đặt thành công');
+    } catch (err) {
+      console.error('❌ [TTS] Lỗi lưu:', err);
+    } finally {
+      setIsSaving(false);
+      onClose();
+    }
+  };
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}>
+      onRequestClose={handleSave}>
       <View style={{flex: 1, justifyContent: 'flex-end'}}>
         {/* Backdrop */}
         <Pressable
           style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}
-          onPress={onClose}
+          onPress={handleSave}
         />
 
         {/* Sheet */}
@@ -122,7 +174,7 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingBottom: 40,
-            maxHeight: '80%',
+            maxHeight: '85%',
           }}>
           {/* Handle bar */}
           <View style={{alignItems: 'center', paddingVertical: 12}}>
@@ -144,7 +196,7 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
             <AppText
               variant="caption"
               style={{color: colors.neutrals400, marginTop: 4}}>
-              Chọn provider và giọng phát âm mẫu
+              Provider, giọng, cảm xúc, tốc độ và cao độ
             </AppText>
           </View>
 
@@ -186,11 +238,51 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                     haptic.light();
                     setTtsSettings({voiceId: voice.id});
                   }}
-                  accentColor={
-                    ttsSettings.provider === 'openai' ? '#10B981' : '#2D9CDB'
-                  }
+                  accentColor={accentColor}
                 />
               ))}
+            </View>
+
+            {/* ============================================ */}
+            {/* C2: Emotion Pills (MỚI) */}
+            {/* ============================================ */}
+            <AppText variant="body" weight="semibold" style={{marginBottom: 10}}>
+              🎭 Cảm xúc giọng
+            </AppText>
+            <View style={{flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap'}}>
+              {EMOTIONS.map(emo => (
+                <EmotionPill
+                  key={emo.id}
+                  emotion={emo}
+                  isSelected={ttsSettings.emotion === emo.id}
+                  onPress={() => {
+                    haptic.light();
+                    setTtsSettings({emotion: emo.id, autoEmotion: false});
+                  }}
+                  accentColor={accentColor}
+                />
+              ))}
+            </View>
+            {/* Auto emotion toggle */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 20,
+              paddingVertical: 4,
+            }}>
+              <AppText variant="caption" style={{color: colors.neutrals400}}>
+                🤖 Tự động chọn cảm xúc theo context
+              </AppText>
+              <Switch
+                value={ttsSettings.autoEmotion}
+                onValueChange={(val) => {
+                  haptic.light();
+                  setTtsSettings({autoEmotion: val});
+                }}
+                trackColor={{false: colors.neutrals400 + '40', true: accentColor + '60'}}
+                thumbColor={ttsSettings.autoEmotion ? accentColor : colors.neutrals400}
+              />
             </View>
 
             {/* Speed Slider */}
@@ -202,7 +294,7 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
-                marginBottom: 20,
+                marginBottom: 4,
               }}>
               <AppText variant="caption" style={{color: colors.neutrals400}}>
                 0.5x
@@ -214,13 +306,83 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                 step={0.1}
                 value={ttsSettings.speed}
                 onValueChange={(val: number) => setTtsSettings({speed: val})}
-                minimumTrackTintColor="#22C55E"
+                minimumTrackTintColor={accentColor}
                 maximumTrackTintColor={colors.neutrals400}
-                thumbTintColor="#22C55E"
+                thumbTintColor={accentColor}
               />
               <AppText variant="caption" style={{color: colors.neutrals400}}>
                 2.0x
               </AppText>
+            </View>
+            {/* Cảnh báo tốc độ cao */}
+            {ttsSettings.speed >= 1.8 && (
+              <AppText variant="caption" style={{color: '#F59E0B', marginBottom: 16}}>
+                ⚠️ Rất nhanh! Có thể khó nghe
+              </AppText>
+            )}
+            {ttsSettings.speed < 1.8 && <View style={{marginBottom: 16}} />}
+
+            {/* ============================================ */}
+            {/* C2: Pitch Slider (MỚI) */}
+            {/* ============================================ */}
+            <AppText variant="body" weight="semibold" style={{marginBottom: 6}}>
+              🎵 Cao độ giọng: {ttsSettings.pitch > 0 ? '+' : ''}{ttsSettings.pitch}%
+            </AppText>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                marginBottom: 20,
+              }}>
+              <AppText variant="caption" style={{color: colors.neutrals400}}>
+                Trầm{`\n`}-50%
+              </AppText>
+              <Slider
+                style={{flex: 1, height: 40}}
+                minimumValue={-50}
+                maximumValue={50}
+                step={5}
+                value={ttsSettings.pitch}
+                onValueChange={(val: number) => setTtsSettings({pitch: Math.round(val)})}
+                minimumTrackTintColor={accentColor}
+                maximumTrackTintColor={colors.neutrals400}
+                thumbTintColor={accentColor}
+              />
+              <AppText variant="caption" style={{color: colors.neutrals400, textAlign: 'right'}}>
+                Cao{`\n`}+50%
+              </AppText>
+            </View>
+
+            {/* ============================================ */}
+            {/* C2: Random Voice Toggle (MỚI) */}
+            {/* ============================================ */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 20,
+              padding: 14,
+              borderRadius: 12,
+              backgroundColor: colors.surface,
+            }}>
+              <View style={{flex: 1}}>
+                <AppText variant="body" weight="semibold">
+                  🎲 Random giọng mỗi câu
+                </AppText>
+                <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 2}}>
+                  Mỗi câu sẽ chọn giọng ngẫu nhiên từ danh sách
+                </AppText>
+              </View>
+              <Switch
+                value={ttsSettings.randomVoice}
+                onValueChange={(val) => {
+                  haptic.light();
+                  setTtsSettings({randomVoice: val});
+                }}
+                trackColor={{false: colors.neutrals400 + '40', true: accentColor + '60'}}
+                thumbColor={ttsSettings.randomVoice ? accentColor : colors.neutrals400}
+              />
             </View>
 
             {/* Preview Button */}
@@ -233,19 +395,85 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                 borderRadius: 14,
                 backgroundColor: isPreviewing
                   ? colors.neutrals400
-                  : '#22C55E',
+                  : accentColor,
                 alignItems: 'center',
-                marginBottom: 16,
+                marginBottom: 12,
                 opacity: isPreviewing ? 0.6 : 1,
               }}>
               <AppText variant="body" weight="bold" style={{color: '#FFF'}}>
                 {isPreviewing ? '⏳ Đang phát...' : '🔊 Nghe thử'}
               </AppText>
             </TouchableOpacity>
+
+            {/* Lưu cài đặt Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleSave}
+              disabled={isSaving}
+              style={{
+                padding: 14,
+                borderRadius: 14,
+                backgroundColor: colors.surface,
+                borderWidth: 1.5,
+                borderColor: accentColor,
+                alignItems: 'center',
+                marginBottom: 16,
+                opacity: isSaving ? 0.6 : 1,
+              }}>
+              <AppText variant="body" weight="bold" style={{color: accentColor}}>
+                {isSaving ? '⏳ Đang lưu...' : '💾 Lưu cài đặt'}
+              </AppText>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </View>
     </Modal>
+  );
+}
+
+// ============================================
+// EmotionPill — Chip cảm xúc TTS
+// ============================================
+
+interface EmotionPillProps {
+  emotion: {id: string; label: string; emoji: string};
+  isSelected: boolean;
+  onPress: () => void;
+  accentColor: string;
+}
+
+/**
+ * Mục đích: Pill chip hiển thị 1 cảm xúc TTS (Cheerful/Neutral/Friendly/Newscast)
+ * Tham số đầu vào: emotion data, isSelected, onPress, accentColor
+ * Tham số đầu ra: JSX.Element
+ * Khi nào sử dụng: SpeakingTtsSheet → mỗi emotion option
+ */
+function EmotionPill({emotion, isSelected, onPress, accentColor}: EmotionPillProps) {
+  const colors = useColors();
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: isSelected ? accentColor : colors.neutrals400 + '30',
+        backgroundColor: isSelected ? accentColor + '15' : colors.surface,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+      }}>
+      <AppText variant="caption">{emotion.emoji}</AppText>
+      <AppText
+        variant="caption"
+        weight={isSelected ? 'bold' : 'regular'}
+        style={{color: isSelected ? accentColor : colors.foreground}}>
+        {emotion.label}
+      </AppText>
+    </TouchableOpacity>
   );
 }
 
