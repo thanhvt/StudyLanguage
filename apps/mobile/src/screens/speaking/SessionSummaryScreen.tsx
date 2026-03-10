@@ -67,6 +67,8 @@ export default function SessionSummaryScreen() {
   // Store
   const setup = useSpeakingStore(s => s.conversationSetup);
   const summary = useSpeakingStore(s => s.conversationSummary);
+  // BUG-H02 FIX: Đọc messages từ conversationSession (trước khi reset)
+  const conversationMessages = useSpeakingStore(s => s.conversationSession?.messages ?? []);
   const resetConversation = useSpeakingStore(s => s.resetConversation);
 
   const mode = setup?.mode ?? 'free-talk';
@@ -74,40 +76,58 @@ export default function SessionSummaryScreen() {
 
   // Auto-save vào history khi summary screen mount (fire-and-forget)
   const savedRef = useRef(false);
+  // BUG-H09 FIX: Ref giữ data mới nhất — tránh object deps
+  const setupRef = useRef(setup);
+  const summaryRef = useRef(summary);
+  const messagesRef = useRef(conversationMessages);
+  useEffect(() => { setupRef.current = setup; }, [setup]);
+  useEffect(() => { summaryRef.current = summary; }, [summary]);
+  useEffect(() => { messagesRef.current = conversationMessages; }, [conversationMessages]);
+
+  // BUG-H09 FIX: Boolean dep thay vì object dep
+  const hasSummary = !!summary;
   useEffect(() => {
-    if (savedRef.current || !summary) return;
+    if (savedRef.current || !hasSummary) return;
     savedRef.current = true;
+    const s = summaryRef.current!;
+    const st = setupRef.current;
+    const msgs = messagesRef.current;
 
     const sessionData: ConversationSessionData = {
-      topic: setup?.topicName ?? 'AI Conversation',
+      topic: st?.topicName ?? 'AI Conversation',
       subMode: mode as 'free-talk' | 'roleplay',
-      messages: [], // Tin nhắn lưu ở conversationSession.messages, không có trên summary
-      pronunciationAlerts: summary.pronunciationIssues?.map((p: any) => ({
+      // BUG-H02 FIX: Đọc messages thực tế từ conversationSession store
+      messages: msgs.map(m => ({
+        role: (m.role === 'ai' ? 'assistant' : m.role) as 'user' | 'assistant',
+        content: m.text,
+      })),
+      pronunciationAlerts: s.pronunciationIssues?.map((p: any) => ({
         word: p.word,
         ipa: p.ipa,
         tip: p.tip ?? '',
       })) ?? [],
-      grammarCorrections: summary.grammarFixes?.map((g: any) => ({
+      grammarCorrections: s.grammarFixes?.map((g: any) => ({
         wrong: g.original,
         correct: g.correction,
         explanation: g.explanation ?? '',
       })) ?? [],
       summary: {
-        totalTurns: summary.totalTurns ?? 0,
-        score: summary.overallScore ?? 0,
-        aiNotes: summary.aiFeedback ?? '',
+        totalTurns: s.totalTurns ?? 0,
+        score: s.overallScore ?? 0,
+        aiNotes: s.aiFeedback ?? '',
       },
-      durationSeconds: summary.totalTime ?? 0,
-      persona: setup?.persona
-        ? {name: setup.persona.name, role: setup.persona.role}
+      durationSeconds: s.totalTime ?? 0,
+      persona: st?.persona
+        ? {name: st.persona.name, role: st.persona.role}
         : undefined,
-      difficulty: setup?.difficulty,
+      difficulty: st?.difficulty,
     };
     saveSpeakingSession(
       mode === 'roleplay' ? 'conversation-roleplay' : 'conversation-freetalk',
       sessionData,
     );
-  }, [summary, setup, mode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasSummary, mode]);
 
   /**
    * Mục đích: Quay lại Setup để luyện lại

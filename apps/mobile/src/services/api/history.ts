@@ -249,6 +249,50 @@ export async function getHistoryEntry(id: string): Promise<HistoryEntry> {
   return response.data;
 }
 
+/**
+ * Mục đích: Interface cho dữ liệu tạo mới history entry
+ * Khi nào sử dụng: createEntry() — sau khi user hoàn thành session
+ * Phải khớp với backend CreateHistoryEntryDto
+ */
+export interface CreateHistoryParams {
+  type: 'listening' | 'speaking' | 'reading';
+  topic: string;
+  content?: Record<string, unknown>;
+  durationMinutes?: number;
+  numSpeakers?: number;
+  keywords?: string;
+  mode?: string;
+  audioUrl?: string;
+  audioTimestamps?: {startTime: number; endTime: number}[];
+}
+
+/**
+ * Mục đích: Tạo mới bản ghi lịch sử học tập
+ * Tham số đầu vào: params - CreateHistoryParams (type, topic, content, mode, ...)
+ * Tham số đầu ra: Promise<{ success: boolean; entry: HistoryEntry; message: string }>
+ * Khi nào sử dụng: Sau khi user hoàn thành session học:
+ *   - Practice → FeedbackScreen → lưu scores, feedback
+ *   - AI Conversation → SessionSummary → lưu messages, corrections
+ *   - Shadowing → ShadowingSummary → lưu rhythm/intonation/accuracy
+ *   - Tongue Twister → completion → lưu phoneme scores, WPM
+ */
+export async function createEntry(
+  params: CreateHistoryParams,
+): Promise<{success: boolean; entry: HistoryEntry; message: string}> {
+  console.log('💾 [HistoryAPI] Tạo bản ghi lịch sử speaking...', {
+    type: params.type,
+    mode: params.mode,
+    topic: params.topic,
+  });
+
+  const response = await apiClient.post<{
+    success: boolean;
+    entry: HistoryEntry;
+    message: string;
+  }>('/history', params);
+  return response.data;
+}
+
 // Gộp tất cả vào object để import dễ dàng
 export const historyApi = {
   getHistory,
@@ -259,4 +303,5 @@ export const historyApi = {
   restoreEntry,
   updateNotes,
   getHistoryEntry,
+  createEntry,
 };

@@ -6,15 +6,17 @@ import {
   Animated,
   Platform,
   TouchableOpacity,
+  AppState,
+  Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {AppText} from '@/components/ui';
 import AppButton from '@/components/ui/AppButton';
 import {useColors} from '@/hooks/useColors';
+import {useSkillColor} from '@/hooks/useSkillColor';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {speakingApi} from '@/services/api/speaking';
-import {SKILL_COLORS} from '@/config/skillColors';
 import Icon from '@/components/ui/Icon';
 import {
   CountdownOverlay,
@@ -22,6 +24,7 @@ import {
   IPAPopup,
   VoiceVisualizer,
 } from '@/components/speaking';
+import LinearGradient from 'react-native-linear-gradient';
 
 // Khai báo type cho optional native modules
 let AudioRecorderPlayerModule: any;
@@ -42,7 +45,6 @@ try {
 // =======================
 
 const MAX_RECORD_SECONDS = 15;
-const speakingColor = SKILL_COLORS.speaking.dark;
 
 // =======================
 // Audio Recorder
@@ -61,6 +63,7 @@ const audioRecorderPlayer = AudioRecorderPlayerModule ? new AudioRecorderPlayerM
 export default function PracticeScreen() {
   const navigation = useNavigation<any>();
   const colors = useColors();
+  const speakingColor = useSkillColor('speaking');
 
   // Store
   const {
@@ -71,7 +74,9 @@ export default function PracticeScreen() {
     audioUri,
     isTranscribing,
     isFeedbackLoading,
+    feedback,
     error,
+    displaySettings,
     startRecording,
     stopRecording,
     setRecordingDuration,
@@ -80,15 +85,24 @@ export default function PracticeScreen() {
     setFeedback,
     setError,
     clearRecording,
+    setShowIPA,
+    nextSentence: storeNextSentence,
+    prevSentence: storePrevSentence,
   } = useSpeakingStore();
 
   const currentSentence = sentences[currentIndex];
   const progress = `${currentIndex + 1} / ${sentences.length}`;
 
+  // Ref cho duration — tránh stale closure trong handleStopRecording (C2 fix)
+  const durationRef = useRef(0);
+  useEffect(() => { durationRef.current = recordingDuration; }, [recordingDuration]);
+
   // Animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [isPlayingAI, setIsPlayingAI] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isRecordingRef = useRef(false);
+  useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
   // Sprint 2: Các state mới
   const [showCountdown, setShowCountdown] = useState(false);
@@ -124,14 +138,67 @@ export default function PracticeScreen() {
     }
   }, [isRecording, pulseAnim]);
 
+  // Timer cleanup khi unmount (E7 fix)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+
+  // AppState handler — auto-stop recording khi app vào background (E3 fix)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active' && isRecordingRef.current) {
+        console.log('⚠️ [Practice] App vào background, auto-stop recording');
+        handleStopRecording();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   /**
    * Mục đích: Bắt đầu countdown trước khi ghi âm
    * Tham số đầu vào: không có
    * Tham số đầu ra: void
    * Khi nào sử dụng: User nhấn nút mic
    */
-  const handleMicPress = useCallback(() => {
+  const handleMicPress = useCallback(async () => {
     setError(null);
+
+    // Check mic permission (E1 fix)
+    if (Platform.OS === 'android') {
+      try {
+        const {PermissionsAndroid} = require('react-native');
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Cần quyền microphone',
+            message: 'Ứng dụng cần quyền truy cập micro để ghi âm giọng nói của bạn',
+            buttonPositive: 'Cho phép',
+            buttonNegative: 'Từ chối',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Cần quyền micro', 'Vui lòng cấp quyền micro trong Cài đặt để sử dụng chức năng ghi âm.', [
+            {text: 'Đóng'},
+          ]);
+          return;
+        }
+      } catch (err) {
+        console.error('❌ [Practice] Lỗi xin quyền micro:', err);
+        return;
+      }
+    }
+
+    // Guard audioRecorderPlayer null (A7 fix)
+    if (!audioRecorderPlayer) {
+      Alert.alert('Lỗi', 'Module ghi âm chưa sẵn sàng. Vui lòng khởi động lại ứng dụng.');
+      return;
+    }
+
     setShowCountdown(true);
     console.log('🗣️ [Practice] Bắt đầu countdown...');
   }, [setError]);
@@ -186,7 +253,8 @@ export default function PracticeScreen() {
       stopRecording(uri);
       console.log('⏹️ [Practice] Dừng ghi âm:', uri);
 
-      if (uri && recordingDuration >= 1) {
+      // Dùng durationRef thay vì recordingDuration (C2 fix — tránh stale closure)
+      if (uri && durationRef.current >= 1) {
         setShowPreview(true);
       } else {
         setError('Ghi âm quá ngắn, hãy thử lại');
@@ -195,7 +263,7 @@ export default function PracticeScreen() {
       console.error('❌ [Practice] Lỗi dừng ghi âm:', err);
       stopRecording('');
     }
-  }, [stopRecording, recordingDuration, setError]);
+  }, [stopRecording, setError]);
 
   /**
    * Mục đích: Phát lại recording preview
@@ -271,7 +339,12 @@ export default function PracticeScreen() {
       setFeedback(result);
       console.log('✅ [Practice] Đánh giá xong! Điểm:', result.overallScore);
 
-      navigation.navigate('Feedback');
+      // Guard feedback không null trước khi navigate (C1 fix)
+      if (result) {
+        navigation.navigate('Feedback');
+      } else {
+        setError('Không nhận được kết quả đánh giá. Vui lòng thử lại.');
+      }
     } catch (err: any) {
       console.error('❌ [Practice] Lỗi xử lý:', err);
       setTranscribing(false);
@@ -380,7 +453,6 @@ export default function PracticeScreen() {
         }}
       />
 
-      {/* Header */}
       <View className="flex-row items-center px-4 pt-2 pb-3">
         <AppButton
           variant="ghost"
@@ -391,11 +463,30 @@ export default function PracticeScreen() {
           {''}
         </AppButton>
         <View className="flex-1 items-center">
-          <AppText variant="bodySmall" weight="semibold" className="text-foreground" raw>
-            {progress}
+          <AppText variant="body" weight="bold" className="text-foreground" raw>
+            Practice
+          </AppText>
+          <AppText variant="caption" className="text-neutrals400" raw>
+            Câu {currentIndex + 1}/{sentences.length}
           </AppText>
         </View>
-        <View className="w-9" />
+        {/* Toggle IPA */}
+        <TouchableOpacity
+          onPress={() => setShowIPA(!displaySettings.showIPA)}
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 10,
+            backgroundColor: displaySettings.showIPA ? `${speakingColor}20` : undefined,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={displaySettings.showIPA ? 'Ẩn IPA' : 'Hiện IPA'}>
+          <AppText variant="caption" weight="semibold"
+            style={{color: displaySettings.showIPA ? speakingColor : colors.neutrals400}}
+            raw>
+            {displaySettings.showIPA ? '👁️ IPA' : '👁️‍🗨️ IPA'}
+          </AppText>
+        </TouchableOpacity>
       </View>
 
       {/* Progress bar */}
@@ -414,7 +505,16 @@ export default function PracticeScreen() {
       {/* Nội dung chính */}
       <View className="flex-1 px-6 justify-center">
         {/* Câu practice — từng từ tap-able để xem IPA */}
-        <View className="items-center mb-8">
+        {/* B5: Glassmorphism card cho câu practice */}
+        <View
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.06)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.12)',
+            borderRadius: 24,
+            padding: 24,
+            marginBottom: 32,
+          }}>
           <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center'}}>
             {currentSentence.text.split(' ').map((word, i) => (
               <TouchableOpacity
@@ -433,8 +533,8 @@ export default function PracticeScreen() {
             ))}
           </View>
 
-          {/* IPA (nếu có) */}
-          {currentSentence.ipa && (
+          {/* IPA — toggleable theo displaySettings.showIPA */}
+          {displaySettings.showIPA && currentSentence.ipa && (
             <AppText
               variant="bodySmall"
               className="mt-2 text-neutrals400 text-center"
@@ -511,48 +611,91 @@ export default function PracticeScreen() {
             )}
 
             {/* Nút MIC */}
+            {/* B8: Mic button green gradient */}
             <Animated.View style={{transform: [{scale: pulseAnim}]}}>
               <Pressable
                 onPress={isRecording ? handleStopRecording : handleMicPress}
-                disabled={isProcessing}
-                style={({pressed}) => ({
-                  width: 80,
-                  height: 80,
-                  borderRadius: 40,
-                  backgroundColor: isRecording
-                    ? '#ef4444'
-                    : pressed
-                      ? `${speakingColor}DD`
-                      : speakingColor,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: isProcessing ? 0.5 : 1,
-                  shadowColor: isRecording ? '#ef4444' : speakingColor,
-                  shadowOffset: {width: 0, height: 4},
-                  shadowOpacity: 0.4,
-                  shadowRadius: 12,
-                  elevation: 8,
-                })}
-              >
-                <Icon
-                  name={isRecording ? 'Square' : 'Mic'}
-                  className="w-8 h-8 text-white"
-                />
+                disabled={isProcessing}>
+                <LinearGradient
+                  colors={
+                    isRecording
+                      ? ['#ef4444', '#dc2626']
+                      : ['#22c55e', '#16a34a']
+                  }
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    alignItems: 'center' as const,
+                    justifyContent: 'center' as const,
+                    opacity: isProcessing ? 0.5 : 1,
+                    shadowColor: isRecording ? '#ef4444' : '#22c55e',
+                    shadowOffset: {width: 0, height: 4},
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }}>
+                  <Icon
+                    name={isRecording ? 'Square' : 'Mic'}
+                    className="w-8 h-8 text-white"
+                  />
+                </LinearGradient>
               </Pressable>
             </Animated.View>
 
-            {/* Hướng dẫn */}
+            {/* Hướng dẫn — match mockup: "Giữ để ghi âm" + "Vuốt lên để hủy" */}
             {!isRecording && !isProcessing && (
               <AppText
                 variant="bodySmall"
                 className="mt-4 text-neutrals400 text-center"
                 raw>
-                Nhấn để bắt đầu ghi âm
+                Giữ để ghi âm • Tối đa {MAX_RECORD_SECONDS}s
+              </AppText>
+            )}
+            {isRecording && (
+              <AppText
+                variant="caption"
+                className="mt-2 text-neutrals400 text-center"
+                raw>
+                ↑ Vuốt lên để hủy
               </AppText>
             )}
           </>
         )}
       </View>
+
+      {/* Sentence Navigation — ← Câu trước / Câu sau → (B6 fix) */}
+      {!isRecording && !isProcessing && !showPreview && sentences.length > 1 && (
+        <View className="flex-row justify-between px-6 pb-4">
+          <TouchableOpacity
+            onPress={() => { storePrevSentence(); clearRecording(); }}
+            disabled={currentIndex === 0}
+            style={{opacity: currentIndex === 0 ? 0.3 : 1}}
+            accessibilityLabel="Câu trước">
+            <AppText variant="bodySmall" weight="semibold"
+              style={{color: speakingColor}} raw>
+              ← Câu trước
+            </AppText>
+          </TouchableOpacity>
+
+          <AppText variant="caption" className="text-neutrals400" raw>
+            Vuốt lên để hủy
+          </AppText>
+
+          <TouchableOpacity
+            onPress={() => { storeNextSentence(); clearRecording(); }}
+            disabled={currentIndex >= sentences.length - 1}
+            style={{opacity: currentIndex >= sentences.length - 1 ? 0.3 : 1}}
+            accessibilityLabel="Câu sau">
+            <AppText variant="bodySmall" weight="semibold"
+              style={{color: speakingColor}} raw>
+              Câu sau →
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

@@ -139,8 +139,9 @@ function mapToHistoryParams(
     | ShadowingSessionData
     | TongueTwisterSessionData,
 ): CreateHistoryParams {
-  // Tính durationMinutes từ seconds
-  const durationMinutes = Math.max(1, Math.round(data.durationSeconds / 60));
+  // BUG-H07 FIX: Dùng Math.ceil thay vì Math.round để không làm tròn xuống 0
+  // 30s → 1min, 90s → 2min, 5s → 1min (ceil luôn >= 1 nếu > 0)
+  const durationMinutes = Math.max(1, Math.ceil(data.durationSeconds / 60));
 
   switch (mode) {
     case 'practice': {
@@ -259,14 +260,22 @@ function mapToHistoryParams(
       };
     }
 
-    default:
-      // Fallback: lưu dữ liệu thô
+    default: {
+      // BUG-H08 FIX: Serialize an toàn — tránh circular ref, class instances
+      let safeContent: Record<string, unknown> = {};
+      try {
+        safeContent = JSON.parse(JSON.stringify(data));
+      } catch {
+        console.warn('⚠️ [SpeakingHistory] Không thể serialize data cho mode:', mode);
+        safeContent = {rawMode: mode, error: 'serialize_failed'};
+      }
       return {
         type: 'speaking',
         topic: 'Unknown Speaking Session',
         mode,
         durationMinutes,
-        content: data as unknown as Record<string, unknown>,
+        content: safeContent,
       };
+    }
   }
 }

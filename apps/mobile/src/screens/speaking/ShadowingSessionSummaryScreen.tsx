@@ -44,16 +44,26 @@ export default function ShadowingSessionSummaryScreen() {
 
   // Auto-save vào history khi summary screen mount (fire-and-forget)
   const savedRef = useRef(false);
-  // BUG-H06 FIX: Track thời gian thực tế thay vì ước tính
+  // BUG-H06 FIX: Track thời gian thực tế
   const sessionStartRef = useRef(Date.now());
+  // BUG-H09 FIX: Ref giữ data mới nhất — tránh object deps trong useEffect
+  const sessionResultsRef = useRef(sessionResults);
+  const configRef = useRef(config);
+  useEffect(() => { sessionResultsRef.current = sessionResults; }, [sessionResults]);
+  useEffect(() => { configRef.current = config; }, [config]);
+
+  // BUG-H09 FIX: Chỉ dep là length (primitive) — không re-run khi object ref thay đổi
+  const resultsCount = sessionResults.length;
   useEffect(() => {
-    if (savedRef.current || sessionResults.length === 0) return;
+    if (savedRef.current || resultsCount === 0) return;
     savedRef.current = true;
 
+    const latestResults = sessionResultsRef.current;
+    const latestConfig = configRef.current;
     const sessionData: ShadowingSessionData = {
-      topic: config.topic?.name ?? 'Shadowing',
-      sentences: sessionResults.map(r => ({text: r.text})),
-      scores: sessionResults.map((r, i) => ({
+      topic: latestConfig.topic?.name ?? 'Shadowing',
+      sentences: latestResults.map(r => ({text: r.text})),
+      scores: latestResults.map((r, i) => ({
         sentenceIndex: i,
         rhythm: r.score.rhythm,
         intonation: r.score.intonation,
@@ -61,12 +71,12 @@ export default function ShadowingSessionSummaryScreen() {
         overall: r.score.overall,
         tips: r.score.tips,
       })),
-      speed: config.speed,
-      // BUG-H06 FIX: Tính duration thực tế
+      speed: latestConfig.speed,
       durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
     };
     saveSpeakingSession('shadowing', sessionData);
-  }, [sessionResults, config]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultsCount]);
 
   // Tính avg scores
   const avgScores = useMemo(() => {
