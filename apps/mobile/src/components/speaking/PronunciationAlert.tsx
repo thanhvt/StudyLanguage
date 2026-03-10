@@ -22,6 +22,8 @@ interface PronunciationAlertProps {
   correction: PronunciationCorrection;
   /** Khi user tap → nghe audio mẫu */
   onPlaySample?: (word: string) => void;
+  /** Khi user nhấn "Thử lại" → focus mic */
+  onReSpeak?: (word: string) => void;
 }
 
 // =======================
@@ -29,67 +31,66 @@ interface PronunciationAlertProps {
 // =======================
 
 /**
- * Mục đích: Hiển thị inline alert sửa lỗi phát âm giữa các chat bubbles
- * Tham số đầu vào: correction (word, IPA, tip), onPlaySample
- * Tham số đầu ra: JSX.Element — compact card với icon + text
+ * Mục đích: Hiển thị inline alert phát âm theo mockup —
+ *   card lớn với tiêu đề "PHÁT ÂM CẦN LƯU Ý", từ bold, IPA, tip, 2 buttons
+ * Tham số đầu vào: correction (word, IPA, tip), onPlaySample, onReSpeak
+ * Tham số đầu ra: JSX.Element — card alert phát âm
  * Khi nào sử dụng:
- *   - CoachSessionScreen: sau khi AI phát hiện lỗi phát âm → insert card
- *   - RoleplaySessionScreen: inline pronunciation feedback
+ *   ConversationScreen → sau message AI phát hiện lỗi phát âm → insert card inline
  */
 export default function PronunciationAlert({
   correction,
   onPlaySample,
+  onReSpeak,
 }: PronunciationAlertProps) {
   const colors = useColors();
-  const alertColor = '#EA580C'; // Coral/orange cho pronunciation
+  const alertColor = '#EA580C'; // Amber/orange cho pronunciation
 
   return (
-    <View style={[styles.container, {backgroundColor: `${alertColor}12`}]}>
+    <View style={[styles.container, {backgroundColor: `${alertColor}12`, borderColor: `${alertColor}20`}]}>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={[styles.iconBadge, {backgroundColor: `${alertColor}25`}]}>
-          <Icon
-            name="Volume2"
-            className="w-3.5 h-3.5"
-            style={{color: alertColor}}
-          />
-        </View>
-        <AppText
-          variant="caption"
-          weight="bold"
-          style={{color: alertColor}}
-          raw>
-          Sửa phát âm
+        <AppText variant="caption" weight="bold" style={{color: alertColor}} raw>
+          ⚠ PHÁT ÂM CẦN LƯU Ý
         </AppText>
       </View>
 
-      <View style={styles.content}>
+      {/* Từ + IPA */}
+      <View style={styles.wordRow}>
+        <AppText variant="heading3" weight="bold" style={{color: colors.foreground}} raw>
+          "{correction.word}"
+        </AppText>
+        <AppText variant="body" style={{color: colors.neutrals400, marginLeft: 8}} raw>
+          / {correction.ipa}/
+        </AppText>
+      </View>
+
+      {/* Tip */}
+      <AppText variant="bodySmall" style={{color: colors.neutrals400, marginTop: 6, lineHeight: 20}} raw>
+        {correction.tip}
+      </AppText>
+
+      {/* 2 Buttons */}
+      <View style={styles.buttonRow}>
         <TouchableOpacity
+          style={[styles.actionBtn, {backgroundColor: `${alertColor}15`, borderColor: `${alertColor}30`}]}
           onPress={() => onPlaySample?.(correction.word)}
           activeOpacity={0.7}>
-          <AppText variant="body" weight="semibold" raw>
-            <AppText
-              variant="body"
-              weight="bold"
-              style={{color: alertColor}}
-              raw>
-              {correction.word}
-            </AppText>
-            {' → '}
-            <AppText
-              variant="body"
-              style={{color: colors.foreground, opacity: 0.7}}
-              raw>
-              {correction.ipa}
-            </AppText>
+          <Icon name="Volume2" className="w-4 h-4" style={{color: alertColor}} />
+          <AppText variant="bodySmall" weight="semibold" style={{color: alertColor, marginLeft: 6}} raw>
+            Nghe phát âm chuẩn
           </AppText>
         </TouchableOpacity>
 
-        <AppText
-          variant="caption"
-          className="text-neutrals400 mt-1"
-          raw>
-          {correction.tip}
-        </AppText>
+        <TouchableOpacity
+          style={[styles.actionBtn, {backgroundColor: colors.surface, borderColor: colors.glassBorder}]}
+          onPress={() => onReSpeak?.(correction.word)}
+          activeOpacity={0.7}>
+          <Icon name="Mic" className="w-4 h-4" style={{color: colors.foreground}} />
+          <AppText variant="bodySmall" weight="semibold" style={{color: colors.foreground, marginLeft: 6}} raw>
+            Thử lại
+          </AppText>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -102,26 +103,29 @@ export default function PronunciationAlert({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 12,
-    marginVertical: 4,
-    padding: 10,
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#EA580C',
+    marginVertical: 6,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   header: {
+    marginBottom: 8,
+  },
+  wordRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  iconBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    marginLeft: 28,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
   },
 });

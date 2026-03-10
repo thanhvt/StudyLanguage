@@ -176,11 +176,8 @@ export default function ConversationSetupScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
 
-        {/* Section 1: Mode Toggle */}
+        {/* Mode Toggle */}
         <View style={styles.section}>
-          <AppText variant="caption" weight="semibold" style={{color: colors.neutrals400, marginBottom: 8}} raw>
-            SECTION 1
-          </AppText>
           <View style={styles.modeToggle}>
             <TouchableOpacity
               style={[
@@ -225,9 +222,6 @@ export default function ConversationSetupScreen() {
 
         {/* Section 2: Topic / Scenario Picker */}
         <View style={styles.section}>
-          <AppText variant="caption" weight="semibold" style={{color: colors.neutrals400, marginBottom: 4}} raw>
-            SECTION 2
-          </AppText>
           <AppText variant="heading4" weight="bold" style={{marginBottom: 8}}>
             {mode === 'free-talk' ? 'Chủ đề' : 'Kịch bản'}
           </AppText>
@@ -241,9 +235,6 @@ export default function ConversationSetupScreen() {
 
         {/* Section 3: Duration (Free Talk) / Difficulty (Roleplay) */}
         <View style={styles.section}>
-          <AppText variant="caption" weight="semibold" style={{color: colors.neutrals400, marginBottom: 4}} raw>
-            SECTION 3
-          </AppText>
           {mode === 'free-talk' ? (
             <>
               <AppText variant="heading4" weight="bold" style={{marginBottom: 12}}>
@@ -313,9 +304,6 @@ export default function ConversationSetupScreen() {
 
         {/* Section 4: Feedback Mode */}
         <View style={styles.section}>
-          <AppText variant="caption" weight="semibold" style={{color: colors.neutrals400, marginBottom: 4}} raw>
-            SECTION 4
-          </AppText>
           <AppText variant="heading4" weight="bold" style={{marginBottom: 12}}>
             Mức phản hồi
           </AppText>

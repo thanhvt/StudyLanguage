@@ -56,7 +56,7 @@ export default function SuggestedResponses({
               styles.chip,
               {borderColor: `${speakingColor}40`},
             ]}>
-            {suggestion}
+            {`🗨️ ${suggestion}`}
           </AppButton>
         ))}
       </ScrollView>

@@ -46,17 +46,17 @@ AI Conversation là mode hội thoại realtime với AI, chia thành 2 sub-mode
 
 | Component | Mô tả | Props khác nhau |
 |-----------|-------|-----------------|
-| `<ConversationSetupScreen>` | Màn config (topic + settings) | `mode: 'free-talk' \| 'roleplay'` → ẩn/hiện: duration vs turns, difficulty |
-| `<ChatBubble>` | Bubble tin nhắn (AI hoặc User) | `persona?: { name, role, avatar }` — nếu có → hiện persona thay 🤖 |
-| `<RecordingOverlay>` | Overlay khi đang ghi âm | Không khác — chỉ top bar context khác |
-| `<PronunciationAlertCard>` | Card vàng cảnh báo phát âm | Không khác |
-| `<GrammarCorrectionCard>` | Card sửa ngữ pháp inline | Không khác |
-| `<InputBar>` | Text input + mic button | Không khác |
-| `<WaveformVisualizer>` | Sóng âm real-time | Không khác |
-| `<AIThinkingIndicator>` | "..." typing dots | `personaName?: string` → "Tony đang trả lời..." vs "AI đang suy nghĩ..." |
-| `<SuggestedResponses>` | 3 chips gợi ý | Chỉ render khi `mode === 'free-talk' && feedbackLevel === 'beginner'` |
-| `<ContextBanner>` | Banner scenario + difficulty | Chỉ render khi `mode === 'roleplay'` |
-| `<SessionSummaryScreen>` | Màn tổng kết | `scenarioBadge` chỉ hiện cho Roleplay |
+| `<ConversationSetupScreen>` | Màn config (topic + settings) | `mode: 'free-talk' \| 'roleplay'` → ẩn/hiện: duration vs turns, difficulty | ✅ |
+| `<ChatBubble>` | Bubble tin nhắn (AI hoặc User) | `persona?: { name, role, avatar }` — nếu có → hiện persona thay 🤖 | ✅ |
+| `<RecordingOverlay>` | Overlay khi đang ghi âm | Không khác — chỉ top bar context khác | ✅ (component, chưa integrate) |
+| `<PronunciationAlertCard>` | Card vàng cảnh báo phát âm | Không khác | ✅ |
+| `<GrammarCorrectionCard>` | Card sửa ngữ pháp inline | Không khác | ✅ |
+| `<InputBar>` | Text input + mic button | Không khác | ✅ |
+| `<WaveformVisualizer>` | Sóng âm real-time | Không khác | ⬜ |
+| `<AIThinkingIndicator>` | "..." typing dots | `personaName?: string` → "Tony đang trả lời..." vs "AI đang suy nghĩ..." | ✅ |
+| `<SuggestedResponses>` | 3 chips gợi ý | Chỉ render khi `mode === 'free-talk' && feedbackLevel === 'beginner'` | ✅ |
+| `<ContextBanner>` | Banner scenario + difficulty | Chỉ render khi `mode === 'roleplay'` | ✅ |
+| `<SessionSummaryScreen>` | Màn tổng kết | `scenarioBadge` chỉ hiện cho Roleplay | ✅ |
 
 ### 2.2 Architecture: 1 Screen, 2 Modes
 
@@ -267,61 +267,61 @@ interface ConversationMessage {
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC01 | Toggle Free Talk → Roleplay | UI đổi: ẩn duration, hiện difficulty |
-| CONV-TC02 | Chọn topic từ Listening picker | Scenario selected ✓ |
-| CONV-TC03 | Bắt đầu Free Talk | Timer bắt đầu countdown |
-| CONV-TC04 | Bắt đầu Roleplay | Context banner + persona hiện |
-| CONV-TC05 | Bắt đầu không chọn topic | Button disabled / toast warning |
+| CONV-TC01 | Toggle Free Talk → Roleplay | UI đổi: ẩn duration, hiện difficulty | ✅ |
+| CONV-TC02 | Chọn topic từ Listening picker | Scenario selected ✓ | ✅ |
+| CONV-TC03 | Bắt đầu Free Talk | Timer bắt đầu countdown | ✅ |
+| CONV-TC04 | Bắt đầu Roleplay | Context banner + persona hiện | ✅ |
+| CONV-TC05 | Bắt đầu không chọn topic | Button disabled / toast warning | ✅ |
 
 ### 8.2 Session (Shared)
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC10 | Ghi âm (hold mic) | Waveform + timer + pulsing glow |
-| CONV-TC11 | Ghi âm → release | STT → user bubble hiện text |
-| CONV-TC12 | Swipe up cancel | Discard audio, trở lại idle |
-| CONV-TC13 | Gõ text thay voice | Text bubble hiện, no STT |
-| CONV-TC14 | AI response | AI bubble + audio auto-play |
-| CONV-TC15 | Pronun alert trigger | Amber card hiện inline |
-| CONV-TC16 | Grammar fix trigger | Amber card ~~sai~~ → đúng |
-| CONV-TC17 | Tap [Đã hiểu] | Dismiss grammar card |
-| CONV-TC18 | Tap [🔊 Nghe] pronun | Audio IPA phát |
-| CONV-TC19 | Tap [Re-speak] | Focus mic, gợi ý nói lại từ đó |
+| CONV-TC10 | Ghi âm (hold mic) | Waveform + timer + pulsing glow | ⬜ (component sẵn, chưa integrate) |
+| CONV-TC11 | Ghi âm → release | STT → user bubble hiện text | ⬜ |
+| CONV-TC12 | Swipe up cancel | Discard audio, trở lại idle | ⬜ |
+| CONV-TC13 | Gõ text thay voice | Text bubble hiện, no STT | ✅ |
+| CONV-TC14 | AI response | AI bubble + audio auto-play | ✅ (bubble ✅, audio ⬜) |
+| CONV-TC15 | Pronun alert trigger | Amber card hiện inline | ✅ |
+| CONV-TC16 | Grammar fix trigger | Amber card ~~sai~~ → đúng | ✅ |
+| CONV-TC17 | Tap [Đã hiểu] | Dismiss grammar card | ✅ |
+| CONV-TC18 | Tap [🔊 Nghe] pronun | Audio IPA phát | ✅ (button ✅, audio ⬜) |
+| CONV-TC19 | Tap [Re-speak] | Focus mic, gợi ý nói lại từ đó | ✅ (button ✅, focus ⬜) |
 
 ### 8.3 Free Talk Only
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC20 | Timer countdown | Badge đếm ngược đúng |
-| CONV-TC21 | Timer hết | Alert → auto navigate Summary |
-| CONV-TC22 | Suggested responses (beginner) | 3 chips hiện sau AI msg |
-| CONV-TC23 | Tap suggested response | Text gửi đi như user typed |
-| CONV-TC24 | No suggestions (intermediate) | Không hiện chips |
+| CONV-TC20 | Timer countdown | Badge đếm ngược đúng | ✅ |
+| CONV-TC21 | Timer hết | Alert → auto navigate Summary | ✅ |
+| CONV-TC22 | Suggested responses (beginner) | 3 chips hiện sau AI msg | ✅ |
+| CONV-TC23 | Tap suggested response | Text gửi đi như user typed | ✅ |
+| CONV-TC24 | No suggestions (intermediate) | Không hiện chips | ✅ |
 
 ### 8.4 Roleplay Only
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC30 | Context banner | Scenario + mô tả + difficulty hiện |
-| CONV-TC31 | AI persona | Avatar + name hiện trong bubble |
-| CONV-TC32 | Turn counter | "Turn X/Y" cập nhật mỗi lượt |
-| CONV-TC33 | Max turns reached | Alert → navigate Summary |
-| CONV-TC34 | AI shouldEnd | AI tự kết thúc sớm → Summary |
-| CONV-TC35 | Difficulty affects AI | Easy = simple vocab, Hard = complex |
+| CONV-TC30 | Context banner | Scenario + mô tả + difficulty hiện | ✅ |
+| CONV-TC31 | AI persona | Avatar + name hiện trong bubble | ✅ |
+| CONV-TC32 | Turn counter | "Turn X/Y" cập nhật mỗi lượt | ✅ |
+| CONV-TC33 | Max turns reached | Alert → navigate Summary | ✅ |
+| CONV-TC34 | AI shouldEnd | AI tự kết thúc sớm → Summary | ✅ |
+| CONV-TC35 | Difficulty affects AI | Easy = simple vocab, Hard = complex | ✅ (API config) |
 
 ### 8.5 Session Summary
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC40 | Stats hiển thị | Thời gian + Lượt + Điểm đúng |
-| CONV-TC41 | Phát âm cần cải thiện | Từ + % + IPA + 🔊 play |
-| CONV-TC42 | Sửa ngữ pháp | ~~Sai~~ → Đúng hiện đúng |
-| CONV-TC43 | AI Feedback | Nhận xét hiển thị |
-| CONV-TC44 | Scenario badge (Roleplay) | "Hoàn thành: [scenario]" ✅ |
-| CONV-TC45 | No badge (Free Talk) | Badge KHÔNG hiện |
-| CONV-TC46 | Luyện lại | Reset → Setup screen cùng config |
-| CONV-TC47 | Chia sẻ | Capture card → share sheet |
-| CONV-TC48 | Về Home | Navigate Speaking Home |
+| CONV-TC40 | Stats hiển thị | Thời gian + Lượt + Điểm đúng | ✅ |
+| CONV-TC41 | Phát âm cần cải thiện | Từ + % + IPA + 🔊 play | ✅ |
+| CONV-TC42 | Sửa ngữ pháp | ~~Sai~~ → Đúng hiện đúng | ✅ |
+| CONV-TC43 | AI Feedback | Nhận xét hiển thị | ✅ |
+| CONV-TC44 | Scenario badge (Roleplay) | "Hoàn thành: [scenario]" ✅ | ✅ |
+| CONV-TC45 | No badge (Free Talk) | Badge KHÔNG hiện | ✅ |
+| CONV-TC46 | Luyện lại | Reset → Setup screen cùng config | ✅ |
+| CONV-TC47 | Chia sẻ | Capture card → share sheet | ✅ (button, capture ⬜) |
+| CONV-TC48 | Về Home | Navigate Speaking Home | ✅ |
 
 ---
 

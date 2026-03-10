@@ -1,7 +1,8 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import {
   View,
   ScrollView,
+  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -14,6 +15,8 @@ import {useColors} from '@/hooks/useColors';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {getConversationColor} from '@/config/skillColors';
 import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
+import {saveSpeakingSession} from '@/services/speaking/saveSpeakingSession';
+import type {ConversationSessionData} from '@/services/speaking/saveSpeakingSession';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 
@@ -22,30 +25,27 @@ type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 // =======================
 
 /**
- * Mục đích: Format thời gian seconds → chuỗi dễ đọc
+ * Mục đích: Format thời gian seconds → m:ss
  * Tham số đầu vào: seconds (number)
- * Tham số đầu ra: string
- * Khi nào sử dụng: Hiển thị tổng thời gian session
+ * Tham số đầu ra: string (m:ss)
+ * Khi nào sử dụng: Stat card hiển thị tổng thời gian
  */
-function formatDuration(seconds: number): string {
+function formatDurationCard(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  if (m > 0) return `${m} phút ${s > 0 ? `${s}s` : ''}`;
-  return `${s} giây`;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 /**
- * Mục đích: Lấy emoji grade dựa trên điểm
- * Tham số đầu vào: grade (string)
- * Tham số đầu ra: string (emoji)
- * Khi nào sử dụng: Hiển thị grade badge
+ * Mục đích: Lấy màu badge dựa trên accuracy %
+ * Tham số đầu vào: accuracy (number)
+ * Tham số đầu ra: {bg: string, text: string}
+ * Khi nào sử dụng: Pronunciation issue row
  */
-function gradeEmoji(grade: string): string {
-  const map: Record<string, string> = {
-    'A+': '🏆', A: '🥇', 'B+': '🥈', B: '🥉',
-    'C+': '⭐', C: '👍', D: '💪', F: '📚',
-  };
-  return map[grade] ?? '📊';
+function getAccuracyColors(accuracy: number): {bg: string; text: string} {
+  if (accuracy >= 70) return {bg: '#22C55E20', text: '#22C55E'};
+  if (accuracy >= 50) return {bg: '#F59E0B20', text: '#F59E0B'};
+  return {bg: '#EF444420', text: '#EF4444'};
 }
 
 // =======================
@@ -72,6 +72,43 @@ export default function SessionSummaryScreen() {
   const mode = setup?.mode ?? 'free-talk';
   const accentColor = getConversationColor(mode);
 
+  // Auto-save vào history khi summary screen mount (fire-and-forget)
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (savedRef.current || !summary) return;
+    savedRef.current = true;
+
+    const sessionData: ConversationSessionData = {
+      topic: setup?.topicName ?? 'AI Conversation',
+      subMode: mode as 'free-talk' | 'roleplay',
+      messages: [], // Tin nhắn lưu ở conversationSession.messages, không có trên summary
+      pronunciationAlerts: summary.pronunciationIssues?.map((p: any) => ({
+        word: p.word,
+        ipa: p.ipa,
+        tip: p.tip ?? '',
+      })) ?? [],
+      grammarCorrections: summary.grammarFixes?.map((g: any) => ({
+        wrong: g.original,
+        correct: g.correction,
+        explanation: g.explanation ?? '',
+      })) ?? [],
+      summary: {
+        totalTurns: summary.totalTurns ?? 0,
+        score: summary.overallScore ?? 0,
+        aiNotes: summary.aiFeedback ?? '',
+      },
+      durationSeconds: summary.totalTime ?? 0,
+      persona: setup?.persona
+        ? {name: setup.persona.name, role: setup.persona.role}
+        : undefined,
+      difficulty: setup?.difficulty,
+    };
+    saveSpeakingSession(
+      mode === 'roleplay' ? 'conversation-roleplay' : 'conversation-freetalk',
+      sessionData,
+    );
+  }, [summary, setup, mode]);
+
   /**
    * Mục đích: Quay lại Setup để luyện lại
    * Tham số đầu vào: không
@@ -91,16 +128,34 @@ export default function SessionSummaryScreen() {
    */
   const handleGoHome = useCallback(() => {
     resetConversation();
-    navigation.navigate('Config');
+    navigation.navigate('SpeakingHome');
   }, [resetConversation, navigation]);
 
+  /**
+   * Mục đích: Chia sẻ kết quả
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn "Chia sẻ"
+   */
+  const handleShare = useCallback(() => {
+    // TODO: Implement capture card → share sheet
+    console.log('📤 [SessionSummary] Chia sẻ kết quả');
+  }, []);
+
+  // Fallback nếu summary chưa load (EC-09)
   if (!summary) {
     return (
       <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
         <View style={styles.emptyState}>
+          <Icon name="Loader" className="w-8 h-8" style={{color: colors.neutrals400, marginBottom: 12}} />
           <AppText variant="body" style={{color: colors.neutrals400}} raw>
-            Đang tải kết quả...
+            Đang tạo tổng kết...
           </AppText>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{marginTop: 20}}>
+            <AppText variant="body" weight="semibold" style={{color: accentColor}} raw>
+              ← Quay lại
+            </AppText>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -113,122 +168,110 @@ export default function SessionSummaryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{paddingBottom: 120}}>
 
-        {/* Header */}
-        <View style={styles.headerSection}>
-          <AppText variant="heading2" weight="bold" style={{textAlign: 'center'}} raw>
-            🎉 Chúc mừng!
+        {/* Header — "Tổng kết" + back button (UI-07) */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={handleGoHome} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Icon name="ChevronLeft" className="w-6 h-6 text-foreground" />
+          </TouchableOpacity>
+          <AppText variant="heading2" weight="bold" raw>
+            Tổng kết
           </AppText>
-          <AppText variant="body" style={{color: colors.neutrals400, textAlign: 'center', marginTop: 4}} raw>
-            Bạn đã hoàn thành session {mode === 'free-talk' ? 'Free Talk' : 'Roleplay'}
-          </AppText>
-
-          {/* Scenario Badge — Roleplay only */}
-          {summary.scenarioBadge && (
-            <View style={[styles.scenarioBadge, {backgroundColor: `${accentColor}15`, borderColor: `${accentColor}40`}]}>
-              <AppText variant="caption" weight="bold" style={{color: accentColor}} raw>
-                🎭 {summary.scenarioBadge}
-              </AppText>
-            </View>
-          )}
+          <View style={{width: 24}} />
         </View>
 
-        {/* Stats Card Row */}
+        {/* Confetti placeholder — emoji fallback (UI-07) */}
+        <View style={styles.confettiRow}>
+          <AppText style={{fontSize: 20}} raw>
+            🎉🎊✨🎉🎊✨🎉🎊✨
+          </AppText>
+        </View>
+
+        {/* Stats Card Row (UI-08: mm:ss format) */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, {backgroundColor: colors.surface}]}>
-            <AppText variant="heading3" weight="bold" style={{color: accentColor}} raw>
-              {formatDuration(summary.totalTime)}
-            </AppText>
-            <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 2}} raw>
+            <AppText variant="caption" style={{color: colors.neutrals400}} raw>
               Thời gian
             </AppText>
+            <AppText variant="heading3" weight="bold" style={{color: accentColor, marginTop: 4}} raw>
+              {formatDurationCard(summary.totalTime)}
+            </AppText>
           </View>
 
           <View style={[styles.statCard, {backgroundColor: colors.surface}]}>
-            <AppText variant="heading3" weight="bold" style={{color: accentColor}} raw>
-              {summary.totalTurns}
-            </AppText>
-            <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 2}} raw>
+            <AppText variant="caption" style={{color: colors.neutrals400}} raw>
               Lượt nói
             </AppText>
+            <AppText variant="heading3" weight="bold" style={{color: accentColor, marginTop: 4}} raw>
+              {summary.totalTurns} lượt
+            </AppText>
           </View>
 
-          <View style={[styles.statCard, {backgroundColor: colors.surface}]}>
-            <AppText variant="heading3" weight="bold" style={{color: accentColor}} raw>
-              {gradeEmoji(summary.grade)} {summary.grade}
+          <View style={[styles.statCard, {backgroundColor: `${accentColor}15`}]}>
+            <AppText variant="caption" style={{color: colors.neutrals400}} raw>
+              Điểm {summary.grade}
             </AppText>
-            <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 2}} raw>
-              Xếp loại
+            <AppText variant="heading3" weight="bold" style={{color: accentColor, marginTop: 4}} raw>
+              {summary.overallScore}/100
             </AppText>
           </View>
         </View>
 
-        {/* Overall Score */}
-        <View style={[styles.scoreCard, {backgroundColor: `${accentColor}10`, borderColor: `${accentColor}25`}]}>
-          <AppText variant="caption" weight="semibold" style={{color: accentColor}} raw>
-            ĐIỂM TỔNG
-          </AppText>
-          <AppText variant="heading1" weight="bold" style={{color: accentColor, fontSize: 48}} raw>
-            {summary.overallScore}
-          </AppText>
-          <AppText variant="caption" style={{color: colors.neutrals400}} raw>
-            /100
-          </AppText>
-        </View>
-
-        {/* Pronunciation Issues */}
+        {/* Pronunciation Issues (UI-09: play button) */}
         {summary.pronunciationIssues.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Icon name="Volume2" className="w-4 h-4" style={{color: '#EA580C'}} />
-              <AppText variant="body" weight="bold" style={{marginLeft: 6}} raw>
-                Phát âm cần cải thiện
-              </AppText>
-            </View>
-            {summary.pronunciationIssues.map((issue, idx) => (
-              <View key={`pronun-${idx}`} style={[styles.issueRow, {backgroundColor: colors.surface}]}>
-                <View style={{flex: 1}}>
-                  <AppText variant="body" weight="semibold" raw>
-                    {issue.word}
-                  </AppText>
-                  <AppText variant="caption" style={{color: colors.neutrals400}} raw>
-                    {issue.ipa}
-                  </AppText>
+          <View style={[styles.sectionCard, {backgroundColor: colors.surface}]}>
+            <AppText variant="body" weight="bold" style={{marginBottom: 10}} raw>
+              Phát âm cần cải thiện
+            </AppText>
+            {summary.pronunciationIssues.map((issue, idx) => {
+              const accColors = getAccuracyColors(issue.accuracy);
+              return (
+                <View key={`pronun-${idx}`} style={styles.issueRow}>
+                  {/* Accuracy badge */}
+                  <View style={[styles.accuracyBadge, {backgroundColor: accColors.bg}]}>
+                    <AppText variant="caption" weight="bold" style={{color: accColors.text}} raw>
+                      {issue.accuracy}%
+                    </AppText>
+                  </View>
+                  {/* Word + IPA */}
+                  <View style={{flex: 1, marginLeft: 8}}>
+                    <AppText variant="body" weight="semibold" raw>
+                      {issue.word}
+                    </AppText>
+                    <AppText variant="caption" style={{color: colors.neutrals400}} raw>
+                      {issue.ipa}
+                    </AppText>
+                  </View>
+                  {/* Play button (UI-09) */}
+                  <TouchableOpacity
+                    style={[styles.playBtn, {backgroundColor: `${accentColor}15`}]}
+                    onPress={() => console.log('🔊 Phát mẫu:', issue.word)}
+                    activeOpacity={0.7}>
+                    <Icon name="Volume2" className="w-4 h-4" style={{color: accentColor}} />
+                  </TouchableOpacity>
                 </View>
-                <View style={[
-                  styles.scoreBadge,
-                  {backgroundColor: issue.accuracy >= 70 ? '#22C55E20' : '#EF444420'},
-                ]}>
-                  <AppText
-                    variant="bodySmall"
-                    weight="bold"
-                    style={{color: issue.accuracy >= 70 ? '#22C55E' : '#EF4444'}}
-                    raw>
-                    {issue.accuracy}%
-                  </AppText>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
         {/* Grammar Fixes */}
         {summary.grammarFixes.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Icon name="PenLine" className="w-4 h-4" style={{color: '#3B82F6'}} />
-              <AppText variant="body" weight="bold" style={{marginLeft: 6}} raw>
-                Sửa ngữ pháp ({summary.grammarFixes.length})
-              </AppText>
-            </View>
+          <View style={[styles.sectionCard, {backgroundColor: colors.surface}]}>
+            <AppText variant="body" weight="bold" style={{marginBottom: 10}} raw>
+              Sửa ngữ pháp
+            </AppText>
             {summary.grammarFixes.map((fix, idx) => (
-              <View key={`grammar-${idx}`} style={[styles.fixRow, {backgroundColor: colors.surface}]}>
+              <View key={`grammar-${idx}`} style={styles.fixRow}>
                 <AppText variant="bodySmall" raw>
+                  <AppText variant="bodySmall" style={{color: '#EF4444'}} raw>
+                    ✗{' '}
+                  </AppText>
                   <AppText variant="bodySmall" style={{textDecorationLine: 'line-through', color: '#EF4444'}} raw>
                     {fix.original}
                   </AppText>
                   {' → '}
-                  <AppText variant="bodySmall" weight="semibold" style={{color: '#22C55E'}} raw>
-                    {fix.correction}
+                  <AppText variant="bodySmall" style={{color: '#22C55E'}} raw>
+                    ✅ {fix.correction}
                   </AppText>
                 </AppText>
               </View>
@@ -237,37 +280,51 @@ export default function SessionSummaryScreen() {
         )}
 
         {/* AI Feedback */}
-        <View style={styles.section}>
+        <View style={[styles.sectionCard, {backgroundColor: `${accentColor}08`, borderColor: `${accentColor}20`, borderWidth: 1}]}>
           <View style={styles.sectionHeader}>
-            <Icon name="MessageCircle" className="w-4 h-4" style={{color: accentColor}} />
-            <AppText variant="body" weight="bold" style={{marginLeft: 6}} raw>
-              Nhận xét AI
+            <AppText style={{fontSize: 18, marginRight: 6}} raw>🤖</AppText>
+            <AppText variant="body" weight="bold" raw>
+              AI Feedback
             </AppText>
           </View>
-          <View style={[styles.feedbackCard, {backgroundColor: `${accentColor}08`, borderColor: `${accentColor}20`}]}>
-            <AppText variant="body" style={{color: colors.foreground, lineHeight: 22}} raw>
-              {summary.aiFeedback}
-            </AppText>
-          </View>
+          <AppText variant="body" style={{color: colors.foreground, lineHeight: 22, marginTop: 8}} raw>
+            {summary.aiFeedback}
+          </AppText>
         </View>
+
+        {/* Scenario Badge — Roleplay only */}
+        {summary.scenarioBadge && (
+          <View style={[styles.scenarioBadgeRow]}>
+            <AppText variant="body" style={{color: colors.foreground}} raw>
+              🤖 Hoàn thành: {summary.scenarioBadge} ✅
+            </AppText>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Action Buttons — sticky bottom */}
+      {/* Action Buttons — 3 buttons (UI-06) */}
       <View style={[styles.footer, {borderTopColor: colors.glassBorder, backgroundColor: colors.background}]}>
         <View style={styles.actionRow}>
           <AppButton
-            variant="default"
+            variant="outline"
             size="lg"
-            style={{flex: 1, backgroundColor: colors.surface}}
-            onPress={handleGoHome}>
-            🏠 Về Home
+            style={{flex: 1}}
+            onPress={handleShare}>
+            📤 Chia sẻ
+          </AppButton>
+          <AppButton
+            variant="outline"
+            size="lg"
+            style={{flex: 1}}
+            onPress={handleRetry}>
+            🔄 Luyện lại
           </AppButton>
           <AppButton
             variant="primary"
             size="lg"
             style={{flex: 1, backgroundColor: accentColor}}
-            onPress={handleRetry}>
-            🔄 Luyện lại
+            onPress={handleGoHome}>
+            Về Home
           </AppButton>
         </View>
       </View>
@@ -292,16 +349,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerSection: {
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 24,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  scenarioBadge: {
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
+  confettiRow: {
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statsRow: {
     flexDirection: 'row',
@@ -310,47 +366,45 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 10,
     borderRadius: 16,
     alignItems: 'center',
   },
-  scoreCard: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 20,
+  sectionCard: {
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 14,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
   },
   issueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 6,
+    paddingVertical: 8,
   },
-  scoreBadge: {
-    paddingHorizontal: 12,
+  accuracyBadge: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  playBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fixRow: {
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 6,
+    paddingVertical: 4,
   },
-  feedbackCard: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
+  scenarioBadgeRow: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
   footer: {
     paddingHorizontal: 16,
@@ -360,6 +414,6 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
 });

@@ -89,6 +89,9 @@ export default function ChatBubble({
     );
   }
 
+  // Format timestamp
+  const timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
   return (
     <View
       style={[
@@ -96,12 +99,12 @@ export default function ChatBubble({
         isUser ? styles.rowRight : styles.rowLeft,
       ]}>
 
-      {/* Persona Avatar — Roleplay AI only */}
-      {isAI && persona && (
+      {/* AI Avatar: persona (Roleplay) hoặc robot icon (Free Talk) */}
+      {isAI && (
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, {backgroundColor: `${accent}20`}]}>
             <AppText style={{fontSize: 16}} raw>
-              {persona.avatar || '🎭'}
+              {persona?.avatar || '🤖'}
             </AppText>
           </View>
         </View>
@@ -124,10 +127,18 @@ export default function ChatBubble({
             weight="bold"
             style={{color: accent, marginBottom: 4}}
             raw>
-            {persona.name}
-            <AppText variant="caption" style={{color: colors.neutrals400, fontWeight: 'normal'}} raw>
-              {' '}• {persona.role}
-            </AppText>
+            {persona.avatar || '🎭'} {persona.name} — {persona.role}
+          </AppText>
+        )}
+
+        {/* Persona label (nhưng không có persona → show AI) */}
+        {isAI && !persona && (
+          <AppText
+            variant="caption"
+            weight="bold"
+            style={{color: accent, marginBottom: 4}}
+            raw>
+            🤖 AI
           </AppText>
         )}
 
@@ -137,6 +148,14 @@ export default function ChatBubble({
           style={{color: colors.foreground}}
           raw>
           {message.text}
+        </AppText>
+
+        {/* Timestamp */}
+        <AppText
+          variant="caption"
+          style={{color: colors.neutrals400, marginTop: 6, alignSelf: isUser ? 'flex-end' : 'flex-start', fontSize: 11}}
+          raw>
+          {timeStr}{isUser && ' ✓'}
         </AppText>
 
         {/* Action row */}

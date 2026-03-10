@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useCallback, useMemo} from 'react';
+import React, {useEffect, useRef, useCallback, useMemo, useState} from 'react';
 import {
   View,
   FlatList,
@@ -13,12 +13,13 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {AppText} from '@/components/ui';
-import AppButton from '@/components/ui/AppButton';
 import Icon from '@/components/ui/Icon';
 import ChatBubble from '@/components/speaking/ChatBubble';
 import PronunciationAlert from '@/components/speaking/PronunciationAlert';
 import GrammarFix from '@/components/speaking/GrammarFix';
 import SuggestedResponses from '@/components/speaking/SuggestedResponses';
+import AIThinkingIndicator from '@/components/speaking/AIThinkingIndicator';
+import ContextBanner from '@/components/speaking/ContextBanner';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
@@ -28,6 +29,16 @@ import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
 import type {ConversationMessage} from '@/store/useSpeakingStore';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
+
+// =======================
+// Constants
+// =======================
+
+/** Timeout cho AI response (EC-04) */
+const AI_RESPONSE_TIMEOUT_MS = 10000;
+
+/** Debounce delay cho send button (EC-05) */
+const SEND_DEBOUNCE_MS = 500;
 
 // =======================
 // Helper
@@ -63,12 +74,14 @@ export default function ConversationScreen() {
   const haptic = useHaptic();
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sendLockRef = useRef(false); // Debounce lock (EC-05)
+  const userScrolledRef = useRef(false); // Smart scroll (EC-08)
+  const endingRef = useRef(false); // Prevent double-end (CR-08)
 
   // Store state
   const setup = useSpeakingStore(s => s.conversationSetup);
   const session = useSpeakingStore(s => s.conversationSession);
   const ai = useSpeakingStore(s => s.conversationAI);
-  const recording = useSpeakingStore(s => s.conversationRecording);
 
   // Store actions
   const startConversation = useSpeakingStore(s => s.startConversation);
@@ -76,7 +89,6 @@ export default function ConversationScreen() {
   const tickConversationTimer = useSpeakingStore(s => s.tickConversationTimer);
   const incrementTurn = useSpeakingStore(s => s.incrementTurn);
   const setAIThinking = useSpeakingStore(s => s.setAIThinking);
-  const setAITranscribing = useSpeakingStore(s => s.setAITranscribing);
   const setSuggestedResponses = useSpeakingStore(s => s.setSuggestedResponses);
   const setConversationSummary = useSpeakingStore(s => s.setConversationSummary);
   const endConversation = useSpeakingStore(s => s.endConversation);
@@ -87,8 +99,9 @@ export default function ConversationScreen() {
   const isActive = session?.isActive ?? false;
   const messages = session?.messages ?? [];
 
-  // Local state cho text input
-  const [textInput, setTextInput] = React.useState('');
+  // Local state
+  const [textInput, setTextInput] = useState('');
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
 
   // ===========================
   // Khởi tạo conversation
@@ -122,36 +135,47 @@ export default function ConversationScreen() {
   }, []);
 
   // ===========================
-  // Timer — Free Talk mode
+  // Timer — Free Talk mode (EC-01: cleanup khi hết giờ)
   // ===========================
   useEffect(() => {
-    if (mode !== 'free-talk' || !isActive) return;
+    if (mode !== 'free-talk' || !isActive) {
+      // Cleanup timer khi session kết thúc hoặc không phải free-talk
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
 
     timerRef.current = setInterval(() => {
       tickConversationTimer();
     }, 1000);
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [mode, isActive, tickConversationTimer]);
 
   // ===========================
-  // Auto-end khi hết timer/turns
+  // Auto-end khi hết timer/turns (CR-08: prevent double navigate)
   // ===========================
   useEffect(() => {
-    if (session && !session.isActive && messages.length > 0) {
+    if (session && !session.isActive && messages.length > 0 && !endingRef.current) {
       console.log('⏰ [Conversation] Session kết thúc — chuyển sang Summary');
+      endingRef.current = true;
       handleEndSession();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.isActive]);
 
   // ===========================
-  // Auto-scroll
+  // Smart auto-scroll (EC-08)
   // ===========================
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && !userScrolledRef.current) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({animated: true});
       }, 200);
@@ -167,8 +191,14 @@ export default function ConversationScreen() {
   const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || !isActive || ai.isThinking) return;
 
+    // Debounce (EC-05)
+    if (sendLockRef.current) return;
+    sendLockRef.current = true;
+    setTimeout(() => { sendLockRef.current = false; }, SEND_DEBOUNCE_MS);
+
     haptic.light();
     setTextInput('');
+    userScrolledRef.current = false; // Reset auto-scroll
 
     // Thêm tin nhắn user
     const userMsg: ConversationMessage = {
@@ -184,9 +214,12 @@ export default function ConversationScreen() {
       incrementTurn();
     }
 
-    // Gọi API AI trả lời
+    // Gọi API AI trả lời (EC-04: timeout)
     setAIThinking(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), AI_RESPONSE_TIMEOUT_MS);
+
       const result = await speakingApi.continueConversation(
         messages.map(m => ({speaker: m.role, text: m.text})),
         text.trim(),
@@ -202,6 +235,7 @@ export default function ConversationScreen() {
           feedbackMode: setup?.feedbackMode,
         },
       );
+      clearTimeout(timeoutId);
 
       // Thêm tin nhắn AI
       const aiMsg: ConversationMessage = {
@@ -224,12 +258,15 @@ export default function ConversationScreen() {
         console.log('🤖 [Conversation] AI yêu cầu kết thúc session');
         endConversation();
       }
-    } catch (err) {
-      console.error('❌ [Conversation] Lỗi gọi API:', err);
+    } catch (err: any) {
+      const isTimeout = err?.name === 'AbortError';
+      console.error('❌ [Conversation] Lỗi gọi API:', isTimeout ? 'Timeout' : err);
       addConversationMessage({
         id: `system-error-${Date.now()}`,
         role: 'system',
-        text: 'Có lỗi xảy ra. Vui lòng thử lại.',
+        text: isTimeout
+          ? 'AI không phản hồi kịp. Vui lòng thử lại.'
+          : 'Có lỗi xảy ra. Vui lòng thử lại.',
         timestamp: Date.now(),
       });
     } finally {
@@ -271,6 +308,7 @@ export default function ConversationScreen() {
       });
     } catch {
       console.error('❌ [Conversation] Lỗi sinh summary');
+      // EC-09: Navigate anyway — Summary screen sẽ show fallback UI
     }
 
     navigation.navigate('SessionSummary');
@@ -303,57 +341,60 @@ export default function ConversationScreen() {
 
   /**
    * Mục đích: Render từng item trong chat list (message + inline feedback)
-   * Tham số đầu vào: item (ConversationMessage), index (number)
+   * Tham số đầu vào: item (ConversationMessage)
    * Tham số đầu ra: JSX.Element
    * Khi nào sử dụng: FlatList renderItem
    */
   const renderItem = useCallback(({item}: {item: ConversationMessage}) => {
     return (
       <View>
+        {/* CR-01: Truyền persona + accentColor cho ChatBubble */}
         <ChatBubble
           message={item}
+          persona={setup?.persona || undefined}
+          accentColor={accentColor}
           onPlayAudio={audioUrl => {
             console.log('🔊 [Conversation] Phát audio:', audioUrl);
             // TODO: Implement audio playback
           }}
         />
 
-        {/* Inline Pronunciation Alert */}
+        {/* Inline Pronunciation Alert (UI-02: đã redesign) */}
         {item.pronunciationFeedback && (
           <PronunciationAlert
             correction={item.pronunciationFeedback}
             onPlaySample={word => {
               console.log('🔊 [Conversation] Phát mẫu cho:', word);
             }}
+            onReSpeak={word => {
+              console.log('🎤 [Conversation] Thử lại nói:', word);
+            }}
           />
         )}
 
-        {/* Inline Grammar Fix */}
+        {/* Inline Grammar Fix (UI-03: đã redesign — grouped) */}
         {item.grammarCorrections && item.grammarCorrections.length > 0 && (
-          <>
-            {item.grammarCorrections.map((gc, idx) => (
-              <GrammarFix
-                key={`grammar-${item.id}-${idx}`}
-                correction={gc}
-              />
-            ))}
-          </>
+          <GrammarFix
+            corrections={item.grammarCorrections}
+            onDismiss={() => {
+              console.log('✅ [Conversation] Đã hiểu grammar fix');
+            }}
+          />
         )}
       </View>
     );
-  }, []);
+  }, [setup?.persona, accentColor]);
 
   const keyExtractor = useCallback((item: ConversationMessage) => item.id, []);
 
   // ===========================
-  // Badge hiển thị Timer / Turn
+  // Badge hiển thị Timer / Turn (CR-14: no emoji in title)
   // ===========================
   const statusBadge = useMemo(() => {
     if (mode === 'free-talk') {
       return (
         <View style={[styles.badge, {backgroundColor: `${accentColor}20`}]}>
-          <Icon name="Clock" className="w-3.5 h-3.5" style={{color: accentColor}} />
-          <AppText variant="bodySmall" weight="bold" style={{color: accentColor, marginLeft: 4}} raw>
+          <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
             {formatTime(session?.remainingTime ?? 0)}
           </AppText>
         </View>
@@ -361,9 +402,8 @@ export default function ConversationScreen() {
     }
     return (
       <View style={[styles.badge, {backgroundColor: `${accentColor}20`}]}>
-        <Icon name="MessageSquare" className="w-3.5 h-3.5" style={{color: accentColor}} />
-        <AppText variant="bodySmall" weight="bold" style={{color: accentColor, marginLeft: 4}} raw>
-          {session?.currentTurn ?? 0}/{setup?.maxTurns ?? 8}
+        <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
+          Turn {session?.currentTurn ?? 0}/{setup?.maxTurns ?? 8}
         </AppText>
       </View>
     );
@@ -376,7 +416,7 @@ export default function ConversationScreen() {
         style={{flex: 1}}
         keyboardVerticalOffset={10}>
 
-        {/* TopBar */}
+        {/* TopBar (CR-14: no emoji) */}
         <View style={[styles.topBar, {borderBottomColor: colors.glassBorder}]}>
           <TouchableOpacity onPress={handleBack} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="ChevronLeft" className="w-6 h-6 text-foreground" />
@@ -384,7 +424,7 @@ export default function ConversationScreen() {
 
           <View style={styles.topBarCenter}>
             <AppText variant="body" weight="bold" raw>
-              {mode === 'free-talk' ? '💬 Free Talk' : '🎭 Roleplay'}
+              {mode === 'free-talk' ? 'Free Talk' : 'Roleplay'}
             </AppText>
             {statusBadge}
           </View>
@@ -398,28 +438,21 @@ export default function ConversationScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Context Banner — Roleplay only */}
+        {/* Context Banner — Roleplay only (CR-03: use component) */}
         {mode === 'roleplay' && setup && (
-          <View style={[styles.contextBanner, {backgroundColor: `${accentColor}10`, borderBottomColor: `${accentColor}20`}]}>
-            <View style={{flex: 1}}>
-              <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
-                {setup.topicName}
-              </AppText>
-              {setup.topicDescription ? (
-                <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 2}} raw>
-                  {setup.topicDescription}
-                </AppText>
-              ) : null}
-            </View>
-            <View style={[styles.difficultyBadge, {backgroundColor: `${accentColor}25`}]}>
-              <AppText variant="caption" weight="bold" style={{color: accentColor}} raw>
-                {setup.difficulty.toUpperCase()}
-              </AppText>
-            </View>
-          </View>
+          <ContextBanner
+            title={setup.topicName}
+            description={setup.topicDescription || ''}
+            difficulty={setup.difficulty}
+            persona={setup.persona ? {
+              name: setup.persona.name,
+              avatar: setup.persona.avatar,
+            } : undefined}
+            accentColor={accentColor}
+          />
         )}
 
-        {/* Chat List */}
+        {/* Chat List (EC-08: smart scroll) */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -427,6 +460,8 @@ export default function ConversationScreen() {
           keyExtractor={keyExtractor}
           contentContainerStyle={{paddingVertical: 12, paddingBottom: 60}}
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => { userScrolledRef.current = true; }}
+          onScrollToIndexFailed={() => {}}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <AppText variant="body" style={{color: colors.neutrals400, textAlign: 'center'}} raw>
@@ -436,18 +471,15 @@ export default function ConversationScreen() {
           }
         />
 
-        {/* AI Thinking Indicator */}
+        {/* AI Thinking Indicator (CR-02: use component) */}
         {ai.isThinking && (
-          <View style={[styles.thinkingRow, {borderTopColor: colors.glassBorder}]}>
-            <View style={[styles.thinkingDots, {backgroundColor: colors.surface}]}>
-              <AppText variant="bodySmall" style={{color: colors.neutrals400}} raw>
-                {setup?.persona ? `${setup.persona.name} đang trả lời` : 'AI đang suy nghĩ'}...
-              </AppText>
-            </View>
-          </View>
+          <AIThinkingIndicator
+            personaName={setup?.persona?.name}
+            accentColor={accentColor}
+          />
         )}
 
-        {/* Suggested Responses — Free Talk + Beginner */}
+        {/* Suggested Responses — Free Talk + Beginner (UI-14: icon on chips) */}
         {setup?.options.showSuggestions && ai.suggestedResponses.length > 0 && isActive && (
           <SuggestedResponses
             suggestions={ai.suggestedResponses}
@@ -456,7 +488,7 @@ export default function ConversationScreen() {
           />
         )}
 
-        {/* Input Bar */}
+        {/* Input Bar (UI-05: keyboard toggle + "Giữ để nói") */}
         <View style={[styles.inputBar, {borderTopColor: colors.glassBorder, backgroundColor: colors.background}]}>
           <TextInput
             style={[styles.textInput, {backgroundColor: colors.surface, color: colors.foreground}]}
@@ -469,6 +501,18 @@ export default function ConversationScreen() {
             returnKeyType="send"
           />
 
+          {/* Keyboard/Mic toggle (UI-05) */}
+          <TouchableOpacity
+            style={styles.toggleBtn}
+            onPress={() => setInputMode(prev => prev === 'voice' ? 'text' : 'voice')}
+            activeOpacity={0.7}>
+            <Icon
+              name={inputMode === 'voice' ? 'Keyboard' : 'Mic'}
+              className="w-5 h-5"
+              style={{color: colors.neutrals400}}
+            />
+          </TouchableOpacity>
+
           {/* Nút gửi / mic */}
           {textInput.trim() ? (
             <TouchableOpacity
@@ -478,15 +522,21 @@ export default function ConversationScreen() {
               <Icon name="Send" className="w-5 h-5" style={{color: '#000'}} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              style={[styles.sendBtn, {backgroundColor: `${accentColor}20`}]}
-              onPress={() => {
-                // TODO: Implement hold-to-record
-                console.log('🎤 [Conversation] Bắt đầu ghi âm');
-              }}
-              disabled={ai.isThinking || !isActive}>
-              <Icon name="Mic" className="w-5 h-5" style={{color: accentColor}} />
-            </TouchableOpacity>
+            <View style={{alignItems: 'center'}}>
+              <TouchableOpacity
+                style={[styles.sendBtn, {backgroundColor: `${accentColor}20`}]}
+                onPress={() => {
+                  // TODO: Integrate hold-to-record + RecordingOverlay (CR-04)
+                  console.log('🎤 [Conversation] Bắt đầu ghi âm');
+                }}
+                disabled={ai.isThinking || !isActive}>
+                <Icon name="Mic" className="w-5 h-5" style={{color: accentColor}} />
+              </TouchableOpacity>
+              {/* "Giữ để nói" label (UI-05) */}
+              <AppText variant="caption" style={{color: colors.neutrals400, fontSize: 10, marginTop: 2}} raw>
+                Giữ để nói
+              </AppText>
+            </View>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -528,35 +578,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
   },
-  contextBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  difficultyBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
   emptyState: {
     flex: 1,
     padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  thinkingRow: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  thinkingDots: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderTopLeftRadius: 4,
   },
   inputBar: {
     flexDirection: 'row',
@@ -572,6 +598,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     fontSize: 15,
+  },
+  toggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendBtn: {
     width: 44,
