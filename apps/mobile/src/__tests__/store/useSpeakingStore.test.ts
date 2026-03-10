@@ -15,10 +15,11 @@ describe('useSpeakingStore', () => {
   });
 
   describe('Config', () => {
-    it('setConfig cập nhật topic', () => {
-      useSpeakingStore.getState().setConfig({topic: 'Technology'});
+    it('setConfig cập nhật topic với TopicScenario', () => {
+      const mockTopic = {id: 'it-1', name: 'Daily Stand-up Update', description: 'Quick report'};
+      useSpeakingStore.getState().setConfig({topic: mockTopic});
 
-      expect(useSpeakingStore.getState().config.topic).toBe('Technology');
+      expect(useSpeakingStore.getState().config.topic).toEqual(mockTopic);
     });
 
     it('setConfig cập nhật level', () => {
@@ -28,20 +29,21 @@ describe('useSpeakingStore', () => {
     });
 
     it('setConfig merge đúng, không mất config cũ', () => {
-      useSpeakingStore.getState().setConfig({topic: 'Travel'});
+      const mockTopic = {id: 'daily-1', name: 'Check-in', description: 'Airport check-in'};
+      useSpeakingStore.getState().setConfig({topic: mockTopic});
       useSpeakingStore.getState().setConfig({level: 'beginner'});
 
       const config = useSpeakingStore.getState().config;
-      expect(config.topic).toBe('Travel');
+      expect(config.topic).toEqual(mockTopic);
       expect(config.level).toBe('beginner');
     });
   });
 
   describe('Sentences', () => {
     const mockSentences = [
-      {text: 'Hello, how are you?', difficulty: 'easy'},
-      {text: 'The weather is nice today.', difficulty: 'easy'},
-      {text: 'Technology is revolutionizing our world.', difficulty: 'medium'},
+      {id: 's-1', text: 'Hello, how are you?', ipa: '/həˈloʊ/', audioUrl: '', difficulty: 'easy' as const},
+      {id: 's-2', text: 'The weather is nice today.', ipa: '', audioUrl: '', difficulty: 'easy' as const},
+      {id: 's-3', text: 'Technology is revolutionizing our world.', ipa: '', audioUrl: '', difficulty: 'medium' as const},
     ];
 
     it('setSentences lưu danh sách câu và reset index', () => {
@@ -137,12 +139,17 @@ describe('useSpeakingStore', () => {
   describe('Feedback', () => {
     const mockFeedback = {
       overallScore: 85,
+      grade: 'B+',
       fluency: 80,
       pronunciation: 88,
       pace: 90,
       wordByWord: [
-        {word: 'hello', score: 95, correct: true},
-        {word: 'world', score: 72, correct: false, issue: 'Thiếu âm cuối'},
+        {word: 'hello', score: 95, phonemes: '/hɛˈloʊ/', issues: []},
+        {word: 'world', score: 72, phonemes: '/wɝːld/', issues: ['Thiếu âm cuối']},
+      ],
+      phonemeHeatmap: [
+        {phoneme: '/θ/', accuracy: 65, totalAttempts: 3},
+        {phoneme: '/ɹ/', accuracy: 90, totalAttempts: 5},
       ],
       patterns: ['Cần luyện âm /θ/'],
       feedback: {
@@ -150,6 +157,7 @@ describe('useSpeakingStore', () => {
         tips: ['Đọc chậm hơn', 'Nhấn âm /ld/'],
         encouragement: 'Tốt lắm!',
       },
+      aiCorrectedAudioUrl: null,
     };
 
     it('setFeedback lưu kết quả', () => {
@@ -207,7 +215,7 @@ describe('useSpeakingStore', () => {
     it('trạng thái mặc định đúng khi khởi tạo', () => {
       const state = useSpeakingStore.getState();
 
-      expect(state.config.topic).toBe('');
+      expect(state.config.topic).toBeNull();
       expect(state.config.level).toBe('intermediate');
       expect(state.sentences).toEqual([]);
       expect(state.currentIndex).toBe(0);
@@ -219,6 +227,7 @@ describe('useSpeakingStore', () => {
       expect(state.isGenerating).toBe(false);
       expect(state.isTranscribing).toBe(false);
       expect(state.error).toBeNull();
+      expect(state.displaySettings.showIPA).toBe(true);
     });
   });
 
@@ -226,8 +235,8 @@ describe('useSpeakingStore', () => {
     it('reset() trả về trạng thái mặc định', () => {
       // Setup state
       useSpeakingStore.setState({
-        config: {topic: 'Test', level: 'advanced'},
-        sentences: [{text: 'Test', difficulty: 'hard'}],
+        config: {topic: {id: 'test', name: 'Test', description: ''}, level: 'advanced'},
+        sentences: [{id: 's-1', text: 'Test', ipa: '', audioUrl: '', difficulty: 'hard'}],
         currentIndex: 2,
         isRecording: true,
         recordingDuration: 10,
@@ -242,7 +251,7 @@ describe('useSpeakingStore', () => {
       useSpeakingStore.getState().reset();
 
       const state = useSpeakingStore.getState();
-      expect(state.config.topic).toBe('');
+      expect(state.config.topic).toBeNull();
       expect(state.config.level).toBe('intermediate');
       expect(state.sentences).toEqual([]);
       expect(state.currentIndex).toBe(0);
@@ -257,12 +266,16 @@ describe('useSpeakingStore', () => {
   // ============================================
 
   describe('TTS Settings (Sprint 7A)', () => {
-    it('trạng thái mặc định TTS đúng', () => {
+    it('trạng thái mặc định TTS đúng (Azure defaults)', () => {
       const state = useSpeakingStore.getState();
 
-      expect(state.ttsSettings.provider).toBe('openai');
-      expect(state.ttsSettings.voiceId).toBe('alloy');
+      expect(state.ttsSettings.provider).toBe('azure');
+      expect(state.ttsSettings.voiceId).toBe('en-US-JennyNeural');
       expect(state.ttsSettings.speed).toBe(1.0);
+      expect(state.ttsSettings.pitch).toBe(0);
+      expect(state.ttsSettings.emotion).toBe('cheerful');
+      expect(state.ttsSettings.autoEmotion).toBe(true);
+      expect(state.ttsSettings.randomVoice).toBe(false);
     });
 
     it('setTtsSettings merge partial — chỉ cập nhật provider', () => {
@@ -271,8 +284,40 @@ describe('useSpeakingStore', () => {
       const {ttsSettings} = useSpeakingStore.getState();
       expect(ttsSettings.provider).toBe('azure');
       // Các field khác giữ nguyên
-      expect(ttsSettings.voiceId).toBe('alloy');
+      expect(ttsSettings.voiceId).toBe('en-US-JennyNeural');
       expect(ttsSettings.speed).toBe(1.0);
+    });
+
+    it('setTtsSettings pitch clamp trong range -50 đến +50', () => {
+      useSpeakingStore.getState().setTtsSettings({pitch: 100});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(50);
+
+      useSpeakingStore.getState().setTtsSettings({pitch: -100});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(-50);
+
+      useSpeakingStore.getState().setTtsSettings({pitch: 25});
+      expect(useSpeakingStore.getState().ttsSettings.pitch).toBe(25);
+    });
+
+    it('setTtsSettings speed clamp trong range 0.5 đến 2.0', () => {
+      useSpeakingStore.getState().setTtsSettings({speed: 5.0});
+      expect(useSpeakingStore.getState().ttsSettings.speed).toBe(2.0);
+
+      useSpeakingStore.getState().setTtsSettings({speed: 0.1});
+      expect(useSpeakingStore.getState().ttsSettings.speed).toBe(0.5);
+    });
+
+    it('setTtsSettings emotion và autoEmotion', () => {
+      useSpeakingStore.getState().setTtsSettings({emotion: 'newscast', autoEmotion: false});
+
+      const {ttsSettings} = useSpeakingStore.getState();
+      expect(ttsSettings.emotion).toBe('newscast');
+      expect(ttsSettings.autoEmotion).toBe(false);
+    });
+
+    it('setTtsSettings randomVoice toggle', () => {
+      useSpeakingStore.getState().setTtsSettings({randomVoice: true});
+      expect(useSpeakingStore.getState().ttsSettings.randomVoice).toBe(true);
     });
 
     it('setTtsSettings merge partial — chỉ cập nhật speed', () => {
@@ -280,7 +325,7 @@ describe('useSpeakingStore', () => {
 
       const {ttsSettings} = useSpeakingStore.getState();
       expect(ttsSettings.speed).toBe(1.5);
-      expect(ttsSettings.provider).toBe('openai');
+      expect(ttsSettings.provider).toBe('azure');
     });
 
     it('setTtsSettings cập nhật nhiều field cùng lúc', () => {
@@ -309,140 +354,110 @@ describe('useSpeakingStore', () => {
   });
 
   // ============================================
-  // Sprint 7: Coach Mode Actions
+  // AI Conversation Actions
   // ============================================
 
-  describe('Coach Mode Actions', () => {
+  describe('AI Conversation Actions', () => {
     const mockSetup = {
-      topic: 'Daily conversation',
+      mode: 'free-talk' as const,
+      topicId: null,
+      topicName: 'Daily conversation',
+      topicDescription: 'Trò chuyện hàng ngày',
+      persona: null,
       durationMinutes: 10,
-      feedbackMode: 'intermediate' as const,
-    };
+      totalTurns: 0,
+      feedbackSettings: {
+        showSuggestions: true,
+        inlineGrammarFix: true,
+        pronunciationAlert: true,
+      },
+    } as any;
 
-    it('startCoachSession khởi tạo session đúng', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
+    it('setConversationSetup lưu setup đúng', () => {
+      useSpeakingStore.getState().setConversationSetup(mockSetup);
 
-      const {coachSession} = useSpeakingStore.getState();
-      expect(coachSession).not.toBeNull();
-      expect(coachSession!.setup.topic).toBe('Daily conversation');
-      expect(coachSession!.setup.durationMinutes).toBe(10);
-      expect(coachSession!.messages).toEqual([]);
-      expect(coachSession!.remainingSeconds).toBe(600); // 10 * 60
-      expect(coachSession!.inputMode).toBe('voice');
-      expect(coachSession!.isAIResponding).toBe(false);
-      expect(coachSession!.isEnded).toBe(false);
+      const {conversationSetup} = useSpeakingStore.getState();
+      expect(conversationSetup).not.toBeNull();
+      expect(conversationSetup!.topicName).toBe('Daily conversation');
+      expect(conversationSetup!.durationMinutes).toBe(10);
+      expect(conversationSetup!.mode).toBe('free-talk');
     });
 
-    it('addCoachMessage thêm tin nhắn vào messages', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
+    it('startConversation khởi tạo session active', () => {
+      useSpeakingStore.getState().setConversationSetup(mockSetup);
+      useSpeakingStore.getState().startConversation();
 
-      const mockMessage = {
-        id: 'msg-1',
-        role: 'user' as const,
-        text: 'Hello, how are you?',
-        timestamp: Date.now(),
-      };
-      useSpeakingStore.getState().addCoachMessage(mockMessage);
-
-      const {coachSession} = useSpeakingStore.getState();
-      expect(coachSession!.messages).toHaveLength(1);
-      expect(coachSession!.messages[0].text).toBe('Hello, how are you?');
+      const {conversationSession} = useSpeakingStore.getState();
+      expect(conversationSession).not.toBeNull();
+      expect(conversationSession!.isActive).toBe(true);
+      expect(conversationSession!.messages).toEqual([]);
+      expect(conversationSession!.inputMode).toBe('voice');
     });
 
-    it('tickCoachTimer giảm remainingSeconds mỗi giây', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
+    it('setConversationInputMode đổi voice ↔ text', () => {
+      useSpeakingStore.getState().setConversationSetup(mockSetup);
+      useSpeakingStore.getState().startConversation();
 
-      useSpeakingStore.getState().tickCoachTimer();
-      useSpeakingStore.getState().tickCoachTimer();
-      useSpeakingStore.getState().tickCoachTimer();
+      useSpeakingStore.getState().setConversationInputMode('text');
+      expect(useSpeakingStore.getState().conversationSession!.inputMode).toBe('text');
 
-      const {coachSession} = useSpeakingStore.getState();
-      expect(coachSession!.remainingSeconds).toBe(597); // 600 - 3
-      expect(coachSession!.isEnded).toBe(false);
+      useSpeakingStore.getState().setConversationInputMode('voice');
+      expect(useSpeakingStore.getState().conversationSession!.inputMode).toBe('voice');
     });
 
-    it('tickCoachTimer auto-end khi hết thời gian', () => {
-      // Tạo session 1 giây
-      useSpeakingStore.getState().startCoachSession({
-        ...mockSetup,
-        durationMinutes: 0, // 0 phút = 0 giây
-      });
-      // Set remainingSeconds = 1 thủ công
-      useSpeakingStore.setState(state => ({
-        coachSession: state.coachSession
-          ? {...state.coachSession, remainingSeconds: 1}
-          : null,
-      }));
+    it('endConversation set isActive = false', () => {
+      useSpeakingStore.getState().setConversationSetup(mockSetup);
+      useSpeakingStore.getState().startConversation();
 
-      useSpeakingStore.getState().tickCoachTimer();
+      useSpeakingStore.getState().endConversation();
 
-      const {coachSession} = useSpeakingStore.getState();
-      expect(coachSession!.remainingSeconds).toBe(0);
-      expect(coachSession!.isEnded).toBe(true);
+      const {conversationSession} = useSpeakingStore.getState();
+      expect(conversationSession!.isActive).toBe(false);
     });
 
-    it('setCoachInputMode đổi voice ↔ text', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
+    it('resetConversation xóa toàn bộ conversation state', () => {
+      useSpeakingStore.getState().setConversationSetup(mockSetup);
+      useSpeakingStore.getState().startConversation();
 
-      useSpeakingStore.getState().setCoachInputMode('text');
-      expect(useSpeakingStore.getState().coachSession!.inputMode).toBe('text');
+      useSpeakingStore.getState().resetConversation();
 
-      useSpeakingStore.getState().setCoachInputMode('voice');
-      expect(useSpeakingStore.getState().coachSession!.inputMode).toBe('voice');
+      const state = useSpeakingStore.getState();
+      expect(state.conversationSetup).toBeNull();
+      expect(state.conversationSession).toBeNull();
+      expect(state.conversationSummary).toBeNull();
     });
 
-    it('setCoachAIResponding toggle trạng thái AI', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
-
-      useSpeakingStore.getState().setCoachAIResponding(true);
-      expect(useSpeakingStore.getState().coachSession!.isAIResponding).toBe(true);
-
-      useSpeakingStore.getState().setCoachAIResponding(false);
-      expect(useSpeakingStore.getState().coachSession!.isAIResponding).toBe(false);
-    });
-
-    it('endCoachSession set isEnded = true', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
-
-      useSpeakingStore.getState().endCoachSession();
-
-      const {coachSession} = useSpeakingStore.getState();
-      expect(coachSession!.isEnded).toBe(true);
-    });
-
-    it('resetCoach xóa toàn bộ coachSession', () => {
-      useSpeakingStore.getState().startCoachSession(mockSetup);
-      useSpeakingStore.getState().addCoachMessage({
-        id: 'msg-1',
-        role: 'ai' as const,
-        text: 'Welcome!',
-        timestamp: Date.now(),
-      });
-
-      useSpeakingStore.getState().resetCoach();
-
-      expect(useSpeakingStore.getState().coachSession).toBeNull();
-    });
-
-    it('Coach actions an toàn khi coachSession = null (null-safe)', () => {
-      // Đảm bảo các action không crash khi coachSession chưa khởi tạo
-      expect(useSpeakingStore.getState().coachSession).toBeNull();
+    it('Conversation actions an toàn khi session = null (null-safe)', () => {
+      // Đảm bảo các action không crash khi conversationSession chưa khởi tạo
+      expect(useSpeakingStore.getState().conversationSession).toBeNull();
 
       // Gọi tất cả actions — không crash
-      useSpeakingStore.getState().addCoachMessage({
-        id: 'msg-1',
-        role: 'user' as const,
-        text: 'Test',
-        timestamp: Date.now(),
-      });
-      useSpeakingStore.getState().setCoachInputMode('text');
-      useSpeakingStore.getState().tickCoachTimer();
-      useSpeakingStore.getState().setCoachAIResponding(true);
-      useSpeakingStore.getState().endCoachSession();
-      useSpeakingStore.getState().resetCoach();
+      useSpeakingStore.getState().setConversationInputMode('text');
+      useSpeakingStore.getState().tickConversationTimer();
+      useSpeakingStore.getState().setAIThinking(true);
+      useSpeakingStore.getState().endConversation();
+      useSpeakingStore.getState().resetConversation();
 
       // Vẫn null, không crash
-      expect(useSpeakingStore.getState().coachSession).toBeNull();
+      expect(useSpeakingStore.getState().conversationSession).toBeNull();
+    });
+  });
+
+  // ============================================
+  // Display Settings (showIPA)
+  // ============================================
+
+  describe('Display Settings', () => {
+    it('trạng thái mặc định showIPA = true', () => {
+      expect(useSpeakingStore.getState().displaySettings.showIPA).toBe(true);
+    });
+
+    it('setShowIPA toggle đúng', () => {
+      useSpeakingStore.getState().setShowIPA(false);
+      expect(useSpeakingStore.getState().displaySettings.showIPA).toBe(false);
+
+      useSpeakingStore.getState().setShowIPA(true);
+      expect(useSpeakingStore.getState().displaySettings.showIPA).toBe(true);
     });
   });
 });
