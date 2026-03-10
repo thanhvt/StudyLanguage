@@ -34,6 +34,14 @@ export default function RootNavigator() {
   const setSession = useAuthStore(state => state.setSession);
   const setInitialized = useAuthStore(state => state.setInitialized);
 
+  // Notification toast state — phải khai báo TRƯỚC mọi early return để đảm bảo hooks order
+  const queuedMessages = useNotificationStore(s => s.queuedMessages);
+  const isAppActive = useNotificationStore(s => s.isAppActive);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  // Local push notification — xin permission 1 lần khi app khởi động
+  const {requestPermission} = useLocalNotification();
+
   // Đảm bảo splash hiển thị đủ lâu để user thấy animation
   const [splashDone, setSplashDone] = useState(false);
 
@@ -78,6 +86,20 @@ export default function RootNavigator() {
     };
   }, [setUser, setSession, setInitialized]);
 
+  // Xin permission notification khi đã login + app sẵn sàng
+  useEffect(() => {
+    if (session) {
+      requestPermission();
+    }
+  }, [session, requestPermission]);
+
+  // Hiện toast khi có tin mới trong queue + user đang active
+  useEffect(() => {
+    if (queuedMessages.length > 0 && isAppActive) {
+      setToastVisible(true);
+    }
+  }, [queuedMessages.length, isAppActive]);
+
   // Hiển thị Splash Screen cho đến khi auth đã check xong VÀ đủ thời gian tối thiểu
   if (!isInitialized || !splashDone) {
     return <SplashScreen />;
@@ -87,24 +109,6 @@ export default function RootNavigator() {
   if (!session) {
     return <AuthStack />;
   }
-
-  // Notification toast state — hiển khi có AI response và user ở tab khác
-  const queuedMessages = useNotificationStore(s => s.queuedMessages);
-  const isAppActive = useNotificationStore(s => s.isAppActive);
-  const [toastVisible, setToastVisible] = useState(false);
-
-  // Local push notification — xin permission 1 lần khi app khởi động
-  const {requestPermission} = useLocalNotification();
-  useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
-
-  // Hiện toast khi có tin mới trong queue + user đang active
-  useEffect(() => {
-    if (queuedMessages.length > 0 && isAppActive) {
-      setToastVisible(true);
-    }
-  }, [queuedMessages.length, isAppActive]);
 
   return (
     <View style={{flex: 1}}>

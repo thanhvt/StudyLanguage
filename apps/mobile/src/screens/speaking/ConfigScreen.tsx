@@ -208,7 +208,7 @@ export default function SpeakingConfigScreen() {
         </AppButton>
         <View style={styles.headerCenter}>
           <AppText variant="heading3" weight="bold">
-            🎤 Practice Mode
+            Practice Mode
           </AppText>
         </View>
         <View style={{width: 36}} />
