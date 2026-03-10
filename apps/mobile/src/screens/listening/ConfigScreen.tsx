@@ -14,7 +14,7 @@ import {
   Pressable,
 } from 'react-native';
 import {Swipeable} from 'react-native-gesture-handler';
-import {AppButton, AppText, Switch} from '@/components/ui';
+import {AppButton, AppText, Switch, SectionCard} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useListeningStore} from '@/store/useListeningStore';
 import {useAppStore} from '@/store/useAppStore';
@@ -32,6 +32,7 @@ import {
   SpeakersSelector,
   TopicPickerModal,
 } from '@/components/listening';
+import {TopicSelector} from '@/components/topic';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import TrackPlayer from 'react-native-track-player';
 import LinearGradient from 'react-native-linear-gradient';
@@ -545,344 +546,36 @@ export default function ListeningConfigScreen({
           {mode === 'podcast' && (
           <View className="px-6 mb-6">
             <SectionCard>
-              {/* Top Row: Label + action buttons */}
-              <View className="flex-row items-center justify-between mb-3">
-                <AppText className="font-sans-semibold text-base" style={{color: colors.foreground}}>
-                  Chủ đề
-                </AppText>
-                <View className="flex-row items-center gap-2">
-                  <TouchableOpacity
-                    className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
-                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                    onPress={() => {
-                      haptic.light();
-                      setShowTopicModal(true);
-                    }}
-                    accessibilityLabel="Tìm kiếm chủ đề"
-                    accessibilityRole="button">
-                    <Icon name="Search" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
-                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                    onPress={() => {
-                      haptic.light();
-                      setSelectedCategory('favorites');
-                      setShowTopicModal(true);
-                    }}
-                    accessibilityLabel="Chủ đề yêu thích"
-                    accessibilityRole="button">
-                    <Icon name="Heart" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{backgroundColor: isDark ? `${LISTENING_BLUE}15` : `${LISTENING_BLUE}10`}}
-                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                    onPress={() => {
-                      haptic.light();
-                      navigation.navigate('CustomScenarios');
-                    }}
-                    accessibilityLabel="Tạo chủ đề mới"
-                    accessibilityRole="button">
-                    <Icon name="Plus" className="w-5 h-5" style={{color: LISTENING_BLUE}} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Hiển thị topic đang chọn — để user biết đang chọn gì */}
-              {selectedTopic && (
-                <View className="flex-row items-center rounded-xl px-3 py-2 mb-3"
-                  style={{backgroundColor: `${LISTENING_BLUE}10`, borderWidth: 1, borderColor: `${LISTENING_BLUE}25`}}>
-                  <Icon name="Check" className="w-3.5 h-3.5" style={{color: LISTENING_BLUE, marginRight: 8}} />
-                  <AppText className="text-[13px] flex-1" style={{color: colors.foreground}} numberOfLines={1}>
-                    <AppText className="font-sans-bold" style={{color: LISTENING_BLUE}}>
-                      {selectedTopic.name}
-                    </AppText>
-                  </AppText>
-                  <TouchableOpacity
-                    onPress={() => {
-                      haptic.light();
-                      setSelectedTopic(null);
-                    }}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                    accessibilityLabel="Bỏ chọn chủ đề"
-                    accessibilityRole="button">
-                    <Icon name="X" className="w-3.5 h-3.5" style={{color: colors.neutrals400}} />
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* Category Tabs */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="mb-2">
-                <View className="flex-row gap-2">
-                  {TOPIC_CATEGORIES.map(cat => {
-                    const isActive = selectedCategory === cat.id;
-                    return (
-                      <TouchableOpacity
-                        key={cat.id}
-                        className="flex-row items-center px-4 py-2.5 rounded-full border"
-                        style={{
-                          backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
-                          borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
-                        }}
-                        onPress={() => {
-                          haptic.light();
-                          setSelectedCategory(cat.id);
-                          setSelectedSubCategory('');
-                        }}
-                        accessibilityLabel={`Danh mục ${cat.name}${isActive ? ', đang chọn' : ''}`}
-                        accessibilityRole="button">
-                        {cat.icon && (
-                          <AppText className="text-[13px] mr-1">{cat.icon}</AppText>
-                        )}
-                        <AppText
-                          className="text-[13px] font-sans-medium"
-                          style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
-                          {cat.name}
-                        </AppText>
-                      </TouchableOpacity>
-                    );
-                  })}
-                  {/* Tab Tuỳ chỉnh */}
-                  {(() => {
-                    const isActive = selectedCategory === 'custom';
-                    return (
-                      <TouchableOpacity
-                        className="flex-row items-center px-4 py-2.5 rounded-full border"
-                        style={{
-                          backgroundColor: isActive ? LISTENING_BLUE : 'transparent',
-                          borderColor: isActive ? LISTENING_BLUE : colors.neutrals800,
-                        }}
-                        onPress={() => {
-                          haptic.light();
-                          setSelectedCategory('custom');
-                          setSelectedSubCategory('');
-                        }}
-                        accessibilityLabel={`Tuỳ chỉnh${isActive ? ', đang chọn' : ''}`}
-                        accessibilityRole="button">
-                        <AppText className="text-[13px] mr-1">✨</AppText>
-                        <AppText
-                          className="text-[13px] font-sans-medium"
-                          style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
-                          Tuỳ chỉnh
-                        </AppText>
-                      </TouchableOpacity>
-                    );
-                  })()}
-                </View>
-              </ScrollView>
-
-              {/* Subcategory Chips — ẩn khi tab Tuỳ chỉnh */}
-              {selectedCategory !== 'custom' && (() => {
-                const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
-                if (!category?.subCategories?.length) {return null;}
-                return (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    className="mb-3">
-                    <View className="flex-row gap-2">
-                      {category.subCategories.map(sub => {
-                        const isActive = selectedSubCategory === sub.id;
-                        return (
-                          <TouchableOpacity
-                            key={sub.id}
-                            className="px-4 py-2.5 rounded-full border"
-                            style={{
-                              backgroundColor: isActive ? `${LISTENING_BLUE}15` : 'transparent',
-                              borderColor: isActive ? LISTENING_BLUE : colors.neutrals700,
-                            }}
-                            onPress={() => {
-                              haptic.light();
-                              setSelectedSubCategory(sub.id);
-                            }}
-                            accessibilityLabel={`${sub.name}${isActive ? ', đang chọn' : ''}`}
-                            accessibilityRole="button">
-                            <AppText
-                              className="text-[13px] font-sans-medium"
-                              style={{color: isActive ? LISTENING_BLUE : colors.neutrals300}}>
-                              {sub.name}
-                            </AppText>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </ScrollView>
-                );
-              })()}
-
-              {/* Custom Scenarios — hiện khi tab Tuỳ chỉnh */}
-              {selectedCategory === 'custom' ? (
-                customScenarios.length === 0 ? (
-                  <View className="items-center py-6">
-                    <AppText className="text-2xl mb-2">✨</AppText>
-                    <AppText className="text-sm" style={{color: colors.neutrals300}}>
-                      Chưa có kịch bản tuỳ chỉnh
-                    </AppText>
-                    <AppText className="text-xs mt-1" style={{color: colors.neutrals300}}>
-                      Mở Chọn chủ đề → Tuỳ chỉnh để tạo
-                    </AppText>
-                  </View>
-                ) : (
-                  customScenarios.slice(0, 3).map(cs => {
-                    const isSelected = selectedTopic?.name === cs.name;
-                    return (
-                      <TouchableOpacity
-                        key={cs.id}
-                        className="rounded-xl px-4 py-3.5 mb-3"
-                        style={{
-                          backgroundColor: isSelected ? `${LISTENING_BLUE}15` : colors.neutrals900,
-                          borderColor: isSelected ? LISTENING_BLUE : colors.border,
-                          borderWidth: 1,
-                        }}
-                        onPress={() => {
-                          haptic.light();
-                          if (isSelected) {
-                            setSelectedTopic(null);
-                          } else {
-                            setSelectedTopic(
-                              {id: cs.id, name: cs.name, description: cs.description || ''},
-                              'custom',
-                              '',
-                            );
-                          }
-                        }}
-                        accessibilityLabel={`${cs.name}${isSelected ? ', đang chọn' : ''}`}
-                        accessibilityRole="button">
-                        <View className="flex-row items-start justify-between">
-                          <View className="flex-1 mr-3">
-                            <AppText
-                              className="font-sans-bold text-[15px]"
-                              style={{color: isSelected ? LISTENING_BLUE : colors.foreground}}>
-                              {cs.name}
-                            </AppText>
-                            {cs.description ? (
-                              <AppText
-                                className="text-xs mt-0.5" style={{color: colors.neutrals300}}
-                                numberOfLines={1}>
-                                {cs.description}
-                              </AppText>
-                            ) : null}
-                          </View>
-                          {isSelected && (
-                            <View
-                              className="w-5 h-5 items-center justify-center rounded-full"
-                              style={{backgroundColor: LISTENING_BLUE}}>
-                              <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
-                            </View>
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })
-                )
-              ) : null}
-
-              {/* Scenario Cards (2-3 cards) — ẩn khi tab Tuỳ chỉnh */}
-              {selectedCategory !== 'custom' && currentScenarios.map(scenario => {
-                const isSelected = selectedTopic?.id === scenario.id;
-                const isFav = favoriteScenarioIds.includes(scenario.id);
-                return (
-                  <TouchableOpacity
-                    key={scenario.id}
-                    className="rounded-xl px-4 py-3.5 mb-3"
-                    style={{
-                      backgroundColor: isSelected
-                        ? `${LISTENING_ORANGE}15`
-                        : colors.neutrals900,
-                      borderColor: isSelected ? LISTENING_ORANGE : colors.border,
-                      borderWidth: 1,
-                    }}
-                    onPress={() => {
-                      haptic.light();
-                      setSelectedTopic(
-                        isSelected ? null : scenario,
-                        selectedCategory,
-                        selectedSubCategory,
-                      );
-                    }}
-                    accessibilityLabel={`${scenario.name}. ${scenario.description}${isSelected ? ', đang chọn' : ''}`}
-                    accessibilityRole="button">
-                    <View className="flex-row items-start justify-between">
-                      <View className="flex-1 mr-3">
-                        <AppText
-                          className="font-sans-bold text-[15px]" 
-                          style={{color: isSelected ? LISTENING_ORANGE : colors.foreground}}>
-                          {scenario.name}
-                        </AppText>
-                        <AppText
-                          className="text-xs mt-0.5" style={{color: colors.neutrals400}}
-                          numberOfLines={1}>
-                          {scenario.description}
-                        </AppText>
-                      </View>
-                      <TouchableOpacity
-                        className="pt-0.5"
-                        onPress={() => {
-                          haptic.light();
-                          toggleFavorite(scenario.id);
-                        }}
-                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                        accessibilityLabel={isFav ? 'Bỏ yêu thích' : 'Yêu thích'}
-                        accessibilityRole="button">
-                        <Icon
-                          name="Heart"
-                          className="w-4 h-4"
-                          style={{
-                            color: isFav ? LISTENING_ORANGE : colors.neutrals400,
-                          }}
-                          fill={isFav ? LISTENING_ORANGE : 'none'}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-              {/* "Xem tất cả" link */}
-              <TouchableOpacity
-                className="py-3 items-center"
-                onPress={() => {
-                  haptic.light();
-                  setShowTopicModal(true);
-                }}
-                accessibilityLabel={`Xem tất cả kịch bản`}
-                accessibilityRole="link">
-                <AppText className="text-sm text-center" style={{color: LISTENING_BLUE}}>
-                  Xem tất cả {totalScenarios} kịch bản →
-                </AppText>
-              </TouchableOpacity>
-
-              {/* Divider "hoặc" */}
-              <View className="flex-row items-center my-3">
-                <View className="flex-1 h-[1px]" style={{backgroundColor: colors.border}} />
-                <AppText className="text-xs mx-3" style={{color: colors.neutrals400}}>hoặc</AppText>
-                <View className="flex-1 h-[1px]" style={{backgroundColor: colors.border}} />
-              </View>
-
-              {/* Free text input */}
-                <TextInput
-                className="rounded-xl px-4 py-3 text-[15px]"
-                style={{color: colors.foreground, backgroundColor: colors.neutrals900, borderWidth: 1, borderColor: colors.neutrals800}}
-                placeholder="Nhập chủ đề riêng..."
-                placeholderTextColor={colors.neutrals400}
-                value={topicInput}
-                onChangeText={text => {
+              <TopicSelector
+                accentColor={LISTENING_BLUE}
+                scenarioHighlightColor={LISTENING_ORANGE}
+                label="Chủ đề"
+                selectedTopic={selectedTopic}
+                selectedCategory={selectedCategory}
+                selectedSubCategory={selectedSubCategory}
+                currentScenarios={currentScenarios}
+                favoriteScenarioIds={favoriteScenarioIds}
+                totalScenarios={totalScenarios}
+                topicInput={topicInput}
+                showCustomTab={true}
+                customScenarios={customScenarios}
+                inputEditable={!isGenerating}
+                inputAccessibilityLabel="Nhập chủ đề hội thoại tự do"
+                onSelectTopic={setSelectedTopic}
+                onSelectCategory={setSelectedCategory}
+                onSelectSubCategory={setSelectedSubCategory}
+                onTopicInputChange={text => {
                   setTopicInput(text);
                   if (text.trim() && selectedTopic) {
                     setSelectedTopic(null);
                   }
                 }}
-                returnKeyType="done"
-                editable={!isGenerating}
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="Nhập chủ đề hội thoại tự do"
+                onToggleFavorite={toggleFavorite}
+                onOpenTopicModal={() => setShowTopicModal(true)}
+                onPlusPress={() => {
+                  haptic.light();
+                  navigation.navigate('CustomScenarios');
+                }}
               />
             </SectionCard>
           </View>
@@ -1462,90 +1155,5 @@ export default function ListeningConfigScreen({
   );
 }
 
-// ========================
-// SectionCard — card wrapper với Liquid Glass effect
-// ========================
-
-interface SectionCardProps {
-  children: React.ReactNode;
-}
-
-/**
- * Mục đích: Card container cho mỗi config section — dùng LiquidGlassView trên iOS 26+
- * Tham số đầu vào: children
- * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ConfigScreen → wrap mỗi section
- */
-function SectionCard({children}: SectionCardProps) {
-  const colors = useColors();
-  const theme = useAppStore(state => state.theme);
-  const isDark = theme !== 'light';
-
-  // iOS 26+ → Liquid Glass effect với shadow, rim light, inner glow
-  // L1: Border adapt light/dark — L5: Inner glow adapt
-  if (isLiquidGlassSupported) {
-    return (
-      <View style={{
-        // Shadow — nhẹ hơn trong light mode
-        shadowColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)',
-        shadowOffset: {width: 0, height: isDark ? 8 : 4},
-        shadowOpacity: isDark ? 0.35 : 0.2,
-        shadowRadius: isDark ? 16 : 12,
-        elevation: isDark ? 8 : 4,
-        borderRadius: 20,
-      }}>
-        <LiquidGlassView
-          effect="regular"
-          tintColor={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)'}
-          style={{
-            borderRadius: 20,
-            padding: 16,
-            overflow: 'hidden',
-            // L1: Rim light adaptive — dark = white tint, light = dark tint
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
-            borderTopColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.60)',
-            borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            // Glass bg — light mode dùng tint nhẹ hơn
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)',
-          }}>
-          {/* Inner glow — chỉ hiện trong dark mode, light mode bị tạo vạch xám */}
-          {isDark && (
-            <LinearGradient
-              colors={['rgba(255,255,255,0.08)', 'transparent']}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 40,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-              }}
-            />
-          )}
-          {children}
-        </LiquidGlassView>
-      </View>
-    );
-  }
-
-  // Fallback — View thường với surfaceRaised
-  return (
-    <View
-      className="rounded-[20px] p-4 overflow-hidden"
-      style={{
-        backgroundColor: colors.surfaceRaised,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 2,
-      }}>
-      {children}
-    </View>
-  );
-}
+// SectionCard — đã chuyển sang @/components/ui/SectionCard.tsx
 
