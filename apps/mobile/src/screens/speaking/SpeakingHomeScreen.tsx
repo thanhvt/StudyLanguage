@@ -9,11 +9,14 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
+import Svg, {Circle} from 'react-native-svg';
 import {AppText} from '@/components/ui';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSkillColor} from '@/hooks/useSkillColor';
 import SpeakingTtsSheet from '@/components/speaking/SpeakingTtsSheet';
+import OnboardingOverlay from '@/components/speaking/OnboardingOverlay';
 import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
@@ -113,7 +116,6 @@ function ModeCard({icon, title, subtitle, gradient, onPress, delay}: ModeCardPro
         {
           opacity: fadeAnim,
           transform: [{scale: scaleAnim}],
-          backgroundColor: gradient[0],
         },
       ]}>
       <TouchableOpacity
@@ -122,16 +124,12 @@ function ModeCard({icon, title, subtitle, gradient, onPress, delay}: ModeCardPro
         activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityLabel={`${title} - ${subtitle}`}>
-        {/* Gradient overlay — diagonal effect */}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius: 20,
-              backgroundColor: gradient[1],
-              opacity: 0.5,
-            },
-          ]}
+        {/* Real LinearGradient (B1 fix) */}
+        <LinearGradient
+          colors={gradient}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={[StyleSheet.absoluteFill, {borderRadius: 20}]}
         />
 
         {/* Nội dung card */}
@@ -144,7 +142,7 @@ function ModeCard({icon, title, subtitle, gradient, onPress, delay}: ModeCardPro
             {subtitle}
           </AppText>
 
-          {/* Arrow indicator */}
+          {/* Arrow indicator — góc phải dưới (B3 fix) */}
           <AppText style={styles.modeCardArrow} raw>→</AppText>
         </View>
       </TouchableOpacity>
@@ -173,7 +171,12 @@ function DailyGoalWidget({completed, target, streak, onDashboardPress}: DailyGoa
   const colors = useColors();
   const speakingColor = useSkillColor('speaking');
   const progress = Math.min(completed / target, 1);
-  const circumference = 2 * Math.PI * 30; // radius = 30
+
+  // SVG đúng chuẩn (B2 fix)
+  const size = 76;
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
@@ -183,30 +186,38 @@ function DailyGoalWidget({completed, target, streak, onDashboardPress}: DailyGoa
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Mục tiêu hàng ngày: ${completed} trên ${target} câu. ${streak} ngày liên tục. Chạm để xem dashboard.`}>
-      {/* Progress Ring */}
+      {/* SVG Progress Ring (B2 fix) */}
       <View style={styles.progressRing}>
-        {/* Vòng nền */}
-        <View style={[styles.ringOuter, {borderColor: `${speakingColor}20`}]}>
-          {/* Vòng tiến độ — giả lập bằng border */}
-          <View
-            style={[
-              styles.ringProgress,
-              {
-                borderColor: speakingColor,
-                borderTopColor: progress >= 0.25 ? speakingColor : 'transparent',
-                borderRightColor: progress >= 0.5 ? speakingColor : 'transparent',
-                borderBottomColor: progress >= 0.75 ? speakingColor : 'transparent',
-                borderLeftColor: progress >= 1 ? speakingColor : 'transparent',
-                transform: [{rotate: '-90deg'}],
-              },
-            ]}
+        <Svg width={size} height={size}>
+          {/* Track nền */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={`${speakingColor}20`}
+            strokeWidth={strokeWidth}
+            fill="none"
           />
-          {/* Số ở giữa */}
-          <View style={styles.ringCenter}>
-            <AppText variant="heading3" weight="bold" style={{color: speakingColor}} raw>
-              {completed}/{target}
-            </AppText>
-          </View>
+          {/* Progress arc */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={speakingColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            rotation={-90}
+            origin={`${size / 2}, ${size / 2}`}
+          />
+        </Svg>
+        {/* Số ở giữa */}
+        <View style={[StyleSheet.absoluteFill, {alignItems: 'center', justifyContent: 'center'}]}>
+          <AppText variant="heading3" weight="bold" style={{color: speakingColor}} raw>
+            {completed}/{target}
+          </AppText>
         </View>
       </View>
 
@@ -249,6 +260,7 @@ export default function SpeakingHomeScreen() {
   const colors = useColors();
   const haptic = useHaptic();
   const [showTtsSettings, setShowTtsSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   // TODO: Lấy từ API hoặc local storage sau — hiện dùng mock data
   const dailyGoalData = {
@@ -348,6 +360,12 @@ export default function SpeakingHomeScreen() {
         visible={showTtsSettings}
         onClose={() => setShowTtsSettings(false)}
       />
+
+      {/* Onboarding Overlay (NAV-07) */}
+      <OnboardingOverlay
+        visible={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -391,26 +409,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   progressRing: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringOuter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  ringProgress: {
-    position: 'absolute',
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-  },
-  ringCenter: {
     alignItems: 'center',
     justifyContent: 'center',
   },
