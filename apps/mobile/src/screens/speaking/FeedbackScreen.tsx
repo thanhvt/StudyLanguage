@@ -448,7 +448,7 @@ export default function FeedbackScreen() {
           onPress={isLastSentence ? handleFinish : handleNext}
           style={[styles.footerBtn, {backgroundColor: speakingColor, flex: 1.5}]}>
           <Icon
-            name={isLastSentence ? 'CheckCircle' : 'ArrowRight'}
+            name={isLastSentence ? 'CircleCheckBig' : 'ArrowRight'}
             className="w-4 h-4"
             style={{color: '#fff'}}
           />
