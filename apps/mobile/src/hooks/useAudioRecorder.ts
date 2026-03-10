@@ -1,6 +1,26 @@
-import {useState, useRef, useCallback} from 'react';
+import {useState, useRef, useCallback, useEffect} from 'react';
 import {Platform, Alert, Linking} from 'react-native';
 import {speakingApi} from '@/services/api/speaking';
+
+// =======================
+// Optional module loading (giống TongueTwisterPractice pattern)
+// =======================
+
+let AudioRecorderPlayerModule: any;
+let RNFSModule: any;
+try {
+  AudioRecorderPlayerModule =
+    require('react-native-audio-recorder-player').default;
+} catch {
+  console.warn(
+    '⚠️ [AudioRecorder] react-native-audio-recorder-player chưa install',
+  );
+}
+try {
+  RNFSModule = require('react-native-fs');
+} catch {
+  console.warn('⚠️ [AudioRecorder] react-native-fs chưa install');
+}
 
 // =======================
 // Types
@@ -27,36 +47,27 @@ export interface AudioRecorderActions {
 }
 
 // =======================
+// Constants
+// =======================
+
+/** Đường dẫn saving file ghi âm */
+const RECORDING_PATH = Platform.select({
+  ios: 'conversation_recording.m4a',
+  android: 'sdcard/conversation_recording.m4a',
+}) as string;
+
+/** Số điểm waveform tối đa hiển thị */
+const MAX_WAVEFORM_POINTS = 30;
+
+// =======================
 // Permission Helper
 // =======================
 
 /**
- * Mục đích: Check + request microphone permission (EC-02)
- * Tham số đầu vào: không
- * Tham số đầu ra: Promise<boolean> — true nếu có permission
- * Khi nào sử dụng: Trước mỗi lần startRecording
- */
-async function checkMicPermission(): Promise<boolean> {
-  try {
-    // TODO: Khi có expo-av hoặc react-native-permissions:
-    // const { status } = await Audio.requestPermissionsAsync();
-    // return status === 'granted';
-
-    // Tạm thời: luôn trả true cho development
-    // Production sẽ cần real permission check
-    console.log('🎤 [Permission] Checking mic permission...');
-    return true;
-  } catch {
-    console.error('❌ [Permission] Lỗi check mic permission');
-    return false;
-  }
-}
-
-/**
- * Mục đích: Hiện alert xin permission khi user từ chối
+ * Mục đích: Hiện alert xin permission khi user từ chối mic
  * Tham số đầu vào: không
  * Tham số đầu ra: void
- * Khi nào sử dụng: Khi checkMicPermission() return false
+ * Khi nào sử dụng: Khi recording fail với permission error
  */
 function showPermissionDeniedAlert(): void {
   Alert.alert(
@@ -84,6 +95,8 @@ function showPermissionDeniedAlert(): void {
 
 /**
  * Mục đích: Hook quản lý audio recording + transcription cho AI Conversation
+ *   Sử dụng react-native-audio-recorder-player (giống ShadowingRecorder/TongueTwister)
+ *   với real metering data cho waveform visualization
  * Tham số đầu vào: không
  * Tham số đầu ra: [AudioRecorderState, AudioRecorderActions]
  * Khi nào sử dụng:
@@ -100,8 +113,31 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
     waveform: [],
   });
 
+  const recorderRef = useRef<any>(
+    AudioRecorderPlayerModule ? new AudioRecorderPlayerModule() : null,
+  );
   const durationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const waveformTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /**
+   * Mục đích: Cleanup tất cả timers + listeners khi unmount
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: useEffect cleanup
+   */
+  useEffect(() => {
+    return () => {
+      if (durationTimer.current) {
+        clearInterval(durationTimer.current);
+      }
+      try {
+        recorderRef.current?.removeRecordBackListener();
+        recorderRef.current?.stopRecorder().catch(() => {});
+      } catch {
+        // Bỏ qua lỗi cleanup
+      }
+      console.log('🧹 [AudioRecorder] Cleanup khi unmount');
+    };
+  }, []);
 
   /**
    * Mục đích: Dọn dẹp tất cả timers
@@ -114,27 +150,28 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
       clearInterval(durationTimer.current);
       durationTimer.current = null;
     }
-    if (waveformTimer.current) {
-      clearInterval(waveformTimer.current);
-      waveformTimer.current = null;
-    }
   }, []);
 
   /**
-   * Mục đích: Bắt đầu ghi âm — check permission trước (EC-02)
+   * Mục đích: Bắt đầu ghi âm — sử dụng react-native-audio-recorder-player thật
+   *   Cấu hình AEC (Echo Cancellation) cho iOS voiceChat mode
    * Tham số đầu vào: không
    * Tham số đầu ra: Promise<void>
    * Khi nào sử dụng: User nhấn giữ mic button (onLongPress)
    */
   const startRecording = useCallback(async () => {
-    // EC-02: Check mic permission
-    const hasPermission = await checkMicPermission();
-    if (!hasPermission) {
-      showPermissionDeniedAlert();
+    const recorder = recorderRef.current;
+
+    // Nếu thư viện chưa install → fallback simulated
+    if (!recorder) {
+      console.warn(
+        '⚠️ [AudioRecorder] Thư viện chưa install, dùng simulated recording',
+      );
+      startSimulatedRecording();
       return;
     }
 
-    console.log('🎤 [AudioRecorder] Bắt đầu ghi âm...');
+    console.log('🎤 [AudioRecorder] Bắt đầu ghi âm thật...');
 
     setState({
       isRecording: true,
@@ -143,38 +180,103 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
       waveform: [],
     });
 
-    // Duration counter
-    durationTimer.current = setInterval(() => {
-      setState(prev => ({...prev, duration: prev.duration + 1}));
-    }, 1000);
+    try {
+      // Bắt đầu ghi âm với config tương tự ShadowingRecorder
+      // iOS: voiceChat mode bật AEC tự động
+      // Android: VOICE_RECOGNITION (source 6) có AEC built-in
+      await recorder.startRecorder(RECORDING_PATH, {
+        AudioEncoderAndroid: 3, // AAC
+        AudioSourceAndroid: 6, // VOICE_RECOGNITION (có AEC)
+        AVEncoderAudioQualityKeyIOS: 127, // max quality
+        AVNumberOfChannelsKeyIOS: 1, // Mono
+        AVSampleRateKeyIOS: 44100,
+      });
 
-    // Simulated waveform data
-    // TODO: Thay bằng real audio metering từ expo-av
-    waveformTimer.current = setInterval(() => {
-      setState(prev => ({
-        ...prev,
-        waveform: [...prev.waveform.slice(-29), Math.random() * 0.8 + 0.1],
-      }));
-    }, 100);
+      // Duration counter
+      durationTimer.current = setInterval(() => {
+        setState(prev => ({...prev, duration: prev.duration + 1}));
+      }, 1000);
 
-    // TODO: Integrate với expo-av hoặc react-native-audio-api
-    // const recording = new Audio.Recording();
-    // await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-    // await recording.startAsync();
+      // Lắng nghe amplitude metering thật → waveform
+      recorder.addRecordBackListener((e: any) => {
+        // e.currentMetering: dB level (-160 đến 0)
+        // Chuẩn hoá về 0-1 cho waveform giống useShadowingRecorder
+        const db = e.currentMetering ?? -60;
+        const normalized = Math.max(0, Math.min(1, (db + 60) / 60));
+
+        setState(prev => ({
+          ...prev,
+          waveform: [
+            ...prev.waveform.slice(-(MAX_WAVEFORM_POINTS - 1)),
+            normalized,
+          ],
+        }));
+      });
+    } catch (err: any) {
+      console.error('❌ [AudioRecorder] Lỗi ghi âm:', err);
+
+      setState(prev => ({...prev, isRecording: false}));
+
+      // EC-02: Permission denied → hướng dẫn Settings
+      if (
+        err?.message?.includes('permission') ||
+        err?.code === 'E_AUDIO_NOPERMISSION'
+      ) {
+        showPermissionDeniedAlert();
+      }
+    }
   }, []);
 
   /**
-   * Mục đích: Dừng ghi âm, transcribe, trả về kết quả
+   * Mục đích: Fallback simulated recording khi thư viện chưa install (dev mode)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: startRecording khi AudioRecorderPlayer chưa install
+   */
+  const startSimulatedRecording = useCallback(() => {
+    setState({
+      isRecording: true,
+      duration: 0,
+      audioUri: null,
+      waveform: [],
+    });
+
+    // Duration
+    durationTimer.current = setInterval(() => {
+      setState(prev => ({...prev, duration: prev.duration + 1}));
+    }, 1000);
+  }, []);
+
+  /**
+   * Mục đích: Dừng ghi âm, transcribe bằng Groq Whisper, trả về kết quả
    * Tham số đầu vào: không
    * Tham số đầu ra: Promise<{audioUri, transcript} | null>
    * Khi nào sử dụng: User thả mic button (onPressOut)
    */
-  const stopRecording = useCallback(async (): Promise<{audioUri: string; transcript: string} | null> => {
+  const stopRecording = useCallback(async (): Promise<{
+    audioUri: string;
+    transcript: string;
+  } | null> => {
     console.log('🎤 [AudioRecorder] Dừng ghi âm...');
     cleanupTimers();
 
-    // TODO: Stop actual recording + get URI
-    const audioUri = '/tmp/recording.m4a'; // Placeholder
+    const recorder = recorderRef.current;
+    let audioUri: string;
+
+    if (recorder) {
+      try {
+        // Dừng recorder thật → lấy URI file audio
+        audioUri = (await recorder.stopRecorder()) || '';
+        recorder.removeRecordBackListener();
+      } catch (err) {
+        console.error('❌ [AudioRecorder] Lỗi stop recorder:', err);
+        setState(prev => ({...prev, isRecording: false}));
+        return null;
+      }
+    } else {
+      // Fallback khi không có thư viện
+      audioUri = '/tmp/simulated_recording.m4a';
+    }
 
     setState(prev => ({
       ...prev,
@@ -182,11 +284,20 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
       audioUri,
     }));
 
-    // Transcribe
+    // Guard: recording quá ngắn (< 1s)
+    if (state.duration < 1) {
+      console.warn('⚠️ [AudioRecorder] Recording quá ngắn, bỏ qua');
+      return null;
+    }
+
+    // Transcribe bằng Groq Whisper
     try {
-      console.log('🔤 [AudioRecorder] Đang transcribe...');
+      console.log('🔤 [AudioRecorder] Đang transcribe...', audioUri);
       const transcript = await speakingApi.transcribeAudio(audioUri);
-      console.log('✅ [AudioRecorder] Transcript:', transcript?.substring(0, 50));
+      console.log(
+        '✅ [AudioRecorder] Transcript:',
+        transcript?.substring(0, 50),
+      );
 
       return {
         audioUri,
@@ -196,10 +307,11 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
       console.error('❌ [AudioRecorder] Lỗi transcribe:', err);
       return null;
     }
-  }, [cleanupTimers]);
+  }, [cleanupTimers, state.duration]);
 
   /**
    * Mục đích: Hủy ghi âm (user swipe cancel trên RecordingOverlay)
+   *   Dừng recording, xóa file, reset state
    * Tham số đầu vào: không
    * Tham số đầu ra: void
    * Khi nào sử dụng: RecordingOverlay → onCancel
@@ -208,7 +320,23 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
     console.log('🎤 [AudioRecorder] Hủy ghi âm');
     cleanupTimers();
 
-    // TODO: Stop và delete actual recording file
+    const recorder = recorderRef.current;
+
+    if (recorder) {
+      try {
+        recorder.stopRecorder().catch(() => {});
+        recorder.removeRecordBackListener();
+      } catch {
+        // Bỏ qua lỗi
+      }
+    }
+
+    // Xóa file recording nếu có thể
+    if (RNFSModule && RECORDING_PATH) {
+      const fullPath = `${RNFSModule.CachesDirectoryPath || ''}/${RECORDING_PATH}`;
+      RNFSModule.unlink(fullPath).catch(() => {});
+    }
+
     setState({
       isRecording: false,
       duration: 0,
@@ -217,8 +345,5 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
     });
   }, [cleanupTimers]);
 
-  return [
-    state,
-    {startRecording, stopRecording, cancelRecording},
-  ];
+  return [state, {startRecording, stopRecording, cancelRecording}];
 }

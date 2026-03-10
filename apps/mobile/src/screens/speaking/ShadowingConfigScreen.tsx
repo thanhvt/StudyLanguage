@@ -121,6 +121,16 @@ export default function ShadowingConfigScreen() {
     } catch (err) {
       console.error('❌ [ShadowingConfig] Lỗi bắt đầu:', err);
       haptic.error();
+      // Edge case 9.3.1: Hiện lỗi mạng cho user + nút thử lại
+      const {Alert} = require('react-native');
+      Alert.alert(
+        'Không thể tạo nội dung',
+        'Vui lòng kiểm tra kết nối mạng và thử lại.',
+        [
+          {text: 'Hủy', style: 'cancel'},
+          {text: 'Thử lại', onPress: () => doStart(forceStart)},
+        ],
+      );
     } finally {
       setIsLoading(false);
     }

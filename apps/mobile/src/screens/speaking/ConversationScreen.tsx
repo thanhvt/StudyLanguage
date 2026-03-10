@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import {speakingApi} from '@/services/api/speaking';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -26,6 +27,8 @@ import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {useConversationSession} from '@/hooks/useConversationSession';
 import {useConversationTimer} from '@/hooks/useConversationTimer';
 import {useAudioRecorder} from '@/hooks/useAudioRecorder';
+import {useSessionPersist} from '@/hooks/useSessionPersist';
+import {useNotificationStore} from '@/store/useNotificationStore';
 import {getConversationColor} from '@/config/skillColors';
 import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
 import type {ConversationMessage} from '@/store/useSpeakingStore';
@@ -85,9 +88,44 @@ export default function ConversationScreen() {
     },
   );
 
+  // P0: Session Persist — lưu/khôi phục state khi background
+  const {persistSession, clearPersist} = useSessionPersist();
+  const setActiveSession = useNotificationStore(s => s.setActiveSession);
+  const clearBadge = useNotificationStore(s => s.clearBadge);
+
+  // Set active session khi mount + clear notification badge
+  useEffect(() => {
+    const sessionId = `conv_${Date.now()}`;
+    setActiveSession(sessionId);
+    clearBadge('Speaking');
+    return () => {
+      setActiveSession(null);
+      clearPersist();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Local UI state
   const [textInput, setTextInput] = useState('');
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [playingAudioUrl, setPlayingAudioUrl] = useState<string | null>(null);
+
+  // Optional modules (audio playback)
+  const audioPlayerRef = useRef<any>(null);
+  useEffect(() => {
+    try {
+      const ARP = require('react-native-audio-recorder-player').default;
+      audioPlayerRef.current = new ARP();
+    } catch {
+      console.warn('⚠️ [Conversation] react-native-audio-recorder-player chưa install');
+    }
+    return () => {
+      try {
+        audioPlayerRef.current?.stopPlayer().catch(() => {});
+        audioPlayerRef.current?.removePlayBackListener();
+      } catch {}
+    };
+  }, []);
 
   // ===========================
   // Khởi tạo conversation
@@ -182,6 +220,86 @@ export default function ConversationScreen() {
   }, [recorderActions, sendMessage]);
 
   /**
+   * Mục đích: Phát audio AI response — TTS → cache → play
+   * Tham số đầu vào: audioUrl (string) — URL hoặc text cần TTS
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: ChatBubble → nhấn nút 🔊 trên AI message
+   */
+  const handlePlayAudio = useCallback(async (audioUrl: string) => {
+    const player = audioPlayerRef.current;
+    if (!player) {
+      console.warn('⚠️ [Conversation] Audio player chưa sẵn sàng');
+      return;
+    }
+
+    try {
+      // Dừng audio đang phát (nếu có)
+      await player.stopPlayer().catch(() => {});
+      player.removePlayBackListener();
+      setPlayingAudioUrl(audioUrl);
+
+      // Nếu audioUrl là URL thực → phát trực tiếp
+      // Nếu là text → gọi TTS API
+      let playPath = audioUrl;
+      if (!audioUrl.startsWith('http') && !audioUrl.startsWith('file://')) {
+        // Là text → cần TTS trước
+        const base64 = await speakingApi.generateConversationAudio(audioUrl);
+        const RNFS = require('react-native-fs');
+        playPath = `${RNFS.CachesDirectoryPath}/conv_audio_${Date.now()}.mp3`;
+        await RNFS.writeFile(playPath, base64, 'base64');
+      }
+
+      await player.startPlayer(playPath);
+      console.log('🔊 [Conversation] Đang phát audio AI');
+
+      // Lắng nghe khi phát xong
+      player.addPlayBackListener((e: any) => {
+        if (e.currentPosition >= e.duration - 50) {
+          setPlayingAudioUrl(null);
+          player.removePlayBackListener();
+        }
+      });
+    } catch (err) {
+      console.error('❌ [Conversation] Lỗi phát audio:', err);
+      setPlayingAudioUrl(null);
+    }
+  }, []);
+
+  /**
+   * Mục đích: Phát audio mẫu phát âm cho từ cụ thể (IPA)
+   * Tham số đầu vào: word (string) — từ cần nghe phát âm mẫu
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: PronunciationAlert → nhấn [🔊 Nghe] cho từ sai
+   */
+  const handlePlaySample = useCallback(async (word: string) => {
+    try {
+      const base64 = await speakingApi.playAISample(word, 'openai', undefined, 0.8);
+      const player = audioPlayerRef.current;
+      if (!player) return;
+
+      const RNFS = require('react-native-fs');
+      const path = `${RNFS.CachesDirectoryPath}/pronun_sample.mp3`;
+      await RNFS.writeFile(path, base64, 'base64');
+      await player.startPlayer(path);
+      console.log('🔊 [Conversation] Phát mẫu phát âm:', word);
+    } catch (err) {
+      console.error('❌ [Conversation] Lỗi phát mẫu:', err);
+    }
+  }, []);
+
+  /**
+   * Mục đích: Focus mic để user nói lại từ sai
+   * Tham số đầu vào: word (string) — từ cần nói lại
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: PronunciationAlert → nhấn [Re-speak]
+   */
+  const handleReSpeak = useCallback(async (_word: string) => {
+    // Tự động bắt đầu recording
+    setInputMode('voice');
+    await recorderActions.startRecording();
+  }, [recorderActions]);
+
+  /**
    * Mục đích: Xác nhận thoát giữa session
    * Tham số đầu vào: không
    * Tham số đầu ra: void
@@ -212,23 +330,23 @@ export default function ConversationScreen() {
         message={item}
         persona={setup?.persona || undefined}
         accentColor={accentColor}
-        onPlayAudio={url => console.log('🔊 Phát audio:', url)}
+        onPlayAudio={handlePlayAudio}
       />
       {item.pronunciationFeedback && (
         <PronunciationAlert
           correction={item.pronunciationFeedback}
-          onPlaySample={w => console.log('🔊 Phát mẫu:', w)}
-          onReSpeak={w => console.log('🎤 Thử lại:', w)}
+          onPlaySample={handlePlaySample}
+          onReSpeak={handleReSpeak}
         />
       )}
       {item.grammarCorrections && item.grammarCorrections.length > 0 && (
         <GrammarFix
           corrections={item.grammarCorrections}
-          onDismiss={() => console.log('✅ Đã hiểu grammar')}
+          onDismiss={() => {}}
         />
       )}
     </View>
-  ), [setup?.persona, accentColor]);
+  ), [setup?.persona, accentColor, handlePlayAudio, handlePlaySample, handleReSpeak]);
 
   const keyExtractor = useCallback((item: ConversationMessage) => item.id, []);
 

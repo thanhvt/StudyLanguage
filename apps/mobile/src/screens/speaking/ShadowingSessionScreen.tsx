@@ -85,11 +85,15 @@ export default function ShadowingSessionScreen() {
   const delayRecordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Ref cho timestamp kiểm tra amplitude gần nhất (Fix M-4) */
   const lastAmpCheckRef = useRef(0);
+  /** Edge case 9.3.2: Cache audio URI để retry scoring khi network fail */
+  const cachedScoringAudioRef = useRef<string | null>(null);
 
   // Local state
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const [showLowAmplitude, setShowLowAmplitude] = useState(false);
+  /** Edge case 9.3.2: Trạng thái scoring fail — hiện retry button */
+  const [scoringFailed, setScoringFailed] = useState(false);
   const [aiTimer, setAITimer] = useState('00:00.0');
   const [aiDuration, setAIDuration] = useState('00:00.0');
   const [aiProgressPercent, setAIProgressPercent] = useState(0);
@@ -401,6 +405,8 @@ export default function ShadowingSessionScreen() {
       setPhase('score');
       setScoreLoading(true);
       setAudioUrls(currentSentence.audioUrl, audioUri);
+      // Edge case 9.3.2: Cache audio URI cho retry
+      cachedScoringAudioRef.current = audioUri;
 
       // Timeout protection (Edge case 9.3.3)
       scoreTimeoutRef.current = setTimeout(() => {
@@ -415,6 +421,7 @@ export default function ShadowingSessionScreen() {
         audioUri,
         currentSentence.text,
         config.speed,
+        config.delay * 1000, // delayMs — future-proofing cho Phase 2 audio alignment
       );
 
       // Clear timeout — đã nhận kết quả
@@ -436,6 +443,8 @@ export default function ShadowingSessionScreen() {
     } catch (err) {
       console.error('❌ [ShadowingSession] Lỗi evaluate:', err);
       haptic.error();
+      // Edge case 9.3.2: Lưu audio để retry — không mất recording
+      setScoringFailed(true);
       if (scoreTimeoutRef.current) {
         clearTimeout(scoreTimeoutRef.current);
         scoreTimeoutRef.current = null;
@@ -448,6 +457,70 @@ export default function ShadowingSessionScreen() {
     recorder, trackPlayer, currentSentence, config.speed,
     setPhase, setScoreLoading, setAudioUrls, setScore, navigation, haptic,
   ]);
+
+  /**
+   * Mục đích: Retry scoring với audio đã cache (khi network fail lần đầu)
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn "Thử lại chấm điểm" sau khi scoring fail
+   */
+  const retryScoring = useCallback(async () => {
+    const audioUri = cachedScoringAudioRef.current;
+    if (!audioUri || !currentSentence || isEvaluatingRef.current) return;
+
+    isEvaluatingRef.current = true;
+    setIsEvaluating(true);
+    setScoringFailed(false);
+
+    try {
+      setScoreLoading(true);
+
+      // Timeout protection
+      scoreTimeoutRef.current = setTimeout(() => {
+        console.warn('⏱️ [ShadowingSession] Retry score timeout > 15s');
+        isEvaluatingRef.current = false;
+        setIsEvaluating(false);
+        setScoreLoading(false);
+        setScoringFailed(true);
+        haptic.error();
+      }, SCORE_TIMEOUT_MS);
+
+      const result = await speakingApi.evaluateShadowingWithAudio(
+        audioUri,
+        currentSentence.text,
+        config.speed,
+        config.delay * 1000,
+      );
+
+      if (scoreTimeoutRef.current) {
+        clearTimeout(scoreTimeoutRef.current);
+        scoreTimeoutRef.current = null;
+      }
+
+      setScore({
+        rhythm: result.rhythm,
+        intonation: result.intonation,
+        accuracy: result.accuracy,
+        overall: result.overall,
+        tips: result.tips,
+        wordIssues: result.wordIssues,
+      });
+
+      cachedScoringAudioRef.current = null;
+      navigation.navigate('ShadowingFeedback');
+    } catch (err) {
+      console.error('❌ [ShadowingSession] Retry scoring fail:', err);
+      haptic.error();
+      setScoringFailed(true);
+      if (scoreTimeoutRef.current) {
+        clearTimeout(scoreTimeoutRef.current);
+        scoreTimeoutRef.current = null;
+      }
+    } finally {
+      isEvaluatingRef.current = false;
+      setIsEvaluating(false);
+    }
+  }, [currentSentence, config, setScoreLoading, setScore, navigation, haptic]);
 
   // Fix BUG-2: Dùng ref cho handleStopAndEvaluate để tránh stale closure
   const handleStopAndEvaluateRef = useRef(handleStopAndEvaluate);
@@ -752,17 +825,32 @@ export default function ShadowingSessionScreen() {
                 </AppText>
               </View>
             ) : (
-              <TouchableOpacity
-                style={[styles.primaryBtn, {backgroundColor: speakingColor}]}
-                onPress={() => {
-                  setPhase('preview');
-                  hasAutoStartedShadow.current = false;
-                }}
-                activeOpacity={0.8}>
-                <AppText style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}} raw>
-                  🔄 Thử lại câu này
-                </AppText>
-              </TouchableOpacity>
+              <View style={{gap: 8}}>
+                {/* Edge case 9.3.2: Retry scoring khi fail */}
+                {scoringFailed && cachedScoringAudioRef.current && (
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, {backgroundColor: '#f59e0b'}]}
+                    onPress={retryScoring}
+                    disabled={isEvaluating}
+                    activeOpacity={0.8}>
+                    <AppText style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}} raw>
+                      🔄 Thử lại chấm điểm
+                    </AppText>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={[styles.primaryBtn, {backgroundColor: speakingColor}]}
+                  onPress={() => {
+                    setPhase('preview');
+                    hasAutoStartedShadow.current = false;
+                    setScoringFailed(false);
+                  }}
+                  activeOpacity={0.8}>
+                  <AppText style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}} raw>
+                    🔄 Thử lại câu này
+                  </AppText>
+                </TouchableOpacity>
+              </View>
             )}
           </>
         )}

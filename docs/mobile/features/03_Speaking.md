@@ -956,65 +956,67 @@ User chỉnh delay 0-2s → phải sync text highlight + playback + recording. K
 
 ## 8. Implementation Tasks
 
+> Cập nhật trạng thái: 2026-03-10 (audit toàn diện)
+
 ### Practice Mode
-- [ ] Topic selection screen (`ConfigScreen.tsx` — topic + level + suggestion chips)
-- [ ] Practice sentence display (`PracticeScreen.tsx` — sentence + IPA display)
-- [ ] Hold-to-record button (`PracticeScreen.tsx` — Pressable hold-to-record 80px)
-- [ ] Audio recording với react-native-audio-recorder-player (15s max, timer, waveform indicator)
-- [ ] Send to backend for AI analysis (`speakingApi.transcribeAudio` + `evaluatePronunciation`)
-- [ ] Display feedback with scores (`FeedbackScreen.tsx` — overall score, word scores, tips, retry/next)
+- [x] Topic selection screen (`ConfigScreen.tsx` — topic + level + suggestion chips)
+- [x] Practice sentence display (`PracticeScreen.tsx` — sentence + IPA display)
+- [x] Hold-to-record button (`PracticeScreen.tsx` — Pressable hold-to-record 80px)
+- [x] Audio recording với react-native-audio-recorder-player (15s max, timer, waveform indicator)
+- [x] Send to backend for AI analysis (`speakingApi.transcribeAudio` + `evaluatePronunciation`)
+- [x] Display feedback with scores (`FeedbackScreen.tsx` — overall score, word scores, tips, retry/next)
 
 ### Recording UX
-- [ ] Countdown overlay — Animated 3→2→1→GO! trước khi ghi (`CountdownOverlay.tsx`)
-- [ ] Swipe-to-cancel — Vuốt lên để hủy recording
-- [ ] Preview before submit — Nghe lại bản ghi trước khi gửi (`RecordingPreview.tsx`)
+- [x] Countdown overlay — Animated 3→2→1→GO! trước khi ghi (`CountdownOverlay.tsx`)
+- [ ] Swipe-to-cancel — Vuốt lên để hủy recording _(skipped per user feedback)_
+- [x] Preview before submit — Nghe lại bản ghi trước khi gửi (`RecordingPreview.tsx`)
 
 ### AI Conversation (Free Talk + Roleplay — hợp nhất)
-- [ ] Setup screen hợp nhất (`ConversationSetupScreen.tsx` — sub-mode toggle, topic/scenario, duration/turns, feedback mode, difficulty)
-- [ ] Scenario picker cho Roleplay sub-mode (tích hợp trong setup — 8+ scenarios, filter tabs, difficulty)
-- [ ] Session screen hợp nhất (`ConversationSessionScreen.tsx` — chat UI, suggested responses, grammar fix, pronunciation alert)
-- [ ] Voice/Text input toggle (voice hold + text input)
-- [ ] Real-time transcription STT via Groq Whisper (`speakingApi.transcribeAudio`)
-- [ ] AI response generation (`speakingApi.continueConversation`)
-- [ ] Pronunciation Alert inline (`PronunciationAlert.tsx`)
-- [ ] Voice Visualizer (`VoiceVisualizer.tsx` — animated waveform bars)
-- [ ] Session Transcript (scrollable chat history)
-- [ ] Session Timer (Free Talk) / Turn Counter (Roleplay) with auto-end
-- [ ] Overall session feedback + summary (end screen)
-- [ ] Save session to History
+- [x] Setup screen hợp nhất (`ConversationSetupScreen.tsx` — sub-mode toggle, topic/scenario, duration/turns, feedback mode, difficulty)
+- [x] Scenario picker cho Roleplay sub-mode (tích hợp trong setup — 8+ scenarios, filter tabs, difficulty)
+- [x] Session screen hợp nhất (`ConversationScreen.tsx` — chat UI, suggested responses, grammar fix, pronunciation alert)
+- [x] Voice/Text input toggle (voice hold + text input) _(useAudioRecorder rewritten with real recording)_
+- [x] Real-time transcription STT via Groq Whisper (`speakingApi.transcribeAudio`)
+- [x] AI response generation (`speakingApi.continueConversation`)
+- [x] Pronunciation Alert inline (`PronunciationAlert.tsx`)
+- [x] Voice Visualizer (`VoiceVisualizer.tsx` — animated waveform bars)
+- [x] Session Transcript (scrollable chat history)
+- [x] Session Timer (Free Talk) / Turn Counter (Roleplay) with auto-end
+- [x] Overall session feedback + summary (end screen)
+- [x] Save session to History
 
 ### Shadowing Mode
-- [ ] Shadowing Mode (real-time compare, delay/speed control) (`ShadowingScreen.tsx` — 4-phase flow)
+- [x] Shadowing Mode (real-time compare, delay/speed control) (`ShadowingSessionScreen.tsx` — 4-phase flow)
 
 ### Tongue Twister Mode
-- [ ] Tongue Twister Mode (phoneme categories, speed challenge, leaderboard) (`TongueTwisterScreen.tsx` — 8 twisters + WPM)
+- [x] Tongue Twister Mode (phoneme categories, speed challenge, leaderboard) (`SpeedChallengeScreen.tsx` — leaderboard modal + badges)
 
 ### Custom Speaking Scenarios
-- [ ] Custom Speaking Scenarios (create/save/favorite/delete) (`CustomScenariosScreen.tsx` — CRUD)
+- [x] Custom Speaking Scenarios (create/save/favorite/delete) — reuse từ Listening module
 
 ### Gamification & Progress
-- [ ] Gamification (daily goals, badges, weekly report) (`DailyGoalCard.tsx`, `BadgeGrid.tsx`)
-- [ ] Speaking Progress Dashboard (radar chart, calendar heatmap, weak sounds) (`ProgressDashboardScreen.tsx`, `RadarChart.tsx`, `CalendarHeatmap.tsx`, `WeakSoundsCard.tsx`)
+- [x] Gamification (daily goals, badges, weekly report) (`ProgressDashboardScreen.tsx`)
+- [x] Speaking Progress Dashboard (radar chart, calendar heatmap, weak sounds) (`ProgressDashboardScreen.tsx`)
 
 ### AI Voice Clone
-- [ ] AI Voice Clone Replay (corrected + before/after) — `VoiceCloneReplay.tsx` + `cloneAndCorrectVoice` API
+- [/] AI Voice Clone Replay (corrected + before/after) — `cloneAndCorrectVoice` API có fallback, UI chưa đầy đủ
 
 ### Save & Share
-- [ ] Save & Share Results (share card, recording history, timeline) (`ShareResultCard.tsx`, `RecordingHistoryScreen.tsx`)
+- [x] Save & Share Results (share card, recording history, timeline) (`ShareResultCard.tsx`, `RecordingHistoryScreen.tsx`)
 
 ### Background Audio & TTS
-- [ ] Background Audio for Coach (notification, session persist) — `useCoachTrackPlayer.ts` + TrackPlayer integration
-- [ ] TTS Provider Settings (parity với Listening) — `SpeakingTtsSheet.tsx`
+- [/] Background Audio for Coach (notification, session persist) — _agent khác đang thực hiện_
+- [x] TTS Provider Settings (parity với Listening) — `SpeakingTtsSheet.tsx`
 
 ### Polish & UX
-- [ ] Onboarding overlay cho user mới (`OnboardingOverlay.tsx` — 5-step tutorial)
-- [ ] Waveform visualization + comparison (`WaveformComparison.tsx` — AI vs User overlay)
-- [ ] Phoneme breakdown view + Phoneme Heatmap (`PhonemeHeatmap.tsx` — word-level red→green)
-- [ ] Progress tracking (`ProgressDashboardScreen.tsx`)
-- [ ] Haptic feedback (integrated in recording flow)
-- [ ] IPA toggle + word stress display (`IPAPopup.tsx`)
-- [ ] Tap-to-pronounce word (IPAPopup — tap word → popup IPA + audio)
-- [ ] Confetti animation khi score ≥90 (`ConfettiAnimation.tsx` — 30-piece reanimated)
+- [x] Onboarding overlay cho user mới (`OnboardingOverlay.tsx` — 5-step tutorial)
+- [x] Waveform visualization + comparison (`DualWaveformVisualizer.tsx` — AI vs User overlay)
+- [x] Phoneme breakdown view + Phoneme Heatmap — trong FeedbackScreen
+- [x] Progress tracking (`ProgressDashboardScreen.tsx`)
+- [x] Haptic feedback (integrated in recording flow)
+- [x] IPA toggle + word stress display
+- [x] Tap-to-pronounce word (IPAPopup — tap word → popup IPA + audio)
+- [x] Confetti animation khi score ≥90 (`ConfettiAnimation.tsx`)
 
 ---
 

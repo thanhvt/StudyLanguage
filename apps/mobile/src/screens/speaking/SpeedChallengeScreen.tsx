@@ -1,5 +1,5 @@
 import React, {useCallback, useRef, useState, useEffect} from 'react';
-import {View, ScrollView, Pressable, Animated, Platform, Alert, StyleSheet, Linking} from 'react-native';
+import {View, ScrollView, Pressable, Animated, Platform, Alert, StyleSheet, Linking, Modal, FlatList, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp, NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -85,6 +85,19 @@ export default function SpeedChallengeScreen() {
     accuracy: number;
     passed: boolean;
   } | null>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<{
+    entries: {rank: number; userId: string; displayName: string; avatar: string; wpm: number; accuracy: number; createdAt: string}[];
+    userRank: number | null;
+    totalEntries: number;
+  } | null>(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [badgesData, setBadgesData] = useState<{
+    badges: {id: string; name: string; icon: string; description: string; isUnlocked: boolean; unlockedAt: string | null; requirement: string}[];
+    totalUnlocked: number;
+    totalBadges: number;
+  } | null>(null);
+  const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
 
   // Refs
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -112,6 +125,29 @@ export default function SpeedChallengeScreen() {
 
   // Kiểm tra hoàn thành tất cả rounds
   const allRoundsCompleted = speedChallenge.rounds.every(r => r.status === 'completed');
+
+  // Auto-submit score khi hoàn thành tất cả rounds
+  useEffect(() => {
+    if (allRoundsCompleted && !hasSubmittedScore) {
+      setHasSubmittedScore(true);
+      speakingApi.submitLeaderboardScore({
+        category: phonemeCategory,
+        wpm: speedChallenge.bestWPM,
+        accuracy: Math.round(speedChallenge.rounds.reduce((sum, r) => sum + (r.accuracy ?? 0), 0) / 4),
+        twisterId: route.params.twisterId,
+      }).then(result => {
+        if (result.badgesEarned.length > 0) {
+          haptic.success();
+          const badgeNames = result.badgesEarned.map(b => `${b.icon} ${b.name}`).join(', ');
+          Alert.alert('🏅 Badge mới!', `Bạn vừa mở khóa: ${badgeNames}`);
+        }
+        console.log(`✅ [SpeedChallenge] Score submitted → Rank #${result.rank}`);
+      });
+      // Load badges
+      speakingApi.getTongueTwisterBadges().then(setBadgesData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allRoundsCompleted]);
 
   // Pulse animation cho mic
   useEffect(() => {
@@ -470,13 +506,118 @@ export default function SpeedChallengeScreen() {
           size="lg"
           className="w-full"
           style={{borderColor: '#eab308'}}
-          onPress={() => {
-            // TODO: Navigate tới Leaderboard (P2)
-            Alert.alert('🏆 Leaderboard', 'Tính năng Leaderboard sẽ có trong phiên bản tới!');
+          onPress={async () => {
+            setShowLeaderboard(true);
+            setLeaderboardLoading(true);
+            try {
+              const data = await speakingApi.getLeaderboard(phonemeCategory);
+              setLeaderboardData(data);
+            } catch (err) {
+              console.error('❌ [SpeedChallenge] Lỗi load leaderboard:', err);
+            } finally {
+              setLeaderboardLoading(false);
+            }
           }}>
           🏆 Leaderboard
         </AppButton>
       </View>
+
+      {/* Leaderboard Modal */}
+      <Modal
+        visible={showLeaderboard}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowLeaderboard(false)}>
+        <View style={{flex: 1, backgroundColor: colors.background, paddingTop: 16}}>
+          {/* Modal Header */}
+          <View style={{flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.surface}}>
+            <Pressable onPress={() => setShowLeaderboard(false)} style={{padding: 8}}>
+              <Icon name="X" className="w-5 h-5" style={{color: colors.foreground}} />
+            </Pressable>
+            <View style={{flex: 1, alignItems: 'center'}}>
+              <AppText variant="heading3" weight="bold">
+                🏆 Leaderboard
+              </AppText>
+            </View>
+            <View style={{width: 36}} />
+          </View>
+
+          {leaderboardLoading ? (
+            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <ActivityIndicator size="large" color="#eab308" />
+              <AppText variant="bodySmall" className="text-neutrals400 mt-3" raw>
+                Đang tải bảng xếp hạng...
+              </AppText>
+            </View>
+          ) : (
+            <FlatList
+              data={leaderboardData?.entries ?? []}
+              keyExtractor={(item) => `${item.rank}-${item.userId}`}
+              contentContainerStyle={{padding: 16}}
+              ListHeaderComponent={
+                leaderboardData?.userRank ? (
+                  <View style={{flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#eab30810', borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#eab30830'}}>
+                    <AppText variant="body" weight="bold" style={{color: '#eab308'}} raw>
+                      Xếp hạng của bạn: #{leaderboardData.userRank}
+                    </AppText>
+                  </View>
+                ) : null
+              }
+              ListEmptyComponent={
+                <View style={{alignItems: 'center', paddingVertical: 40}}>
+                  <AppText variant="heading1" raw>🏆</AppText>
+                  <AppText variant="body" className="text-neutrals400 mt-3" raw>
+                    Chưa có ai trong bảng xếp hạng.
+                  </AppText>
+                  <AppText variant="bodySmall" className="text-neutrals400 mt-1" raw>
+                    Hãy là người đầu tiên!
+                  </AppText>
+                </View>
+              }
+              renderItem={({item}) => (
+                <View style={{flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, backgroundColor: item.rank <= 3 ? `${['#eab308', '#94a3b8', '#cd7f32'][item.rank - 1]}08` : 'transparent', borderRadius: 12, marginBottom: 4}}>
+                  <AppText variant="body" weight="bold" style={{width: 36, color: item.rank <= 3 ? ['#eab308', '#94a3b8', '#cd7f32'][item.rank - 1] : colors.neutrals400}} raw>
+                    {item.rank <= 3 ? ['🥇', '🥈', '🥉'][item.rank - 1] : `#${item.rank}`}
+                  </AppText>
+                  <AppText variant="body" weight="semibold" style={{flex: 1, color: colors.foreground}} raw>
+                    {item.avatar} {item.displayName}
+                  </AppText>
+                  <View style={{alignItems: 'flex-end'}}>
+                    <AppText variant="body" weight="bold" style={{color: '#22c55e'}} raw>
+                      {item.wpm} WPM
+                    </AppText>
+                    <AppText variant="caption" style={{color: colors.neutrals400}} raw>
+                      {item.accuracy}%
+                    </AppText>
+                  </View>
+                </View>
+              )}
+              ListFooterComponent={
+                badgesData ? (
+                  <View style={{marginTop: 24}}>
+                    <AppText variant="bodySmall" weight="bold" className="text-neutrals400 mb-3" raw>
+                      🏅 Badges ({badgesData.totalUnlocked}/{badgesData.totalBadges})
+                    </AppText>
+                    <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
+                      {badgesData.badges.map(badge => (
+                        <View key={badge.id} style={{width: '30%', alignItems: 'center', padding: 12, backgroundColor: badge.isUnlocked ? '#eab30810' : `${colors.foreground}05`, borderRadius: 12, borderWidth: 1, borderColor: badge.isUnlocked ? '#eab30830' : `${colors.foreground}10`, opacity: badge.isUnlocked ? 1 : 0.5}}>
+                          <AppText variant="heading2" raw>{badge.icon}</AppText>
+                          <AppText variant="caption" weight="semibold" className="text-foreground mt-1" raw numberOfLines={1}>
+                            {badge.name}
+                          </AppText>
+                          <AppText variant="caption" style={{color: colors.neutrals400, fontSize: 9}} raw numberOfLines={1}>
+                            {badge.requirement}
+                          </AppText>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : null
+              }
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

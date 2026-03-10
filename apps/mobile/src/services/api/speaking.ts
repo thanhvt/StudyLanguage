@@ -158,7 +158,7 @@ export const speakingApi = {
     const prompt = `Bạn là một giáo viên tiếng Anh. Hãy tạo 10 câu tiếng Anh ở trình độ ${config.level} về chủ đề "${topicName}" (${topicDesc}) để người học luyện phát âm.
 
 Yêu cầu:
-- Mỗi câu dài 5-15 từ
+- Mỗi câu dài 5-15 từ (TỐI ĐA 20 từ — tránh câu quá dài gây tốn tài nguyên thiết bị)
 - Tăng dần độ khó
 - Có từ vựng phổ biến trong chủ đề
 - ${config.level === 'beginner' ? 'Dùng câu đơn giản, từ vựng cơ bản A1-A2' : config.level === 'intermediate' ? 'Câu trung bình, B1-B2, có âm khó' : 'Câu phức tạp, C1-C2, connected speech, idioms'}
@@ -175,8 +175,20 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
     });
 
     const sentences = parseSentences(response.data?.text || '');
-    console.log(`✅ [Speaking] Đã sinh ${sentences.length} câu practice`);
-    return sentences;
+
+    // Gap Fix: Lọc câu quá dài (>25 từ ≈ >30s khi đọc) để tránh OOM trên device yếu
+    const MAX_WORDS_PER_SENTENCE = 25;
+    const filtered = sentences.filter(s => {
+      const wordCount = s.text.split(/\s+/).length;
+      if (wordCount > MAX_WORDS_PER_SENTENCE) {
+        console.warn(`⚠️ [Speaking] Bỏ câu quá dài (${wordCount} từ):`, s.text.substring(0, 40));
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`✅ [Speaking] Đã sinh ${filtered.length} câu practice (lọc ${sentences.length - filtered.length} câu quá dài)`);
+    return filtered;
   },
 
   /**
@@ -721,21 +733,37 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
     });
 
     const sentences = parseSentences(response.data?.text || '');
-    console.log(`✅ [Shadowing] Đã sinh ${sentences.length} câu shadowing`);
-    return sentences;
+
+    // Gap Fix: Lọc câu quá dài (>30 từ ≈ >30s) — Shadowing cần câu vừa phải để luyện rhythm
+    const MAX_SHADOWING_WORDS = 30;
+    const filtered = sentences.filter(s => {
+      const wordCount = s.text.split(/\s+/).length;
+      if (wordCount > MAX_SHADOWING_WORDS) {
+        console.warn(`⚠️ [Shadowing] Bỏ câu quá dài (${wordCount} từ):`, s.text.substring(0, 40));
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`✅ [Shadowing] Đã sinh ${filtered.length} câu shadowing (lọc ${sentences.length - filtered.length} câu quá dài)`);
+    return filtered;
   },
 
   /**
    * Mục đích: Combo endpoint: upload audio user → transcribe (Groq Whisper) → evaluate shadowing
-   * Tham số đầu vào: audioUri, originalText, speed
+   * Tham số đầu vào: audioUri, originalText, speed, delayMs (optional, future-proofing)
    * Tham số đầu ra: Promise<ShadowingEvalResult> — rhythm, intonation, accuracy, tips
    * Khi nào sử dụng: ShadowingSessionScreen → Phase 2 kết thúc → gửi audio → nhận score
    *   Flow: auto-stop recording → evaluateShadowingWithAudio → navigate FeedbackScreen
+   * Lưu ý:
+   *   - delayMs hiện tại chỉ là metadata (server dùng text-based scoring)
+   *   - Khi Phase 2 (real-time pitch comparison), server sẽ dùng delayMs để align audio
    */
   evaluateShadowingWithAudio: async (
     audioUri: string,
     originalText: string,
     speed: number = 1.0,
+    delayMs: number = 0,
   ): Promise<{
     rhythm: number;
     intonation: number;
@@ -747,7 +775,7 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
   }> => {
     console.log('🔊 [Shadowing] Đánh giá shadowing...');
     console.log('  Câu mẫu:', originalText.substring(0, 40));
-    console.log('  Tốc độ:', speed);
+    console.log('  Tốc độ:', speed, '| Delay:', delayMs, 'ms');
 
     try {
       // Dùng combo endpoint transcribe-and-evaluate
@@ -759,6 +787,8 @@ CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
       } as any);
       formData.append('originalText', originalText);
       formData.append('speed', String(speed));
+      // Future-proofing: gửi delayMs metadata cho Phase 2 audio alignment
+      formData.append('delayMs', String(delayMs));
 
       const response = await apiClient.post(
         '/speaking/transcribe-and-evaluate',
@@ -931,6 +961,97 @@ CHỈ JSON.`;
     } catch (err) {
       console.error('❌ [TongueTwister] Lỗi cập nhật progress:', err);
       return null;
+    }
+  },
+
+  // ============================================
+  // TONGUE TWISTER — LEADERBOARD & BADGES APIs
+  // ============================================
+
+  /**
+   * Mục đích: Lấy bảng xếp hạng Speed Challenge cho 1 phoneme category
+   * Tham số đầu vào: category (string) — phoneme category key
+   * Tham số đầu ra: Promise<LeaderboardEntry[]>
+   * Khi nào sử dụng: SpeedChallengeScreen → nhấn "🏆 Leaderboard" → hiện danh sách
+   */
+  getLeaderboard: async (category: string): Promise<{
+    entries: {rank: number; userId: string; displayName: string; avatar: string; wpm: number; accuracy: number; createdAt: string}[];
+    userRank: number | null;
+    totalEntries: number;
+  }> => {
+    console.log(`🏆 [Leaderboard] Lấy bảng xếp hạng: ${category}`);
+    try {
+      const response = await apiClient.get('/speaking/leaderboard', {
+        params: {category, limit: 20},
+      });
+      return response.data ?? {entries: [], userRank: null, totalEntries: 0};
+    } catch (err) {
+      console.error('❌ [Leaderboard] Lỗi lấy leaderboard:', err);
+      return {entries: [], userRank: null, totalEntries: 0};
+    }
+  },
+
+  /**
+   * Mục đích: Gửi score Speed Challenge lên leaderboard
+   * Tham số đầu vào: data { category, wpm, accuracy, twisterId }
+   * Tham số đầu ra: Promise<{rank, isNewRecord, badgesEarned}>
+   * Khi nào sử dụng: SpeedChallengeScreen → kết thúc → submit score
+   */
+  submitLeaderboardScore: async (data: {
+    category: string;
+    wpm: number;
+    accuracy: number;
+    twisterId: string;
+  }): Promise<{
+    rank: number;
+    isNewRecord: boolean;
+    badgesEarned: {id: string; name: string; icon: string}[];
+  }> => {
+    console.log(`🏆 [Leaderboard] Gửi score: WPM=${data.wpm}, Accuracy=${data.accuracy}`);
+    try {
+      const response = await apiClient.post('/speaking/leaderboard', data);
+      const result = response.data ?? {};
+      console.log(`✅ [Leaderboard] Rank: #${result.rank}, New Record: ${result.isNewRecord}`);
+      return {
+        rank: result.rank ?? 0,
+        isNewRecord: result.isNewRecord ?? false,
+        badgesEarned: result.badgesEarned ?? [],
+      };
+    } catch (err) {
+      console.error('❌ [Leaderboard] Lỗi gửi score:', err);
+      return {rank: 0, isNewRecord: false, badgesEarned: []};
+    }
+  },
+
+  /**
+   * Mục đích: Lấy danh sách badges Tongue Twister của user
+   * Tham số đầu vào: không
+   * Tham số đầu ra: Promise<TongueTwisterBadgeData>
+   * Khi nào sử dụng: SpeedChallengeScreen → badge grid section
+   */
+  getTongueTwisterBadges: async (): Promise<{
+    badges: {id: string; name: string; icon: string; description: string; isUnlocked: boolean; unlockedAt: string | null; requirement: string}[];
+    totalUnlocked: number;
+    totalBadges: number;
+  }> => {
+    console.log('🏅 [Badges] Lấy badges Tongue Twister...');
+    try {
+      const response = await apiClient.get('/speaking/tongue-twister-badges');
+      return response.data ?? {badges: [], totalUnlocked: 0, totalBadges: 0};
+    } catch (err) {
+      console.error('❌ [Badges] Lỗi lấy badges:', err);
+      // Fallback: danh sách badges mặc định
+      return {
+        badges: [
+          {id: 'speed-100', name: 'Tốc độ 100', icon: '⚡', description: 'Đạt 100 WPM', isUnlocked: false, unlockedAt: null, requirement: '100 WPM'},
+          {id: 'speed-150', name: 'Tốc độ Âm thanh', icon: '🚀', description: 'Đạt 150 WPM', isUnlocked: false, unlockedAt: null, requirement: '150 WPM'},
+          {id: 'perfect-score', name: 'Hoàn hảo', icon: '💎', description: 'Điểm phát âm 100%', isUnlocked: false, unlockedAt: null, requirement: '100% accuracy'},
+          {id: 'streak-7', name: 'Kiên trì 7 ngày', icon: '🔥', description: 'Luyện 7 ngày liên tiếp', isUnlocked: false, unlockedAt: null, requirement: '7-day streak'},
+          {id: 'all-phonemes', name: 'Master Phát âm', icon: '👑', description: 'Hoàn thành tất cả phoneme', isUnlocked: false, unlockedAt: null, requirement: 'All categories'},
+        ],
+        totalUnlocked: 0,
+        totalBadges: 5,
+      };
     }
   },
 };
