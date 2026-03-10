@@ -1,6 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Ghi âm cho Speaking, Shadowing, Tongue Twister -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Local notification (notifee) — Android 13+ cần xin runtime -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Rung khi có notification -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Lưu share card vào gallery (Android < 10) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <application
       android:name=".MainApplication"

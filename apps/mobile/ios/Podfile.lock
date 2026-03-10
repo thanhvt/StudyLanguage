@@ -2635,6 +2635,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNReactNativeHapticFeedback (2.3.3):
     - boost
     - DoubleConversion
@@ -3092,6 +3097,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -3296,6 +3302,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keychain"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3411,6 +3419,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 79721265b1c5eba0d893e5f6c79d0a1f277d246d
   RNKeychain: f9022b0a123bb459ba2e6045f79203a7c7e54956
   RNLocalize: ca8ab6235c5e178b75ab8af89e19e55ade5c9c8b
+  RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNReactNativeHapticFeedback: 7ab0232cc103ac7d928635410fa0df7b11c53ada
   RNReanimated: 7a5c057b1db27bfeaddd9a7cb60bd68266ecd22f
   RNScreens: bcdac59a65c0aa26853e1bb20061edec34d475f2

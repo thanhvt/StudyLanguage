@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Platform} from 'react-native';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, {AVModeIOSOption} from 'react-native-audio-recorder-player';
 import {useShadowingStore} from '@/store/useShadowingStore';
 
 // =======================
@@ -66,12 +66,17 @@ export function useShadowingRecorder() {
       const recorder = recorderRef.current;
 
       // Cấu hình recording
+      // iOS: dùng voiceChat mode để bật AEC (Acoustic Echo Cancellation)
+      //   khi user không dùng tai nghe, mic sẽ lọc tiếng AI từ speaker
+      // Android: AudioSourceAndroid = 6 (VOICE_RECOGNITION) đã có AEC built-in
       const uri = await recorder.startRecorder(RECORDING_PATH, {
         AudioEncoderAndroid: 3, // AAC
         AudioSourceAndroid: 6, // VOICE_RECOGNITION (có AEC trên Android)
         AVEncoderAudioQualityKeyIOS: 127, // max quality
         AVNumberOfChannelsKeyIOS: 1, // Mono cho voice
         AVSampleRateKeyIOS: 44100,
+        // iOS AEC: set mode voiceChat → AVAudioSession tự bật echo cancellation
+        AVModeIOS: AVModeIOSOption.voicechat,
       });
 
       setIsRecording(true);

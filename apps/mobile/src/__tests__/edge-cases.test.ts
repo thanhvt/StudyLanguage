@@ -207,13 +207,13 @@ describe('useSpeakingStore — Edge Cases', () => {
     ];
 
     it('clamp index âm về 0', () => {
-      useSpeakingStore.getState().setSentences(mockSentences);
+      useSpeakingStore.getState().setSentences(mockSentences as any);
       useSpeakingStore.getState().setCurrentIndex(-5);
       expect(useSpeakingStore.getState().currentIndex).toBe(0);
     });
 
     it('clamp index vượt quá length về max', () => {
-      useSpeakingStore.getState().setSentences(mockSentences);
+      useSpeakingStore.getState().setSentences(mockSentences as any);
       useSpeakingStore.getState().setCurrentIndex(999);
       expect(useSpeakingStore.getState().currentIndex).toBe(2);
     });

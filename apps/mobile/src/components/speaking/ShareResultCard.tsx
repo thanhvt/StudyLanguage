@@ -2,7 +2,7 @@ import React, {useRef, useState} from 'react';
 import {View, TouchableOpacity, Platform, Alert, ActivityIndicator} from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import QRCode from 'react-native-qrcode-svg';
-import Share from 'react-native-share';
+import Share, {Social} from 'react-native-share';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
 import {AppText} from '@/components/ui';
@@ -112,20 +112,17 @@ export default function ShareResultCard({
           // Phát qua social app cụ thể — dùng Share.shareSingle nếu có
           try {
             if (action === 'instagram') {
-              // Fix S-4: Instagram Stories cần backgroundImage thay vì url
-              await (Share.shareSingle as Function)({
-                social: Share.Social.INSTAGRAM_STORIES,
+              // Fix S-4: Instagram Stories cần backgroundImage + appId
+              await Share.shareSingle({
+                social: Social.InstagramStories,
                 backgroundImage: fileUri,
                 type: 'image/png',
+                appId: '', // Facebook App ID (required cho IG Stories)
               });
             } else {
-              const socialMap = {
-                facebook: Share.Social.FACEBOOK,
-                messenger: Share.Social.MESSENGER,
-              } as const;
               await Share.shareSingle({
                 url: fileUri,
-                social: socialMap[action as 'facebook' | 'messenger'],
+                social: action === 'facebook' ? Social.Facebook : Social.Messenger,
                 type: 'image/png',
               });
             }

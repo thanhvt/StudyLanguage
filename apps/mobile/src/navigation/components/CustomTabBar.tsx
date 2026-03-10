@@ -27,6 +27,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
 import {useAppStore} from '@/store/useAppStore';
+import {useNotificationStore} from '@/store/useNotificationStore';
 import {SKILL_COLORS} from '@/config/skillColors';
 
 // ============================================================
@@ -113,6 +114,10 @@ function AnimatedTabItem({
   const isTablet = useIsTablet();
   const haptic = useHaptic();
 
+  // Badge — đọc từ notification store
+  const badgeCount = useNotificationStore(s => s.badgeCounts[routeName] || 0);
+  const clearBadge = useNotificationStore(s => s.clearBadge);
+
   // Pixel-aligned sizes — iPad lớn hơn đáng kể
   const iconSize = isTablet ? 28 : 22;
 
@@ -164,6 +169,10 @@ function AnimatedTabItem({
 
   const handlePress = () => {
     haptic.light();
+    // Clear badge khi user navigate vào tab này
+    if (badgeCount > 0) {
+      clearBadge(routeName);
+    }
     onPress();
   };
 
@@ -210,6 +219,19 @@ function AnimatedTabItem({
             color={iconColor}
             strokeWidth={strokeWidth}
           />
+
+          {/* Badge dot — hiện khi có notification chưa đọc */}
+          {badgeCount > 0 && (
+            <View style={styles.badgeDot}>
+              {badgeCount > 1 && (
+                <AppText
+                  style={{fontSize: 8, fontWeight: '700', color: '#FFFFFF'}}
+                  raw>
+                  {badgeCount > 9 ? '9+' : badgeCount}
+                </AppText>
+              )}
+            </View>
+          )}
 
           {/* Label — iPhone: expand khi active / iPad: luôn hiện */}
           <Animated.View style={[styles.labelContainer, labelStyle]}>
@@ -371,6 +393,20 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: 'center',
+  },
+  // Badge dot — thông báo chưa đọc
+  badgeDot: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    zIndex: 10,
   },
 });
 

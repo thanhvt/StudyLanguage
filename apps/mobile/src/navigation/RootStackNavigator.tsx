@@ -1,11 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
 import {useAuthStore} from '@/store/useAuthStore';
+import {useNotificationStore} from '@/store/useNotificationStore';
 import {authService} from '@/services/supabase/auth';
 import AuthStack from './AuthStack';
 import MainStack from './MainTabNavigator';
 import SplashScreen from '@/screens/SplashScreen';
 import {MinimizedPlayer} from '@/components/listening';
+import {CoachNotificationToast} from '@/components/speaking/CoachNotificationToast';
+import {useLocalNotification} from '@/hooks/useLocalNotification';
 
 // Thời gian tối thiểu hiển thị splash (ms) — đủ để animation chạy hết
 const SPLASH_MIN_DURATION = 3500;
@@ -85,11 +88,34 @@ export default function RootNavigator() {
     return <AuthStack />;
   }
 
+  // Notification toast state — hiển khi có AI response và user ở tab khác
+  const queuedMessages = useNotificationStore(s => s.queuedMessages);
+  const isAppActive = useNotificationStore(s => s.isAppActive);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  // Local push notification — xin permission 1 lần khi app khởi động
+  const {requestPermission} = useLocalNotification();
+  useEffect(() => {
+    requestPermission();
+  }, [requestPermission]);
+
+  // Hiện toast khi có tin mới trong queue + user đang active
+  useEffect(() => {
+    if (queuedMessages.length > 0 && isAppActive) {
+      setToastVisible(true);
+    }
+  }, [queuedMessages.length, isAppActive]);
+
   return (
     <View style={{flex: 1}}>
       <MainStack />
       {/* Global Player — luôn render, tự ẩn khi playerMode !== minimized */}
       <MinimizedPlayer />
+      {/* Coach Notification Toast — hiện khi AI trả lời và user ở tab khác */}
+      <CoachNotificationToast
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
     </View>
   );
 }

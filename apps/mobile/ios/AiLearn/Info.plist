@@ -44,6 +44,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AiLearn cần quyền microphone để ghi âm giọng nói trong các bài luyện phát âm, Shadowing, và cuộc trò chuyện AI.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>AiLearn cần quyền lưu ảnh để lưu kết quả chia sẻ vào thư viện ảnh của bạn.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AiLearn cần quyền camera để sử dụng các tính năng ghi hình (nếu có).</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
