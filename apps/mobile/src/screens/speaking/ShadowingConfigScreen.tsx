@@ -5,12 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  TextInput,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {AppText} from '@/components/ui';
+import {AppText, SectionCard} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -21,6 +20,7 @@ import {useHeadphoneDetection} from '@/hooks/useHeadphoneDetection';
 import {speakingApi} from '@/services/api/speaking';
 import {useListeningStore} from '@/store/useListeningStore';
 import {TopicPickerModal} from '@/components/listening';
+import {TopicSelector} from '@/components/topic';
 import {
   HeadphoneStatusCard,
   HeadphoneWarningModal,
@@ -36,38 +36,6 @@ import {
 // =======================
 
 const SPEED_OPTIONS: ShadowingSpeed[] = [0.5, 0.75, 1.0, 1.25, 1.5];
-
-// =======================
-// SectionCard — card wrapper giống Listening ConfigScreen
-// =======================
-
-/**
- * Mục đích: Card container cho mỗi config section
- * Tham số đầu vào: children
- * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: ShadowingConfigScreen → wrap mỗi section
- */
-function SectionCard({children}: {children: React.ReactNode}) {
-  const colors = useColors();
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        padding: 16,
-        overflow: 'hidden',
-        backgroundColor: colors.surfaceRaised,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 2,
-      }}>
-      {children}
-    </View>
-  );
-}
 
 // =======================
 // Component
@@ -153,6 +121,18 @@ export default function ShadowingConfigScreen() {
 
   // Derived
   const hasValidTopic = !!selectedTopic || !!topicInput.trim();
+
+  /**
+   * Mục đích: Xử lý thay đổi text input — sync vào shadowing store + xoá selectedTopic nếu cần
+   * Tham số đầu vào: text (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: TopicSelector → onTopicInputChange callback
+   */
+  const handleTopicInputChange = useCallback((text: string) => {
+    setTopicInput(text);
+    if (text.trim() && selectedTopic) setSelectedTopic(null);
+    if (text.trim()) setTopic({id: 'custom', name: text.trim(), description: ''});
+  }, [selectedTopic, setSelectedTopic, setTopic]);
 
   /**
    * Mục đích: Logic bắt đầu Shadowing (validate + generate + navigate)
@@ -252,149 +232,27 @@ export default function ShadowingConfigScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
 
-        {/* ===== SECTION 1 — Chọn nội dung (inline topic picker giống Listening) ===== */}
+        {/* ===== SECTION 1 — Chọn nội dung (dùng TopicSelector dùng chung) ===== */}
         <View style={styles.section}>
           <SectionCard>
-            {/* Top Row: Label + action buttons */}
-            <View style={styles.topRow}>
-              <AppText variant="body" weight="semibold" style={{color: colors.foreground}}>
-                Nội dung luyện tập
-              </AppText>
-              <View style={styles.actionIcons}>
-                <TouchableOpacity
-                  style={[styles.iconBtn, {backgroundColor: `${speakingColor}15`}]}
-                  hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                  onPress={() => { haptic.light(); setShowTopicModal(true); }}>
-                  <Icon name="Search" className="w-5 h-5" style={{color: speakingColor}} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.iconBtn, {backgroundColor: `${speakingColor}15`}]}
-                  hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                  onPress={() => { haptic.light(); setSelectedCategory('favorites'); setShowTopicModal(true); }}>
-                  <Icon name="Heart" className="w-5 h-5" style={{color: speakingColor}} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.iconBtn, {backgroundColor: `${speakingColor}15`}]}
-                  hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
-                  onPress={() => { haptic.light(); setSelectedCategory('custom'); setShowTopicModal(true); }}>
-                  <Icon name="Plus" className="w-5 h-5" style={{color: speakingColor}} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Selected topic badge */}
-            {selectedTopic && (
-              <View style={[styles.selectedBadge, {backgroundColor: `${speakingColor}10`, borderColor: `${speakingColor}25`}]}>
-                <Icon name="Check" className="w-3.5 h-3.5" style={{color: speakingColor, marginRight: 8}} />
-                <AppText variant="caption" style={{color: colors.foreground, flex: 1}} numberOfLines={1}>
-                  <AppText weight="bold" style={{color: speakingColor}}>{selectedTopic.name}</AppText>
-                </AppText>
-                <TouchableOpacity
-                  onPress={() => { haptic.light(); setSelectedTopic(null); }}
-                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <Icon name="X" className="w-3.5 h-3.5" style={{color: colors.neutrals400}} />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Category Tabs */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 8}}>
-              <View style={styles.pillRow}>
-                {TOPIC_CATEGORIES.map(cat => {
-                  const isActive = selectedCategory === cat.id;
-                  return (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[styles.categoryPill, {backgroundColor: isActive ? speakingColor : 'transparent', borderColor: isActive ? speakingColor : colors.neutrals800}]}
-                      onPress={() => { haptic.light(); setSelectedCategory(cat.id); setSelectedSubCategory(''); }}>
-                      {cat.icon ? <AppText style={{fontSize: 13, marginRight: 4}}>{cat.icon}</AppText> : null}
-                      <AppText style={{fontSize: 13, fontWeight: '500', color: isActive ? '#FFFFFF' : colors.foreground}}>{cat.name}</AppText>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-
-            {/* Subcategory Chips */}
-            {(() => {
-              const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
-              if (!category?.subCategories?.length) return null;
-              return (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 12}}>
-                  <View style={styles.pillRow}>
-                    {category.subCategories.map(sub => {
-                      const isActive = selectedSubCategory === sub.id;
-                      return (
-                        <TouchableOpacity
-                          key={sub.id}
-                          style={[styles.subPill, {backgroundColor: isActive ? `${speakingColor}15` : 'transparent', borderColor: isActive ? speakingColor : colors.neutrals700}]}
-                          onPress={() => { haptic.light(); setSelectedSubCategory(sub.id); }}>
-                          <AppText style={{fontSize: 13, fontWeight: '500', color: isActive ? speakingColor : colors.neutrals300}}>{sub.name}</AppText>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-              );
-            })()}
-
-            {/* Scenario Cards (max 3) */}
-            {currentScenarios.map(scenario => {
-              const isSelected = selectedTopic?.id === scenario.id;
-              const isFav = favoriteScenarioIds.includes(scenario.id);
-              return (
-                <TouchableOpacity
-                  key={scenario.id}
-                  style={[styles.scenarioCard, {backgroundColor: isSelected ? `${speakingColor}15` : colors.neutrals900, borderColor: isSelected ? speakingColor : colors.border}]}
-                  onPress={() => { haptic.light(); setSelectedTopic(isSelected ? null : scenario, selectedCategory, selectedSubCategory); }}>
-                  <View style={styles.scenarioInner}>
-                    <View style={{flex: 1, marginRight: 12}}>
-                      <AppText weight="bold" style={{fontSize: 15, color: isSelected ? speakingColor : colors.foreground}}>{scenario.name}</AppText>
-                      <AppText style={{fontSize: 12, marginTop: 2, color: colors.neutrals400}} numberOfLines={1}>{scenario.description}</AppText>
-                    </View>
-                    <TouchableOpacity
-                      style={{paddingTop: 2}}
-                      onPress={() => { haptic.light(); toggleFavorite(scenario.id); }}
-                      hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                      <Icon name="Heart" className="w-4 h-4" style={{color: isFav ? speakingColor : colors.neutrals400}} fill={isFav ? speakingColor : 'none'} />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-
-            {/* "Xem tất cả" link */}
-            <TouchableOpacity
-              style={styles.viewAllLink}
-              onPress={() => { haptic.light(); setShowTopicModal(true); }}>
-              <AppText style={{fontSize: 14, textAlign: 'center', color: speakingColor}}>
-                Xem tất cả {totalScenarios} kịch bản →
-              </AppText>
-            </TouchableOpacity>
-
-            {/* Divider "hoặc" */}
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, {backgroundColor: colors.border}]} />
-              <AppText style={{fontSize: 12, marginHorizontal: 12, color: colors.neutrals400}}>hoặc</AppText>
-              <View style={[styles.dividerLine, {backgroundColor: colors.border}]} />
-            </View>
-
-            {/* Free text input */}
-            <TextInput
-              style={[styles.textInput, {color: colors.foreground, backgroundColor: colors.neutrals900, borderColor: colors.neutrals800}]}
-              placeholder="Nhập chủ đề riêng..."
-              placeholderTextColor={colors.neutrals400}
-              value={topicInput}
-              onChangeText={text => {
-                setTopicInput(text);
-                if (text.trim() && selectedTopic) setSelectedTopic(null);
-                if (text.trim()) setTopic({id: 'custom', name: text.trim(), description: ''});
-              }}
-              returnKeyType="done"
-              editable={!isLoading}
-              autoCapitalize="none"
-              autoCorrect={false}
-              accessibilityLabel="Nhập chủ đề luyện tập tự do"
+            <TopicSelector
+              accentColor={speakingColor}
+              label="Nội dung luyện tập"
+              selectedTopic={selectedTopic}
+              selectedCategory={selectedCategory}
+              selectedSubCategory={selectedSubCategory}
+              currentScenarios={currentScenarios}
+              favoriteScenarioIds={favoriteScenarioIds}
+              totalScenarios={totalScenarios}
+              topicInput={topicInput}
+              inputEditable={!isLoading}
+              inputAccessibilityLabel="Nhập chủ đề luyện tập tự do"
+              onSelectTopic={setSelectedTopic}
+              onSelectCategory={setSelectedCategory}
+              onSelectSubCategory={setSelectedSubCategory}
+              onTopicInputChange={handleTopicInputChange}
+              onToggleFavorite={toggleFavorite}
+              onOpenTopicModal={() => setShowTopicModal(true)}
             />
           </SectionCard>
         </View>
@@ -551,20 +409,6 @@ export default function ShadowingConfigScreen() {
 const styles = StyleSheet.create({
   header: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12},
   section: {marginBottom: 16},
-  // Topic section
-  topRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12},
-  actionIcons: {flexDirection: 'row', alignItems: 'center', gap: 8},
-  iconBtn: {width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center'},
-  selectedBadge: {flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12, borderWidth: 1},
-  pillRow: {flexDirection: 'row', gap: 8},
-  categoryPill: {flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, borderWidth: 1},
-  subPill: {paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, borderWidth: 1},
-  scenarioCard: {borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 8, borderWidth: 1},
-  scenarioInner: {flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between'},
-  viewAllLink: {paddingVertical: 12, alignItems: 'center'},
-  dividerRow: {flexDirection: 'row', alignItems: 'center', marginVertical: 12},
-  dividerLine: {flex: 1, height: 1},
-  textInput: {borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, borderWidth: 1},
   // Labels
   sectionLabel: {fontSize: 13, fontWeight: '700', marginBottom: 10},
   // Speed

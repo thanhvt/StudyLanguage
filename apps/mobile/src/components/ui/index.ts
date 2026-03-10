@@ -21,6 +21,7 @@ export {default as SessionCard} from './SessionCard';
 export {default as SegmentedControl} from './SegmentedControl';
 export {default as StatCard} from './StatCard';
 export {default as AlertCard} from './AlertCard';
+export {default as SectionCard} from './SectionCard';
 
 export {
   Form,
