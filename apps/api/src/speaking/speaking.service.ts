@@ -35,7 +35,7 @@ export class SpeakingService {
    * @returns Danh sách tongue twisters
    * Khi nào sử dụng: GET /speaking/tongue-twisters?level=beginner
    */
-  async getTongueTwisters(level?: string) {
+  async getTongueTwisters(level?: string, category?: string) {
     try {
       let query = this.supabase
         .from('tongue_twisters')
@@ -44,6 +44,9 @@ export class SpeakingService {
 
       if (level) {
         query = query.eq('level', level);
+      }
+      if (category) {
+        query = query.eq('phoneme_category', category);
       }
 
       const { data, error } = await query;
@@ -55,12 +58,14 @@ export class SpeakingService {
 
       return {
         success: true,
-        tongueTwisters: (data || []).map((t: any) => ({
+        twisters: (data || []).map((t: any) => ({
           id: t.id,
           text: t.text_en,
-          ipa: t.ipa,
+          ipa: t.ipa || '',
           level: t.level,
           difficulty: t.difficulty,
+          targetPhonemes: t.target_phonemes || [],
+          highlightWords: t.highlight_words || [],
         })),
         count: data?.length || 0,
       };
@@ -70,6 +75,122 @@ export class SpeakingService {
       throw new InternalServerErrorException('Lỗi lấy tongue twisters');
     }
   }
+
+  /**
+   * Lấy level progress cho 1 phoneme category
+   *
+   * Mục đích: Check unlock status cho các levels
+   * @param userId - ID của user
+   * @param category - Phoneme category (th_sounds, sh_s, r_l, v_w, ae_e, ee_i)
+   * @returns Level progress { easy, medium, hard, extreme }
+   * Khi nào sử dụng: GET /speaking/level-progress?category=th_sounds
+   */
+  async getLevelProgress(userId: string, category: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('tongue_twister_progress')
+        .select('level, avg_score, completed')
+        .eq('user_id', userId)
+        .eq('category', category);
+
+      if (error) {
+        this.logger.error('[SpeakingService] Lỗi lấy level progress:', error);
+      }
+
+      // Build progress map
+      const defaultLevel = { avgScore: 0, completed: false };
+      const levels: Record<string, any> = {
+        easy: { ...defaultLevel },
+        medium: { ...defaultLevel },
+        hard: { ...defaultLevel },
+        extreme: { ...defaultLevel },
+      };
+
+      (data || []).forEach((row: any) => {
+        if (levels[row.level]) {
+          levels[row.level] = {
+            avgScore: row.avg_score ?? 0,
+            completed: row.completed ?? false,
+          };
+        }
+      });
+
+      return { success: true, levels };
+    } catch (error) {
+      this.logger.error('[SpeakingService] Lỗi lấy level progress:', error);
+      return {
+        success: true,
+        levels: {
+          easy: { avgScore: 0, completed: false },
+          medium: { avgScore: 0, completed: false },
+          hard: { avgScore: 0, completed: false },
+          extreme: { avgScore: 0, completed: false },
+        },
+      };
+    }
+  }
+
+  /**
+   * Cập nhật level progress sau khi user hoàn thành practice
+   *
+   * Mục đích: Track score và unlock levels mới
+   * @param userId - ID của user
+   * @param category - Phoneme category
+   * @param level - Level vừa hoàn thành
+   * @param score - Điểm đạt được (0-100)
+   * @returns { unlocked: string[] } — danh sách levels mới unlock
+   * Khi nào sử dụng: PUT /speaking/level-progress
+   */
+  async updateLevelProgress(userId: string, category: string, level: string, score: number) {
+    try {
+      // Upsert progress — giữ max score
+      const { data: existing } = await this.supabase
+        .from('tongue_twister_progress')
+        .select('avg_score')
+        .eq('user_id', userId)
+        .eq('category', category)
+        .eq('level', level)
+        .single();
+
+      const newScore = Math.max(existing?.avg_score ?? 0, score);
+      const completed = newScore >= 70;
+
+      const { error } = await this.supabase
+        .from('tongue_twister_progress')
+        .upsert(
+          {
+            user_id: userId,
+            category,
+            level,
+            avg_score: newScore,
+            completed,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,category,level' },
+        );
+
+      if (error) {
+        this.logger.error('[SpeakingService] Lỗi cập nhật level progress:', error);
+        throw new InternalServerErrorException('Lỗi cập nhật level progress');
+      }
+
+      // Check nếu unlock level tiếp theo
+      const levelOrder = ['easy', 'medium', 'hard', 'extreme'];
+      const currentIdx = levelOrder.indexOf(level);
+      const unlocked: string[] = [];
+
+      if (completed && currentIdx < levelOrder.length - 1) {
+        unlocked.push(levelOrder[currentIdx + 1]);
+      }
+
+      return { success: true, unlocked };
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      this.logger.error('[SpeakingService] Lỗi cập nhật level progress:', error);
+      throw new InternalServerErrorException('Lỗi cập nhật level progress');
+    }
+  }
+
 
   /**
    * Lấy thống kê speaking của user
@@ -655,6 +776,193 @@ export class SpeakingService {
     } catch (error) {
       this.logger.error('[SpeakingService] Lỗi đánh giá shadowing:', error);
       throw new InternalServerErrorException('Lỗi đánh giá shadowing');
+    }
+  }
+
+  // ============================================
+  // SPRINT 4: TTS SETTINGS + RECORDING HISTORY
+  // ============================================
+
+  /**
+   * Lấy cài đặt TTS của user
+   *
+   * Mục đích: Load TTS config đã lưu (voice, speed, emotion, pitch, randomVoice)
+   * @param userId - ID của user
+   * @returns TTS settings
+   * Khi nào sử dụng: GET /speaking/tts-settings → SpeakingTtsSheet mount
+   */
+  async getTtsSettings(userId: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('speaking_tts_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      // Nếu chưa có → trả default
+      const defaults = {
+        voiceId: 'alloy',
+        speed: 1.0,
+        emotion: 'cheerful',
+        autoEmotion: true,
+        pitch: 0,
+        randomVoice: false,
+      };
+
+      return {
+        success: true,
+        ttsSettings: data ? {
+          voiceId: data.voice_id ?? defaults.voiceId,
+          speed: data.speed ?? defaults.speed,
+          emotion: data.emotion ?? defaults.emotion,
+          autoEmotion: data.auto_emotion ?? defaults.autoEmotion,
+          pitch: data.pitch ?? defaults.pitch,
+          randomVoice: data.random_voice ?? defaults.randomVoice,
+        } : defaults,
+      };
+    } catch (error) {
+      this.logger.error('[SpeakingService] Lỗi lấy TTS settings:', error);
+      // Trả default thay vì throw error
+      return {
+        success: true,
+        ttsSettings: {
+          voiceId: 'alloy',
+          speed: 1.0,
+          emotion: 'cheerful',
+          autoEmotion: true,
+          pitch: 0,
+          randomVoice: false,
+        },
+      };
+    }
+  }
+
+  /**
+   * Lưu cài đặt TTS của user
+   *
+   * Mục đích: Persist TTS config (upsert)
+   * @param userId - ID của user
+   * @param settings - Partial TTS settings
+   * @returns Updated settings
+   * Khi nào sử dụng: PUT /speaking/tts-settings → SpeakingTtsSheet "Lưu cài đặt"
+   */
+  async updateTtsSettings(userId: string, settings: {
+    voiceId?: string;
+    speed?: number;
+    emotion?: string;
+    autoEmotion?: boolean;
+    pitch?: number;
+    randomVoice?: boolean;
+  }) {
+    try {
+      const updateData: Record<string, any> = {
+        user_id: userId,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (settings.voiceId !== undefined) updateData.voice_id = settings.voiceId;
+      if (settings.speed !== undefined) updateData.speed = Math.max(0.5, Math.min(2.0, settings.speed));
+      if (settings.emotion !== undefined) updateData.emotion = settings.emotion;
+      if (settings.autoEmotion !== undefined) updateData.auto_emotion = settings.autoEmotion;
+      if (settings.pitch !== undefined) updateData.pitch = Math.max(-50, Math.min(50, settings.pitch));
+      if (settings.randomVoice !== undefined) updateData.random_voice = settings.randomVoice;
+
+      const { data, error } = await this.supabase
+        .from('speaking_tts_settings')
+        .upsert(updateData, { onConflict: 'user_id' })
+        .select()
+        .single();
+
+      if (error) {
+        this.logger.error('[SpeakingService] Lỗi lưu TTS settings:', error);
+        throw new InternalServerErrorException('Lỗi lưu cài đặt TTS');
+      }
+
+      return {
+        success: true,
+        ttsSettings: {
+          voiceId: data?.voice_id ?? settings.voiceId,
+          speed: data?.speed ?? settings.speed,
+          emotion: data?.emotion ?? settings.emotion,
+          autoEmotion: data?.auto_emotion ?? settings.autoEmotion,
+          pitch: data?.pitch ?? settings.pitch,
+          randomVoice: data?.random_voice ?? settings.randomVoice,
+        },
+      };
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      this.logger.error('[SpeakingService] Lỗi lưu TTS settings:', error);
+      throw new InternalServerErrorException('Lỗi lưu cài đặt TTS');
+    }
+  }
+
+  /**
+   * Lấy lịch sử ghi âm speaking
+   *
+   * Mục đích: Trả danh sách recordings grouped by date, filter by mode
+   * @param userId - ID của user
+   * @param mode - Filter (practice / conversation / shadowing / tongue-twister)
+   * @param page - Trang (1-based)
+   * @param limit - Số entries mỗi trang
+   * @returns { entries, totalCount, hasMore }
+   * Khi nào sử dụng: GET /speaking/recording-history → RecordingHistoryScreen
+   */
+  async getRecordingHistory(
+    userId: string,
+    mode?: string,
+    page: number = 1,
+    limit: number = 20,
+  ) {
+    try {
+      const offset = (page - 1) * limit;
+
+      let query = this.supabase
+        .from('lessons')
+        .select('id, topic, duration_minutes, created_at, content, mode, audio_url', { count: 'exact' })
+        .eq('user_id', userId)
+        .eq('type', 'speaking')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      // Filter theo speaking mode (practice, conversation, shadowing, tongue-twister)
+      if (mode && mode !== 'all') {
+        query = query.eq('mode', mode);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        this.logger.error('[SpeakingService] Lỗi lấy recording history:', error);
+        throw new InternalServerErrorException('Lỗi lấy lịch sử ghi âm');
+      }
+
+      const entries = (data || []).map((l: any) => ({
+        id: l.id,
+        sentence: l.content?.sentence ?? l.topic ?? 'Không có tiêu đề',
+        score: l.content?.overallScore ?? 0,
+        pronunciation: l.content?.pronunciation ?? 0,
+        fluency: l.content?.fluency ?? 0,
+        pace: l.content?.pace ?? 0,
+        duration: l.duration_minutes ? l.duration_minutes * 60 : 0,
+        date: new Date(l.created_at).toISOString().split('T')[0],
+        mode: l.mode ?? 'practice',
+        audioUrl: l.audio_url ?? null,
+        topic: l.topic ?? null,
+      }));
+
+      const totalCount = count || 0;
+
+      return {
+        success: true,
+        entries,
+        totalCount,
+        hasMore: offset + limit < totalCount,
+        page,
+      };
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      this.logger.error('[SpeakingService] Lỗi lấy recording history:', error);
+      throw new InternalServerErrorException('Lỗi lấy lịch sử ghi âm');
     }
   }
 }

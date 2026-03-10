@@ -88,6 +88,62 @@ class TranscribeAndEvaluateDto {
   model?: 'whisper-large-v3-turbo' | 'whisper-large-v3';
 }
 
+/**
+ * DTO cho update level progress
+ *
+ * Mục đích: Validate input PUT /speaking/level-progress
+ * Khi nào sử dụng: User hoàn thành tongue twister practice → cập nhật progress
+ */
+class UpdateLevelProgressDto {
+  @IsString()
+  @IsNotEmpty()
+  category: string;
+
+  @IsString()
+  @IsNotEmpty()
+  level: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  score: number;
+}
+
+/**
+ * DTO cho TTS settings
+ *
+ * Mục đích: Validate input PUT /speaking/tts-settings
+ * Khi nào sử dụng: User thay đổi cài đặt giọng AI trên SpeakingTtsSheet
+ */
+class UpdateTtsSettingsDto {
+  @IsString()
+  @IsOptional()
+  voiceId?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0.5)
+  @Max(2.0)
+  speed?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['cheerful', 'neutral', 'friendly', 'newscast'])
+  emotion?: 'cheerful' | 'neutral' | 'friendly' | 'newscast';
+
+  @IsOptional()
+  autoEmotion?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(-50)
+  @Max(50)
+  pitch?: number;
+
+  @IsOptional()
+  randomVoice?: boolean;
+}
+
 // ==================== Controller ====================
 
 /**
@@ -119,8 +175,50 @@ export class SpeakingController {
    */
   @Get('tongue-twisters')
   @HttpCode(HttpStatus.OK)
-  async getTongueTwisters(@Query('level') level?: string) {
-    return this.speakingService.getTongueTwisters(level);
+  async getTongueTwisters(
+    @Query('level') level?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.speakingService.getTongueTwisters(level, category);
+  }
+
+  /**
+   * GET /api/speaking/level-progress?category=th_sounds
+   *
+   * Mục đích: Lấy level progress cho 1 phoneme category
+   * @param category - Phoneme category key
+   * @returns Level progress { easy, medium, hard, extreme }
+   * Khi nào sử dụng: TongueTwisterSelectScreen → check unlock status
+   */
+  @Get('level-progress')
+  @HttpCode(HttpStatus.OK)
+  async getLevelProgress(
+    @Req() req: any,
+    @Query('category') category: string,
+  ) {
+    return this.speakingService.getLevelProgress(req.user.id, category);
+  }
+
+  /**
+   * PUT /api/speaking/level-progress
+   *
+   * Mục đích: Cập nhật level progress sau khi hoàn thành practice
+   * @param dto - { category, level, score }
+   * @returns { unlocked: string[] }
+   * Khi nào sử dụng: TongueTwisterPracticeScreen → score → cập nhật progress
+   */
+  @Put('level-progress')
+  @HttpCode(HttpStatus.OK)
+  async updateLevelProgress(
+    @Req() req: any,
+    @Body() dto: UpdateLevelProgressDto,
+  ) {
+    return this.speakingService.updateLevelProgress(
+      req.user.id,
+      dto.category,
+      dto.level,
+      dto.score,
+    );
   }
 
   /**
@@ -139,6 +237,59 @@ export class SpeakingController {
   // ============================================
   // SPRINT 2: GAMIFICATION ENDPOINTS
   // ============================================
+
+  /**
+   * GET /api/speaking/tts-settings
+   *
+   * Mục đích: Lấy cài đặt TTS của user
+   * @returns TTS settings { voiceId, speed, emotion, autoEmotion, pitch, randomVoice }
+   * Khi nào sử dụng: SpeakingTtsSheet mount → load saved settings
+   */
+  @Get('tts-settings')
+  @HttpCode(HttpStatus.OK)
+  async getTtsSettings(@Req() req: any) {
+    return this.speakingService.getTtsSettings(req.user.id);
+  }
+
+  /**
+   * PUT /api/speaking/tts-settings
+   *
+   * Mục đích: Lưu cài đặt TTS của user
+   * @param dto - UpdateTtsSettingsDto
+   * @returns Updated TTS settings
+   * Khi nào sử dụng: SpeakingTtsSheet → nhấn "Lưu cài đặt"
+   */
+  @Put('tts-settings')
+  @HttpCode(HttpStatus.OK)
+  async updateTtsSettings(@Req() req: any, @Body() dto: UpdateTtsSettingsDto) {
+    return this.speakingService.updateTtsSettings(req.user.id, dto);
+  }
+
+  /**
+   * GET /api/speaking/recording-history
+   *
+   * Mục đích: Lấy lịch sử ghi âm speaking (grouped by date)
+   * @param mode - Filter theo mode: practice | conversation | shadowing | tongue-twister
+   * @param page - Trang (mặc định 1)
+   * @param limit - Số entries mỗi trang (mặc định 20)
+   * @returns { entries[], totalCount, hasMore }
+   * Khi nào sử dụng: RecordingHistoryScreen
+   */
+  @Get('recording-history')
+  @HttpCode(HttpStatus.OK)
+  async getRecordingHistory(
+    @Req() req: any,
+    @Query('mode') mode?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.speakingService.getRecordingHistory(
+      req.user.id,
+      mode,
+      parseInt(page || '1', 10),
+      parseInt(limit || '20', 10),
+    );
+  }
 
   /**
    * GET /api/speaking/daily-goal

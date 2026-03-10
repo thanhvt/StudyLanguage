@@ -39,28 +39,28 @@ Tongue Twister Mode là chế độ gamified tập trung luyện phát âm **pho
 
 ### 1.2 Functional Requirements
 
-| ID | Yêu cầu | Mức ưu tiên |
-|----|---------|-------------|
-| TT-01 | Phoneme category selection (6+ categories) | P0 |
-| TT-02 | Level selection: Easy → Medium → Hard → Extreme 🔒 | P0 |
-| TT-03 | Level unlock: hoàn thành level trước → mở khóa sau | P1 |
-| TT-04 | Hiển thị tongue twister text + IPA + phoneme highlight | P0 |
-| TT-05 | Nghe mẫu: AI TTS phát câu ở tốc độ chậm (0.8x) + bình thường (1.0x) | P0 |
-| TT-06 | Hold mic → ghi âm → AI scoring (phoneme-focused) | P0 |
-| TT-07 | Speed Challenge: 4 rounds tăng tốc (0.8x → 1.0x → 1.2x → 1.5x) | P1 |
-| TT-08 | WPM (Words Per Minute) tracking mỗi round | P1 |
-| TT-09 | Leaderboard: xếp hạng theo speed + accuracy | P2 |
-| TT-10 | Badges: speed milestones (100 WPM, 120 WPM, 150 WPM...) | P2 |
-| TT-11 | Navigation: "← Câu trước" / "Câu sau →" | P0 |
+| ID | Yêu cầu | Mức ưu tiên | Status |
+|----|---------|-------------|--------|
+| TT-01 | Phoneme category selection (6+ categories) | P0 | ✅ Done |
+| TT-02 | Level selection: Easy → Medium → Hard → Extreme 🔒 | P0 | ✅ Done |
+| TT-03 | Level unlock: hoàn thành level trước → mở khóa sau | P1 | ✅ Done |
+| TT-04 | Hiển thị tongue twister text + IPA + phoneme highlight | P0 | ✅ Done |
+| TT-05 | Nghe mẫu: AI TTS phát câu ở tốc độ chậm (0.8x) + bình thường (1.0x) | P0 | ✅ Done |
+| TT-06 | Tap mic → ghi âm → AI scoring (phoneme-focused) | P0 | ✅ Done |
+| TT-07 | Speed Challenge: 4 rounds tăng tốc (0.8x → 1.0x → 1.2x → 1.5x) | P1 | ✅ Done |
+| TT-08 | WPM (Words Per Minute) tracking mỗi round | P1 | ✅ Done |
+| TT-09 | Leaderboard: xếp hạng theo speed + accuracy | P2 | 🟡 Placeholder |
+| TT-10 | Badges: speed milestones (100 WPM, 120 WPM, 150 WPM...) | P2 | 🟡 Planned |
+| TT-11 | Navigation: "← Câu trước" / "Câu sau →" | P0 | ✅ Done |
 
 ### 1.3 Non-Functional Requirements
 
-| ID | Yêu cầu | Chi tiết |
-|----|---------|----------|
-| TT-NF01 | Scoring latency ≤ 3s | Từ submit → hiện score |
-| TT-NF02 | Audio quality | 16kHz mono, AAC, max 10s per round |
-| TT-NF03 | Haptic | Medium start, Light stop, Success khi hoàn thành round |
-| TT-NF04 | WPM calculation accuracy | ±5 WPM tolerance |
+| ID | Yêu cầu | Chi tiết | Status |
+|----|---------|----------|--------|
+| TT-NF01 | Scoring latency ≤ 3s | Từ submit → hiện score | ✅ Timeout guard 8s |
+| TT-NF02 | Audio quality | 16kHz mono, AAC, max 10s per round | ✅ Auto-stop 10s |
+| TT-NF03 | Haptic | Medium start, Light stop, Success khi hoàn thành round | ✅ Done |
+| TT-NF04 | WPM calculation accuracy | ±5 WPM tolerance | ✅ Tested |
 
 ---
 
@@ -344,47 +344,47 @@ type PhonemeCategory = 'th_sounds' | 'sh_s' | 'r_l' | 'v_w' | 'ae_e' | 'ee_i';
 
 ### 8.1 Phoneme Select
 
-| TC-ID | Tên | Steps | Expected |
-|-------|-----|-------|----------|
-| TT-TC01 | Hiển thị categories | Mở Tongue Twister screen | 6 phoneme cards hiện |
-| TT-TC02 | Chọn phoneme | Tap "/θ/ vs /ð/" | Card highlight purple border |
-| TT-TC03 | Level locked | Chưa hoàn thành Easy | Medium/Hard/Extreme hiện 🔒 |
-| TT-TC04 | Level unlocked | Easy avg ≥ 70% | Medium hiện unlocked |
-| TT-TC05 | Start without selection | Tap CTA không chọn | Button disabled |
-| TT-TC06 | Start thành công | Chọn phoneme + level → CTA | Navigate → Practice |
+| TC-ID | Tên | Steps | Expected | Status |
+|-------|-----|-------|----------|--------|
+| TT-TC01 | Hiển thị categories | Mở Tongue Twister screen | 6 phoneme cards hiện | ✅ |
+| TT-TC02 | Chọn phoneme | Tap "/θ/ vs /ð/" | Card highlight purple border | ✅ |
+| TT-TC03 | Level locked | Chưa hoàn thành Easy | Medium/Hard/Extreme hiện 🔒 | ✅ |
+| TT-TC04 | Level unlocked | Easy avg ≥ 70% | Medium hiện unlocked | ✅ |
+| TT-TC05 | Start without selection | Tap CTA không chọn | Button disabled | ✅ |
+| TT-TC06 | Start thành công | Chọn phoneme + level → CTA | Navigate → Practice | ✅ |
 
 ### 8.2 Practice
 
-| TC-ID | Tên | Steps | Expected |
-|-------|-----|-------|----------|
-| TT-TC10 | Hiển thị twister | Vào Practice | Câu + IPA + phoneme highlight |
-| TT-TC11 | Nghe mẫu chậm | Tap "🔊 Nghe mẫu — 0.8x" | TTS phát 0.8x speed |
-| TT-TC12 | Nghe mẫu normal | Tap "🔊 Nghe mẫu — 1.0x" | TTS phát 1.0x speed |
-| TT-TC13 | Ghi âm | Hold mic 3s → release | Waveform + timer → score |
-| TT-TC14 | Score display | Sau ghi âm | "Pronunciation: 72/100" + tip |
-| TT-TC15 | Phoneme highlight | Score < 80% cho "seashells" | Từ "seashells" highlight đỏ |
-| TT-TC16 | Navigation câu | Tap "Câu sau →" | Chuyển twister tiếp theo |
+| TC-ID | Tên | Steps | Expected | Status |
+|-------|-----|-------|----------|--------|
+| TT-TC10 | Hiển thị twister | Vào Practice | Câu + IPA + phoneme highlight | ✅ |
+| TT-TC11 | Nghe mẫu chậm | Tap "🔊 Nghe mẫu — 0.8x" | TTS phát 0.8x speed | ✅ |
+| TT-TC12 | Nghe mẫu normal | Tap "🔊 Nghe mẫu — 1.0x" | TTS phát 1.0x speed | ✅ |
+| TT-TC13 | Ghi âm | Tap mic → nhấn stop | Waveform + timer → score | ✅ |
+| TT-TC14 | Score display | Sau ghi âm | "Pronunciation: 72/100" + tip | ✅ |
+| TT-TC15 | Phoneme highlight | Score < 80% cho "seashells" | Từ "seashells" highlight đỏ | ✅ |
+| TT-TC16 | Navigation câu | Tap "Câu sau →" | Chuyển twister tiếp theo | ✅ |
 
 ### 8.3 Speed Challenge
 
-| TC-ID | Tên | Steps | Expected |
-|-------|-----|-------|----------|
-| TT-TC20 | Enter Speed Challenge | Practice score ≥ 60 → tap "🏁" | Speed Challenge screen hiện |
-| TT-TC21 | Round 1 active | Bắt đầu Speed Challenge | Round 1 (0.8x) ACTIVE, rest 🔒 |
-| TT-TC22 | Complete round 1 | Ghi âm Round 1 | Score + WPM hiện, Round 2 unlock |
-| TT-TC23 | Round 2 play | Tap Round 2 | Recording ở 1.0x target |
-| TT-TC24 | All rounds complete | Hoàn thành 4 rounds | Final summary: Best WPM + combo |
-| TT-TC25 | WPM display | Mỗi round xong | "WPM: 142" hiện đúng |
-| TT-TC26 | Fail round | Accuracy < threshold | "Chưa đạt — thử lại!" + retry |
+| TC-ID | Tên | Steps | Expected | Status |
+|-------|-----|-------|----------|--------|
+| TT-TC20 | Enter Speed Challenge | Practice score ≥ 60 → tap "🏁" | Speed Challenge screen hiện | ✅ |
+| TT-TC21 | Round 1 active | Bắt đầu Speed Challenge | Round 1 (0.8x) ACTIVE, rest 🔒 | ✅ |
+| TT-TC22 | Complete round 1 | Ghi âm Round 1 | Score + WPM hiện, Round 2 unlock | ✅ |
+| TT-TC23 | Round 2 play | Tap Round 2 | Recording ở 1.0x target | ✅ |
+| TT-TC24 | All rounds complete | Hoàn thành 4 rounds | Final summary: Best WPM + combo | ✅ |
+| TT-TC25 | WPM display | Mỗi round xong | "WPM: 142" hiện đúng | ✅ |
+| TT-TC26 | Fail round | Accuracy < threshold | "Chưa đạt — thử lại!" + retry | ✅ |
 
 ### 8.4 Leaderboard & Gamification
 
-| TC-ID | Tên | Steps | Expected |
-|-------|-----|-------|----------|
-| TT-TC30 | View leaderboard | Tap "🏆 Leaderboard" | List rank + WPM + accuracy |
-| TT-TC31 | Score submitted | Complete Speed Challenge | Score tự động submit → rank |
-| TT-TC32 | Badge earned | 150+ WPM | "⚡ Speed Demon" badge notification |
-| TT-TC33 | Level unlock | Easy avg ≥ 70% | Toast "🎉 Medium unlocked!" |
+| TC-ID | Tên | Steps | Expected | Status |
+|-------|-----|-------|----------|--------|
+| TT-TC30 | View leaderboard | Tap "🏆 Leaderboard" | List rank + WPM + accuracy | 🟡 P2 |
+| TT-TC31 | Score submitted | Complete Speed Challenge | Score tự động submit → rank | 🟡 P2 |
+| TT-TC32 | Badge earned | 150+ WPM | "⚡ Speed Demon" badge notification | 🟡 P2 |
+| TT-TC33 | Level unlock | Easy avg ≥ 70% | Toast "🎉 Medium unlocked!" | ✅ |
 
 ---
 
