@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {View, TouchableOpacity, Platform, Alert} from 'react-native';
+import {View, TouchableOpacity, Platform, Alert, ActivityIndicator} from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import QRCode from 'react-native-qrcode-svg';
 import Share from 'react-native-share';
@@ -41,7 +41,8 @@ const SHARE_OPTIONS_ROW1 = [
 ];
 
 const SHARE_OPTIONS_ROW2 = [
-  {id: 'copy', label: 'Copy Image', emoji: '📋'},
+  // Fix SHARE-1: Label đúng — copy text, không phải image
+  {id: 'copy', label: 'Copy Text', emoji: '📋'},
   {id: 'save', label: 'Save to Photos', emoji: '💾'},
   {id: 'more', label: 'More options', emoji: '⋯'},
 ];
@@ -71,6 +72,9 @@ export default function ShareResultCard({
   const haptic = useHaptic();
   const viewShotRef = useRef<ViewShot>(null);
   const [isSharing, setIsSharing] = useState(false);
+
+  // Fix S-5: Tạo QR URL dynamic theo mode
+  const qrUrl = `https://studylanguage.app/speaking${mode ? `/${mode}` : ''}`;
 
   const grade = calculateGrade(score);
   const scoreColor = score >= 90 ? '#22C55E' : score >= 70 ? '#F59E0B' : '#EF4444';
@@ -107,16 +111,24 @@ export default function ShareResultCard({
         case 'messenger':
           // Phát qua social app cụ thể — dùng Share.shareSingle nếu có
           try {
-            const socialMap = {
-              facebook: Share.Social.FACEBOOK,
-              instagram: Share.Social.INSTAGRAM_STORIES,
-              messenger: Share.Social.MESSENGER,
-            } as const;
-            await Share.shareSingle({
-              url: fileUri,
-              social: socialMap[action as keyof typeof socialMap],
-              type: 'image/png',
-            });
+            if (action === 'instagram') {
+              // Fix S-4: Instagram Stories cần backgroundImage thay vì url
+              await (Share.shareSingle as Function)({
+                social: Share.Social.INSTAGRAM_STORIES,
+                backgroundImage: fileUri,
+                type: 'image/png',
+              });
+            } else {
+              const socialMap = {
+                facebook: Share.Social.FACEBOOK,
+                messenger: Share.Social.MESSENGER,
+              } as const;
+              await Share.shareSingle({
+                url: fileUri,
+                social: socialMap[action as 'facebook' | 'messenger'],
+                type: 'image/png',
+              });
+            }
           } catch {
             // Fallback về native share sheet nếu app không có
             await Share.open({url: fileUri, type: 'image/png'}).catch(() => {});
@@ -244,16 +256,31 @@ export default function ShareResultCard({
             </AppText>
           </View>
 
-          {/* Topic / Mode / Date meta (like mockup) */}
+          {/* Fix S-2: Sub-scores hiển thị trên card */}
+          {(pronunciation > 0 || fluency > 0 || pace > 0) && (
+            <View style={{flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12}}>
+              <View style={{alignItems: 'center'}}>
+                <AppText variant="caption" style={{color: '#FFFFFF60'}}>Phát âm</AppText>
+                <AppText variant="body" weight="bold" style={{color: '#FFFFFF'}}>{pronunciation}</AppText>
+              </View>
+              <View style={{alignItems: 'center'}}>
+                <AppText variant="caption" style={{color: '#FFFFFF60'}}>Trôi chảy</AppText>
+                <AppText variant="body" weight="bold" style={{color: '#FFFFFF'}}>{fluency}</AppText>
+              </View>
+              <View style={{alignItems: 'center'}}>
+                <AppText variant="caption" style={{color: '#FFFFFF60'}}>Tốc độ</AppText>
+                <AppText variant="body" weight="bold" style={{color: '#FFFFFF'}}>{pace}</AppText>
+              </View>
+            </View>
+          )}
+
+          {/* Topic / Mode meta — Fix S-6: Bỏ duplicate date */}
           <View style={{marginBottom: 12}}>
             <AppText variant="caption" style={{color: '#FFFFFF80'}}>
               Topic: {topic}
             </AppText>
             <AppText variant="caption" style={{color: '#FFFFFF80'}}>
               Mode: {mode}
-            </AppText>
-            <AppText variant="caption" style={{color: '#FFFFFF80'}}>
-              Date: {displayDate}
             </AppText>
           </View>
 
@@ -274,9 +301,10 @@ export default function ShareResultCard({
               <View />
             )}
             {/* QR Code */}
+            {/* Fix S-5: QR URL dynamic */}
             <View style={{backgroundColor: '#FFF', padding: 5, borderRadius: 6}}>
               <QRCode
-                value="https://studylanguage.app/speaking"
+                value={qrUrl}
                 size={52}
                 backgroundColor="#FFF"
               />
@@ -284,6 +312,14 @@ export default function ShareResultCard({
           </View>
         </View>
       </ViewShot>
+
+      {/* Fix S-3: Loading indicator khi đang capture/share */}
+      {isSharing && (
+        <View style={{alignItems: 'center', padding: 8}}>
+          <ActivityIndicator color={scoreColor} />
+          <AppText variant="caption" style={{color: colors.neutrals400, marginTop: 4}}>Đang xử lý...</AppText>
+        </View>
+      )}
 
       {/* Social Share Grid — 6 icons (2 rows × 3) theo mockup */}
       <View style={{gap: 10}}>

@@ -81,6 +81,10 @@ export default function ShadowingSessionScreen() {
   const highlightTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const lowAmplitudeCounter = useRef(0);
   const scoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Ref lưu delay timer để cleanup khi unmount (Fix M-3) */
+  const delayRecordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Ref cho timestamp kiểm tra amplitude gần nhất (Fix M-4) */
+  const lastAmpCheckRef = useRef(0);
 
   // Local state
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -117,6 +121,8 @@ export default function ShadowingSessionScreen() {
       if (isAIPlayingRef.current) {
         trackPlayer.stopAI();
       }
+      // Fix BUG-7: Auto-dismiss toast sau 5s nếu user không cắm lại
+      setTimeout(() => setHeadphoneDisconnected(false), 5000);
     } else if (!prevHeadphoneRef.current && headphoneConnected) {
       // Tai nghe vừa kết nối lại
       setHeadphoneDisconnected(false);
@@ -158,9 +164,13 @@ export default function ShadowingSessionScreen() {
     }
   }, [phase.isAIPlaying, updateAIWaveform]);
 
-  // ===== Edge Case: Low amplitude detection (9.1.4) =====
+  // ===== Edge Case: Low amplitude detection (9.1.4) — Fix M-4: throttle 300ms =====
   useEffect(() => {
     if (phase.isRecording && waveform.userData.length > 0) {
+      const now = Date.now();
+      if (now - lastAmpCheckRef.current < 300) return;
+      lastAmpCheckRef.current = now;
+
       const lastAmp = waveform.userData[waveform.userData.length - 1];
       if (lastAmp < LOW_AMPLITUDE_THRESHOLD) {
         lowAmplitudeCounter.current++;
@@ -184,6 +194,8 @@ export default function ShadowingSessionScreen() {
    * Khi nào sử dụng: Hiển thị AI timer + duration
    */
   const formatTime = useCallback((ms: number): string => {
+    // Fix M-1: Validate NaN, Infinity, âm
+    if (!Number.isFinite(ms) || ms < 0) return '00:00.0';
     const totalSecs = ms / 1000;
     const mins = Math.floor(totalSecs / 60).toString().padStart(2, '0');
     const secs = Math.floor(totalSecs % 60).toString().padStart(2, '0');
@@ -191,18 +203,16 @@ export default function ShadowingSessionScreen() {
     return `${mins}:${secs}.${dec}`;
   }, []);
 
-  // ===== Timer update =====
+  // ===== Timer update — Fix BUG-1: progress/duration là number, không phải object =====
   useEffect(() => {
-    if (trackPlayer.isPlaying && trackPlayer.progress) {
-      setAITimer(formatTime(trackPlayer.progress.position * 1000));
-      setAIDuration(formatTime(trackPlayer.progress.duration * 1000));
+    if (trackPlayer.isPlaying && trackPlayer.duration > 0) {
+      setAITimer(formatTime(trackPlayer.progress * 1000));
+      setAIDuration(formatTime(trackPlayer.duration * 1000));
       setAIProgressPercent(
-        trackPlayer.progress.duration > 0
-          ? Math.round((trackPlayer.progress.position / trackPlayer.progress.duration) * 100)
-          : 0,
+        Math.round((trackPlayer.progress / trackPlayer.duration) * 100),
       );
     }
-  }, [trackPlayer.isPlaying, trackPlayer.progress, formatTime]);
+  }, [trackPlayer.isPlaying, trackPlayer.progress, trackPlayer.duration, formatTime]);
 
   /**
    * Mục đích: Cleanup tất cả setTimeout cho word highlight (Fix M2)
@@ -216,11 +226,12 @@ export default function ShadowingSessionScreen() {
     setHighlightIndex(-1);
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — Fix M-3: cũng cleanup delay record timer
   useEffect(() => {
     return () => {
       clearHighlightTimers();
       if (scoreTimeoutRef.current) clearTimeout(scoreTimeoutRef.current);
+      if (delayRecordTimerRef.current) clearTimeout(delayRecordTimerRef.current);
     };
   }, [clearHighlightTimers]);
 
@@ -251,7 +262,8 @@ export default function ShadowingSessionScreen() {
 
       // Word highlight (Fix M2: store timers for cleanup)
       const words = currentSentence.text.split(/\s+/);
-      const estimatedDuration = words.length * 400;
+      // Fix BUG-6: Tính cả speed vào duration highlight
+      const estimatedDuration = (words.length * 400) / config.speed;
       words.forEach((_, i) => {
         const timer = setTimeout(
           () => setHighlightIndex(i),
@@ -268,23 +280,43 @@ export default function ShadowingSessionScreen() {
   }, [currentSentence, config.speed, trackPlayer, clearHighlightTimers, updateSentenceAudioUrl, session.currentIndex, haptic]);
 
   /**
-   * Mục đích: Pause/Resume preview audio
+   * Mục đích: Pause/Resume audio — xử lý riêng Preview vs Shadow
    * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn Pause ở Preview/Shadow
+   * Khi nào sử dụng: User nhấn Pause ở Preview hoặc Shadow phase
    */
   const togglePause = useCallback(async () => {
     try {
       if (trackPlayer.isPlaying) {
-        await trackPlayer.stopAI();
+        // Pause AI audio
+        await trackPlayer.pauseAI();
         clearHighlightTimers();
+        // Fix BUG-4: Nếu đang ở Shadow phase, cũng pause recording
+        if (phase.current === 'shadow' && isRecordingRef.current) {
+          await recorder.stopRecording();
+        }
+      } else if (phase.current === 'shadow') {
+        // Fix BUG-4: Resume shadow — phát AI + bắt đầu ghi âm lại
+        const audioUrl = currentSentence?.audioUrl;
+        if (audioUrl) {
+          await trackPlayer.playAI(audioUrl, config.speed);
+          // Delay nhỏ rồi ghi âm lại
+          setTimeout(async () => {
+            try {
+              await recorder.startRecording();
+            } catch (recErr) {
+              console.error('❌ [ShadowingSession] Lỗi resume ghi âm:', recErr);
+            }
+          }, 200);
+        }
       } else {
+        // Preview phase — replay bình thường
         await playPreview();
       }
     } catch (err) {
       console.error('❌ [ShadowingSession] Lỗi toggle pause:', err);
     }
-  }, [trackPlayer, clearHighlightTimers, playPreview]);
+  }, [trackPlayer, clearHighlightTimers, playPreview, phase, recorder, currentSentence, config.speed]);
 
   // Auto-play preview khi câu mới load
   useEffect(() => {
@@ -303,11 +335,11 @@ export default function ShadowingSessionScreen() {
    * Khi nào sử dụng: User nhấn "Bắt đầu Shadow" ở Preview phase
    */
   const startShadowing = useCallback(async () => {
+    // Fix BUG-3: Guard chặt hơn — dùng check + set atomic-like
     if (!currentSentence || hasAutoStartedShadow.current) return;
     hasAutoStartedShadow.current = true;
     haptic.medium();
 
-    setPhase('shadow');
     updateUserWaveform([]);
     clearHighlightTimers();
     lowAmplitudeCounter.current = 0;
@@ -325,8 +357,11 @@ export default function ShadowingSessionScreen() {
 
       await trackPlayer.playAI(audioUrl, config.speed);
 
-      // Delay rồi bắt đầu ghi âm
-      setTimeout(async () => {
+      // Fix M-2: Set phase SAU khi playAI thành công
+      setPhase('shadow');
+
+      // Fix M-3: Lưu delay timer vào ref để cleanup khi unmount
+      delayRecordTimerRef.current = setTimeout(async () => {
         try {
           await recorder.startRecording();
         } catch (recErr) {
@@ -335,30 +370,12 @@ export default function ShadowingSessionScreen() {
       }, config.delay * 1000);
     } catch (err) {
       console.error('❌ [ShadowingSession] Lỗi bắt đầu shadow:', err);
+      // Fix BUG-3: Reset guard khi lỗi
       hasAutoStartedShadow.current = false;
+      // Fix M-2: Rollback phase nếu playAI fail
+      setPhase('preview');
     }
   }, [currentSentence, config, haptic, setPhase, updateUserWaveform, clearHighlightTimers, trackPlayer, recorder, updateSentenceAudioUrl, session.currentIndex]);
-
-  // Auto-stop recording khi AI kết thúc (Fix B4: dùng ref thay vì hook value)
-  useEffect(() => {
-    // Kiểm tra bằng ref + interval thay vì effect dependency trực tiếp
-    if (phase.current !== 'shadow' || !hasAutoStartedShadow.current) return;
-
-    const checkInterval = setInterval(() => {
-      if (!isAIPlayingRef.current && isRecordingRef.current) {
-        clearInterval(checkInterval);
-        // AI đã kết thúc → dừng recording sau 1s buffer
-        setTimeout(async () => {
-          if (!isEvaluatingRef.current) {
-            await handleStopAndEvaluate();
-          }
-        }, 1000);
-      }
-    }, 200);
-
-    return () => clearInterval(checkInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase.current]);
 
   /**
    * Mục đích: Dừng recording + gửi evaluate + navigate feedback
@@ -431,6 +448,34 @@ export default function ShadowingSessionScreen() {
     recorder, trackPlayer, currentSentence, config.speed,
     setPhase, setScoreLoading, setAudioUrls, setScore, navigation, haptic,
   ]);
+
+  // Fix BUG-2: Dùng ref cho handleStopAndEvaluate để tránh stale closure
+  const handleStopAndEvaluateRef = useRef(handleStopAndEvaluate);
+  useEffect(() => {
+    handleStopAndEvaluateRef.current = handleStopAndEvaluate;
+  }, [handleStopAndEvaluate]);
+
+  // Auto-stop recording khi AI kết thúc (Fix B4: dùng ref thay vì hook value)
+  useEffect(() => {
+    // Kiểm tra bằng ref + interval thay vì effect dependency trực tiếp
+    if (phase.current !== 'shadow' || !hasAutoStartedShadow.current) return;
+
+    const checkInterval = setInterval(() => {
+      if (!isAIPlayingRef.current && isRecordingRef.current) {
+        clearInterval(checkInterval);
+        // AI đã kết thúc → dừng recording sau 1s buffer
+        setTimeout(async () => {
+          if (!isEvaluatingRef.current) {
+            // Fix BUG-2: Gọi qua ref — luôn lấy closure mới nhất
+            await handleStopAndEvaluateRef.current();
+          }
+        }, 1000);
+      }
+    }, 200);
+
+    return () => clearInterval(checkInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase.current]);
 
   /**
    * Mục đích: Thoát session — cleanup tất cả audio
@@ -672,14 +717,14 @@ export default function ShadowingSessionScreen() {
 
         {phase.current === 'shadow' && (
           <>
-            {/* Pause button (mockup 21) */}
+            {/* Pause button (mockup 21) — Fix BUG-4: icon phản ánh trạng thái */}
             <TouchableOpacity
               style={[styles.outlineBtn, {borderColor: colors.glassBorderStrong}]}
               onPress={togglePause}
               activeOpacity={0.7}>
-              <Icon name="Pause" className="w-4 h-4" style={{color: colors.foreground}} />
+              <Icon name={trackPlayer.isPlaying ? 'Pause' : 'Play'} className="w-4 h-4" style={{color: colors.foreground}} />
               <AppText style={{fontSize: 13, fontWeight: '600', color: colors.foreground, marginLeft: 6}} raw>
-                Pause
+                {trackPlayer.isPlaying ? 'Pause' : 'Resume'}
               </AppText>
             </TouchableOpacity>
 
@@ -693,6 +738,32 @@ export default function ShadowingSessionScreen() {
                 ⏹️ Dừng & Chấm điểm
               </AppText>
             </TouchableOpacity>
+          </>
+        )}
+
+        {/* Fix BUG-5: Score phase — hiện loading + retry khi timeout */}
+        {phase.current === 'score' && (
+          <>
+            {isEvaluating ? (
+              <View style={styles.evaluatingContainer}>
+                <ActivityIndicator color={speakingColor} size="large" />
+                <AppText style={{color: colors.neutrals400, marginTop: 12, fontSize: 14}} raw>
+                  🧠 Đang phân tích giọng nói...
+                </AppText>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.primaryBtn, {backgroundColor: speakingColor}]}
+                onPress={() => {
+                  setPhase('preview');
+                  hasAutoStartedShadow.current = false;
+                }}
+                activeOpacity={0.8}>
+                <AppText style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}} raw>
+                  🔄 Thử lại câu này
+                </AppText>
+              </TouchableOpacity>
+            )}
           </>
         )}
       </View>

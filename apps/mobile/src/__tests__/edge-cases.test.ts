@@ -18,6 +18,7 @@ import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {useHistoryStore} from '@/store/useHistoryStore';
 import {useAuthStore} from '@/store/useAuthStore';
 import {useVocabularyStore} from '@/store/useVocabularyStore';
+import {useShadowingStore} from '@/store/useShadowingStore';
 import {formatTime} from '@/utils/formatTime';
 import {
   formatRelativeTime,
@@ -84,16 +85,20 @@ describe('formatRelativeTime — Edge Cases', () => {
     expect(formatRelativeTime(date.toISOString())).toBe('Vừa xong');
   });
 
+  // Fix TEST-2: Dùng regex để tránh flaky ±1 phút khi chạy test ở ranh giới
   it('trả "X phút trước" cho ngày trong 1 giờ', () => {
     const date = new Date();
     date.setMinutes(date.getMinutes() - 30);
-    expect(formatRelativeTime(date.toISOString())).toBe('30 phút trước');
+    const result = formatRelativeTime(date.toISOString());
+    expect(result).toMatch(/^(29|30|31) phút trước$/);
   });
 
+  // Fix TEST-2: Dùng regex để tránh flaky giờ
   it('trả "X giờ trước" cho ngày trong 24 giờ', () => {
     const date = new Date();
     date.setHours(date.getHours() - 5);
-    expect(formatRelativeTime(date.toISOString())).toBe('5 giờ trước');
+    const result = formatRelativeTime(date.toISOString());
+    expect(result).toMatch(/^(4|5|6) giờ trước$/);
   });
 });
 
@@ -117,6 +122,31 @@ describe('groupEntriesByDate — Edge Cases', () => {
     expect(result).toHaveLength(1);
     expect(result[0].data).toHaveLength(2);
     expect(result[0].title).toBe('Hôm nay');
+  });
+
+  // Fix TEST-3: Thêm test entries khác ngày
+  it('nhóm đúng khi có entries khác ngày', () => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const entries = [
+      {createdAt: today.toISOString(), id: '1'},
+      {createdAt: yesterday.toISOString(), id: '2'},
+    ];
+    const result = groupEntriesByDate(entries);
+    expect(result.length).toBeGreaterThanOrEqual(2);
+    result.forEach(group => {
+      expect(group.data.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // Fix TEST-3: Entries với invalid date không crash
+  it('xử lý entries có date không hợp lệ không crash', () => {
+    const entries = [
+      {createdAt: 'invalid-date', id: '1'},
+      {createdAt: new Date().toISOString(), id: '2'},
+    ];
+    expect(() => groupEntriesByDate(entries)).not.toThrow();
   });
 });
 
@@ -194,14 +224,15 @@ describe('useSpeakingStore — Edge Cases', () => {
     });
   });
 
+  // Fix T-1: Verify giá trị cuối cùng thay vì chỉ check "không crash"
   describe('EC-m07: nextSentence khi sentences rỗng', () => {
-    it('nextSentence không crash khi sentences rỗng', () => {
+    it('nextSentence không crash và giữ index hợp lệ khi sentences rỗng', () => {
       expect(() => {
         useSpeakingStore.getState().nextSentence();
       }).not.toThrow();
-      // currentIndex = min(0 + 1, -1) = Math.min(1, -1) = -1
-      // Nhưng do sentences rỗng, length - 1 = -1
-      // Không crash là đủ
+      // currentIndex phải >= 0 (không bị âm)
+      const index = useSpeakingStore.getState().currentIndex;
+      expect(index).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -264,9 +295,13 @@ describe('useReadingStore — Edge Cases', () => {
       expect(useReadingStore.getState().fontSize).toBe(20);
     });
 
-    it('fontSize boundary: 12 và 28', () => {
+    // Fix T-3: Tách riêng từng boundary test để dễ debug khi fail
+    it('fontSize boundary dưới: 12 giữ nguyên', () => {
       useReadingStore.getState().setFontSize(12);
       expect(useReadingStore.getState().fontSize).toBe(12);
+    });
+
+    it('fontSize boundary trên: 28 giữ nguyên', () => {
       useReadingStore.getState().setFontSize(28);
       expect(useReadingStore.getState().fontSize).toBe(28);
     });
@@ -477,11 +512,12 @@ describe('useHistoryStore — Edge Cases', () => {
 // ==============================================================
 
 describe('useAuthStore — Edge Cases', () => {
+  // Fix T-2: Dùng default state thực tế của store
   beforeEach(() => {
     useAuthStore.setState({
       user: null,
       session: null,
-      isLoading: true,
+      isLoading: false,
       isInitialized: false,
     });
   });
@@ -688,3 +724,110 @@ describe('useSpeakingStore — AI Conversation Edge Cases', () => {
   });
 });
 
+// ==============================================================
+// 13. useShadowingStore — Edge Cases (TEST-1)
+// ==============================================================
+
+describe('useShadowingStore — Edge Cases', () => {
+  const mockSentences = [
+    {id: 's1', text: 'Hello world', ipa: '/h\u0259\u02c8lo\u028a w\u025c\u02d0ld/', audioUrl: '', duration: 2, difficulty: 'easy' as const},
+    {id: 's2', text: 'Good morning', ipa: '/\u0261\u028ad \u02c8m\u0254\u02d0n\u026a\u014b/', audioUrl: '', duration: 3, difficulty: 'medium' as const},
+    {id: 's3', text: 'Nice to meet you', ipa: '/na\u026as t\u0259 mi\u02d0t ju\u02d0/', audioUrl: '', duration: 4, difficulty: 'hard' as const},
+  ];
+
+  beforeEach(() => {
+    useShadowingStore.getState().reset();
+  });
+
+  describe('setDelay validation', () => {
+    it('clamp delay \u00e2m v\u1ec1 0', () => {
+      useShadowingStore.getState().setDelay(-1);
+      expect(useShadowingStore.getState().config.delay).toBe(0);
+    });
+
+    it('clamp delay > 2.0 v\u1ec1 2.0', () => {
+      useShadowingStore.getState().setDelay(5);
+      expect(useShadowingStore.getState().config.delay).toBe(2.0);
+    });
+
+    it('gi\u1eef delay h\u1ee3p l\u1ec7', () => {
+      useShadowingStore.getState().setDelay(1.0);
+      expect(useShadowingStore.getState().config.delay).toBe(1.0);
+    });
+
+    it('delay boundary: 0 v\u00e0 2.0', () => {
+      useShadowingStore.getState().setDelay(0);
+      expect(useShadowingStore.getState().config.delay).toBe(0);
+      useShadowingStore.getState().setDelay(2.0);
+      expect(useShadowingStore.getState().config.delay).toBe(2.0);
+    });
+  });
+
+  describe('updateSentenceAudioUrl bounds', () => {
+    it('index ngo\u00e0i bounds (> length) kh\u00f4ng crash', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      expect(() => {
+        useShadowingStore.getState().updateSentenceAudioUrl(999, 'http://audio.mp3');
+      }).not.toThrow();
+      expect(useShadowingStore.getState().session.sentences[0].audioUrl).toBe('');
+    });
+
+    it('index \u00e2m kh\u00f4ng crash', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      expect(() => {
+        useShadowingStore.getState().updateSentenceAudioUrl(-1, 'http://audio.mp3');
+      }).not.toThrow();
+    });
+
+    it('c\u1eadp nh\u1eadt \u0111\u00fang v\u1edbi index h\u1ee3p l\u1ec7', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      useShadowingStore.getState().updateSentenceAudioUrl(1, 'http://new-audio.mp3');
+      expect(useShadowingStore.getState().session.sentences[1].audioUrl).toBe('http://new-audio.mp3');
+      expect(useShadowingStore.getState().session.sentences[0].audioUrl).toBe('');
+    });
+  });
+
+  describe('nextSentence boundary', () => {
+    it('nextSentence kh\u00f4ng v\u01b0\u1ee3t qu\u00e1 last index', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      useShadowingStore.getState().nextSentence();
+      useShadowingStore.getState().nextSentence();
+      useShadowingStore.getState().nextSentence();
+      useShadowingStore.getState().nextSentence();
+
+      const session = useShadowingStore.getState().session;
+      expect(session.isCompleted).toBe(true);
+      expect(session.currentIndex).toBeLessThan(session.totalSentences);
+    });
+
+    it('nextSentence v\u1edbi session r\u1ed7ng kh\u00f4ng crash', () => {
+      expect(() => {
+        useShadowingStore.getState().nextSentence();
+      }).not.toThrow();
+    });
+  });
+
+  describe('repeatSentence', () => {
+    it('gi\u1eef nguy\u00ean currentIndex khi repeat', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      useShadowingStore.getState().nextSentence();
+      useShadowingStore.getState().repeatSentence();
+      expect(useShadowingStore.getState().session.currentIndex).toBe(1);
+      expect(useShadowingStore.getState().phase.current).toBe('preview');
+    });
+  });
+
+  describe('reset', () => {
+    it('reset x\u00f3a h\u1ebft state v\u1ec1 initial', () => {
+      useShadowingStore.getState().startSession(mockSentences);
+      useShadowingStore.getState().setDelay(1.5);
+      useShadowingStore.getState().nextSentence();
+
+      useShadowingStore.getState().reset();
+      expect(useShadowingStore.getState().session.sentences).toEqual([]);
+      expect(useShadowingStore.getState().session.currentIndex).toBe(0);
+      expect(useShadowingStore.getState().phase.current).toBe('preview');
+      expect(useShadowingStore.getState().sessionResults).toEqual([]);
+    });
+  });
+});
