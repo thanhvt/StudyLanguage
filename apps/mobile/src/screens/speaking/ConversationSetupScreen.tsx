@@ -17,6 +17,7 @@ import {useSpeakingStore} from '@/store/useSpeakingStore';
 import {useListeningStore} from '@/store/useListeningStore';
 import TopicPicker from '@/components/listening/TopicPicker';
 import {CONVERSATION_COLORS, getConversationColor} from '@/config/skillColors';
+import {getPersonaForScenario, getDefaultPersona} from '@/config/conversationPersonas';
 import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
@@ -122,7 +123,11 @@ export default function ConversationSetupScreen() {
       topicId: selectedTopicId,
       topicName: selectedTopicName || '',
       topicDescription: '',
-      persona: null, // TODO: Lấy persona từ scenario metadata
+      // CR-05 FIX: Tải persona từ mapping thay vì hardcode null
+      persona: mode === 'roleplay'
+        ? getPersonaForScenario(selectedTopicId ?? selectedTopicName ?? '')
+          ?? getDefaultPersona(selectedTopicName ?? 'Roleplay')
+        : null,
       difficulty,
       durationMinutes: DURATIONS[durationIndex].value,
       maxTurns: 8,

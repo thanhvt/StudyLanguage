@@ -20,10 +20,12 @@ import GrammarFix from '@/components/speaking/GrammarFix';
 import SuggestedResponses from '@/components/speaking/SuggestedResponses';
 import AIThinkingIndicator from '@/components/speaking/AIThinkingIndicator';
 import ContextBanner from '@/components/speaking/ContextBanner';
+import RecordingOverlay from '@/components/speaking/RecordingOverlay';
 import {useColors} from '@/hooks/useColors';
-import {useHaptic} from '@/hooks/useHaptic';
 import {useSpeakingStore} from '@/store/useSpeakingStore';
-import {speakingApi} from '@/services/api/speaking';
+import {useConversationSession} from '@/hooks/useConversationSession';
+import {useConversationTimer} from '@/hooks/useConversationTimer';
+import {useAudioRecorder} from '@/hooks/useAudioRecorder';
 import {getConversationColor} from '@/config/skillColors';
 import type {SpeakingStackParamList} from '@/navigation/stacks/SpeakingStack';
 import type {ConversationMessage} from '@/store/useSpeakingStore';
@@ -31,67 +33,33 @@ import type {ConversationMessage} from '@/store/useSpeakingStore';
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 
 // =======================
-// Constants
-// =======================
-
-/** Timeout cho AI response (EC-04) */
-const AI_RESPONSE_TIMEOUT_MS = 10000;
-
-/** Debounce delay cho send button (EC-05) */
-const SEND_DEBOUNCE_MS = 500;
-
-// =======================
-// Helper
-// =======================
-
-/**
- * Mục đích: Format thời gian seconds → mm:ss
- * Tham số đầu vào: seconds (number)
- * Tham số đầu ra: string (mm:ss)
- * Khi nào sử dụng: TimerBadge hiển thị remaining time
- */
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-// =======================
 // Screen
 // =======================
 
 /**
  * Mục đích: Màn hình hội thoại AI — thống nhất cho Free Talk & Roleplay
- * Tham số đầu vào: không có (đọc state từ useSpeakingStore)
+ * Tham số đầu vào: không có (đọc state từ useSpeakingStore + hooks)
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng:
- *   ConversationSetupScreen → nhấn "Bắt đầu" → setConversationSetup → navigate ConversationSession
+ *   ConversationSetupScreen → nhấn "Bắt đầu" → navigate ConversationSession
  *   Kết thúc session → navigate SessionSummary
  */
 export default function ConversationScreen() {
   const navigation = useNavigation<NavProp>();
   const colors = useColors();
-  const haptic = useHaptic();
   const flatListRef = useRef<FlatList>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sendLockRef = useRef(false); // Debounce lock (EC-05)
   const userScrolledRef = useRef(false); // Smart scroll (EC-08)
   const endingRef = useRef(false); // Prevent double-end (CR-08)
 
-  // Store state
+  // ===========================
+  // Store (UI-only reads)
+  // ===========================
   const setup = useSpeakingStore(s => s.conversationSetup);
   const session = useSpeakingStore(s => s.conversationSession);
   const ai = useSpeakingStore(s => s.conversationAI);
-
-  // Store actions
   const startConversation = useSpeakingStore(s => s.startConversation);
   const addConversationMessage = useSpeakingStore(s => s.addConversationMessage);
   const tickConversationTimer = useSpeakingStore(s => s.tickConversationTimer);
-  const incrementTurn = useSpeakingStore(s => s.incrementTurn);
-  const setAIThinking = useSpeakingStore(s => s.setAIThinking);
-  const setSuggestedResponses = useSpeakingStore(s => s.setSuggestedResponses);
-  const setConversationSummary = useSpeakingStore(s => s.setConversationSummary);
-  const endConversation = useSpeakingStore(s => s.endConversation);
 
   // Derived
   const mode = setup?.mode ?? 'free-talk';
@@ -99,7 +67,25 @@ export default function ConversationScreen() {
   const isActive = session?.isActive ?? false;
   const messages = session?.messages ?? [];
 
-  // Local state
+  // ===========================
+  // Hooks (CR-06/09/10)
+  // ===========================
+  const {sendMessage, endSession} = useConversationSession();
+  const [recorderState, recorderActions] = useAudioRecorder();
+  useConversationTimer(
+    setup?.durationMinutes ?? 5,
+    mode === 'free-talk' && isActive,
+    tickConversationTimer,
+    () => {
+      // Timer hết giờ → kết thúc
+      if (!endingRef.current) {
+        endingRef.current = true;
+        handleEndAndNavigate();
+      }
+    },
+  );
+
+  // Local UI state
   const [textInput, setTextInput] = useState('');
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
 
@@ -113,11 +99,10 @@ export default function ConversationScreen() {
       return;
     }
 
-    // Bắt đầu session nếu chưa active
     if (!session?.isActive) {
       startConversation();
 
-      // Thêm tin nhắn chào đầu tiên từ AI
+      // Greeting message
       const greetingText = mode === 'roleplay' && setup.persona
         ? setup.persona.greeting
         : `Chào bạn! Hãy cùng trò chuyện về "${setup.topicName}" nhé. Bạn muốn bắt đầu về chủ đề gì?`;
@@ -135,38 +120,12 @@ export default function ConversationScreen() {
   }, []);
 
   // ===========================
-  // Timer — Free Talk mode (EC-01: cleanup khi hết giờ)
-  // ===========================
-  useEffect(() => {
-    if (mode !== 'free-talk' || !isActive) {
-      // Cleanup timer khi session kết thúc hoặc không phải free-talk
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      tickConversationTimer();
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [mode, isActive, tickConversationTimer]);
-
-  // ===========================
-  // Auto-end khi hết timer/turns (CR-08: prevent double navigate)
+  // Auto-end khi store deactivate (turns/shouldEnd)
   // ===========================
   useEffect(() => {
     if (session && !session.isActive && messages.length > 0 && !endingRef.current) {
-      console.log('⏰ [Conversation] Session kết thúc — chuyển sang Summary');
       endingRef.current = true;
-      handleEndSession();
+      handleEndAndNavigate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.isActive]);
@@ -176,149 +135,57 @@ export default function ConversationScreen() {
   // ===========================
   useEffect(() => {
     if (messages.length > 0 && !userScrolledRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({animated: true});
-      }, 200);
+      setTimeout(() => flatListRef.current?.scrollToEnd({animated: true}), 200);
     }
   }, [messages.length]);
 
-  /**
-   * Mục đích: Gửi tin nhắn text và xử lý AI response
-   * Tham số đầu vào: text (string) — nội dung tin nhắn
-   * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn nút gửi hoặc tap suggestion chip
-   */
-  const handleSendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || !isActive || ai.isThinking) return;
-
-    // Debounce (EC-05)
-    if (sendLockRef.current) return;
-    sendLockRef.current = true;
-    setTimeout(() => { sendLockRef.current = false; }, SEND_DEBOUNCE_MS);
-
-    haptic.light();
-    setTextInput('');
-    userScrolledRef.current = false; // Reset auto-scroll
-
-    // Thêm tin nhắn user
-    const userMsg: ConversationMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      text: text.trim(),
-      timestamp: Date.now(),
-    };
-    addConversationMessage(userMsg);
-
-    // Tăng turn cho Roleplay
-    if (mode === 'roleplay') {
-      incrementTurn();
-    }
-
-    // Gọi API AI trả lời (EC-04: timeout)
-    setAIThinking(true);
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), AI_RESPONSE_TIMEOUT_MS);
-
-      const result = await speakingApi.continueConversation(
-        messages.map(m => ({speaker: m.role, text: m.text})),
-        text.trim(),
-        setup?.topicName ?? '',
-        {
-          mode,
-          persona: setup?.persona ? {
-            name: setup.persona.name,
-            role: setup.persona.role,
-            systemPrompt: setup.persona.systemPrompt,
-          } : undefined,
-          difficulty: mode === 'roleplay' ? setup?.difficulty : undefined,
-          feedbackMode: setup?.feedbackMode,
-        },
-      );
-      clearTimeout(timeoutId);
-
-      // Thêm tin nhắn AI
-      const aiMsg: ConversationMessage = {
-        id: `ai-${Date.now()}`,
-        role: 'ai',
-        text: result.response,
-        timestamp: Date.now(),
-        pronunciationFeedback: result.pronunciationFeedback || undefined,
-        grammarCorrections: result.corrections ?? [],
-      };
-      addConversationMessage(aiMsg);
-
-      // Gợi ý câu trả lời (Free Talk + beginner)
-      if (result.suggestedResponses && result.suggestedResponses.length > 0) {
-        setSuggestedResponses(result.suggestedResponses);
-      }
-
-      // AI yêu cầu kết thúc
-      if (result.shouldEnd) {
-        console.log('🤖 [Conversation] AI yêu cầu kết thúc session');
-        endConversation();
-      }
-    } catch (err: any) {
-      const isTimeout = err?.name === 'AbortError';
-      console.error('❌ [Conversation] Lỗi gọi API:', isTimeout ? 'Timeout' : err);
-      addConversationMessage({
-        id: `system-error-${Date.now()}`,
-        role: 'system',
-        text: isTimeout
-          ? 'AI không phản hồi kịp. Vui lòng thử lại.'
-          : 'Có lỗi xảy ra. Vui lòng thử lại.',
-        timestamp: Date.now(),
-      });
-    } finally {
-      setAIThinking(false);
-    }
-  }, [
-    isActive, ai.isThinking, haptic, addConversationMessage, mode,
-    incrementTurn, setAIThinking, messages, setup, setSuggestedResponses, endConversation,
-  ]);
+  // ===========================
+  // Actions
+  // ===========================
 
   /**
-   * Mục đích: Kết thúc session và chuyển sang Summary
+   * Mục đích: Kết thúc session và navigate tới Summary
    * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: Timer hết, max turns, AI shouldEnd, hoặc user nhấn End
+   * Khi nào sử dụng: Timer hết, max turns reached, AI shouldEnd, user nhấn "Kết thúc"
    */
-  const handleEndSession = useCallback(async () => {
-    endConversation();
-
-    // Sinh summary
-    try {
-      const summaryData = await speakingApi.generateSessionSummary(
-        messages.map(m => ({role: m.role, text: m.text})),
-        mode,
-        setup?.mode === 'free-talk'
-          ? (setup?.durationMinutes ?? 5) * 60
-          : messages.filter(m => m.role === 'user').length,
-      );
-
-      setConversationSummary({
-        totalTime: setup?.mode === 'free-talk' ? (setup?.durationMinutes ?? 5) * 60 : 0,
-        totalTurns: messages.filter(m => m.role === 'user').length,
-        overallScore: summaryData.overallScore,
-        grade: summaryData.grade,
-        pronunciationIssues: summaryData.pronunciationIssues,
-        grammarFixes: summaryData.grammarFixes,
-        aiFeedback: summaryData.aiFeedback,
-        scenarioBadge: mode === 'roleplay' ? setup?.topicName ?? null : null,
-      });
-    } catch {
-      console.error('❌ [Conversation] Lỗi sinh summary');
-      // EC-09: Navigate anyway — Summary screen sẽ show fallback UI
-    }
-
+  const handleEndAndNavigate = useCallback(async () => {
+    await endSession();
     navigation.navigate('SessionSummary');
-  }, [endConversation, messages, mode, setup, setConversationSummary, navigation]);
+  }, [endSession, navigation]);
 
   /**
-   * Mục đích: Xác nhận thoát session (prevent mất dữ liệu)
+   * Mục đích: Gửi tin nhắn text
+   * Tham số đầu vào: text (string)
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: Nhấn send button, tap suggestion, hoặc sau STT
+   */
+  const handleSend = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+    setTextInput('');
+    userScrolledRef.current = false;
+    await sendMessage(text);
+  }, [sendMessage]);
+
+  /**
+   * Mục đích: Xử lý khi user thả mic (stop recording + transcribe + send)
    * Tham số đầu vào: không
    * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn nút Back
+   * Khi nào sử dụng: onPressOut trên mic button — kết thúc recording
+   */
+  const handleRecordingStop = useCallback(async () => {
+    const result = await recorderActions.stopRecording();
+    if (result?.transcript) {
+      userScrolledRef.current = false;
+      await sendMessage(result.transcript);
+    }
+  }, [recorderActions, sendMessage]);
+
+  /**
+   * Mục đích: Xác nhận thoát giữa session
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void
+   * Khi nào sử dụng: User nhấn back button
    */
   const handleBack = useCallback(() => {
     if (messages.length > 0 && isActive) {
@@ -327,75 +194,53 @@ export default function ConversationScreen() {
         'Bạn có muốn kết thúc và xem kết quả không?',
         [
           {text: 'Tiếp tục', style: 'cancel'},
-          {text: 'Kết thúc', style: 'destructive', onPress: handleEndSession},
+          {text: 'Kết thúc', style: 'destructive', onPress: handleEndAndNavigate},
         ],
       );
     } else {
       navigation.goBack();
     }
-  }, [messages.length, isActive, handleEndSession, navigation]);
+  }, [messages.length, isActive, handleEndAndNavigate, navigation]);
 
   // ===========================
-  // Render list items
+  // Render helpers
   // ===========================
 
-  /**
-   * Mục đích: Render từng item trong chat list (message + inline feedback)
-   * Tham số đầu vào: item (ConversationMessage)
-   * Tham số đầu ra: JSX.Element
-   * Khi nào sử dụng: FlatList renderItem
-   */
-  const renderItem = useCallback(({item}: {item: ConversationMessage}) => {
-    return (
-      <View>
-        {/* CR-01: Truyền persona + accentColor cho ChatBubble */}
-        <ChatBubble
-          message={item}
-          persona={setup?.persona || undefined}
-          accentColor={accentColor}
-          onPlayAudio={audioUrl => {
-            console.log('🔊 [Conversation] Phát audio:', audioUrl);
-            // TODO: Implement audio playback
-          }}
+  const renderItem = useCallback(({item}: {item: ConversationMessage}) => (
+    <View>
+      <ChatBubble
+        message={item}
+        persona={setup?.persona || undefined}
+        accentColor={accentColor}
+        onPlayAudio={url => console.log('🔊 Phát audio:', url)}
+      />
+      {item.pronunciationFeedback && (
+        <PronunciationAlert
+          correction={item.pronunciationFeedback}
+          onPlaySample={w => console.log('🔊 Phát mẫu:', w)}
+          onReSpeak={w => console.log('🎤 Thử lại:', w)}
         />
-
-        {/* Inline Pronunciation Alert (UI-02: đã redesign) */}
-        {item.pronunciationFeedback && (
-          <PronunciationAlert
-            correction={item.pronunciationFeedback}
-            onPlaySample={word => {
-              console.log('🔊 [Conversation] Phát mẫu cho:', word);
-            }}
-            onReSpeak={word => {
-              console.log('🎤 [Conversation] Thử lại nói:', word);
-            }}
-          />
-        )}
-
-        {/* Inline Grammar Fix (UI-03: đã redesign — grouped) */}
-        {item.grammarCorrections && item.grammarCorrections.length > 0 && (
-          <GrammarFix
-            corrections={item.grammarCorrections}
-            onDismiss={() => {
-              console.log('✅ [Conversation] Đã hiểu grammar fix');
-            }}
-          />
-        )}
-      </View>
-    );
-  }, [setup?.persona, accentColor]);
+      )}
+      {item.grammarCorrections && item.grammarCorrections.length > 0 && (
+        <GrammarFix
+          corrections={item.grammarCorrections}
+          onDismiss={() => console.log('✅ Đã hiểu grammar')}
+        />
+      )}
+    </View>
+  ), [setup?.persona, accentColor]);
 
   const keyExtractor = useCallback((item: ConversationMessage) => item.id, []);
 
-  // ===========================
-  // Badge hiển thị Timer / Turn (CR-14: no emoji in title)
-  // ===========================
   const statusBadge = useMemo(() => {
     if (mode === 'free-talk') {
+      const m = Math.floor((session?.remainingTime ?? 0) / 60);
+      const s = (session?.remainingTime ?? 0) % 60;
+      const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       return (
         <View style={[styles.badge, {backgroundColor: `${accentColor}20`}]}>
           <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
-            {formatTime(session?.remainingTime ?? 0)}
+            {formatted}
           </AppText>
         </View>
       );
@@ -409,6 +254,9 @@ export default function ConversationScreen() {
     );
   }, [mode, accentColor, session?.remainingTime, session?.currentTurn, setup?.maxTurns]);
 
+  // ===========================
+  // JSX
+  // ===========================
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
       <KeyboardAvoidingView
@@ -416,21 +264,19 @@ export default function ConversationScreen() {
         style={{flex: 1}}
         keyboardVerticalOffset={10}>
 
-        {/* TopBar (CR-14: no emoji) */}
+        {/* TopBar */}
         <View style={[styles.topBar, {borderBottomColor: colors.glassBorder}]}>
           <TouchableOpacity onPress={handleBack} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon name="ChevronLeft" className="w-6 h-6 text-foreground" />
           </TouchableOpacity>
-
           <View style={styles.topBarCenter}>
             <AppText variant="body" weight="bold" raw>
               {mode === 'free-talk' ? 'Free Talk' : 'Roleplay'}
             </AppText>
             {statusBadge}
           </View>
-
           <TouchableOpacity
-            onPress={handleEndSession}
+            onPress={handleEndAndNavigate}
             style={[styles.endBtn, {backgroundColor: '#EF444420'}]}>
             <AppText variant="caption" weight="bold" style={{color: '#EF4444'}} raw>
               Kết thúc
@@ -438,21 +284,18 @@ export default function ConversationScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Context Banner — Roleplay only (CR-03: use component) */}
+        {/* Context Banner — Roleplay only */}
         {mode === 'roleplay' && setup && (
           <ContextBanner
             title={setup.topicName}
             description={setup.topicDescription || ''}
             difficulty={setup.difficulty}
-            persona={setup.persona ? {
-              name: setup.persona.name,
-              avatar: setup.persona.avatar,
-            } : undefined}
+            persona={setup.persona ? {name: setup.persona.name, avatar: setup.persona.avatar} : undefined}
             accentColor={accentColor}
           />
         )}
 
-        {/* Chat List (EC-08: smart scroll) */}
+        {/* Chat List */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -471,24 +314,21 @@ export default function ConversationScreen() {
           }
         />
 
-        {/* AI Thinking Indicator (CR-02: use component) */}
+        {/* AI Thinking Indicator */}
         {ai.isThinking && (
-          <AIThinkingIndicator
-            personaName={setup?.persona?.name}
-            accentColor={accentColor}
-          />
+          <AIThinkingIndicator personaName={setup?.persona?.name} accentColor={accentColor} />
         )}
 
-        {/* Suggested Responses — Free Talk + Beginner (UI-14: icon on chips) */}
+        {/* Suggested Responses */}
         {setup?.options.showSuggestions && ai.suggestedResponses.length > 0 && isActive && (
           <SuggestedResponses
             suggestions={ai.suggestedResponses}
-            onSelect={handleSendMessage}
+            onSelect={handleSend}
             disabled={ai.isThinking}
           />
         )}
 
-        {/* Input Bar (UI-05: keyboard toggle + "Giữ để nói") */}
+        {/* Input Bar */}
         <View style={[styles.inputBar, {borderTopColor: colors.glassBorder, backgroundColor: colors.background}]}>
           <TextInput
             style={[styles.textInput, {backgroundColor: colors.surface, color: colors.foreground}]}
@@ -496,12 +336,12 @@ export default function ConversationScreen() {
             placeholderTextColor={colors.neutrals400}
             value={textInput}
             onChangeText={setTextInput}
-            editable={isActive && !ai.isThinking}
-            onSubmitEditing={() => handleSendMessage(textInput)}
+            editable={isActive && !ai.isThinking && !recorderState.isRecording}
+            onSubmitEditing={() => handleSend(textInput)}
             returnKeyType="send"
           />
 
-          {/* Keyboard/Mic toggle (UI-05) */}
+          {/* Keyboard/Mic toggle */}
           <TouchableOpacity
             style={styles.toggleBtn}
             onPress={() => setInputMode(prev => prev === 'voice' ? 'text' : 'voice')}
@@ -513,11 +353,11 @@ export default function ConversationScreen() {
             />
           </TouchableOpacity>
 
-          {/* Nút gửi / mic */}
+          {/* Send / Mic button */}
           {textInput.trim() ? (
             <TouchableOpacity
               style={[styles.sendBtn, {backgroundColor: accentColor}]}
-              onPress={() => handleSendMessage(textInput)}
+              onPress={() => handleSend(textInput)}
               disabled={ai.isThinking}>
               <Icon name="Send" className="w-5 h-5" style={{color: '#000'}} />
             </TouchableOpacity>
@@ -525,14 +365,12 @@ export default function ConversationScreen() {
             <View style={{alignItems: 'center'}}>
               <TouchableOpacity
                 style={[styles.sendBtn, {backgroundColor: `${accentColor}20`}]}
-                onPress={() => {
-                  // TODO: Integrate hold-to-record + RecordingOverlay (CR-04)
-                  console.log('🎤 [Conversation] Bắt đầu ghi âm');
-                }}
+                onLongPress={recorderActions.startRecording}
+                onPressOut={handleRecordingStop}
+                delayLongPress={200}
                 disabled={ai.isThinking || !isActive}>
                 <Icon name="Mic" className="w-5 h-5" style={{color: accentColor}} />
               </TouchableOpacity>
-              {/* "Giữ để nói" label (UI-05) */}
               <AppText variant="caption" style={{color: colors.neutrals400, fontSize: 10, marginTop: 2}} raw>
                 Giữ để nói
               </AppText>
@@ -540,6 +378,16 @@ export default function ConversationScreen() {
           )}
         </View>
       </KeyboardAvoidingView>
+
+      {/* Recording Overlay (CR-04) */}
+      <RecordingOverlay
+        visible={recorderState.isRecording}
+        duration={recorderState.duration}
+        waveform={recorderState.waveform}
+        accentColor={accentColor}
+        onStop={handleRecordingStop}
+        onCancel={recorderActions.cancelRecording}
+      />
     </SafeAreaView>
   );
 }
@@ -549,9 +397,7 @@ export default function ConversationScreen() {
 // =======================
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: {flex: 1},
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -567,8 +413,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 14,

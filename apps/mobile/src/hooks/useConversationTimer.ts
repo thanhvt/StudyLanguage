@@ -1,12 +1,20 @@
 import {useEffect, useRef, useCallback} from 'react';
 
+// =======================
+// Hook
+// =======================
+
 /**
  * Mục đích: Hook quản lý countdown timer cho Free Talk mode
- * Tham số đầu vào: durationMinutes, isActive, onTick, onTimeUp
- * Tham số đầu ra: {remainingTime, formattedTime, progress}
+ * Tham số đầu vào:
+ *   durationMinutes — thời gian tính bằng phút
+ *   isActive — session đang chạy?
+ *   onTick — callback gọi mỗi giây (tick store timer)
+ *   onTimeUp — callback khi hết giờ (end session)
+ * Tham số đầu ra: { formatTime }
  * Khi nào sử dụng:
- *   ConversationScreen → mode === 'free-talk' → useConversationTimer(setup.durationMinutes)
- *   Timer tự đếm ngược, gọi onTick mỗi giây, gọi onTimeUp khi hết giờ
+ *   ConversationScreen → mode === 'free-talk'
+ *   → useConversationTimer(setup.durationMinutes, isActive, tickTimer, endSession)
  */
 export function useConversationTimer(
   durationMinutes: number,
@@ -17,6 +25,12 @@ export function useConversationTimer(
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedRef = useRef(0);
   const totalSeconds = durationMinutes * 60;
+
+  // Stable refs cho callbacks — tránh re-create interval khi callback thay đổi
+  const onTickRef = useRef(onTick);
+  const onTimeUpRef = useRef(onTimeUp);
+  useEffect(() => { onTickRef.current = onTick; }, [onTick]);
+  useEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
 
   // Bắt đầu/dừng timer
   useEffect(() => {
@@ -33,7 +47,7 @@ export function useConversationTimer(
 
     timerRef.current = setInterval(() => {
       elapsedRef.current += 1;
-      onTick();
+      onTickRef.current();
 
       if (elapsedRef.current >= totalSeconds) {
         console.log('⏰ [Timer] Hết giờ!');
@@ -41,7 +55,7 @@ export function useConversationTimer(
           clearInterval(timerRef.current);
           timerRef.current = null;
         }
-        onTimeUp();
+        onTimeUpRef.current();
       }
     }, 1000);
 
@@ -51,13 +65,14 @@ export function useConversationTimer(
         timerRef.current = null;
       }
     };
-  }, [isActive, durationMinutes, totalSeconds, onTick, onTimeUp]);
+    // Chỉ deps vào isActive + totalSeconds — callbacks qua ref
+  }, [isActive, durationMinutes, totalSeconds]);
 
   /**
    * Mục đích: Format seconds còn lại → mm:ss
    * Tham số đầu vào: remaining (number)
    * Tham số đầu ra: string
-   * Khi nào sử dụng: UI hiển thị timer
+   * Khi nào sử dụng: UI hiển thị timer badge
    */
   const formatTime = useCallback((remaining: number): string => {
     const m = Math.floor(remaining / 60);
