@@ -17,6 +17,7 @@ Module luyện phát âm với AI feedback, tối ưu cho mobile với hold-to-r
 | **Shadowing Mode** | Nhại theo AI đồng thời, so sánh real-time | Luyện ngữ điệu, nhịp nói |
 | **AI Conversation** | Hội thoại với AI — Free Talk hoặc Roleplay | Luyện giao tiếp tự nhiên & tình huống |
 | **Tongue Twister Mode** | Luyện phát âm vui với câu nói lái | Luyện âm khó |
+| **Read Aloud Mode** | Đọc to bài viết dài, AI chấm phát âm | Luyện đọc paragraph/article |
 
 ### 1.2 AI Conversation (Coach + Roleplay hợp nhất)
 
@@ -197,6 +198,7 @@ Hệ thống gamification nâng cao cho Speaking:
 | 💬 AI Conversation card | Conversation Setup (chọn topic Listening picker ở đây) |
 | 🔊 Shadowing card | Shadowing Config Screen (chọn sentences) |
 | 👅 Tongue Twister card | Tongue Twister Screen (chọn phoneme) |
+| 📖 Read Aloud card | Read Aloud Config Screen (chọn topic + paragraph length) |
 
 > ❌ Home **KHÔNG** hiện topics/scenarios. Sạch sẽ, tập trung.
 
@@ -424,7 +426,54 @@ Hệ thống gamification nâng cao cho Speaking:
 
 ---
 
-### 2.6 Cross-cutting Feature Flows
+### 2.6 Read Aloud Mode — Đọc to bài viết
+
+> **Gốc:** Gộp từ Reading Practice (04_Reading.md cũ). Mọi hoạt động phát âm giờ thuộc Speaking module.
+
+```
+[Speaking Home] → [📖 Read Aloud card] → [Read Aloud Config]
+                    │
+                    ├─ Chọn topic → REUSE Listening Topic Picker
+                    ├─ Chọn level (Beginner / Intermediate / Advanced)
+                    ├─ Chọn độ dài (Short / Medium / Long paragraph)
+                    └─ [Bắt đầu]
+                         │
+                         ▼
+                  [Read Aloud Session Screen]
+                    │
+                    ├─ Hiển thị paragraph text
+                    ├─ [Nghe mẫu] → AI TTS đọc paragraph → highlight
+                    │
+                    ├─ [Ghi âm] (hold mic — reuse Practice recording UX)
+                    │    ├─ Countdown + Haptic
+                    │    ├─ Waveform animation
+                    │    ├─ Max 60s timer (dài hơn Practice vì đọc đoạn)
+                    │    └─ Release → Submit
+                    │         │
+                    │         ▼
+                    │  [AI phân tích phát âm toàn đoạn]
+                    │    ├─ Overall Score: accuracy + fluency
+                    │    ├─ Word-by-word score (highlight sai)
+                    │    ├─ AI Tips
+                    │    └─ [Retry] / [Next paragraph]
+                    │
+                    └─ Khi hết paragraphs → Session Summary
+                         ├─ Tổng điểm
+                         ├─ Từ phát âm sai nhiều nhất
+                         └─ Save to History
+```
+
+| So sánh | Practice Mode | Read Aloud Mode |
+|---------|--------------|----------------|
+| Input | 1 câu ngắn (~5-15 từ) | 1 paragraph dài (~30-100 từ) |
+| Thời gian ghi âm | Max 15s | Max 60s |
+| Đánh giá | Word-level score + phoneme | Paragraph-level + fluency |
+| Source text | AI sinh câu mẫu | AI sinh article paragraph |
+| Reuse API | `/ai/evaluate-pronunciation` | `/ai/evaluate-pronunciation` (cùng API) |
+
+---
+
+### 2.7 Cross-cutting Feature Flows
 
 #### C1. Custom Scenarios (Shared với Listening)
 
@@ -542,6 +591,7 @@ Sử dụng:  [Speaking → Mode Setup → Topic Picker → tab ✨ Tuỳ chỉn
 | B3 | AI Conv. Roleplay | Home → 💬 AI Conv. → Setup | Reuse Listening | Summary → History |
 | B4 | Shadowing | Home → 🔊 Shadowing → Config | Sentences | Score → Repeat/Next |
 | B5 | Tongue Twister | Home → 👅 Tongue T. → Screen | Phonemes | Speed Challenge → LB |
+| B6 | Read Aloud | Home → 📖 Read Aloud → Config | Reuse Listening | Feedback → Next para |
 | C1 | Custom Scenarios | Shared DB với Listening | — | Hiện trong topic picker |
 | C2 | TTS Settings | Home → ⚙️ (overlay) | — | Lưu config (độc lập) |
 | C3 | Gamification | Home → Daily Goal → Dashboard | — | View-only |
@@ -1007,6 +1057,12 @@ User chỉnh delay 0-2s → phải sync text highlight + playback + recording. K
 ### Background Audio & TTS
 - [/] Background Audio for Coach (notification, session persist) — _agent khác đang thực hiện_
 - [x] TTS Provider Settings (parity với Listening) — `SpeakingTtsSheet.tsx`
+
+### Read Aloud Mode (gộp từ Reading Practice)
+- [ ] Read Aloud Config Screen (`ReadAloudConfigScreen.tsx` — topic, level, paragraph length)
+- [ ] Read Aloud Session Screen (paragraph display + hold-to-record + AI feedback)
+- [ ] 60s max recording support (longer than Practice 15s)
+- [ ] Paragraph-level fluency scoring
 
 ### Polish & UX
 - [x] Onboarding overlay cho user mới (`OnboardingOverlay.tsx` — 5-step tutorial)
