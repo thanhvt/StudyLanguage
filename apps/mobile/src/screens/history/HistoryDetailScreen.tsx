@@ -24,7 +24,6 @@ import {
  *   - Nội dung chi tiết theo loại:
  *     + Listening: audio player mini, transcript, bookmarks
  *     + Speaking: conversation replay, score breakdown
- *     + Reading: article preview, quiz results
  *   - User notes (editable)
  *   - Pin/Favorite toggles
  */
@@ -389,28 +388,6 @@ export default function HistoryDetailScreen() {
               <AppText className="text-neutrals400 text-sm">
                 Đánh giá chi tiết sẽ hiển thị khi có dữ liệu từ AI
               </AppText>
-            </View>
-          </View>
-        )}
-
-        {/* ============================== */}
-        {/* Content — Reading Detail */}
-        {/* ============================== */}
-        {entry.type === 'reading' && (
-          <View className="mx-4 gap-4">
-            <View className="p-4 bg-surface-raised rounded-2xl border border-border">
-              <View className="flex-row items-center gap-3 mb-3">
-                <AppText className="text-sm">📖</AppText>
-                <AppText className="text-foreground font-sans-semibold">Chi tiết bài đọc</AppText>
-              </View>
-              <View className="gap-2">
-                <View className="flex-row justify-between">
-                  <AppText className="text-neutrals400 text-sm">Thời lượng đọc</AppText>
-                  <AppText className="text-foreground text-sm font-sans-medium">
-                    {entry.durationMinutes || 5} phút
-                  </AppText>
-                </View>
-              </View>
             </View>
           </View>
         )}

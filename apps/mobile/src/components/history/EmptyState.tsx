@@ -40,13 +40,6 @@ export function EmptyState({filterType}: EmptyStateProps) {
           subtitle: 'Bắt đầu luyện nói để cải thiện phát âm!',
           ctas: [{icon: '🗣️', label: 'Luyện nói ngay', skill: 'Speaking'}],
         };
-      case 'reading':
-        return {
-          emoji: '📖',
-          title: 'Chưa có bài đọc nào',
-          subtitle: 'Bắt đầu đọc để mở rộng vốn từ!',
-          ctas: [{icon: '📖', label: 'Bắt đầu đọc', skill: 'Reading'}],
-        };
       default:
         return {
           emoji: '📚',
@@ -55,7 +48,6 @@ export function EmptyState({filterType}: EmptyStateProps) {
           ctas: [
             {icon: '🎧', label: 'Bắt đầu nghe', skill: 'Listening'},
             {icon: '🗣️', label: 'Bắt đầu nói', skill: 'Speaking'},
-            {icon: '📖', label: 'Bắt đầu đọc', skill: 'Reading'},
           ],
         };
     }

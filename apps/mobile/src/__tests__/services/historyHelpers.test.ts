@@ -28,10 +28,6 @@ describe('historyHelpers', () => {
     it('trả về 🗣️ cho speaking', () => {
       expect(getTypeIcon('speaking')).toBe('🗣️');
     });
-
-    it('trả về 📖 cho reading', () => {
-      expect(getTypeIcon('reading')).toBe('📖');
-    });
   });
 
   describe('getTypeLabel', () => {
@@ -41,10 +37,6 @@ describe('historyHelpers', () => {
 
     it('trả về Nói cho speaking', () => {
       expect(getTypeLabel('speaking')).toBe('Nói');
-    });
-
-    it('trả về Đọc cho reading', () => {
-      expect(getTypeLabel('reading')).toBe('Đọc');
     });
   });
 
@@ -58,11 +50,6 @@ describe('historyHelpers', () => {
     it('speaking trả về màu green', () => {
       const color = getAccentColor('speaking');
       expect(color.border).toBe('#16A34A');
-    });
-
-    it('reading trả về màu amber', () => {
-      const color = getAccentColor('reading');
-      expect(color.border).toBe('#D97706');
     });
   });
 

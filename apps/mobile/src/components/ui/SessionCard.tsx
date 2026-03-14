@@ -13,7 +13,7 @@ import {useColors} from '@/hooks/useColors';
  * Mục đích: Card hiển thị 1 phiên học trong History
  * Tham số đầu vào:
  *   - title: tiêu đề bài học
- *   - skillType: loại kỹ năng ('listening' | 'speaking' | 'reading')
+ *   - skillType: loại kỹ năng ('listening' | 'speaking')
  *   - duration: thời gian (string, ví dụ: '15 phút')
  *   - date: ngày tháng (string)
  *   - score: điểm (number, 0-100)
@@ -27,7 +27,7 @@ import {useColors} from '@/hooks/useColors';
 
 interface SessionCardProps {
   title: string;
-  skillType: 'listening' | 'speaking' | 'reading';
+  skillType: 'listening' | 'speaking';
   duration?: string;
   date?: string;
   score?: number;
@@ -47,8 +47,6 @@ function getSkillColor(skillType: string, colors: any): string {
       return colors.skillListening;
     case 'speaking':
       return colors.skillSpeaking;
-    case 'reading':
-      return colors.skillReading;
     default:
       return colors.primary;
   }
@@ -66,8 +64,6 @@ function getSkillLabel(skillType: string): string {
       return 'Nghe';
     case 'speaking':
       return 'Nói';
-    case 'reading':
-      return 'Đọc';
     default:
       return skillType;
   }

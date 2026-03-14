@@ -29,11 +29,10 @@ import Config from 'react-native-config';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
-// Dữ liệu 3 skill badges
+// Dữ liệu 2 skill badges
 const SKILL_BADGES = [
   {emoji: '🎧', label: SKILL_LABELS.listening, color: SKILL_COLORS.listening.dark, delay: 600},
   {emoji: '🗣️', label: SKILL_LABELS.speaking, color: SKILL_COLORS.speaking.dark, delay: 800},
-  {emoji: '📖', label: SKILL_LABELS.reading, color: SKILL_COLORS.reading.dark, delay: 1000},
 ];
 
 /**

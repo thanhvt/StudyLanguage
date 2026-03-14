@@ -26,7 +26,6 @@ interface SearchSuggestionsProps {
 const QUICK_SUGGESTIONS = [
   {icon: '🎧', label: 'Bài nghe gần đây', query: 'listening'},
   {icon: '🗣️', label: 'Bài nói gần đây', query: 'speaking'},
-  {icon: '📖', label: 'Bài đọc gần đây', query: 'reading'},
   {icon: '⭐', label: 'Yêu thích', query: 'favorite'},
   {icon: '📌', label: 'Đã ghim', query: 'pinned'},
 ];

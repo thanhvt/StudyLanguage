@@ -41,7 +41,6 @@ function formatGreetingText(hour: number, userName: string | null): string {
 const SKILLS = [
   {id: 'listening', label: 'Nghe', emoji: '🎧', route: 'Listening'},
   {id: 'speaking', label: 'Nói', emoji: '🗣️', route: 'Speaking'},
-  {id: 'reading', label: 'Đọc', emoji: '📖', route: 'Reading'},
 ];
 
 // Weekly activity mock data (phải match WeeklyActivityChart)
@@ -149,16 +148,9 @@ describe('Dashboard Logic', () => {
       expect(speaking?.route).toBe('Speaking');
     });
 
-    // MOB-DASH-MVP-HP-009: Có card Đọc
-    it('có card "Đọc" với route Reading', () => {
-      const reading = SKILLS.find(s => s.id === 'reading');
-      expect(reading).toBeDefined();
-      expect(reading?.route).toBe('Reading');
-    });
-
-    // Đủ 3 skills
-    it('có đúng 3 skill cards', () => {
-      expect(SKILLS).toHaveLength(3);
+    // Đủ 2 skills
+    it('có đúng 2 skill cards', () => {
+      expect(SKILLS).toHaveLength(2);
     });
   });
 

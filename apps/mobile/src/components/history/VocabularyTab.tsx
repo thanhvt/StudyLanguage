@@ -22,7 +22,7 @@ import {useColors} from '@/hooks/useColors';
  *
  * Tính năng nâng cao (Enhancement):
  *   - Spaced Repetition indicator (đến hạn review)
- *   - Filter theo skill type (Nghe/Đọc)
+ *   - Filter theo skill type (Nghe)
  *   - Vocabulary detail modal (meaning, context, pronunciation status)
  *   - Stats header (tổng từ, đã review, cần review)
  *   - Search từ vựng
@@ -86,7 +86,7 @@ export function VocabularyTab() {
 
   // Filters
   const [filter, setFilter] = useState<'all' | 'words' | 'bookmarks'>('all');
-  const [skillFilter, setSkillFilter] = useState<'all' | 'listening' | 'reading'>('all');
+  const [skillFilter, setSkillFilter] = useState<'all' | 'listening'>('all');
   const [searchText, setSearchText] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
@@ -223,7 +223,7 @@ export function VocabularyTab() {
             {/* Source badge */}
             <View className="bg-primary/10 rounded-xl px-2.5 py-1.5 mr-3">
               <AppText className="text-sm">
-                {item.data.source === 'listening' ? '🎧' : '📖'}
+                🎧
               </AppText>
             </View>
 
@@ -310,7 +310,7 @@ export function VocabularyTab() {
           Chưa có từ vựng nào
         </AppText>
         <AppText className="text-neutrals400 text-sm text-center leading-5">
-          Tap vào từ trong bài nghe hoặc bài đọc → chọn{' '}
+          Tap vào từ trong bài nghe → chọn{' '}
           <AppText className="text-primary font-sans-bold">"Lưu từ"</AppText> để
           bắt đầu xây dựng bộ từ vựng!
         </AppText>
@@ -382,9 +382,9 @@ export function VocabularyTab() {
         {/* Skill filter chips */}
         {filter !== 'bookmarks' && (
           <View className="flex-row gap-1.5">
-            {(['all', 'listening', 'reading'] as const).map(s => {
+            {(['all', 'listening'] as const).map(s => {
               const isActive = skillFilter === s;
-              const icons = {all: '📋', listening: '🎧', reading: '📖'};
+              const icons = {all: '📋', listening: '🎧'};
               return (
                 <Pressable
                   key={s}
@@ -513,8 +513,8 @@ export function VocabularyTab() {
               {/* Từ + Source */}
               <View className="flex-row items-center gap-3 mb-3">
                 <View className="bg-primary/10 rounded-xl px-3 py-2">
-                  <AppText className="text-lg">
-                    {selectedWord.source === 'listening' ? '🎧' : '📖'}
+                <AppText className="text-lg">
+                    🎧
                   </AppText>
                 </View>
                 <View className="flex-1">
@@ -522,7 +522,7 @@ export function VocabularyTab() {
                     {selectedWord.word}
                   </AppText>
                   <AppText className="text-neutrals400 text-xs mt-0.5">
-                    Từ {selectedWord.source === 'listening' ? 'bài nghe' : 'bài đọc'}
+                    Từ bài nghe
                   </AppText>
                 </View>
 

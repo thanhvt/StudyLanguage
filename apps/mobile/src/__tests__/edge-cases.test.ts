@@ -5,14 +5,13 @@
  * Khi nào sử dụng: CI/CD pipeline, development verification
  *
  * Bao gồm edge cases từ phân tích EC-C01 → EC-m15:
- *   - Stores: useSpeakingStore, useReadingStore, useListeningStore,
+ *   - Stores: useSpeakingStore, useListeningStore,
  *             useAudioPlayerStore, useHistoryStore, useAuthStore, useVocabularyStore
  *   - Utils: formatTime, historyHelpers (formatRelativeTime, groupEntriesByDate)
- *   - Hooks: useReadingPractice, useTtsReader, useDictionary
+ *   - Hooks: useTtsReader, useDictionary
  */
 
 import {useSpeakingStore} from '@/store/useSpeakingStore';
-import {useReadingStore} from '@/store/useReadingStore';
 import {useListeningStore} from '@/store/useListeningStore';
 import {useAudioPlayerStore} from '@/store/useAudioPlayerStore';
 import {useHistoryStore} from '@/store/useHistoryStore';
@@ -158,7 +157,6 @@ describe('historyHelpers — utility functions', () => {
   it('getTypeIcon trả icon đúng cho từng type', () => {
     expect(getTypeIcon('listening')).toBe('🎧');
     expect(getTypeIcon('speaking')).toBe('🗣️');
-    expect(getTypeIcon('reading')).toBe('📖');
   });
 
   it('getTypeIcon fallback cho type không hợp lệ', () => {
@@ -168,7 +166,6 @@ describe('historyHelpers — utility functions', () => {
   it('getTypeLabel trả label đúng', () => {
     expect(getTypeLabel('listening')).toBe('Nghe');
     expect(getTypeLabel('speaking')).toBe('Nói');
-    expect(getTypeLabel('reading')).toBe('Đọc');
   });
 
   it('getTypeLabel fallback cho type không hợp lệ', () => {
@@ -261,49 +258,6 @@ describe('useSpeakingStore — Edge Cases', () => {
       useSpeakingStore.getState().setTtsSettings({speed: 2.0});
       useSpeakingStore.getState().setTtsSettings({provider: 'azure'});
       expect(useSpeakingStore.getState().ttsSettings.speed).toBe(2.0);
-    });
-  });
-});
-
-// ==============================================================
-// 6. useReadingStore — Edge Cases (EC-M03)
-// ==============================================================
-
-describe('useReadingStore — Edge Cases', () => {
-  beforeEach(() => {
-    useReadingStore.getState().reset();
-  });
-
-  describe('EC-M03: setFontSize validation', () => {
-    it('clamp fontSize 0 về 12', () => {
-      useReadingStore.getState().setFontSize(0);
-      expect(useReadingStore.getState().fontSize).toBe(12);
-    });
-
-    it('clamp fontSize âm về 12', () => {
-      useReadingStore.getState().setFontSize(-10);
-      expect(useReadingStore.getState().fontSize).toBe(12);
-    });
-
-    it('clamp fontSize quá lớn về 28', () => {
-      useReadingStore.getState().setFontSize(100);
-      expect(useReadingStore.getState().fontSize).toBe(28);
-    });
-
-    it('giữ nguyên fontSize hợp lệ', () => {
-      useReadingStore.getState().setFontSize(20);
-      expect(useReadingStore.getState().fontSize).toBe(20);
-    });
-
-    // Fix T-3: Tách riêng từng boundary test để dễ debug khi fail
-    it('fontSize boundary dưới: 12 giữ nguyên', () => {
-      useReadingStore.getState().setFontSize(12);
-      expect(useReadingStore.getState().fontSize).toBe(12);
-    });
-
-    it('fontSize boundary trên: 28 giữ nguyên', () => {
-      useReadingStore.getState().setFontSize(28);
-      expect(useReadingStore.getState().fontSize).toBe(28);
     });
   });
 });
@@ -437,7 +391,7 @@ describe('useHistoryStore — Edge Cases', () => {
       // Append entries có 1 trùng (id: '2') + 1 mới (id: '3')
       const newEntries = [
         {id: '2', type: 'speaking', topic: 'Duplicate', createdAt: '2024-01-02', isPinned: false, isFavorite: false},
-        {id: '3', type: 'reading', topic: 'New', createdAt: '2024-01-02', isPinned: false, isFavorite: false},
+        {id: '3', type: 'speaking', topic: 'New', createdAt: '2024-01-02', isPinned: false, isFavorite: false},
       ];
       useHistoryStore.getState().appendEntries(newEntries as any);
 
@@ -550,28 +504,28 @@ describe('useVocabularyStore — Edge Cases', () => {
   });
 
   it('addWord không thêm trùng lặp (case-insensitive)', () => {
-    useVocabularyStore.getState().addWord('Hello', 'reading');
+    useVocabularyStore.getState().addWord('Hello', 'listening');
     useVocabularyStore.getState().addWord('hello', 'listening');
-    useVocabularyStore.getState().addWord('HELLO', 'reading');
+    useVocabularyStore.getState().addWord('HELLO', 'listening');
 
     expect(useVocabularyStore.getState().words).toHaveLength(1);
     expect(useVocabularyStore.getState().words[0].word).toBe('hello');
   });
 
   it('addWord trim whitespace', () => {
-    useVocabularyStore.getState().addWord('  world  ', 'reading');
+    useVocabularyStore.getState().addWord('  world  ', 'listening');
     expect(useVocabularyStore.getState().words[0].word).toBe('world');
   });
 
   it('hasWord kiểm tra đúng (case-insensitive)', () => {
-    useVocabularyStore.getState().addWord('test', 'reading');
+    useVocabularyStore.getState().addWord('test', 'listening');
     expect(useVocabularyStore.getState().hasWord('TEST')).toBe(true);
     expect(useVocabularyStore.getState().hasWord('  test  ')).toBe(true);
     expect(useVocabularyStore.getState().hasWord('other')).toBe(false);
   });
 
   it('removeWord xóa đúng (case-insensitive)', () => {
-    useVocabularyStore.getState().addWord('apple', 'reading');
+    useVocabularyStore.getState().addWord('apple', 'listening');
     useVocabularyStore.getState().addWord('banana', 'listening');
 
     useVocabularyStore.getState().removeWord('APPLE');
@@ -580,9 +534,9 @@ describe('useVocabularyStore — Edge Cases', () => {
   });
 
   it('clearAll xóa tất cả', () => {
-    useVocabularyStore.getState().addWord('a', 'reading');
+    useVocabularyStore.getState().addWord('a', 'listening');
     useVocabularyStore.getState().addWord('b', 'listening');
-    useVocabularyStore.getState().addWord('c', 'reading');
+    useVocabularyStore.getState().addWord('c', 'listening');
 
     useVocabularyStore.getState().clearAll();
     expect(useVocabularyStore.getState().words).toEqual([]);

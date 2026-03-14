@@ -21,7 +21,7 @@ import {apiClient} from './client';
  */
 export interface HistoryEntry {
   id: string;
-  type: 'listening' | 'speaking' | 'reading';
+  type: 'listening' | 'speaking';
   topic: string;
   content: Record<string, unknown>;
   durationMinutes?: number;
@@ -43,7 +43,7 @@ export interface HistoryEntry {
  * Khi nào sử dụng: HistoryScreen → truyền vào getHistory()
  */
 export interface HistoryFilters {
-  type?: 'listening' | 'speaking' | 'reading' | 'all';
+  type?: 'listening' | 'speaking' | 'all';
   status?: 'all' | 'pinned' | 'favorite' | 'deleted';
   search?: string;
   page?: number;
@@ -84,7 +84,7 @@ export interface HistoryStats {
   weeklyData: {
     date: string;
     count: number;
-    byType: {listening: number; speaking: number; reading: number};
+    byType: {listening: number; speaking: number};
   }[];
 }
 
@@ -255,7 +255,7 @@ export async function getHistoryEntry(id: string): Promise<HistoryEntry> {
  * Phải khớp với backend CreateHistoryEntryDto
  */
 export interface CreateHistoryParams {
-  type: 'listening' | 'speaking' | 'reading';
+  type: 'listening' | 'speaking';
   topic: string;
   content?: Record<string, unknown>;
   durationMinutes?: number;

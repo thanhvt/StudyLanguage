@@ -160,8 +160,6 @@ export const HistoryCard = React.memo(function HistoryCard({
         return `${entry.durationMinutes || 5} phút • ${entry.numSpeakers || 2} người`;
       case 'speaking':
         return `${entry.mode === 'interactive' ? 'Hội thoại AI' : 'Luyện phát âm'}`;
-      case 'reading':
-        return `${entry.durationMinutes || 5} phút đọc`;
       default:
         return '';
     }

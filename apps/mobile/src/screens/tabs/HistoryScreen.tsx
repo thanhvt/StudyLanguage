@@ -56,7 +56,7 @@ const DATE_RANGE_LABELS: Record<string, string> = {
  * Khi nào sử dụng: Tab thứ 2 trong MainTabNavigator
  *
  * Tính năng:
- *   - Filter theo loại bài (Nghe/Nói/Đọc)
+ *   - Filter theo loại bài (Nghe/Nói)
  *   - Search theo topic với recent searches
  *   - Stats bar (streak, today, week)
  *   - Date range filter (Tuần/Tháng/3 tháng/Tùy chỉnh)
@@ -270,7 +270,7 @@ export default function HistoryScreen() {
    * Khi nào sử dụng: FilterPills → tap pill
    */
   const handleFilterChange = useCallback(
-    (type: 'all' | 'listening' | 'speaking' | 'reading') => {
+    (type: 'all' | 'listening' | 'speaking') => {
       setFilters({type});
     },
     [setFilters],
@@ -574,7 +574,6 @@ export default function HistoryScreen() {
         <SkillDistribution
           listening={entries.filter(e => e.type === 'listening').length}
           speaking={entries.filter(e => e.type === 'speaking').length}
-          reading={entries.filter(e => e.type === 'reading').length}
         />
 
         {/* Pinned Section */}

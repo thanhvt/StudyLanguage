@@ -12,7 +12,6 @@ import {
   Clock,
   Headphones,
   MessageCircle,
-  BookOpen,
   Menu,
 } from 'lucide-react-native';
 import {AppText} from '@/components/ui';
@@ -60,11 +59,6 @@ const TAB_CONFIG: Record<
     label: 'Nói',
     icon: MessageCircle,
     activeColor: SKILL_COLORS.speaking.dark,
-  },
-  Reading: {
-    label: 'Đọc',
-    icon: BookOpen,
-    activeColor: SKILL_COLORS.reading.dark,
   },
   More: {
     label: 'Thêm',

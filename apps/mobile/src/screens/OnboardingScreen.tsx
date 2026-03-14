@@ -30,7 +30,7 @@ import {SKILL_COLORS} from '@/config/skillColors';
 
 const {width, height} = Dimensions.get('window');
 
-// Nội dung 3 slides onboarding
+// Nội dung 2 slides onboarding
 const SLIDES = [
   {
     id: '1',
@@ -49,15 +49,6 @@ const SLIDES = [
     color: SKILL_COLORS.speaking.dark,
     decorEmojis: ['💬', '🎤', '💡', '🌟'],
     gradientColors: ['#0a0a0a', '#0d1f12', '#0a0a0a'],
-  },
-  {
-    id: '3',
-    emoji: '📖',
-    title: 'Luyện Đọc',
-    subtitle: 'Đọc bài viết phù hợp trình độ\nvới từ vựng nổi bật',
-    color: SKILL_COLORS.reading.dark,
-    decorEmojis: ['📚', '✏️', '🔍', '⭐'],
-    gradientColors: ['#0a0a0a', '#1a1408', '#0a0a0a'],
   },
 ];
 

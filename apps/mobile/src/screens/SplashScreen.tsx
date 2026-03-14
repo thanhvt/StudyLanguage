@@ -24,10 +24,10 @@ const APP_ICON = require('../../assets/app_icon.png');
 // Các emoji bay vào nhẹ nhàng xung quanh logo
 const EMOJI_PARADE = [
   {emoji: '🎧', color: SKILL_COLORS.listening.dark},
-  {emoji: '📖', color: SKILL_COLORS.reading.dark},
   {emoji: '🚀', color: '#f472b6'},
   {emoji: '💡', color: '#a78bfa'},
   {emoji: '🗣️', color: SKILL_COLORS.speaking.dark},
+  {emoji: '✨', color: '#fbbf24'},
 ];
 
 // Ký tự app name cho wave animation
@@ -392,7 +392,7 @@ function LoadingDots() {
   const dots = [
     {color: SKILL_COLORS.speaking.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
     {color: SKILL_COLORS.listening.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
-    {color: SKILL_COLORS.reading.dark, sv: useSharedValue(0), scaleSv: useSharedValue(1)},
+    {color: '#fbbf24', sv: useSharedValue(0), scaleSv: useSharedValue(1)},
   ];
 
   useEffect(() => {
@@ -632,8 +632,8 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    borderColor: SKILL_COLORS.reading.dark + '40',
-    shadowColor: SKILL_COLORS.reading.dark,
+    borderColor: '#fbbf24' + '40',
+    shadowColor: '#fbbf24',
     shadowOpacity: 0.4,
     shadowRadius: 20,
   },

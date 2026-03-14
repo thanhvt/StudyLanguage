@@ -5,11 +5,10 @@ import Svg, {Circle, G, Text as SvgText} from 'react-native-svg';
 import {getAccentColor, type SkillType} from '@/utils/historyHelpers';
 
 /**
- * Mục đích: Biểu đồ donut chart hiển thị tỷ lệ Nghe/Nói/Đọc sử dụng react-native-svg
+ * Mục đích: Biểu đồ donut chart hiển thị tỷ lệ Nghe/Nói sử dụng react-native-svg
  * Tham số đầu vào:
  *   - listening: number — số bài nghe
  *   - speaking: number — số bài nói
- *   - reading: number — số bài đọc
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Analytics section → skill distribution
  *
@@ -20,13 +19,11 @@ import {getAccentColor, type SkillType} from '@/utils/historyHelpers';
 interface SkillDistributionProps {
   listening?: number;
   speaking?: number;
-  reading?: number;
 }
 
 const SKILLS: {key: SkillType; icon: string; label: string; color: string}[] = [
   {key: 'listening', icon: '🎧', label: 'Nghe', color: '#38bdf8'},
   {key: 'speaking', icon: '🗣️', label: 'Nói', color: '#a78bfa'},
-  {key: 'reading', icon: '📖', label: 'Đọc', color: '#fb923c'},
 ];
 
 // Donut chart dimensions
@@ -39,15 +36,14 @@ const CENTER = SIZE / 2;
 export const SkillDistribution = React.memo(function SkillDistribution({
   listening = 0,
   speaking = 0,
-  reading = 0,
 }: SkillDistributionProps) {
-  const total = listening + speaking + reading;
+  const total = listening + speaking;
   const hasData = total > 0;
 
   // Dùng data thật hoặc placeholder
   const counts: Record<SkillType, number> = hasData
-    ? {listening, speaking, reading}
-    : {listening: 45, speaking: 30, reading: 25};
+    ? {listening, speaking}
+    : {listening: 55, speaking: 45};
   const displayTotal = hasData ? total : 100;
 
   /**

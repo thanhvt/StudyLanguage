@@ -17,7 +17,6 @@ export type MainTabParamList = {
   History: undefined;
   Listening: undefined;
   Speaking: undefined;
-  Reading: undefined;
   More: undefined;
 };
 

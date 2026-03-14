@@ -5,7 +5,7 @@
  * Khi nào sử dụng: HistoryScreen, HistoryCard, StatsBar
  *   → Tất cả components trong History tab đều dùng store này
  *
- * Pattern: Giống useListeningStore, useReadingStore
+ * Pattern: Giống useListeningStore
  */
 
 import {create} from 'zustand';

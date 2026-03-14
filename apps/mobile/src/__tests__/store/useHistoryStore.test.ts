@@ -162,7 +162,7 @@ describe('useHistoryStore', () => {
         totalPages: 5,
       });
 
-      useHistoryStore.getState().setFilters({type: 'reading'});
+      useHistoryStore.getState().setFilters({type: 'speaking'});
       expect(useHistoryStore.getState().filters.page).toBe(1);
     });
 

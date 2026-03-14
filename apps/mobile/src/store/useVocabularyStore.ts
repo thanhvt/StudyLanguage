@@ -24,21 +24,20 @@ const mmkvStorage: StateStorage = {
 // =======================
 
 /**
- * Mục đích: Lưu trữ từ vựng đã lưu từ cả Listening + Reading (persist vĩnh viễn)
+ * Mục đích: Lưu trữ từ vựng đã lưu từ Listening (persist vĩnh viễn)
  * Khi nào sử dụng:
  *   - PlayerScreen (Listening): user tap từ → lưu vào store
- *   - ArticleScreen (Reading): user tap từ → lưu vào store
  *   - VocabularyTab (History): hiển thị + xóa từ đã lưu
  *
- * Lưu ý: Store này tách biệt khỏi useListeningStore/useReadingStore
+ * Lưu ý: Store này tách biệt khỏi useListeningStore
  * để đảm bảo persist chỉ cho saved words mà không ảnh hưởng state khác.
  */
 
 export interface VocabWord {
   /** Từ đã lưu (lowercase) */
   word: string;
-  /** Nguồn: listening hoặc reading */
-  source: 'listening' | 'reading';
+  /** Nguồn: listening */
+  source: 'listening';
   /** Thời điểm lưu (ISO string) */
   savedAt: string;
   /** Nghĩa (nếu có) */
@@ -55,13 +54,13 @@ interface VocabularyState {
 interface VocabularyActions {
   /**
    * Mục đích: Thêm từ mới vào danh sách (không trùng lặp)
-   * Tham số đầu vào: word (string), source ('listening'|'reading'), meaning?, context?
+   * Tham số đầu vào: word (string), source ('listening'), meaning?, context?
    * Tham số đầu ra: void
    * Khi nào sử dụng: User tap "Lưu từ" trong DictionaryPopup
    */
   addWord: (
     word: string,
-    source: 'listening' | 'reading',
+    source: 'listening',
     meaning?: string,
     context?: string,
   ) => void;

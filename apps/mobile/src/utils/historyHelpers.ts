@@ -6,11 +6,11 @@
  *   để format dữ liệu hiển thị trên UI
  */
 
-export type SkillType = 'listening' | 'speaking' | 'reading';
+export type SkillType = 'listening' | 'speaking';
 
 /**
  * Mục đích: Lấy icon emoji cho từng loại bài học
- * Tham số đầu vào: type - Loại bài học (listening/speaking/reading)
+ * Tham số đầu vào: type - Loại bài học (listening/speaking)
  * Tham số đầu ra: Emoji tương ứng
  * Khi nào sử dụng: HistoryCard → hiển thị icon bên cạnh title
  */
@@ -18,7 +18,6 @@ export function getTypeIcon(type: SkillType): string {
   const icons: Record<SkillType, string> = {
     listening: '🎧',
     speaking: '🗣️',
-    reading: '📖',
   };
   return icons[type] || '📚';
 }
@@ -33,7 +32,6 @@ export function getTypeLabel(type: SkillType): string {
   const labels: Record<SkillType, string> = {
     listening: 'Nghe',
     speaking: 'Nói',
-    reading: 'Đọc',
   };
   return labels[type] || type;
 }
@@ -56,11 +54,6 @@ export function getAccentColor(type: SkillType) {
         border: '#16A34A',
         bg: 'rgba(22, 163, 74, 0.1)',
         text: '#16A34A',
-      },
-      reading: {
-        border: '#D97706',
-        bg: 'rgba(217, 119, 6, 0.1)',
-        text: '#D97706',
       },
     };
   return colors[type] || colors.listening;

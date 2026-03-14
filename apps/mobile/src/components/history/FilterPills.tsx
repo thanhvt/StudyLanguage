@@ -4,7 +4,7 @@ import {AppText} from '@/components/ui';
 import {getAccentColor, type SkillType} from '@/utils/historyHelpers';
 
 /**
- * Mục đích: Thanh pills filter theo loại bài học (All/Nghe/Nói/Đọc)
+ * Mục đích: Thanh pills filter theo loại bài học (All/Nghe/Nói)
  * Tham số đầu vào:
  *   - activeType: Loại đang active ('all' | 'listening' | ...)
  *   - onChange: Callback khi chọn filter
@@ -14,14 +14,13 @@ import {getAccentColor, type SkillType} from '@/utils/historyHelpers';
 
 interface FilterPillsProps {
   activeType: string;
-  onChange: (type: 'all' | 'listening' | 'speaking' | 'reading') => void;
+  onChange: (type: 'all' | 'listening' | 'speaking') => void;
 }
 
 const FILTERS: {key: 'all' | SkillType; icon: string; label: string}[] = [
   {key: 'all', icon: '📋', label: 'Tất cả'},
   {key: 'listening', icon: '🎧', label: 'Nghe'},
   {key: 'speaking', icon: '🗣️', label: 'Nói'},
-  {key: 'reading', icon: '📖', label: 'Đọc'},
 ];
 
 export function FilterPills({activeType, onChange}: FilterPillsProps) {

@@ -5,7 +5,7 @@ import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
 import {SKILL_COLORS, type SkillType} from '@/config/skillColors';
 
-// Cấu hình 3 skill cards — horizontal layout theo mockup
+// Cấu hình 2 skill cards — horizontal layout theo mockup
 const SKILLS: {
   id: SkillType;
   emoji: string;
@@ -27,21 +27,14 @@ const SKILLS: {
     time: '10 phút',
     route: 'Speaking',
   },
-  {
-    id: 'reading',
-    emoji: '📖',
-    label: 'Đọc',
-    time: '5 phút',
-    route: 'Reading',
-  },
 ];
 
 /**
- * Mục đích: Widget 3 skill cards nằm ngang (Nghe, Nói, Đọc) theo mockup mới
+ * Mục đích: Widget 2 skill cards nằm ngang (Nghe, Nói) theo mockup mới
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Phần "Luyện tập nhanh" trên Dashboard
- *   - 3 cards nằm ngang, mỗi card có màu nền riêng theo skill
+ *   - 2 cards nằm ngang, mỗi card có màu nền riêng theo skill
  *   - Nhấn → navigate đến feature tương ứng
  *   - Animated: mỗi card xuất hiện staggered FadeInDown
  */
