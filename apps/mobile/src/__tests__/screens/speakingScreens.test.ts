@@ -1,5 +1,5 @@
 /**
- * Unit test cho Speaking Screens — Data & Logic (Shadowing, TongueTwister, Roleplay)
+ * Unit test cho Speaking Screens — Data & Logic (Shadowing, Roleplay)
  *
  * Mục đích: Test data structures, mock data integrity, và business logic
  *           mà các screen này sử dụng (không cần render component)
@@ -14,12 +14,6 @@
 
 type ShadowPhase = 'listen' | 'countdown' | 'record' | 'compare';
 
-interface TongueTwister {
-  id: string;
-  text: string;
-  targetWPM: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-}
 
 interface RoleplayScenario {
   id: string;
@@ -35,16 +29,6 @@ interface RoleplayScenario {
 // Mock data (mirror từ screens)
 // ============================================
 
-const TWISTERS: TongueTwister[] = [
-  {id: '1', text: 'She sells seashells by the seashore.', targetWPM: 80, difficulty: 'easy'},
-  {id: '2', text: 'Peter Piper picked a peck of pickled peppers.', targetWPM: 90, difficulty: 'easy'},
-  {id: '3', text: 'How much wood would a woodchuck chuck if a woodchuck could chuck wood?', targetWPM: 100, difficulty: 'medium'},
-  {id: '4', text: 'Betty Botter bought some butter, but she said the butter is bitter.', targetWPM: 100, difficulty: 'medium'},
-  {id: '5', text: 'The sixth sick sheikh sixth sheep is sick.', targetWPM: 120, difficulty: 'hard'},
-  {id: '6', text: 'I wish to wash my Irish wristwatch.', targetWPM: 110, difficulty: 'medium'},
-  {id: '7', text: 'Fuzzy Wuzzy was a bear, Fuzzy Wuzzy had no hair.', targetWPM: 90, difficulty: 'easy'},
-  {id: '8', text: 'Red lorry, yellow lorry, red lorry, yellow lorry.', targetWPM: 100, difficulty: 'medium'},
-];
 
 const SCENARIOS: RoleplayScenario[] = [
   {id: '1', title: 'Đặt phòng khách sạn', description: 'Gọi điện đặt phòng', emoji: '🏨', difficulty: 'easy', plays: 234, totalTurns: 6},
@@ -62,7 +46,7 @@ const SCENARIOS: RoleplayScenario[] = [
 // ============================================
 
 /**
- * Mục đích: Format seconds → mm:ss (dùng chung trong Shadowing, TongueTwister, Roleplay)
+ * Mục đích: Format seconds → mm:ss (dùng chung trong Shadowing, Roleplay)
  * Tham số đầu vào: s (number) — seconds
  * Tham số đầu ra: string — formatted time
  * Khi nào sử dụng: Hiển thị timer
@@ -77,7 +61,7 @@ function formatTime(s: number): string {
  * Mục đích: Tính WPM từ text và thời gian ghi âm
  * Tham số đầu vào: text (string), durationSeconds (number)
  * Tham số đầu ra: number — words per minute
- * Khi nào sử dụng: TongueTwisterScreen → sau khi record → tính tốc độ
+ * Khi nào sử dụng: Speaking screens → sau khi record → tính tốc độ
  */
 function calculateWPM(text: string, durationSeconds: number): number {
   if (durationSeconds <= 0) return 0;
@@ -123,37 +107,10 @@ describe('Speaking Screens — Data & Logic', () => {
     });
   });
 
-  // ----- Tongue Twister -----
 
-  describe('TongueTwister — Data Integrity', () => {
-    it('có đủ 8 tongue twisters', () => {
-      expect(TWISTERS).toHaveLength(8);
-    });
+  // ----- WPM Calculation -----
 
-    it('mỗi twister có đủ fields', () => {
-      TWISTERS.forEach(t => {
-        expect(t.id).toBeTruthy();
-        expect(t.text).toBeTruthy();
-        expect(t.targetWPM).toBeGreaterThan(0);
-        expect(['easy', 'medium', 'hard']).toContain(t.difficulty);
-      });
-    });
-
-    it('không có ID trùng lặp', () => {
-      const ids = TWISTERS.map(t => t.id);
-      expect(new Set(ids).size).toBe(ids.length);
-    });
-
-    it('targetWPM tăng theo difficulty', () => {
-      const easyAvg = TWISTERS.filter(t => t.difficulty === 'easy')
-        .reduce((sum, t) => sum + t.targetWPM, 0) / TWISTERS.filter(t => t.difficulty === 'easy').length;
-      const hardAvg = TWISTERS.filter(t => t.difficulty === 'hard')
-        .reduce((sum, t) => sum + t.targetWPM, 0) / TWISTERS.filter(t => t.difficulty === 'hard').length;
-      expect(hardAvg).toBeGreaterThanOrEqual(easyAvg);
-    });
-  });
-
-  describe('TongueTwister — WPM Calculation', () => {
+  describe('WPM Calculation', () => {
     it('tính đúng WPM cho câu đơn giản', () => {
       // "She sells seashells by the seashore" = 6 từ
       // Đọc trong 5 giây → (6/5)*60 = 72 WPM

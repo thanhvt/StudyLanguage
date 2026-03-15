@@ -274,7 +274,7 @@ export interface CreateHistoryParams {
  *   - Practice → FeedbackScreen → lưu scores, feedback
  *   - AI Conversation → SessionSummary → lưu messages, corrections
  *   - Shadowing → ShadowingSummary → lưu rhythm/intonation/accuracy
- *   - Tongue Twister → completion → lưu phoneme scores, WPM
+ *   - Shadowing → ShadowingSessionSummaryScreen → lưu rhythm/intonation/accuracy
  */
 export async function createEntry(
   params: CreateHistoryParams,

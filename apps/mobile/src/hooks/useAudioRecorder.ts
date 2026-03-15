@@ -3,7 +3,7 @@ import {Platform, Alert, Linking} from 'react-native';
 import {speakingApi} from '@/services/api/speaking';
 
 // =======================
-// Optional module loading (giống TongueTwisterPractice pattern)
+// Optional module loading
 // =======================
 
 let AudioRecorderPlayerModule: any;
@@ -95,7 +95,7 @@ function showPermissionDeniedAlert(): void {
 
 /**
  * Mục đích: Hook quản lý audio recording + transcription cho AI Conversation
- *   Sử dụng react-native-audio-recorder-player (giống ShadowingRecorder/TongueTwister)
+ *   Sử dụng react-native-audio-recorder-player (giống ShadowingRecorder)
  *   với real metering data cho waveform visualization
  * Tham số đầu vào: không
  * Tham số đầu ra: [AudioRecorderState, AudioRecorderActions]

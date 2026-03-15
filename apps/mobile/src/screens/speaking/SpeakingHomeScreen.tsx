@@ -50,14 +50,6 @@ const MODE_CARDS = [
     gradient: ['#10B981', '#14B8A6'] as [string, string],
     route: 'ConversationSetup' as const,
   },
-  {
-    key: 'tongue-twister',
-    icon: '👅',
-    title: 'Tongue Twister',
-    subtitle: 'Nói lái vui',
-    gradient: ['#F59E0B', '#EAB308'] as [string, string],
-    route: 'TongueTwisterSelect' as const,
-  },
 ];
 
 // =======================
@@ -77,7 +69,7 @@ interface ModeCardProps {
  * Mục đích: Render 1 mode card với gradient background và fade-in animation
  * Tham số đầu vào: icon, title, subtitle, gradient colors, onPress, animation delay
  * Tham số đầu ra: JSX.Element
- * Khi nào sử dụng: SpeakingHomeScreen → 4 mode cards trong 2×2 grid
+ * Khi nào sử dụng: SpeakingHomeScreen → 3 mode cards trong grid
  */
 function ModeCard({icon, title, subtitle, gradient, onPress, delay}: ModeCardProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -250,7 +242,7 @@ function DailyGoalWidget({completed, target, streak, onDashboardPress}: DailyGoa
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Tab Bar → Speaking tab → SpeakingHome
- *   - Hiển thị 4 mode cards (NAV-01)
+ *   - Hiển thị 3 mode cards (NAV-01)
  *   - Hiển thị Daily Goal (NAV-02)
  *   - Tap ⚙️ → TTS Settings Bottom Sheet (NAV-04)
  *   - KHÔNG hiển thị topics/scenarios (NAV-05)

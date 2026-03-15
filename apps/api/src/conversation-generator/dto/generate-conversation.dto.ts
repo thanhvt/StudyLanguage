@@ -184,6 +184,38 @@ export class ContinueConversationDto {
   })
   @IsString()
   topic: string;
+
+  @ApiPropertyOptional({
+    description: 'Chế độ hội thoại',
+    enum: ['free-talk', 'roleplay'],
+    default: 'free-talk',
+  })
+  @IsOptional()
+  @IsString()
+  mode?: 'free-talk' | 'roleplay';
+
+  @ApiPropertyOptional({
+    description: 'Mức phản hồi lỗi từ AI',
+    enum: ['beginner', 'intermediate', 'advanced'],
+  })
+  @IsOptional()
+  @IsString()
+  feedbackMode?: 'beginner' | 'intermediate' | 'advanced';
+
+  @ApiPropertyOptional({
+    description: 'Persona AI cho Roleplay mode',
+    example: { name: 'Tony', role: 'Waiter', systemPrompt: 'You are a waiter...' },
+  })
+  @IsOptional()
+  persona?: { name: string; role: string; systemPrompt: string };
+
+  @ApiPropertyOptional({
+    description: 'Độ khó (Roleplay only)',
+    enum: ['easy', 'medium', 'hard'],
+  })
+  @IsOptional()
+  @IsString()
+  difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 /**

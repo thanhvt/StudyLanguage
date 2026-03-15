@@ -19,7 +19,6 @@ export {default as ScoreBreakdown} from './ScoreBreakdown';
 export {default as ConfettiAnimation} from './ConfettiAnimation';
 export {default as ScenarioCard} from './ScenarioCard';
 export {default as TurnCounter} from './TurnCounter';
-export {default as SpeedChallengeMeter} from './SpeedChallengeMeter';
 export {default as RadarChart} from './RadarChart';
 export {default as CalendarHeatmap} from './CalendarHeatmap';
 export {default as BadgeGrid} from './BadgeGrid';
@@ -29,13 +28,7 @@ export {default as ShareResultCard} from './ShareResultCard';
 export {default as OnboardingOverlay} from './OnboardingOverlay';
 export {default as SpeakingTtsSheet} from './SpeakingTtsSheet';
 export {default as VoiceCloneReplay} from './VoiceCloneReplay';
-
-// Tongue Twister components
-export {default as PhonemeCard} from './PhonemeCard';
-export {default as LevelPill} from './LevelPill';
-export {default as RoundCard} from './RoundCard';
 export {default as StatChip} from './StatChip';
-export {default as PhonemeHighlightText} from './PhonemeHighlightText';
 
 // Shadowing components
 export {default as ScoreRing} from './ScoreRing';

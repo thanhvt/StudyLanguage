@@ -13,7 +13,6 @@ import {
   type PracticeSessionData,
   type ConversationSessionData,
   type ShadowingSessionData,
-  type TongueTwisterSessionData,
 } from '@/services/speaking/saveSpeakingSession';
 import {createEntry} from '@/services/api/history';
 
@@ -282,70 +281,6 @@ describe('saveSpeakingSession — Shadowing', () => {
   });
 });
 
-// =======================
-// Tongue Twister Tests
-// =======================
-describe('saveSpeakingSession — Tongue Twister', () => {
-  const baseTTData: TongueTwisterSessionData = {
-    phonemeCategory: 'th-vs-s',
-    level: 'easy',
-    twisters: [
-      {text: 'She sells seashells', ipa: '/ʃiː sɛlz/', targetPhonemes: ['/ʃ/', '/s/']},
-    ],
-    scores: [
-      {twisterIndex: 0, pronunciation: 72, tip: 'Lưỡi đặt sau răng'},
-    ],
-    durationSeconds: 60,
-  };
-
-  it('topic tự generate "Tongue Twister: {category}"', async () => {
-    await saveSpeakingSession('tongue-twister', baseTTData);
-
-    const params = mockCreateEntry.mock.calls[0][0];
-    expect(params.topic).toBe('Tongue Twister: th-vs-s');
-    expect(params.mode).toBe('tongue-twister');
-  });
-
-  it('content chứa phonemeCategory, level, scores', async () => {
-    await saveSpeakingSession('tongue-twister', baseTTData);
-
-    const content = (mockCreateEntry.mock.calls[0][0].content as any);
-    expect(content.phonemeCategory).toBe('th-vs-s');
-    expect(content.level).toBe('easy');
-    expect(content.avgScore).toBe(72);
-    expect(content.totalTwisters).toBe(1);
-  });
-
-  it('keywords chứa phonemeCategory, level, score', async () => {
-    await saveSpeakingSession('tongue-twister', baseTTData);
-
-    const params = mockCreateEntry.mock.calls[0][0];
-    expect(params.keywords).toContain('th-vs-s');
-    expect(params.keywords).toContain('easy');
-    expect(params.keywords).toContain('score:72');
-  });
-
-  it('speedChallenge data lưu WPM trong keywords', async () => {
-    const withSpeed: TongueTwisterSessionData = {
-      ...baseTTData,
-      speedChallenge: {
-        rounds: [{round: 1, speed: 1.0, wpm: 120, accuracy: 85}],
-        bestWPM: 120,
-      },
-    };
-    await saveSpeakingSession('tongue-twister', withSpeed);
-
-    const params = mockCreateEntry.mock.calls[0][0];
-    expect(params.keywords).toContain('wpm:120');
-  });
-
-  it('không có speedChallenge → không có wpm trong keywords', async () => {
-    await saveSpeakingSession('tongue-twister', baseTTData);
-
-    const params = mockCreateEntry.mock.calls[0][0];
-    expect(params.keywords).not.toContain('wpm');
-  });
-});
 
 // =======================
 // Edge Cases & Error Handling
@@ -434,13 +369,12 @@ describe('saveSpeakingSession — Edge Cases', () => {
   });
 
   it('tất cả mode đều set type = "speaking"', async () => {
-    const modes = ['practice', 'conversation-freetalk', 'conversation-roleplay', 'shadowing', 'tongue-twister'];
+    const modes = ['practice', 'conversation-freetalk', 'conversation-roleplay', 'shadowing'];
     const datas = [
       {topic: 'T', sentences: [], scores: [], durationSeconds: 60},
       {topic: 'T', subMode: 'free-talk', messages: [], durationSeconds: 60},
       {topic: 'T', subMode: 'roleplay', messages: [], durationSeconds: 60},
       {topic: 'T', sentences: [], scores: [], speed: 1, durationSeconds: 60},
-      {phonemeCategory: 'th', level: 'easy', twisters: [], scores: [], durationSeconds: 60},
     ];
 
     for (let i = 0; i < modes.length; i++) {

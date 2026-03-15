@@ -190,8 +190,8 @@ export default function ProgressDashboardScreen({navigation}: any) {
   const handleWeakSoundPress = (phoneme: string) => {
     haptic.light();
     console.log('🔊 [Dashboard] Tap weak sound:', phoneme);
-    // Navigate tới TongueTwister hoặc Practice với phoneme filter
-    navigation.navigate('TongueTwister', {focusPhoneme: phoneme});
+    // Navigate tới Practice với phoneme filter
+    navigation.navigate('PracticeConfig', {focusPhoneme: phoneme});
   };
 
   if (isLoading) {

@@ -37,7 +37,7 @@ const ONBOARDING_STEPS = [
     id: 'modes',
     emoji: '📋',
     title: 'Nhiều chế độ luyện tập',
-    description: 'Luyện câu, hội thoại AI, Shadowing, Tongue Twister — mỗi mode giúp bạn cải thiện khác nhau.',
+    description: 'Luyện câu, hội thoại AI, Shadowing — mỗi mode giúp bạn cải thiện khác nhau.',
   },
   {
     id: 'recording',

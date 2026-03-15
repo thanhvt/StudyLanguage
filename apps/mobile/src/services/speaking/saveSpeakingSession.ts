@@ -6,7 +6,6 @@
  *   - Practice → FeedbackScreen → handleFinish / handleNext (câu cuối)
  *   - AI Conversation → SessionSummaryScreen → mount
  *   - Shadowing → ShadowingSessionSummaryScreen → mount
- *   - Tongue Twister → completion handler
  *
  * Luồng: Screen → saveSpeakingSession() → historyApi.createEntry() → POST /history
  */
@@ -75,25 +74,6 @@ export interface ShadowingSessionData {
   durationSeconds: number;
 }
 
-/**
- * Mục đích: Payload Tongue Twister mode
- */
-export interface TongueTwisterSessionData {
-  phonemeCategory: string;
-  level: string;
-  twisters: {text: string; ipa?: string; targetPhonemes?: string[]}[];
-  scores: {
-    twisterIndex: number;
-    pronunciation: number;
-    phonemeHits?: {phoneme: string; word: string; isCorrect: boolean}[];
-    tip?: string;
-  }[];
-  speedChallenge?: {
-    rounds: {round: number; speed: number; wpm: number; accuracy: number}[];
-    bestWPM: number;
-  };
-  durationSeconds: number;
-}
 
 // =======================
 // Main function
@@ -102,7 +82,7 @@ export interface TongueTwisterSessionData {
 /**
  * Mục đích: Lưu speaking session vào history — fire-and-forget
  * Tham số đầu vào:
- *   mode — 'practice' | 'conversation-freetalk' | 'conversation-roleplay' | 'shadowing' | 'tongue-twister'
+ *   mode — 'practice' | 'conversation-freetalk' | 'conversation-roleplay' | 'shadowing'
  *   data — mode-specific payload (xem interfaces ở trên)
  * Tham số đầu ra: void
  * Khi nào sử dụng: Mỗi mode gọi khi session kết thúc, không await/block UI
@@ -112,8 +92,7 @@ export async function saveSpeakingSession(
   data:
     | PracticeSessionData
     | ConversationSessionData
-    | ShadowingSessionData
-    | TongueTwisterSessionData,
+    | ShadowingSessionData,
 ): Promise<void> {
   try {
     const params = mapToHistoryParams(mode, data);
@@ -136,8 +115,7 @@ function mapToHistoryParams(
   data:
     | PracticeSessionData
     | ConversationSessionData
-    | ShadowingSessionData
-    | TongueTwisterSessionData,
+    | ShadowingSessionData,
 ): CreateHistoryParams {
   // BUG-H07 FIX: Dùng Math.ceil thay vì Math.round để không làm tròn xuống 0
   // 30s → 1min, 90s → 2min, 5s → 1min (ceil luôn >= 1 nếu > 0)
@@ -224,41 +202,6 @@ function mapToHistoryParams(
       };
     }
 
-    case 'tongue-twister': {
-      const d = data as TongueTwisterSessionData;
-      const avgScore =
-        d.scores.length > 0
-          ? Math.round(
-              d.scores.reduce((sum, s) => sum + s.pronunciation, 0) /
-                d.scores.length,
-            )
-          : 0;
-      return {
-        type: 'speaking',
-        topic: `Tongue Twister: ${d.phonemeCategory}`,
-        mode: 'tongue-twister',
-        durationMinutes,
-        keywords: [
-          'tongue-twister',
-          d.phonemeCategory,
-          d.level,
-          d.speedChallenge ? `wpm:${d.speedChallenge.bestWPM}` : null,
-          `score:${avgScore}`,
-        ]
-          .filter(Boolean)
-          .join(','),
-        content: {
-          phonemeCategory: d.phonemeCategory,
-          level: d.level,
-          twisters: d.twisters,
-          scores: d.scores,
-          speedChallenge: d.speedChallenge || null,
-          avgScore,
-          totalTwisters: d.twisters.length,
-          completedTwisters: d.scores.length,
-        } as Record<string, unknown>,
-      };
-    }
 
     default: {
       // BUG-H08 FIX: Serialize an toàn — tránh circular ref, class instances

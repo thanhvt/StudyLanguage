@@ -35,13 +35,12 @@ interface SectionData {
   data: RecordingEntry[];
 }
 
-/** Filter tabs — 5 mode filter */
+/** Filter tabs — 4 mode filter */
 const FILTER_TABS = [
   {id: 'all', label: 'Tất cả', emoji: '📋'},
   {id: 'practice', label: 'Luyện nói', emoji: '🎙️'},
   {id: 'conversation', label: 'Hội thoại', emoji: '💬'},
   {id: 'shadowing', label: 'Shadowing', emoji: '🎧'},
-  {id: 'tongue-twister', label: 'Tongue Tw.', emoji: '👅'},
 ];
 
 /** Emoji theo mode */
@@ -49,7 +48,6 @@ const MODE_EMOJI: Record<string, string> = {
   practice: '🎙️',
   conversation: '💬',
   shadowing: '🎧',
-  'tongue-twister': '👅',
 };
 
 /** Màu viền trái theo mode (mockup) */
@@ -57,7 +55,6 @@ const MODE_BORDER_COLOR: Record<string, string> = {
   practice: '#22C55E',
   conversation: '#F59E0B',
   shadowing: '#3B82F6',
-  'tongue-twister': '#EC4899',
 };
 
 /** Màu score badge */

@@ -16,12 +16,8 @@ import ShadowingFeedbackScreen from '@/screens/speaking/ShadowingFeedbackScreen'
 import ShadowingSessionSummaryScreen from '@/screens/speaking/ShadowingSessionSummaryScreen';
 import RoleplaySelectScreen from '@/screens/speaking/RoleplaySelectScreen';
 import RoleplaySessionScreen from '@/screens/speaking/RoleplaySessionScreen';
-import TongueTwisterSelectScreen from '@/screens/speaking/TongueTwisterSelectScreen';
-import TongueTwisterPracticeScreen from '@/screens/speaking/TongueTwisterPracticeScreen';
-import SpeedChallengeScreen from '@/screens/speaking/SpeedChallengeScreen';
 import ProgressDashboardScreen from '@/screens/speaking/ProgressDashboardScreen';
 import RecordingHistoryScreen from '@/screens/speaking/RecordingHistoryScreen';
-import type {PhonemeCategory, TwisterLevel} from '@/types/tongueTwister.types';
 
 export type SpeakingStackParamList = {
   // === Màn hình chính ===
@@ -45,9 +41,7 @@ export type SpeakingStackParamList = {
   ShadowingSessionSummary: undefined;
   RoleplaySelect: undefined;
   RoleplaySession: {title: string; totalTurns: number; emoji: string};
-  TongueTwisterSelect: undefined;
-  TongueTwisterPractice: {phonemeCategory: PhonemeCategory; level: TwisterLevel};
-  SpeedChallenge: {twisterId: string; phonemeCategory: PhonemeCategory};
+
   ProgressDashboard: undefined;
   RecordingHistory: undefined;
 
@@ -68,7 +62,7 @@ const Stack = createNativeStackNavigator<SpeakingStackParamList>();
  *   - SpeakingHome → PracticeConfig → PracticeSession → Feedback
  *   - SpeakingHome → ConversationSetup → ConversationSession → SessionSummary
  *   - SpeakingHome → ShadowingConfig → ShadowingSession → ShadowingFeedback → ShadowingSessionSummary
- *   - SpeakingHome → TongueTwisterSelect → TongueTwisterPractice → SpeedChallenge
+
  */
 export default function SpeakingStack() {
   return (
@@ -98,9 +92,7 @@ export default function SpeakingStack() {
       <Stack.Screen name="ShadowingSessionSummary" component={ShadowingSessionSummaryScreen} />
       <Stack.Screen name="RoleplaySelect" component={RoleplaySelectScreen} />
       <Stack.Screen name="RoleplaySession" component={RoleplaySessionScreen} />
-      <Stack.Screen name="TongueTwisterSelect" component={TongueTwisterSelectScreen} />
-      <Stack.Screen name="TongueTwisterPractice" component={TongueTwisterPracticeScreen} />
-      <Stack.Screen name="SpeedChallenge" component={SpeedChallengeScreen} />
+
       <Stack.Screen name="ProgressDashboard" component={ProgressDashboardScreen} />
       <Stack.Screen name="RecordingHistory" component={RecordingHistoryScreen} />
 

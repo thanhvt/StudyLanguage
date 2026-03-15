@@ -20,6 +20,9 @@ import type {ConversationSessionData} from '@/services/speaking/saveSpeakingSess
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 
+// Mảng rỗng stable — tránh tạo mới mỗi render gây infinite loop Zustand
+const EMPTY_MESSAGES: never[] = [];
+
 // =======================
 // Helper
 // =======================
@@ -68,7 +71,8 @@ export default function SessionSummaryScreen() {
   const setup = useSpeakingStore(s => s.conversationSetup);
   const summary = useSpeakingStore(s => s.conversationSummary);
   // BUG-H02 FIX: Đọc messages từ conversationSession (trước khi reset)
-  const conversationMessages = useSpeakingStore(s => s.conversationSession?.messages ?? []);
+  // BUG-H10 FIX: Trả stable ref EMPTY_MESSAGES thay vì `?? []` — tránh infinite loop
+  const conversationMessages = useSpeakingStore(s => s.conversationSession?.messages ?? EMPTY_MESSAGES);
   const resetConversation = useSpeakingStore(s => s.resetConversation);
 
   const mode = setup?.mode ?? 'free-talk';
