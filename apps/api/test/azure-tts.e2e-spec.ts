@@ -212,6 +212,41 @@ describe('Azure TTS Endpoints (e2e)', () => {
         });
     });
 
+    it('nên accept speed parameter và convert sang rate (Azure)', () => {
+      return request(app.getHttpServer())
+        .post('/ai/text-to-speech')
+        .send({
+          text: 'Hello world',
+          provider: 'azure',
+          speed: 1.5, // Mobile gửi speed number
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.audio).toBeDefined();
+          // Đảm bảo TtsProviderService nhận rate string "+50%"
+          expect(mockTtsProviderService.textToSpeechWithTimestamps).toHaveBeenCalledWith(
+            'Hello world',
+            expect.objectContaining({
+              rate: '50%', // speed 1.5 → (1.5-1)*100 = 50%
+            }),
+          );
+        });
+    });
+
+    it('nên accept speed=1 (tốc độ bình thường) không lỗi 400', () => {
+      return request(app.getHttpServer())
+        .post('/ai/text-to-speech')
+        .send({
+          text: 'Testing normal speed',
+          provider: 'azure',
+          speed: 1,
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.audio).toBeDefined();
+        });
+    });
+
     it('nên validate text là bắt buộc', () => {
       return request(app.getHttpServer())
         .post('/ai/text-to-speech')

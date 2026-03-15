@@ -37,12 +37,12 @@ const DIFFICULTY_MAP = {
 // =======================
 
 /**
- * Mục đích: Card hiển thị 1 kịch bản roleplay hoặc tongue twister
+ * Mục đích: Card hiển thị 1 kịch bản roleplay
  * Tham số đầu vào: title, description, emoji, plays, difficulty, onPress, selected
  * Tham số đầu ra: JSX.Element — card tap-able
  * Khi nào sử dụng:
  *   - RoleplaySelectScreen: danh sách kịch bản
- *   - TongueTwisterScreen: danh sách bài tongue twister
+ *   - RoleplaySelectScreen: danh sách kịch bản
  */
 export default function ScenarioCard({
   title,

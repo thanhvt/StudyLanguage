@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {View, StyleSheet, TouchableOpacity, Modal, Switch} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -17,6 +17,10 @@ interface HeadphoneWarningModalProps {
   onClose: () => void;
   /** Callback "Tiếp tục không tai nghe" */
   onContinueWithout: () => void;
+  /** Trạng thái kết nối tai nghe hiện tại — dùng để auto-dismiss */
+  headphoneConnected?: boolean;
+  /** Callback khi tai nghe cắm vào giữa lúc modal đang mở → auto start session */
+  onAutoStart?: () => void;
 }
 
 // =======================
@@ -35,6 +39,8 @@ export default function HeadphoneWarningModal({
   visible,
   onClose,
   onContinueWithout,
+  headphoneConnected,
+  onAutoStart,
 }: HeadphoneWarningModalProps) {
   const colors = useColors();
   const speakingColor = SKILL_COLORS.speaking.dark;
@@ -42,6 +48,32 @@ export default function HeadphoneWarningModal({
   // Volume ducking toggle — đọc/ghi từ store
   const volumeDucking = useShadowingStore(s => s.config.volumeDucking);
   const setVolumeDucking = useShadowingStore(s => s.setVolumeDucking);
+
+  // Ref theo dõi trạng thái trước đó
+  const prevConnectedRef = useRef(headphoneConnected);
+
+  /**
+   * Mục đích: Auto-dismiss modal khi tai nghe được cắm vào giữa lúc modal đang mở
+   * Tham số đầu vào: headphoneConnected, visible
+   * Tham số đầu ra: void (gọi onClose + onAutoStart)
+   * Khi nào sử dụng: User mở modal warning → cắm tai nghe → modal tự đóng + bắt đầu session
+   */
+  useEffect(() => {
+    if (
+      visible &&
+      headphoneConnected &&
+      !prevConnectedRef.current
+    ) {
+      // Tai nghe vừa cắm vào khi modal đang mở → auto-dismiss
+      console.log('🎧 [HeadphoneWarningModal] Tai nghe cắm vào → tự đóng modal + auto start');
+      onClose();
+      // Delay nhỏ để modal animation hoàn tất rồi mới start
+      if (onAutoStart) {
+        setTimeout(() => onAutoStart(), 300);
+      }
+    }
+    prevConnectedRef.current = headphoneConnected;
+  }, [headphoneConnected, visible, onClose, onAutoStart]);
 
   return (
     <Modal

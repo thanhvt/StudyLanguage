@@ -1,5 +1,5 @@
 import {useEffect, useState, useCallback, useRef} from 'react';
-import {NativeEventEmitter, NativeModules, Platform} from 'react-native';
+import {NativeEventEmitter, NativeModules, Platform, DeviceEventEmitter} from 'react-native';
 
 // =======================
 // Types
@@ -31,6 +31,9 @@ export function useHeadphoneDetection(): HeadphoneDetectionResult {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionType, setConnectionType] = useState<ConnectionType>('none');
   const listenerRef = useRef<any>(null);
+  const androidListenerRef = useRef<any>(null);
+  /** Polling interval ref cho Android fallback */
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /**
    * Mục đích: Kiểm tra trạng thái tai nghe ban đầu
@@ -101,9 +104,51 @@ export function useHeadphoneDetection(): HeadphoneDetectionResult {
             },
           );
         }
+      } else if (Platform.OS === 'android') {
+        // ===== ANDROID HEADPHONE DETECTION =====
+
+        // Cách 1: Subscribe native AudioManager events qua NativeModules
+        const {AudioManagerModule} = NativeModules;
+        if (AudioManagerModule?.addHeadsetListener) {
+          // Native module có sẵn → dùng event listener trực tiếp
+          const emitter = new NativeEventEmitter(AudioManagerModule);
+          androidListenerRef.current = emitter.addListener(
+            'HeadsetStateChanged',
+            (event: {state: number; type: string}) => {
+              const connected = event.state === 1;
+              const isBluetooth = event.type === 'bluetooth';
+              setIsConnected(connected);
+              setConnectionType(connected ? (isBluetooth ? 'bluetooth' : 'wired') : 'none');
+              console.log(`🎧 [Headphone] Android event: ${connected ? 'Kết nối' : 'Ngắt'} (${event.type})`);
+            },
+          );
+          console.log('🎧 [Headphone] Android native listener đã subscribe');
+        } else {
+          // ===== Cách 2: Fallback — Polling react-native-device-info mỗi 2s =====
+          console.log('⚠️ [Headphone] Android: không có native module, dùng polling fallback');
+          try {
+            const DeviceInfo = require('react-native-device-info');
+            if (DeviceInfo?.isHeadphonesConnected) {
+              pollingRef.current = setInterval(async () => {
+                try {
+                  const connected = await DeviceInfo.isHeadphonesConnected();
+                  setIsConnected(prev => {
+                    if (prev !== connected) {
+                      console.log(`🎧 [Headphone] Android polling: ${connected ? 'Kết nối' : 'Ngắt'}`);
+                      setConnectionType(connected ? 'wired' : 'none');
+                    }
+                    return connected;
+                  });
+                } catch {
+                  // Im lặng — tránh spam log
+                }
+              }, 2000);
+            }
+          } catch {
+            console.log('⚠️ [Headphone] Android: react-native-device-info không khả dụng cho polling');
+          }
+        }
       }
-      // Android: tương tự với AudioManager events
-      // Sẽ implement khi cần
     } catch (err) {
       console.warn('⚠️ [Headphone] Không thể subscribe events:', err);
     }
@@ -114,8 +159,17 @@ export function useHeadphoneDetection(): HeadphoneDetectionResult {
     subscribeToEvents();
 
     return () => {
+      // Cleanup iOS listener
       if (listenerRef.current?.remove) {
         listenerRef.current.remove();
+      }
+      // Cleanup Android listener
+      if (androidListenerRef.current?.remove) {
+        androidListenerRef.current.remove();
+      }
+      // Cleanup Android polling
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
       }
     };
   }, [checkInitialState, subscribeToEvents]);

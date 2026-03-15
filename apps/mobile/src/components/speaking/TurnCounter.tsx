@@ -27,7 +27,7 @@ interface TurnCounterProps {
  * Tham số đầu ra: JSX.Element — compact badge
  * Khi nào sử dụng:
  *   - RoleplaySessionScreen: hiển thị lượt nói User/AI
- *   - TongueTwisterScreen: hiển thị round hiện tại
+ *   - ConversationSession: hiển thị turn hiện tại
  */
 export default function TurnCounter({
   current,

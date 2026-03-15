@@ -27,8 +27,8 @@ interface StatChipProps {
  * Tham số đầu vào: icon, label, value, valueColor
  * Tham số đầu ra: JSX.Element — compact stat display
  * Khi nào sử dụng:
- *   - SpeedChallengeScreen → Stats Row → 3× StatChip
- *   - TongueTwisterPracticeScreen → score summary (tùy chọn)
+ *   - FeedbackScreen → Stats Row → 3× StatChip
+ *   - ShadowingFeedbackScreen → score summary
  */
 export default function StatChip({icon, label, value, valueColor}: StatChipProps) {
   const colors = useColors();

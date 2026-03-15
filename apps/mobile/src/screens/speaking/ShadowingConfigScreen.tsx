@@ -552,6 +552,8 @@ export default function ShadowingConfigScreen() {
         visible={showHeadphoneWarning}
         onClose={() => setShowHeadphoneWarning(false)}
         onContinueWithout={handleContinueWithoutHeadphone}
+        headphoneConnected={isConnected}
+        onAutoStart={() => doStart(true)}
       />
 
       {/* TopicPicker Full-screen Modal */}

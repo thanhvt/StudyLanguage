@@ -21,7 +21,7 @@ interface ShareResultCardProps {
   sentence: string;
   /** Chủ đề */
   topic?: string;
-  /** Mode (practice / conversation / shadowing / tongue-twister) */
+  /** Mode (practice / conversation / shadowing) */
   mode?: string;
   /** Streak ngày */
   streak?: number;
