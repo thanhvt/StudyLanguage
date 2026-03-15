@@ -79,9 +79,17 @@ class TranscribeAndEvaluateDto {
   @IsNotEmpty()
   originalText: string;
 
+  /** Tốc độ phát shadowing (FormData gửi string → cần transform) */
   @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   speed?: number;
+
+  /** Delay trước khi ghi âm (ms) — mobile gửi metadata */
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  delayMs?: number;
 
   @IsString()
   @IsOptional()
