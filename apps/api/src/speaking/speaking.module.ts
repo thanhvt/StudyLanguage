@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SpeakingService } from './speaking.service';
 import { SpeakingController } from './speaking.controller';
 import { GroqSttModule } from '../groq-stt/groq-stt.module';
+import { AiModule } from '../ai/ai.module';
 
 /**
  * SpeakingModule - Module cho Speaking feature extensions
@@ -10,7 +11,7 @@ import { GroqSttModule } from '../groq-stt/groq-stt.module';
  * Khi nào sử dụng: Được import bởi AppModule
  */
 @Module({
-  imports: [GroqSttModule],
+  imports: [GroqSttModule, AiModule],
   controllers: [SpeakingController],
   providers: [SpeakingService],
   exports: [SpeakingService],

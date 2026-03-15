@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { AiService } from '../ai/ai.service';
 
 /**
  * SpeakingService - Service xử lý nghiệp vụ cho Speaking Module
@@ -20,7 +21,7 @@ export class SpeakingService {
   private readonly logger = new Logger(SpeakingService.name);
   private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(private readonly aiService: AiService) {
     this.supabase = createClient(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -963,6 +964,116 @@ export class SpeakingService {
       if (error instanceof InternalServerErrorException) throw error;
       this.logger.error('[SpeakingService] Lỗi lấy recording history:', error);
       throw new InternalServerErrorException('Lỗi lấy lịch sử ghi âm');
+    }
+  }
+
+  /**
+   * Sinh tổng kết session conversation
+   *
+   * Mục đích: Phân tích toàn bộ hội thoại → trả về score, lỗi phát âm, lỗi ngữ pháp, feedback
+   * Tham số đầu vào:
+   *   - userId: ID user
+   *   - messages: {role, text}[] — toàn bộ hội thoại
+   *   - mode: 'free-talk' | 'roleplay'
+   *   - totalTime: tổng thời gian session (giây)
+   * Tham số đầu ra: { overallScore, grade, pronunciationIssues, grammarFixes, aiFeedback }
+   * Khi nào sử dụng: POST /speaking/generate-summary → ConversationScreen kết thúc
+   */
+  async generateSessionSummary(
+    userId: string,
+    messages: { role: string; text: string }[],
+    mode: 'free-talk' | 'roleplay',
+    totalTime: number,
+  ) {
+    this.logger.log(`[SpeakingService] Sinh tổng kết session cho user ${userId}, mode: ${mode}`);
+
+    try {
+      // Lọc chỉ lấy tin nhắn của user để phân tích
+      const userMessages = messages.filter(m => m.role === 'user');
+      const aiMessages = messages.filter(m => m.role !== 'user');
+      const userText = userMessages.map(m => m.text).join('\n');
+
+      // Nếu không có tin nhắn user → trả default
+      if (userMessages.length === 0) {
+        return {
+          success: true,
+          overallScore: 0,
+          grade: 'N/A',
+          pronunciationIssues: [],
+          grammarFixes: [],
+          aiFeedback: 'Session quá ngắn để đánh giá. Hãy nói nhiều hơn nhé!',
+        };
+      }
+
+      // Gọi AI để phân tích
+      const prompt = `Phân tích cuộc hội thoại tiếng Anh sau đây (mode: ${mode}, thời gian: ${Math.round(totalTime / 60)} phút, ${userMessages.length} câu user nói).
+
+Các câu USER nói:
+${userMessages.map((m, i) => `${i + 1}. "${m.text}"`).join('\n')}
+
+Các câu AI trả lời:
+${aiMessages.map((m, i) => `${i + 1}. "${m.text}"`).join('\n')}
+
+Hãy đánh giá và trả về JSON với format:
+{
+  "overallScore": <số 0-100>,
+  "grade": "<A+/A/B+/B/C+/C/D/F>",
+  "pronunciationIssues": [{"word": "<từ>", "accuracy": <0-100>, "ipa": "<phiên âm IPA>"}],
+  "grammarFixes": [{"original": "<câu gốc sai>", "correction": "<câu sửa đúng>"}],
+  "aiFeedback": "<nhận xét tổng quát bằng tiếng Việt, 2-3 câu>"
+}
+
+Lưu ý:
+- overallScore dựa trên: độ phức tạp câu, ngữ pháp, từ vựng, độ dài phản hồi
+- pronunciationIssues: chỉ liệt kê từ thường bị phát âm sai (tối đa 5)
+- grammarFixes: liệt kê lỗi ngữ pháp thực tế trong câu user (tối đa 5)
+- aiFeedback: nhận xét thân thiện, khích lệ
+CHỈ TRẢ VỀ JSON, KHÔNG TEXT KHÁC.`;
+
+      const aiResponse = await this.aiService.generateText(
+        prompt,
+        'Bạn là giáo viên tiếng Anh chuyên đánh giá kỹ năng nói. Trả về JSON thuần túy.',
+      );
+
+      // Parse AI response
+      try {
+        const text = aiResponse || '';
+        const clean = text.replace(/```json?\s*/g, '').replace(/```/g, '').trim();
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            success: true,
+            overallScore: parsed.overallScore ?? 70,
+            grade: parsed.grade ?? 'B',
+            pronunciationIssues: Array.isArray(parsed.pronunciationIssues) ? parsed.pronunciationIssues : [],
+            grammarFixes: Array.isArray(parsed.grammarFixes) ? parsed.grammarFixes : [],
+            aiFeedback: parsed.aiFeedback ?? 'Bạn đã làm tốt! Hãy tiếp tục luyện tập nhé!',
+          };
+        }
+      } catch (parseError) {
+        this.logger.error('[SpeakingService] Lỗi parse AI summary response:', parseError);
+      }
+
+      // Fallback: tính score đơn giản dựa trên text
+      const wordCount = userText.split(/\s+/).length;
+      const avgWordsPerMessage = wordCount / userMessages.length;
+      const score = Math.min(100, Math.round(
+        40 + avgWordsPerMessage * 3 + Math.min(userMessages.length * 2, 20),
+      ));
+      const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B+' : score >= 60 ? 'B' : score >= 50 ? 'C' : 'D';
+
+      return {
+        success: true,
+        overallScore: score,
+        grade,
+        pronunciationIssues: [],
+        grammarFixes: [],
+        aiFeedback: `Bạn đã nói ${userMessages.length} câu trong ${Math.round(totalTime / 60)} phút. Hãy tiếp tục luyện tập nhé!`,
+      };
+    } catch (error) {
+      this.logger.error('[SpeakingService] Lỗi sinh tổng kết session:', error);
+      throw new InternalServerErrorException('Lỗi sinh tổng kết session');
     }
   }
 }

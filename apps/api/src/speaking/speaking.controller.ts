@@ -18,7 +18,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { SpeakingService } from './speaking.service';
 import { GroqSttService } from '../groq-stt/groq-stt.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 // ==================== DTOs ====================
 
@@ -142,6 +143,40 @@ class UpdateTtsSettingsDto {
 
   @IsOptional()
   randomVoice?: boolean;
+}
+
+/**
+ * DTO cho message item trong session summary
+ */
+class SessionMessageDto {
+  @IsString()
+  @IsNotEmpty()
+  role: string;
+
+  @IsString()
+  @IsNotEmpty()
+  text: string;
+}
+
+/**
+ * DTO cho generate session summary
+ *
+ * Mục đích: Validate input POST /speaking/generate-summary
+ * Khi nào sử dụng: Conversation kết thúc → sinh tổng kết
+ */
+class GenerateSessionSummaryDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SessionMessageDto)
+  messages: SessionMessageDto[];
+
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(['free-talk', 'roleplay'])
+  mode: 'free-talk' | 'roleplay';
+
+  @IsNumber()
+  totalTime: number;
 }
 
 // ==================== Controller ====================
@@ -387,6 +422,28 @@ export class SpeakingController {
       dto.originalText,
       dto.userTranscript,
       dto.speed ?? 1.0,
+    );
+  }
+
+  /**
+   * POST /api/speaking/generate-summary
+   *
+   * Mục đích: Sinh tổng kết session conversation (Free Talk / Roleplay)
+   * @param dto - { messages, mode, totalTime }
+   * @returns { overallScore, grade, pronunciationIssues, grammarFixes, aiFeedback }
+   * Khi nào sử dụng: ConversationScreen kết thúc → sinh summary
+   */
+  @Post('generate-summary')
+  @HttpCode(HttpStatus.OK)
+  async generateSessionSummary(
+    @Req() req: any,
+    @Body() dto: GenerateSessionSummaryDto,
+  ) {
+    return this.speakingService.generateSessionSummary(
+      req.user.id,
+      dto.messages,
+      dto.mode,
+      dto.totalTime,
     );
   }
 
