@@ -17,6 +17,7 @@ export {default as WaveformComparison} from './WaveformComparison';
 export {default as PhonemeHeatmap} from './PhonemeHeatmap';
 export {default as ScoreBreakdown} from './ScoreBreakdown';
 export {default as ConfettiAnimation} from './ConfettiAnimation';
+export {default as FireworksAnimation} from './FireworksAnimation';
 export {default as ScenarioCard} from './ScenarioCard';
 export {default as TurnCounter} from './TurnCounter';
 export {default as RadarChart} from './RadarChart';

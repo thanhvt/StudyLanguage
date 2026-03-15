@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
@@ -50,6 +51,7 @@ export default function ShadowingFeedbackScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const colors = useColors();
   const haptic = useHaptic();
+  const insets = useSafeAreaInsets();
   const speakingColor = SKILL_COLORS.speaking.dark;
 
   // Store
@@ -422,7 +424,7 @@ export default function ShadowingFeedbackScreen() {
       </ScrollView>
 
       {/* ===== Bottom Actions (mockup: Shadow lại + Câu tiếp) ===== */}
-      <View style={[styles.actions, {borderTopColor: colors.glassDivider, backgroundColor: colors.background}]}>
+      <View style={[styles.actions, {borderTopColor: colors.glassDivider, backgroundColor: colors.background, paddingBottom: Math.max(12, insets.bottom + 60)}]}>
         <View style={{flexDirection: 'row', flex: 1, gap: 10}}>
 
           {/* Shadow lại */}

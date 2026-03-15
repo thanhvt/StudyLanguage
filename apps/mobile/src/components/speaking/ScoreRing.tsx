@@ -128,7 +128,7 @@ export default function ScoreRing({
             />
           </Svg>
 
-          {/* Score text ở giữa — format: 85/100 */}
+          {/* Score text + Grade badge ở giữa ring */}
           <View
             style={{
               position: 'absolute',
@@ -139,6 +139,7 @@ export default function ScoreRing({
               alignItems: 'center',
               justifyContent: 'center',
             }}>
+            {/* Điểm số: 85/100 */}
             <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
               <AppText
                 style={{
@@ -162,40 +163,38 @@ export default function ScoreRing({
                 </AppText>
               )}
             </View>
+
+            {/* Grade badge — nằm bên dưới score, center trong ring */}
+            {showGradeBadge && grade && (
+              <View
+                style={{
+                  marginTop: 4,
+                  paddingHorizontal: 10,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                  backgroundColor: gradeColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  // Shadow nhẹ cho nổi bật
+                  shadowColor: gradeColor,
+                  shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.3,
+                  shadowRadius: 3,
+                  elevation: 3,
+                }}>
+                <AppText
+                  style={{
+                    fontSize: size >= 100 ? 13 : 10,
+                    fontWeight: '800',
+                    color: '#FFFFFF',
+                  }}
+                  raw>
+                  {grade}
+                </AppText>
+              </View>
+            )}
           </View>
         </View>
-
-        {/* Grade badge — hình tròn nhỏ gắn ở góc phải trên của ring */}
-        {showGradeBadge && grade && (
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: gradeColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              // Shadow cho nổi bật
-              shadowColor: gradeColor,
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.4,
-              shadowRadius: 4,
-              elevation: 4,
-            }}>
-            <AppText
-              style={{
-                fontSize: 15,
-                fontWeight: '800',
-                color: '#FFFFFF',
-              }}
-              raw>
-              {grade}
-            </AppText>
-          </View>
-        )}
       </View>
 
       {/* Label + Icon */}

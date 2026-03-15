@@ -281,6 +281,10 @@ export default function PracticeScreen() {
    */
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      // Nếu session đã hoàn thành (user nhấn Hoàn thành) → cho thoát
+      const completed = useSpeakingStore.getState().sessionCompleted;
+      if (completed) return;
+
       const hasUnsavedData = !!audioUri || currentIndex > 0 || isRecordingRef.current;
       if (!hasUnsavedData) return; // Cho thoát bình thường
 

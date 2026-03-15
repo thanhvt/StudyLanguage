@@ -189,6 +189,8 @@ interface SpeakingState {
   isTranscribing: boolean;
   /** Lỗi (nếu có) */
   error: string | null;
+  /** Session đã hoàn thành (user nhấn Hoàn thành) — bypass beforeRemove guard */
+  sessionCompleted: boolean;
 
   // ===== TTS Settings =====
   /** Cài đặt TTS provider + voice + speed + pitch + emotion */
@@ -246,6 +248,8 @@ interface SpeakingActions {
   clearRecording: () => void;
   /** Reset toàn bộ store */
   reset: () => void;
+  /** Đánh dấu session đã hoàn thành (bypass confirm popup) */
+  setSessionCompleted: (value: boolean) => void;
 
   // ===== AI Conversation Actions =====
   /** Lưu setup cấu hình conversation */
@@ -326,6 +330,7 @@ const initialState: SpeakingState = {
   isGenerating: false,
   isTranscribing: false,
   error: null,
+  sessionCompleted: false,
   ttsSettings: {
     provider: 'azure',
     voiceId: 'en-US-JennyNeural',
@@ -430,6 +435,8 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
       set({audioUri: null, recordingDuration: 0, isRecording: false, feedback: null}),
 
     reset: () => set(initialState),
+
+    setSessionCompleted: value => set({sessionCompleted: value}),
 
     // ===== AI Conversation Actions =====
 

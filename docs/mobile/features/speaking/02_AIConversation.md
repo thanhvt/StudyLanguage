@@ -81,7 +81,7 @@ ConversationScreen (shared)
 ├── {mode === 'free-talk' && feedbackLevel === 'beginner' && <SuggestedResponses />}
 │
 ├── <InputBar>
-│   └── onMicHold → <RecordingOverlay />  ← shared
+│   └── onMicTap → <RecordingOverlay />  ← shared (tap-to-toggle)
 │
 └── onSessionEnd → <SessionSummaryScreen scenarioBadge={mode === 'roleplay'} />
 ```
@@ -117,7 +117,7 @@ ConversationScreen (shared)
 | State | Components | Mô tả |
 |-------|-----------|-------|
 | **Idle** | ChatList + InputBar + SuggestedResponses | User đọc AI message, chọn cách reply |
-| **Recording** | RecordingOverlay (waveform + mic pulsing) | User giữ mic đang nói |
+| **Recording** | RecordingOverlay bottom-sheet (waveform + mic pulsing) | User nhấn mic → overlay hiện, nhấn ■ hoặc vuốt xuống để gửi |
 | **Transcribing** | InputBar disabled + "Đang nhận dạng..." | Groq Whisper STT đang xử lý |
 | **AI Thinking** | AIThinkingIndicator ("...") | AI đang generate response |
 | **Pronun Alert** | PronunciationAlertCard inline | Phát hiện từ phát âm sai |
@@ -277,9 +277,9 @@ interface ConversationMessage {
 
 | TC-ID | Tên | Expected |
 |-------|-----|----------|
-| CONV-TC10 | Ghi âm (hold mic) | Waveform + timer + pulsing glow | ⬜ (component sẵn, chưa integrate) |
+| CONV-TC10 | Ghi âm (tap mic) | Bottom-sheet overlay + Waveform + timer + pulsing glow | ⬜ (component sẵn, chưa integrate) |
 | CONV-TC11 | Ghi âm → release | STT → user bubble hiện text | ⬜ |
-| CONV-TC12 | Swipe up cancel | Discard audio, trở lại idle | ⬜ |
+| CONV-TC12 | Swipe down stop / Swipe up cancel | Vuốt xuống → gửi, Vuốt lên/trái → hủy | ⬜ |
 | CONV-TC13 | Gõ text thay voice | Text bubble hiện, no STT | ✅ |
 | CONV-TC14 | AI response | AI bubble + audio auto-play | ✅ (bubble ✅, audio ⬜) |
 | CONV-TC15 | Pronun alert trigger | Amber card hiện inline | ✅ |

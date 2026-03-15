@@ -100,9 +100,9 @@ function showPermissionDeniedAlert(): void {
  * Tham số đầu vào: không
  * Tham số đầu ra: [AudioRecorderState, AudioRecorderActions]
  * Khi nào sử dụng:
- *   ConversationScreen → user nhấn giữ mic → startRecording
- *   → thả → stopRecording → transcript → sendMessage(transcript)
- *   → kéo cancel → cancelRecording
+ *   ConversationScreen → user nhấn mic (tap) → startRecording
+ *   → nhấn lần nữa hoặc vuốt xuống → stopRecording → transcript → sendMessage(transcript)
+ *   → vuốt lên hoặc vuốt trái → cancelRecording
  *   Dùng kết hợp với <RecordingOverlay> component
  */
 export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
@@ -157,7 +157,7 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
    *   Cấu hình AEC (Echo Cancellation) cho iOS voiceChat mode
    * Tham số đầu vào: không
    * Tham số đầu ra: Promise<void>
-   * Khi nào sử dụng: User nhấn giữ mic button (onLongPress)
+   * Khi nào sử dụng: User nhấn mic button để bắt đầu ghi (tap-to-toggle)
    */
   const startRecording = useCallback(async () => {
     const recorder = recorderRef.current;
@@ -251,7 +251,7 @@ export function useAudioRecorder(): [AudioRecorderState, AudioRecorderActions] {
    * Mục đích: Dừng ghi âm, transcribe bằng Groq Whisper, trả về kết quả
    * Tham số đầu vào: không
    * Tham số đầu ra: Promise<{audioUri, transcript} | null>
-   * Khi nào sử dụng: User thả mic button (onPressOut)
+   * Khi nào sử dụng: User nhấn mic lần nữa hoặc vuốt xuống trên RecordingOverlay
    */
   const stopRecording = useCallback(async (): Promise<{
     audioUri: string;

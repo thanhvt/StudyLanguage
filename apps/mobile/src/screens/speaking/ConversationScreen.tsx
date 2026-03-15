@@ -486,15 +486,21 @@ export default function ConversationScreen() {
           ) : (
             <View style={{alignItems: 'center'}}>
               <TouchableOpacity
-                style={[styles.sendBtn, {backgroundColor: `${accentColor}20`}]}
-                onLongPress={recorderActions.startRecording}
-                onPressOut={handleRecordingStop}
-                delayLongPress={200}
+                style={[styles.sendBtn, {
+                  backgroundColor: recorderState.isRecording
+                    ? '#EF444430'
+                    : `${accentColor}20`,
+                }]}
+                onPress={recorderState.isRecording ? handleRecordingStop : recorderActions.startRecording}
                 disabled={ai.isThinking || !isActive}>
-                <Icon name="Mic" className="w-5 h-5" style={{color: accentColor}} />
+                <Icon
+                  name={recorderState.isRecording ? 'Square' : 'Mic'}
+                  className="w-5 h-5"
+                  style={{color: recorderState.isRecording ? '#EF4444' : accentColor}}
+                />
               </TouchableOpacity>
               <AppText variant="caption" style={{color: colors.neutrals400, fontSize: 10, marginTop: 2}} raw>
-                Giữ để nói
+                Nhấn để nói
               </AppText>
             </View>
           )}

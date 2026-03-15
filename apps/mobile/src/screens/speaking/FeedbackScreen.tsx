@@ -11,6 +11,7 @@ import {
   PhonemeHeatmap,
   ConfettiAnimation,
 } from '@/components/speaking';
+import FireworksAnimation from '@/components/speaking/FireworksAnimation';
 import {speakingApi} from '@/services/api/speaking';
 import {saveSpeakingSession} from '@/services/speaking/saveSpeakingSession';
 import type {PracticeSessionData} from '@/services/speaking/saveSpeakingSession';
@@ -47,12 +48,14 @@ export default function FeedbackScreen() {
     audioUri,
     nextSentence,
     clearRecording,
+    setSessionCompleted,
   } = useSpeakingStore();
 
   // Animated score counter
   const animValue = useRef(new Animated.Value(0)).current;
   const [displayScore, setDisplayScore] = React.useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
 
   // Voice Clone state
   const [isPlayingUser, setIsPlayingUser] = useState(false);
@@ -83,7 +86,11 @@ export default function FeedbackScreen() {
       setDisplayScore(Math.round(value));
     });
 
-    // Confetti khi điểm >= 90 (NAV-NF05 spec)
+    // Pháo hoa khi điểm >= 85, confetti thêm khi >= 90
+    if (feedback.overallScore >= 85) {
+      setShowFireworks(true);
+      setTimeout(() => setShowFireworks(false), 3500);
+    }
     if (feedback.overallScore >= 90) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3500);
@@ -283,12 +290,15 @@ export default function FeedbackScreen() {
       };
       saveSpeakingSession('practice', sessionData);
     }
+    // Đánh dấu session hoàn thành → bypass confirm popup trên PracticeScreen
+    setSessionCompleted(true);
     navigation.popToTop();
   };
 
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]}>
-      {/* Confetti Animation */}
+      {/* Hiệu ứng ăn mừng */}
+      <FireworksAnimation visible={showFireworks} />
       <ConfettiAnimation visible={showConfetti} />
 
       {/* Header — ← back + "Kết quả" */}
@@ -405,7 +415,7 @@ export default function FeedbackScreen() {
         {/* Câu tiếp theo / Hoàn thành */}
         <Pressable
           onPress={isLastSentence ? handleFinish : handleNext}
-          style={[styles.footerBtn, {backgroundColor: speakingColor, flex: 1.5}]}>
+          style={[styles.footerBtn, {backgroundColor: speakingColor}]}>
           <Icon
             name={isLastSentence ? 'CircleCheckBig' : 'ArrowRight'}
             className="w-4 h-4"
