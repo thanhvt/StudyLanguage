@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {AppText, Switch} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
-import Slider from '@react-native-community/slider';
+import {Slider} from '@/components/ui';
 import {useListeningStore} from '@/store/useListeningStore';
 import {listeningApi, type VoiceInfo, type MultiTalkerPair} from '@/services/api/listening';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -518,9 +518,6 @@ export default function TtsSettingsSheet({
                     step={1}
                     value={ttsPitch}
                     onValueChange={setTtsPitch}
-                    minimumTrackTintColor={LISTENING_BLUE}
-                    maximumTrackTintColor={colors.neutrals800}
-                    thumbTintColor={LISTENING_BLUE}
                   />
                 </View>
 
@@ -538,9 +535,6 @@ export default function TtsSettingsSheet({
                     step={1}
                     value={ttsRate}
                     onValueChange={setTtsRate}
-                    minimumTrackTintColor={LISTENING_BLUE}
-                    maximumTrackTintColor={colors.neutrals800}
-                    thumbTintColor={LISTENING_BLUE}
                   />
                 </View>
 

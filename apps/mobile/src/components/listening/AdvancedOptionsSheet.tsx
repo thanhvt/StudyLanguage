@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Modal, Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
-import Slider from '@react-native-community/slider';
+import {Slider} from '@/components/ui';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -714,9 +714,6 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
             maximumValue={20}
             step={5}
             onValueChange={setTtsPitch}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.neutrals800}
-            thumbTintColor={colors.primary}
             disabled={disabled}
           />
         </View>
@@ -739,9 +736,6 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
             maximumValue={20}
             step={5}
             onValueChange={setTtsRate}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.neutrals800}
-            thumbTintColor={colors.primary}
             disabled={disabled}
           />
         </View>
@@ -764,9 +758,6 @@ function TtsProsodySection({disabled}: {disabled?: boolean}) {
             maximumValue={100}
             step={10}
             onValueChange={setTtsVolume}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.neutrals800}
-            thumbTintColor={colors.primary}
             disabled={disabled}
           />
         </View>

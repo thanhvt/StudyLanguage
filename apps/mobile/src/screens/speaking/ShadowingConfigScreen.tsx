@@ -8,7 +8,7 @@ import {
   Keyboard,
   Animated as RNAnimated,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
+import {Slider} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
@@ -416,16 +416,14 @@ export default function ShadowingConfigScreen() {
               {config.delay.toFixed(1)}s
             </AppText>
             <Slider
-              style={{width: '100%', height: 40}}
               minimumValue={0}
               maximumValue={2.0}
               step={0.1}
               value={config.delay}
               onValueChange={val => setDelay(Math.round(val * 10) / 10)}
-              minimumTrackTintColor={speakingColor}
-              maximumTrackTintColor={colors.neutrals800}
-              thumbTintColor={speakingColor}
               disabled={isLoading}
+              fillClassName="bg-green-600"
+              thumbClassName="border-green-600"
             />
             <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
               <AppText style={{fontSize: 11, color: colors.neutrals400}} raw>0s</AppText>

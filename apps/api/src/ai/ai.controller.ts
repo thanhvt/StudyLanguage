@@ -130,6 +130,11 @@ class TextToSpeechDto {
   @IsString()
   @IsOptional()
   volume?: string;
+
+  /** Tốc độ đọc (0.5-2.0) — mobile gửi, server convert sang rate format Azure */
+  @IsNumber()
+  @IsOptional()
+  speed?: number;
 }
 
 /**
@@ -295,6 +300,11 @@ export class AiController {
   @Post('text-to-speech')
   @HttpCode(HttpStatus.OK)
   async textToSpeech(@Body() dto: TextToSpeechDto) {
+    // Chuyển speed (number 0.5-2.0) → rate format Azure ("+10%", "-25%")
+    const rate = dto.rate || (dto.speed && dto.speed !== 1
+      ? `${Math.round((dto.speed - 1) * 100)}%`
+      : undefined);
+
     // Nếu provider = azure → dùng TtsProviderService với word timestamps
     if (dto.provider === 'azure') {
       const result = await this.ttsProviderService.textToSpeechWithTimestamps(
@@ -306,7 +316,7 @@ export class AiController {
           randomVoice: dto.randomVoice,
           randomEmotion: dto.randomEmotion,
           pitch: dto.pitch,
-          rate: dto.rate,
+          rate,
           volume: dto.volume,
         },
       );

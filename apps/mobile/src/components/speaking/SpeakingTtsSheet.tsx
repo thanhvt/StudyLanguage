@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {Modal, Pressable, ScrollView, Switch, TouchableOpacity, View} from 'react-native';
-import Slider from '@react-native-community/slider';
+import {Slider} from '@/components/ui';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -300,15 +300,11 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                 0.5x
               </AppText>
               <Slider
-                style={{flex: 1, height: 40}}
                 minimumValue={0.5}
                 maximumValue={2.0}
                 step={0.1}
                 value={ttsSettings.speed}
                 onValueChange={(val: number) => setTtsSettings({speed: val})}
-                minimumTrackTintColor={accentColor}
-                maximumTrackTintColor={colors.neutrals400}
-                thumbTintColor={accentColor}
               />
               <AppText variant="caption" style={{color: colors.neutrals400}}>
                 2.0x
@@ -339,15 +335,11 @@ export default function SpeakingTtsSheet({visible, onClose}: SpeakingTtsSheetPro
                 Trầm{`\n`}-50%
               </AppText>
               <Slider
-                style={{flex: 1, height: 40}}
                 minimumValue={-50}
                 maximumValue={50}
                 step={5}
                 value={ttsSettings.pitch}
                 onValueChange={(val: number) => setTtsSettings({pitch: Math.round(val)})}
-                minimumTrackTintColor={accentColor}
-                maximumTrackTintColor={colors.neutrals400}
-                thumbTintColor={accentColor}
               />
               <AppText variant="caption" style={{color: colors.neutrals400, textAlign: 'right'}}>
                 Cao{`\n`}+50%
