@@ -59,22 +59,22 @@ export default function HeadphoneStatusCard({
         Animated.timing(flashAnim, {
           toValue: 0.6,
           duration: 150,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(flashAnim, {
           toValue: 1,
           duration: 150,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(flashAnim, {
           toValue: 0.7,
           duration: 120,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(flashAnim, {
           toValue: 1,
           duration: 120,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
 

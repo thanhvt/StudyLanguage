@@ -22,6 +22,14 @@ import {useShadowingStore} from '@/store/useShadowingStore';
 import type {ShadowingSpeed, ScoringMode} from '@/store/useShadowingStore';
 import {useHeadphoneDetection} from '@/hooks/useHeadphoneDetection';
 import {speakingApi} from '@/services/api/speaking';
+
+// Dynamic import RNFS (tránh crash nếu chưa install)
+let RNFSModule: any;
+try {
+  RNFSModule = require('react-native-fs');
+} catch {
+  console.warn('⚠️ [ShadowingConfig] react-native-fs chưa install');
+}
 import {useListeningStore} from '@/store/useListeningStore';
 import {useAppStore} from '@/store/useAppStore';
 import {TopicPickerModal} from '@/components/listening';
@@ -210,13 +218,17 @@ export default function ShadowingConfigScreen() {
         count: 8,
       });
 
-      // TTS cho câu đầu tiên
+      // TTS cho câu đầu tiên + ghi ra file tạm cho TrackPlayer
       if (sentences.length > 0 && !sentences[0].audioUrl) {
-        const audio = await speakingApi.generateShadowingTTS(
+        const base64Audio = await speakingApi.generateShadowingTTS(
           sentences[0].text,
           config.speed,
         );
-        sentences[0].audioUrl = audio;
+        // TrackPlayer cần file path, không nhận raw base64
+        const cacheDir = RNFSModule?.CachesDirectoryPath || '/tmp';
+        const filePath = `${cacheDir}/shadow_ai_0.mp3`;
+        await RNFSModule?.writeFile(filePath, base64Audio, 'base64');
+        sentences[0].audioUrl = filePath;
       }
 
       const shadowingSentences = sentences.map(s => ({

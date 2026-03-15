@@ -107,7 +107,7 @@ export default function ConversationScreen() {
 
   // Local UI state
   const [textInput, setTextInput] = useState('');
-  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+
   const [playingAudioUrl, setPlayingAudioUrl] = useState<string | null>(null);
 
   // Optional modules (audio playback)
@@ -130,38 +130,52 @@ export default function ConversationScreen() {
   // ===========================
   // Khởi tạo conversation
   // ===========================
+  const sessionInitializedRef = useRef(false);
+
   useEffect(() => {
+    // Reset refs cho session mới — tránh state cũ từ session trước
+    endingRef.current = false;
+    sessionInitializedRef.current = false;
+
     if (!setup) {
       console.error('❌ [Conversation] Không có setup, quay về');
       navigation.goBack();
       return;
     }
 
-    if (!session?.isActive) {
-      startConversation();
+    // Luôn gọi startConversation để reset session state cho session mới
+    startConversation();
+    sessionInitializedRef.current = true;
 
-      // Greeting message
-      const greetingText = mode === 'roleplay' && setup.persona
-        ? setup.persona.greeting
-        : `Chào bạn! Hãy cùng trò chuyện về "${setup.topicName}" nhé. Bạn muốn bắt đầu về chủ đề gì?`;
+    // Greeting message
+    const greetingText = mode === 'roleplay' && setup.persona
+      ? setup.persona.greeting
+      : `Chào bạn! Hãy cùng trò chuyện về "${setup.topicName}" nhé. Bạn muốn bắt đầu về chủ đề gì?`;
 
-      setTimeout(() => {
-        addConversationMessage({
-          id: `ai-greeting-${Date.now()}`,
-          role: 'ai',
-          text: greetingText,
-          timestamp: Date.now(),
-        });
-      }, 500);
-    }
+    setTimeout(() => {
+      addConversationMessage({
+        id: `ai-greeting-${Date.now()}`,
+        role: 'ai',
+        text: greetingText,
+        timestamp: Date.now(),
+      });
+    }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ===========================
   // Auto-end khi store deactivate (turns/shouldEnd)
+  // Guard: chỉ auto-end nếu session đã được khởi tạo trong lần mount này
+  // và có ít nhất 1 user message (tránh stale state từ session trước)
   // ===========================
   useEffect(() => {
-    if (session && !session.isActive && messages.length > 0 && !endingRef.current) {
+    if (
+      sessionInitializedRef.current &&
+      session &&
+      !session.isActive &&
+      messages.some(m => m.role === 'user') &&
+      !endingRef.current
+    ) {
       endingRef.current = true;
       handleEndAndNavigate();
     }
@@ -295,7 +309,7 @@ export default function ConversationScreen() {
    */
   const handleReSpeak = useCallback(async (_word: string) => {
     // Tự động bắt đầu recording
-    setInputMode('voice');
+
     await recorderActions.startRecording();
   }, [recorderActions]);
 
@@ -459,17 +473,7 @@ export default function ConversationScreen() {
             returnKeyType="send"
           />
 
-          {/* Keyboard/Mic toggle */}
-          <TouchableOpacity
-            style={styles.toggleBtn}
-            onPress={() => setInputMode(prev => prev === 'voice' ? 'text' : 'voice')}
-            activeOpacity={0.7}>
-            <Icon
-              name={inputMode === 'voice' ? 'Keyboard' : 'Mic'}
-              className="w-5 h-5"
-              style={{color: colors.neutrals400}}
-            />
-          </TouchableOpacity>
+
 
           {/* Send / Mic button */}
           {textInput.trim() ? (
@@ -561,13 +565,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     fontSize: 15,
   },
-  toggleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   sendBtn: {
     width: 44,
     height: 44,

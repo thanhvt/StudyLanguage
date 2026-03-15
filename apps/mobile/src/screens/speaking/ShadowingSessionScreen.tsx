@@ -25,6 +25,27 @@ import {
   SentenceHighlightCard,
 } from '@/components/speaking';
 
+// Dynamic import RNFS (tránh crash nếu chưa install)
+let RNFSModule: any;
+try {
+  RNFSModule = require('react-native-fs');
+} catch {
+  console.warn('⚠️ [ShadowingSession] react-native-fs chưa install');
+}
+
+/**
+ * Mục đích: Ghi base64 audio ra file tạm để TrackPlayer phát được
+ * Tham số đầu vào: base64 (string), sentenceIndex (number)
+ * Tham số đầu ra: file path (string)
+ * Khi nào sử dụng: Sau khi TTS trả về base64, trước khi gọi TrackPlayer.playAI
+ */
+async function saveBase64ToFile(base64: string, sentenceIndex: number): Promise<string> {
+  const cacheDir = RNFSModule?.CachesDirectoryPath || '/tmp';
+  const path = `${cacheDir}/shadow_ai_${sentenceIndex}.mp3`;
+  await RNFSModule?.writeFile(path, base64, 'base64');
+  return path;
+}
+
 // =======================
 // Constants
 // =======================
@@ -254,10 +275,12 @@ export default function ShadowingSessionScreen() {
       // Generate TTS nếu chưa có audioUrl (Fix B1: immutable update)
       let audioUrl = currentSentence.audioUrl;
       if (!audioUrl) {
-        audioUrl = await speakingApi.generateShadowingTTS(
+        const base64 = await speakingApi.generateShadowingTTS(
           currentSentence.text,
           config.speed,
         );
+        // Ghi base64 ra file tạm — TrackPlayer cần file URL, không nhận raw base64
+        audioUrl = await saveBase64ToFile(base64, session.currentIndex);
         updateSentenceAudioUrl(session.currentIndex, audioUrl);
       }
 
@@ -352,10 +375,12 @@ export default function ShadowingSessionScreen() {
       // Generate TTS nếu cần (Fix B2: immutable update)
       let audioUrl = currentSentence.audioUrl;
       if (!audioUrl) {
-        audioUrl = await speakingApi.generateShadowingTTS(
+        const base64 = await speakingApi.generateShadowingTTS(
           currentSentence.text,
           config.speed,
         );
+        // Ghi base64 ra file tạm — TrackPlayer cần file URL
+        audioUrl = await saveBase64ToFile(base64, session.currentIndex);
         updateSentenceAudioUrl(session.currentIndex, audioUrl);
       }
 

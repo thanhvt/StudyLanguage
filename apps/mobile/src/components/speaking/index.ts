@@ -24,7 +24,6 @@ export {default as CalendarHeatmap} from './CalendarHeatmap';
 export {default as BadgeGrid} from './BadgeGrid';
 export {default as DailyGoalCard} from './DailyGoalCard';
 export {default as WeakSoundsCard} from './WeakSoundsCard';
-export {default as ShareResultCard} from './ShareResultCard';
 export {default as OnboardingOverlay} from './OnboardingOverlay';
 export {default as SpeakingTtsSheet} from './SpeakingTtsSheet';
 export {default as VoiceCloneReplay} from './VoiceCloneReplay';

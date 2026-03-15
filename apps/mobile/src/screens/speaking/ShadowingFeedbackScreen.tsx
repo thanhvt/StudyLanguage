@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Share,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -182,23 +181,7 @@ export default function ShadowingFeedbackScreen() {
     }
   }, [haptic, isLastSentence, nextSentence, navigation]);
 
-  /**
-   * Mục đích: Share kết quả shadow (SHD-10 Share requirement)
-   * Tham số đầu vào: không
-   * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn 📤 Share
-   */
-  const handleShare = useCallback(async () => {
-    if (!scoreData) return;
-    haptic.light();
-    const grade = calculateGrade(scoreData.overall);
-    const text = `🔊 Shadowing Result\n\n📊 Overall: ${scoreData.overall}/100 (${grade})\n🎵 Rhythm: ${scoreData.rhythm}/100\n🎶 Intonation: ${scoreData.intonation}/100\n🎯 Accuracy: ${scoreData.accuracy}/100\n\n"${currentSentence?.text || ''}"`;
-    try {
-      await Share.share({message: text});
-    } catch (err) {
-      console.error('❌ [Feedback] Lỗi share:', err);
-    }
-  }, [scoreData, currentSentence, haptic]);
+
 
   if (!scoreData) {
     return (
@@ -441,13 +424,6 @@ export default function ShadowingFeedbackScreen() {
       {/* ===== Bottom Actions (mockup: Shadow lại + Câu tiếp) ===== */}
       <View style={[styles.actions, {borderTopColor: colors.glassDivider, backgroundColor: colors.background}]}>
         <View style={{flexDirection: 'row', flex: 1, gap: 10}}>
-          {/* Share */}
-          <TouchableOpacity
-            style={[styles.iconBtn, {borderColor: colors.glassBorderStrong}]}
-            onPress={handleShare}
-            activeOpacity={0.7}>
-            <Icon name="Share2" className="w-5 h-5" style={{color: colors.foreground}} />
-          </TouchableOpacity>
 
           {/* Shadow lại */}
           <TouchableOpacity
@@ -529,14 +505,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
   },
-  iconBtn: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   repeatBtn: {
     alignItems: 'center',
     justifyContent: 'center',

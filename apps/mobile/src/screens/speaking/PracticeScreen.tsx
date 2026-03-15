@@ -272,6 +272,38 @@ export default function PracticeScreen() {
   }, [stopRecording]);
 
   /**
+   * Mục đích: Chặn back navigation khi user có dữ liệu chưa lưu
+   * Tham số đầu vào: không (dùng beforeRemove event từ React Navigation)
+   * Tham số đầu ra: void (hiện Alert confirm hoặc cho thoát)
+   * Khi nào sử dụng:
+   *   User nhấn nút back hoặc swipe-back gesture trên iOS
+   *   Chỉ chặn khi có dữ liệu đáng mất: đang ghi âm, đã ghi âm, hoặc đã luyện qua >=1 câu
+   */
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      const hasUnsavedData = !!audioUri || currentIndex > 0 || isRecordingRef.current;
+      if (!hasUnsavedData) return; // Cho thoát bình thường
+
+      // Chặn navigation mặc định
+      e.preventDefault();
+
+      Alert.alert(
+        'Thoát luyện tập?',
+        'Tiến trình hiện tại sẽ không được lưu.',
+        [
+          {text: 'Tiếp tục luyện', style: 'cancel'},
+          {
+            text: 'Thoát',
+            style: 'destructive',
+            onPress: () => navigation.dispatch(e.data.action),
+          },
+        ],
+      );
+    });
+    return unsubscribe;
+  }, [navigation, audioUri, currentIndex]);
+
+  /**
    * Mục đích: Bắt đầu countdown trước khi ghi âm
    * Tham số đầu vào: không có
    * Tham số đầu ra: void
@@ -712,7 +744,10 @@ export default function PracticeScreen() {
         {/* ======================== */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              // Dùng goBack() — logic confirm đã được xử lý qua beforeRemove event
+              navigation.goBack();
+            }}
             hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
             accessibilityLabel="Quay lại"
             accessibilityRole="button">

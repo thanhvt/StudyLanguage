@@ -155,16 +155,7 @@ export default function SessionSummaryScreen() {
     navigation.navigate('SpeakingHome');
   }, [resetConversation, navigation]);
 
-  /**
-   * Mục đích: Chia sẻ kết quả
-   * Tham số đầu vào: không
-   * Tham số đầu ra: void
-   * Khi nào sử dụng: User nhấn "Chia sẻ"
-   */
-  const handleShare = useCallback(() => {
-    // TODO: Implement capture card → share sheet
-    console.log('📤 [SessionSummary] Chia sẻ kết quả');
-  }, []);
+
 
   // Fallback nếu summary chưa load (EC-09)
   if (!summary) {
@@ -329,13 +320,6 @@ export default function SessionSummaryScreen() {
       {/* Action Buttons — 3 buttons (UI-06) */}
       <View style={[styles.footer, {borderTopColor: colors.glassBorder, backgroundColor: colors.background}]}>
         <View style={styles.actionRow}>
-          <AppButton
-            variant="outline"
-            size="lg"
-            style={{flex: 1}}
-            onPress={handleShare}>
-            📤 Chia sẻ
-          </AppButton>
           <AppButton
             variant="outline"
             size="lg"

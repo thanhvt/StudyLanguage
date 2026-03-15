@@ -26,19 +26,7 @@ try {
   // Bỏ qua
 }
 
-// Share utils
-let ViewShot: any;
-let ShareModule: any;
-try {
-  ViewShot = require('react-native-view-shot');
-} catch {
-  console.warn('⚠️ [Feedback] react-native-view-shot chưa install');
-}
-try {
-  ShareModule = require('react-native-share').default;
-} catch {
-  console.warn('⚠️ [Feedback] react-native-share chưa install');
-}
+
 
 /**
  * Mục đích: Hiển thị kết quả AI đánh giá phát âm — redesign v2
@@ -79,8 +67,7 @@ export default function FeedbackScreen() {
   // BUG-H04 FIX: Track thời gian session
   const sessionStartRef = useRef(Date.now());
 
-  // Share ref
-  const viewShotRef = useRef<any>(null);
+
 
   useEffect(() => {
     if (!feedback) return;
@@ -277,30 +264,7 @@ export default function FeedbackScreen() {
     navigation.goBack();
   };
 
-  /**
-   * Mục đích: Chia sẻ kết quả dưới dạng ảnh
-   * Khi nào sử dụng: User nhấn Share
-   */
-  const handleShare = async () => {
-    try {
-      if (!ViewShot?.captureRef || !viewShotRef.current) return;
-      const uri = await ViewShot.captureRef(viewShotRef.current, {
-        format: 'png',
-        quality: 0.9,
-      });
-      if (ShareModule) {
-        await ShareModule.open({
-          url: `file://${uri}`,
-          type: 'image/png',
-          title: `Điểm phát âm: ${feedback.overallScore}/100`,
-        });
-      }
-    } catch (err: any) {
-      if (err?.message !== 'User did not share') {
-        console.error('❌ [Feedback] Lỗi share:', err);
-      }
-    }
-  };
+
 
   const handleFinish = () => {
     // PRC-15: Auto-save vào history (fire-and-forget)
@@ -344,7 +308,7 @@ export default function FeedbackScreen() {
         contentContainerStyle={{paddingBottom: 24}}
       >
         {/* Score Card — ScoreRing + Grade badge + Câu x/y */}
-        <View ref={viewShotRef} collapsable={false}>
+        <View>
           <View style={styles.scoreCard}>
             <ScoreRing
               value={displayScore}
@@ -390,11 +354,6 @@ export default function FeedbackScreen() {
             <AppText style={{fontSize: 15, fontWeight: '600', color: colors.foreground}} raw>
               AI Voice Clone
             </AppText>
-            <Pressable onPress={handleShare} hitSlop={8}>
-              <AppText style={{fontSize: 13, color: speakingColor}} raw>
-                Share
-              </AppText>
-            </Pressable>
           </View>
 
           {/* 2 nút cạnh nhau */}
@@ -455,13 +414,6 @@ export default function FeedbackScreen() {
           <AppText style={{fontSize: 14, fontWeight: '600', color: '#fff', marginLeft: 6}}>
             {isLastSentence ? 'Hoàn thành' : 'Câu tiếp theo'}
           </AppText>
-        </Pressable>
-
-        {/* Share */}
-        <Pressable
-          onPress={handleShare}
-          style={[styles.shareBtn, {borderWidth: 1, borderColor: colors.neutrals600}]}>
-          <Icon name="Share2" className="w-5 h-5" style={{color: colors.foreground}} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -552,11 +504,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  shareBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
 });
