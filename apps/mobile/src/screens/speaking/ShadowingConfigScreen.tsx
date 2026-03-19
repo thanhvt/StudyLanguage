@@ -7,6 +7,7 @@ import {
   Platform,
   Keyboard,
   Animated as RNAnimated,
+  Alert,
 } from 'react-native';
 import {Slider} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
@@ -44,6 +45,8 @@ import {
   type TopicScenario,
 } from '@/data/topic-data';
 import {isLiquidGlassSupported} from '@/utils/LiquidGlass';
+import {enhanceApi} from '@/services/api/enhance';
+import {canEnhanceToday, incrementEnhanceCount} from '@/utils/enhanceRateLimit';
 
 // =======================
 // Màu sắc Speaking-specific (Green identity)
@@ -110,6 +113,7 @@ export default function ShadowingConfigScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   // Keyboard tracking — ẩn sticky footer khi mở keyboard
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -180,6 +184,35 @@ export default function ShadowingConfigScreen() {
     if (text.trim() && selectedTopic) setSelectedTopic(null);
     if (text.trim()) setTopic({id: 'custom', name: text.trim(), description: ''});
   }, [selectedTopic, setSelectedTopic, setTopic]);
+
+  /**
+   * Mục đích: Gọi AI mở rộng keyword ngắn thành scenario 12-16 từ
+   * Tham số đầu vào: không (đọc topicInput từ state)
+   * Tham số đầu ra: void (cập nhật topicInput với kết quả)
+   * Khi nào sử dụng: TopicSelector → user bấm nút ✨ → onEnhanceScenario
+   */
+  const handleEnhanceScenario = useCallback(async () => {
+    if (!topicInput.trim() || isEnhancing) return;
+    const allowed = await canEnhanceToday();
+    if (!allowed) {
+      Alert.alert('Giới hạn', 'Bạn đã dùng hết 10 lần enhance hôm nay. Hãy thử lại vào ngày mai nhé!');
+      return;
+    }
+    setIsEnhancing(true);
+    try {
+      const enhanced = await enhanceApi.enhanceScenario(topicInput.trim(), 'shadowing');
+      setTopicInput(enhanced);
+      if (selectedTopic) setSelectedTopic(null);
+      setTopic({id: 'custom', name: enhanced, description: ''});
+      await incrementEnhanceCount();
+      haptic.success();
+    } catch (err) {
+      console.error('❌ [Enhance] Lỗi enhance scenario:', err);
+      haptic.error();
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [topicInput, isEnhancing, selectedTopic, setSelectedTopic, setTopic, haptic]);
 
   /**
    * Mục đích: Logic bắt đầu Shadowing (validate + generate + navigate)
@@ -384,6 +417,8 @@ export default function ShadowingConfigScreen() {
               onTopicInputChange={handleTopicInputChange}
               onToggleFavorite={toggleFavorite}
               onOpenTopicModal={() => setShowTopicModal(true)}
+              onEnhanceScenario={handleEnhanceScenario}
+              isEnhancing={isEnhancing}
             />
           </SectionCard>
         </View>

@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {View, ScrollView, TouchableOpacity, TextInput} from 'react-native';
+import {View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Pressable} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
 import {useColors} from '@/hooks/useColors';
@@ -69,6 +69,12 @@ export interface TopicSelectorProps {
   onOpenTopicModal: () => void;
   /** Custom action cho nút Plus (mặc định: setCategory('custom') + openModal) */
   onPlusPress?: () => void;
+
+  // === Enhance Scenario ===
+  /** Callback khi user bấm nút ✨ enhance scenario */
+  onEnhanceScenario?: () => void;
+  /** Trạng thái đang enhance (hiện loading indicator thay icon) */
+  isEnhancing?: boolean;
 }
 
 // =======================
@@ -110,6 +116,8 @@ export default function TopicSelector({
   onToggleFavorite,
   onOpenTopicModal,
   onPlusPress,
+  onEnhanceScenario,
+  isEnhancing = false,
 }: TopicSelectorProps) {
   const colors = useColors();
   const haptic = useHaptic();
@@ -471,25 +479,51 @@ export default function TopicSelector({
         <View className="flex-1 h-[1px]" style={{backgroundColor: colors.border}} />
       </View>
 
-      {/* Free text input */}
-      <TextInput
-        className="rounded-xl px-4 py-3 text-[15px]"
-        style={{
-          color: colors.foreground,
-          backgroundColor: colors.neutrals900,
-          borderWidth: 1,
-          borderColor: colors.neutrals800,
-        }}
-        placeholder={inputPlaceholder}
-        placeholderTextColor={colors.neutrals400}
-        value={topicInput}
-        onChangeText={onTopicInputChange}
-        returnKeyType="done"
-        editable={inputEditable}
-        autoCapitalize="none"
-        autoCorrect={false}
-        accessibilityLabel={inputAccessibilityLabel}
-      />
+      {/* Free text input + Enhance button */}
+      <View className="flex-row items-center gap-2">
+        <TextInput
+          className="flex-1 rounded-xl px-4 py-3 text-[15px]"
+          style={{
+            color: colors.foreground,
+            backgroundColor: colors.neutrals900,
+            borderWidth: 1,
+            borderColor: colors.neutrals800,
+          }}
+          placeholder={inputPlaceholder}
+          placeholderTextColor={colors.neutrals400}
+          value={topicInput}
+          onChangeText={onTopicInputChange}
+          returnKeyType="done"
+          editable={inputEditable}
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel={inputAccessibilityLabel}
+        />
+
+        {/* Nút ✨ Enhance Scenario — chỉ hiện khi có text + callback */}
+        {onEnhanceScenario && topicInput.trim().length > 0 && (
+          <Pressable
+            onPress={onEnhanceScenario}
+            disabled={isEnhancing}
+            hitSlop={12}
+            className="w-10 h-10 rounded-xl items-center justify-center"
+            style={{
+              backgroundColor: isDark ? colors.neutrals900 : colors.neutrals100,
+              borderWidth: 1,
+              borderColor: isEnhancing ? colors.neutrals700 : accentColor,
+              opacity: isEnhancing ? 0.6 : 1,
+            }}
+            accessibilityLabel="Mở rộng kịch bản bằng AI"
+            accessibilityRole="button"
+          >
+            {isEnhancing ? (
+              <ActivityIndicator size="small" color={accentColor} />
+            ) : (
+              <Icon name="Sparkles" className="w-5 h-5" style={{color: accentColor}} />
+            )}
+          </Pressable>
+        )}
+      </View>
     </>
   );
 }

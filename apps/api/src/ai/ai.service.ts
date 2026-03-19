@@ -542,6 +542,69 @@ CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC.
   }
 
   /**
+   * Mở rộng keyword/cụm từ ngắn thành scenario đầy đủ 12-16 từ
+   *
+   * Mục đích: Giúp user không cần nghĩ scenario dài, chỉ cần gõ vài từ khoá
+   * Tham số đầu vào:
+   *   - shortInput: Keyword hoặc cụm từ ngắn (VD: "interview ui ux")
+   *   - context: Loại screen đang dùng (VD: "conversation_roleplay", "listening_podcast")
+   * Tham số đầu ra: { enhanced: string } — scenario đầy đủ 12-16 từ
+   * Khi nào sử dụng:
+   *   - TopicSelector → user nhập text ngắn → bấm nút ✨ Enhance
+   *   - Gọi từ POST /api/ai/enhance-scenario
+   */
+  async enhanceScenario(
+    shortInput: string,
+    context: string = 'general',
+  ): Promise<{ enhanced: string }> {
+    this.logger.log(`Đang enhance scenario: "${shortInput}" (context: ${context})`);
+
+    // Map context → hướng dẫn cụ thể cho AI
+    const contextGuides: Record<string, string> = {
+      speaking_practice: 'a pronunciation practice sentence or topic for English learners',
+      shadowing: 'a shadowing exercise topic (e.g., TED talk, news report, podcast episode)',
+      conversation_free_talk: 'a casual English conversation topic between friends or colleagues',
+      conversation_roleplay: 'a specific roleplay scenario with clear roles and setting',
+      listening_podcast: 'a podcast or radio show episode topic for English listening practice',
+      general: 'an English learning practice scenario',
+    };
+
+    const guide = contextGuides[context] || contextGuides.general;
+
+    const prompt = `Expand the following short keyword(s) into a single, specific, descriptive English scenario sentence.
+
+Keywords: "${shortInput}"
+Context: ${guide}
+
+Rules:
+- Output MUST be exactly 12-16 words
+- Output MUST be in English
+- Be specific and vivid (include setting, people, situation)
+- Do NOT use generic phrases like "practice English" or "improve skills"
+- Output ONLY the scenario sentence, nothing else
+
+Example:
+- Input: "coffee" → "Ordering different types of specialty coffee at a cozy downtown café"
+- Input: "interview ui ux" → "Job interview for a Senior UI/UX Designer position at a tech startup"
+- Input: "travel japan" → "Planning a two-week backpacking trip through Tokyo, Kyoto, and Osaka"`;
+
+    const result = await this.generateText(
+      prompt,
+      'You are a creative scenario writer. Output ONLY the enhanced scenario sentence, no quotes, no explanation.',
+      150,
+    );
+
+    // Dọn dẹp output: bỏ dấu ngoặc kép, xuống dòng, khoảng trắng thừa
+    const enhanced = result
+      .replace(/^["'`]+|["'`]+$/g, '')
+      .replace(/\n/g, ' ')
+      .trim();
+
+    this.logger.log(`Enhance thành công: "${enhanced}"`);
+    return { enhanced };
+  }
+
+  /**
    * Helper: Repair JSON bị truncated (bị cắt giữa chừng)
    *
    * Mục đích: Khi OpenAI response bị cắt, JSON không đóng đúng

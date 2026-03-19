@@ -240,6 +240,23 @@ class ContinueConversationDto {
 }
 
 /**
+ * DTO cho request enhance scenario
+ *
+ * Mục đích: Validate input POST /ai/enhance-scenario
+ * Tham số: shortInput (bắt buộc), context (tùy chọn)
+ * Khi nào sử dụng: TopicSelector → user bấm nút ✨ Enhance
+ */
+class EnhanceScenarioDto {
+  @IsString()
+  @IsNotEmpty()
+  shortInput: string;
+
+  @IsString()
+  @IsOptional()
+  context?: string;
+}
+
+/**
  * AI Controller - API endpoints cho AI features
  *
  * Mục đích: Expose các AI services qua REST API
@@ -455,6 +472,22 @@ export class AiController {
       dto.conversationHistory,
       dto.userInput,
       dto.topic,
+    );
+  }
+
+  /**
+   * POST /api/ai/enhance-scenario
+   *
+   * Mục đích: Mở rộng keyword ngắn thành scenario đầy đủ 12-16 từ
+   * Body: { shortInput, context? }
+   * Trả về: { enhanced: "..." }
+   */
+  @Post('enhance-scenario')
+  @HttpCode(HttpStatus.OK)
+  async enhanceScenario(@Body() dto: EnhanceScenarioDto) {
+    return this.aiService.enhanceScenario(
+      dto.shortInput,
+      dto.context,
     );
   }
 

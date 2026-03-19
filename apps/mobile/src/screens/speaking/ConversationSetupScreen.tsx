@@ -9,6 +9,7 @@ import {
   Animated as RNAnimated,
   LayoutAnimation,
   UIManager,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -33,6 +34,8 @@ import {
   type TopicScenario,
 } from '@/data/topic-data';
 import {isLiquidGlassSupported, LiquidGlassView} from '@/utils/LiquidGlass';
+import {enhanceApi} from '@/services/api/enhance';
+import {canEnhanceToday, incrementEnhanceCount} from '@/utils/enhanceRateLimit';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 
@@ -121,6 +124,7 @@ export default function ConversationSetupScreen() {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   // Keyboard tracking — ẩn sticky footer khi mở keyboard
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -277,6 +281,35 @@ export default function ConversationSetupScreen() {
     setTopicInput(text);
     if (text.trim() && selectedTopic) setSelectedTopic(null);
   }, [selectedTopic, setSelectedTopic]);
+
+  /**
+   * Mục đích: Gọi AI mở rộng keyword ngắn thành scenario 12-16 từ
+   * Tham số đầu vào: không (đọc topicInput từ state)
+   * Tham số đầu ra: void (cập nhật topicInput với kết quả)
+   * Khi nào sử dụng: TopicSelector → user bấm nút ✨ → onEnhanceScenario
+   */
+  const handleEnhanceScenario = useCallback(async () => {
+    if (!topicInput.trim() || isEnhancing) return;
+    const allowed = await canEnhanceToday();
+    if (!allowed) {
+      Alert.alert('Giới hạn', 'Bạn đã dùng hết 10 lần enhance hôm nay. Hãy thử lại vào ngày mai nhé!');
+      return;
+    }
+    setIsEnhancing(true);
+    try {
+      const context = mode === 'roleplay' ? 'conversation_roleplay' : 'conversation_free_talk';
+      const enhanced = await enhanceApi.enhanceScenario(topicInput.trim(), context);
+      setTopicInput(enhanced);
+      if (selectedTopic) setSelectedTopic(null);
+      await incrementEnhanceCount();
+      haptic.success();
+    } catch (err) {
+      console.error('❌ [Enhance] Lỗi enhance scenario:', err);
+      haptic.error();
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [topicInput, isEnhancing, mode, selectedTopic, setSelectedTopic, haptic]);
 
   /**
    * Mục đích: Bắt đầu conversation session
@@ -474,6 +507,8 @@ export default function ConversationSetupScreen() {
               onTopicInputChange={handleTopicInputChange}
               onToggleFavorite={toggleFavorite}
               onOpenTopicModal={() => setShowTopicModal(true)}
+              onEnhanceScenario={handleEnhanceScenario}
+              isEnhancing={isEnhancing}
             />
           </SectionCard>
         </View>

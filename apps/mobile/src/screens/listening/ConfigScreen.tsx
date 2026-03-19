@@ -40,6 +40,8 @@ import TtsSettingsSheet from '@/components/listening/TtsSettingsSheet';
 import GeneratingScreen from '@/components/listening/GeneratingScreen';
 import NowPlayingBar from '@/components/listening/NowPlayingBar';
 import {LiquidGlassView, isLiquidGlassSupported} from '@/utils/LiquidGlass';
+import {enhanceApi} from '@/services/api/enhance';
+import {canEnhanceToday, incrementEnhanceCount} from '@/utils/enhanceRateLimit';
 
 // ========================
 // Màu sắc Listening-specific (Blue + Orange identity)
@@ -112,6 +114,7 @@ export default function ListeningConfigScreen({
   const [showTtsSettings, setShowTtsSettings] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
   const [activeSpeaker, setActiveSpeaker] = useState<string | undefined>();
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   // T-01: Radio playlist history state
   const [radioPlaylists, setRadioPlaylists] = useState<PlaylistSummary[]>([]);
@@ -380,6 +383,34 @@ export default function ListeningConfigScreen({
     doGenerate(topic);
   }, [mode, getFinalTopic, haptic, showWarning, showConfirm, lastSession, doGenerate, navigation]);
 
+  /**
+   * Mục đích: Gọi AI mở rộng keyword ngắn thành scenario 12-16 từ
+   * Tham số đầu vào: không (đọc topicInput từ state)
+   * Tham số đầu ra: void (cập nhật topicInput với kết quả)
+   * Khi nào sử dụng: TopicSelector → user bấm nút ✨ → onEnhanceScenario
+   */
+  const handleEnhanceScenario = useCallback(async () => {
+    if (!topicInput.trim() || isEnhancing) return;
+    const allowed = await canEnhanceToday();
+    if (!allowed) {
+      Alert.alert('Giới hạn', 'Bạn đã dùng hết 10 lần enhance hôm nay. Hãy thử lại vào ngày mai nhé!');
+      return;
+    }
+    setIsEnhancing(true);
+    try {
+      const enhanced = await enhanceApi.enhanceScenario(topicInput.trim(), 'listening_podcast');
+      setTopicInput(enhanced);
+      if (selectedTopic) setSelectedTopic(null);
+      await incrementEnhanceCount();
+      haptic.success();
+    } catch (err) {
+      console.error('❌ [Enhance] Lỗi enhance scenario:', err);
+      haptic.error();
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [topicInput, isEnhancing, selectedTopic, setSelectedTopic, haptic]);
+
   // Kiểm tra topic hợp lệ
   const hasValidTopic = !!selectedTopic || !!topicInput.trim();
   const canStart = mode === 'radio' || hasValidTopic;
@@ -572,6 +603,8 @@ export default function ListeningConfigScreen({
                 }}
                 onToggleFavorite={toggleFavorite}
                 onOpenTopicModal={() => setShowTopicModal(true)}
+                onEnhanceScenario={handleEnhanceScenario}
+                isEnhancing={isEnhancing}
                 onPlusPress={() => {
                   haptic.light();
                   navigation.navigate('CustomScenarios');
