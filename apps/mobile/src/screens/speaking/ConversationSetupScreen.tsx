@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useMemo, useRef} from 'react';
+import React, {useState, useCallback, useMemo, useRef, useEffect} from 'react';
 import {
   View,
   ScrollView,
@@ -7,6 +7,8 @@ import {
   Platform,
   Keyboard,
   Animated as RNAnimated,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -30,7 +32,7 @@ import {
   TOPIC_CATEGORIES,
   type TopicScenario,
 } from '@/data/topic-data';
-import {isLiquidGlassSupported} from '@/utils/LiquidGlass';
+import {isLiquidGlassSupported, LiquidGlassView} from '@/utils/LiquidGlass';
 
 type NavProp = NativeStackNavigationProp<SpeakingStackParamList>;
 
@@ -44,11 +46,12 @@ const SPEAKING_GREEN = '#16A34A';
 // =======================
 
 const DURATIONS = [
-  {label: "3'", value: 3},
   {label: "5'", value: 5},
+  {label: "7'", value: 7},
   {label: "10'", value: 10},
   {label: "15'", value: 15},
   {label: "20'", value: 20},
+  {label: '∞', value: 0},
 ];
 
 const DIFFICULTIES = [
@@ -57,23 +60,22 @@ const DIFFICULTIES = [
   {label: 'Hard', value: 'hard' as const},
 ];
 
-const FEEDBACK_MODES = [
-  {
-    key: 'beginner' as const,
-    icon: '🌱',
-    label: 'Beginner',
-  },
-  {
-    key: 'intermediate' as const,
-    icon: '📊',
-    label: 'Intermediate',
-  },
-  {
-    key: 'advanced' as const,
-    icon: '🎯',
-    label: 'Advanced',
-  },
-];
+/**
+ * Mục đích: Derive feedbackMode từ difficulty — mapping 1:1
+ * Tham số đầu vào: difficulty ('easy' | 'medium' | 'hard')
+ * Tham số đầu ra: 'beginner' | 'intermediate' | 'advanced'
+ * Khi nào sử dụng: handleStart() — trước khi set conversationSetup
+ */
+const deriveFeedbackMode = (
+  difficulty: 'easy' | 'medium' | 'hard',
+): 'beginner' | 'intermediate' | 'advanced' => {
+  const mapping = {
+    easy: 'beginner' as const,
+    medium: 'intermediate' as const,
+    hard: 'advanced' as const,
+  };
+  return mapping[difficulty];
+};
 
 // =======================
 // Screen
@@ -115,9 +117,8 @@ export default function ConversationSetupScreen() {
 
   // Local state
   const [mode, setMode] = useState<'free-talk' | 'roleplay'>('free-talk');
-  const [durationIndex, setDurationIndex] = useState(1); // Mặc định 5 phút
+  const [durationIndex, setDurationIndex] = useState(0); // Mặc định 5 phút
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-  const [feedbackMode, setFeedbackMode] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
   const [topicInput, setTopicInput] = useState('');
   const [showTopicModal, setShowTopicModal] = useState(false);
 
@@ -180,8 +181,91 @@ export default function ConversationSetupScreen() {
    */
   const handleModeToggle = useCallback((newMode: 'free-talk' | 'roleplay') => {
     haptic.light();
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setMode(newMode);
   }, [haptic]);
+
+  /**
+   * Mục đích: Render nội dung bên trong segmented control
+   * Tham số đầu vào: không
+   * Tham số đầu ra: JSX.Element
+   * Khi nào sử dụng: Được gọi bởi cả LiquidGlassView và View fallback
+   */
+  const renderSegmentedButtons = useCallback(() => (
+    <View style={styles.segmentedInner}>
+      {/* Free Talk tab */}
+      <TouchableOpacity
+        style={[
+          styles.segmentedBtn,
+          mode === 'free-talk' && [
+            styles.segmentedBtnActive,
+            {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#FFFFFF',
+              ...(isDark ? {} : {
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.12,
+                shadowRadius: 6,
+                elevation: 3,
+              }),
+            },
+          ],
+        ]}
+        onPress={() => handleModeToggle('free-talk')}
+        activeOpacity={0.7}
+        accessibilityLabel="Chế độ Free Talk"
+        accessibilityRole="tab"
+        accessibilityState={{selected: mode === 'free-talk'}}>
+        <AppText
+          variant="body"
+          weight={mode === 'free-talk' ? 'bold' : 'semibold'}
+          style={{
+            color: mode === 'free-talk'
+              ? CONVERSATION_COLORS.freeTalk.dark
+              : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)',
+          }}
+          raw>
+          💬 Free Talk
+        </AppText>
+      </TouchableOpacity>
+
+      {/* Roleplay tab */}
+      <TouchableOpacity
+        style={[
+          styles.segmentedBtn,
+          mode === 'roleplay' && [
+            styles.segmentedBtnActive,
+            {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#FFFFFF',
+              ...(isDark ? {} : {
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.12,
+                shadowRadius: 6,
+                elevation: 3,
+              }),
+            },
+          ],
+        ]}
+        onPress={() => handleModeToggle('roleplay')}
+        activeOpacity={0.7}
+        accessibilityLabel="Chế độ Roleplay"
+        accessibilityRole="tab"
+        accessibilityState={{selected: mode === 'roleplay'}}>
+        <AppText
+          variant="body"
+          weight={mode === 'roleplay' ? 'bold' : 'semibold'}
+          style={{
+            color: mode === 'roleplay'
+              ? CONVERSATION_COLORS.roleplay.dark
+              : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)',
+          }}
+          raw>
+          🎭 Roleplay
+        </AppText>
+      </TouchableOpacity>
+    </View>
+  ), [mode, isDark, handleModeToggle]);
 
   /**
    * Mục đích: Xử lý thay đổi text input — xoá selectedTopic nếu có text
@@ -206,12 +290,15 @@ export default function ConversationSetupScreen() {
     const topicName = selectedTopic?.name || topicInput.trim();
     const topicId = selectedTopic?.id || null;
 
+    // Tự động derive feedbackMode từ difficulty
+    const feedbackMode = deriveFeedbackMode(difficulty);
+
     console.log('💬 [ConversationSetup] Bắt đầu session:', {
       mode,
       topicId,
       topicName,
       duration: mode === 'free-talk' ? DURATIONS[durationIndex].value : undefined,
-      difficulty: mode === 'roleplay' ? difficulty : undefined,
+      difficulty,
       feedbackMode,
     });
 
@@ -227,7 +314,10 @@ export default function ConversationSetupScreen() {
         : null,
       difficulty,
       durationMinutes: DURATIONS[durationIndex].value,
-      maxTurns: 8,
+      // Cải thiện 3: maxTurns dynamic — liên kết với duration
+      maxTurns: DURATIONS[durationIndex].value === 0
+        ? 999                                      // Unlimited → không giới hạn turns
+        : DURATIONS[durationIndex].value * 2,       // 5 phút → 10 turns, 10 phút → 20 turns
       feedbackMode,
       options: {
         showSuggestions: feedbackMode === 'beginner' && mode === 'free-talk',
@@ -239,7 +329,7 @@ export default function ConversationSetupScreen() {
     navigation.navigate('ConversationSession');
   }, [
     mode, hasValidTopic, selectedTopic, topicInput,
-    durationIndex, difficulty, feedbackMode, navigation, setConversationSetup,
+    durationIndex, difficulty, navigation, setConversationSetup,
   ]);
 
   return (
@@ -343,48 +433,25 @@ export default function ConversationSetupScreen() {
           </View>
         </View>
 
-        {/* Mode Toggle */}
+        {/* Mode Toggle — iOS Segmented Control style */}
         <View className="px-6 mb-4">
-          <View style={styles.modeToggle}>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                mode === 'free-talk' && {backgroundColor: `${CONVERSATION_COLORS.freeTalk.dark}20`, borderColor: CONVERSATION_COLORS.freeTalk.dark},
-              ]}
-              onPress={() => handleModeToggle('free-talk')}
-              activeOpacity={0.7}>
-              <AppText
-                variant="body"
-                weight={mode === 'free-talk' ? 'bold' : 'medium'}
-                style={{color: mode === 'free-talk' ? CONVERSATION_COLORS.freeTalk.dark : colors.neutrals400}}
-                raw>
-                💬 Free Talk
-              </AppText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                mode === 'roleplay' && {backgroundColor: `${CONVERSATION_COLORS.roleplay.dark}20`, borderColor: CONVERSATION_COLORS.roleplay.dark},
-              ]}
-              onPress={() => handleModeToggle('roleplay')}
-              activeOpacity={0.7}>
-              <AppText
-                variant="body"
-                weight={mode === 'roleplay' ? 'bold' : 'medium'}
-                style={{color: mode === 'roleplay' ? CONVERSATION_COLORS.roleplay.dark : colors.neutrals400}}
-                raw>
-                🎭 Roleplay
-              </AppText>
-              {mode === 'roleplay' && (
-                <View style={[styles.activeBadge, {backgroundColor: CONVERSATION_COLORS.roleplay.dark}]}>
-                  <AppText variant="caption" weight="bold" style={{color: '#000', fontSize: 9}} raw>
-                    ACTIVE
-                  </AppText>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Container: Glass trên iOS 26, solid fallback */}
+          {isLiquidGlassSupported ? (
+            <LiquidGlassView
+              effect="regular"
+              style={styles.segmentedContainer}>
+              {renderSegmentedButtons()}
+            </LiquidGlassView>
+          ) : (
+            <View style={[
+              styles.segmentedContainer,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              },
+            ]}>
+              {renderSegmentedButtons()}
+            </View>
+          )}
         </View>
 
         {/* Section 2: Chủ đề — dùng TopicSelector dùng chung */}
@@ -411,69 +478,54 @@ export default function ConversationSetupScreen() {
           </SectionCard>
         </View>
 
-        {/* Section 3: Duration (Free Talk) / Difficulty (Roleplay) */}
-        <View className="px-6 mb-4">
-          <SectionCard>
-            {mode === 'free-talk' ? (
-              <>
-                <AppText style={styles.sectionLabel}>Thời lượng</AppText>
-                <View style={styles.optionRow}>
-                  {DURATIONS.map((d, i) => (
-                    <TouchableOpacity
-                      key={d.value}
-                      style={[styles.optionPill, {backgroundColor: i === durationIndex ? accentColor : 'transparent', borderColor: i === durationIndex ? accentColor : colors.neutrals800}]}
-                      onPress={() => { haptic.light(); setDurationIndex(i); }}
-                      activeOpacity={0.7}>
-                      <AppText style={{fontSize: 15, fontWeight: i === durationIndex ? '700' : '500', color: i === durationIndex ? '#FFFFFF' : colors.foreground}}>{d.label}</AppText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            ) : (
-              <>
-                <AppText style={styles.sectionLabel}>Mức độ khó</AppText>
-                <View style={styles.optionRow}>
-                  {DIFFICULTIES.map(d => (
-                    <TouchableOpacity
-                      key={d.value}
-                      style={[styles.optionPill, {flex: 1, backgroundColor: d.value === difficulty ? accentColor : 'transparent', borderColor: d.value === difficulty ? accentColor : colors.neutrals800}]}
-                      onPress={() => { haptic.light(); setDifficulty(d.value); }}
-                      activeOpacity={0.7}>
-                      <AppText style={{fontSize: 15, fontWeight: d.value === difficulty ? '700' : '500', color: d.value === difficulty ? '#FFFFFF' : colors.foreground}}>{d.label}</AppText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-          </SectionCard>
-        </View>
+        {/* Section 3: Duration (Free Talk only) */}
+        {mode === 'free-talk' && (
+          <View className="px-6 mb-4">
+            <SectionCard>
+              <AppText style={styles.sectionLabel}>Thời lượng</AppText>
+              {/* Cải thiện 5: Tooltip gợi ý */}
+              <AppText style={{fontSize: 11, color: colors.neutrals400, marginBottom: 10, marginTop: -4}}>💡 Gợi ý: 5-10 phút cho luyện tập hàng ngày</AppText>
+              <View style={styles.optionRow}>
+                {DURATIONS.map((d, i) => (
+                  <TouchableOpacity
+                    key={d.value}
+                    style={[styles.optionPill, {
+                      backgroundColor: i === durationIndex ? accentColor : 'transparent',
+                      borderColor: i === durationIndex ? accentColor : colors.neutrals800,
+                      ...(d.value === 0 ? {paddingHorizontal: 14} : {}),
+                    }]}
+                    onPress={() => { haptic.light(); setDurationIndex(i); }}
+                    activeOpacity={0.7}>
+                    <AppText style={{
+                      fontSize: d.value === 0 ? 18 : 15,
+                      fontWeight: i === durationIndex ? '700' : '500',
+                      color: i === durationIndex ? '#FFFFFF' : colors.foreground,
+                    }}>{d.label}</AppText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </SectionCard>
+          </View>
+        )}
 
-        {/* Section 4: Feedback Mode */}
+        {/* Section 4: Mức độ — thống nhất cho cả Free Talk & Roleplay */}
         <View className="px-6 mb-6">
           <SectionCard>
-            <AppText style={styles.sectionLabel}>Mức phản hồi</AppText>
-            <View style={styles.feedbackRow}>
-              {FEEDBACK_MODES.map(fm => (
+            <AppText style={styles.sectionLabel}>Mức độ</AppText>
+            <AppText
+              variant="caption"
+              style={{color: colors.neutrals400, marginBottom: 10, marginTop: -4}}
+              raw>
+              Ảnh hưởng đến độ khó ngôn ngữ và mức hỗ trợ từ AI
+            </AppText>
+            <View style={styles.optionRow}>
+              {DIFFICULTIES.map(d => (
                 <TouchableOpacity
-                  key={fm.key}
-                  style={[
-                    styles.feedbackCard,
-                    {
-                      backgroundColor: fm.key === feedbackMode ? `${accentColor}15` : colors.neutrals900,
-                      borderColor: fm.key === feedbackMode ? accentColor : colors.border,
-                      borderWidth: fm.key === feedbackMode ? 1.5 : 1,
-                    },
-                  ]}
-                  onPress={() => { haptic.light(); setFeedbackMode(fm.key); }}
+                  key={d.value}
+                  style={[styles.optionPill, {flex: 1, backgroundColor: d.value === difficulty ? accentColor : 'transparent', borderColor: d.value === difficulty ? accentColor : colors.neutrals800}]}
+                  onPress={() => { haptic.light(); setDifficulty(d.value); }}
                   activeOpacity={0.7}>
-                  <AppText style={{fontSize: 24, marginBottom: 4}} raw>{fm.icon}</AppText>
-                  <AppText
-                    variant="bodySmall"
-                    weight={fm.key === feedbackMode ? 'bold' : 'medium'}
-                    style={{color: fm.key === feedbackMode ? accentColor : colors.foreground}}
-                    raw>
-                    {fm.label}
-                  </AppText>
+                  <AppText style={{fontSize: 15, fontWeight: d.value === difficulty ? '700' : '500', color: d.value === difficulty ? '#FFFFFF' : colors.foreground}}>{d.label}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -566,14 +618,29 @@ export default function ConversationSetupScreen() {
 
 const styles = StyleSheet.create({
   // Mode toggle
-  modeToggle: {flexDirection: 'row', gap: 10},
-  modeBtn: {flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: 'transparent'},
-  activeBadge: {marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6},
+  // Segmented Control — kiểu iOS native
+  segmentedContainer: {
+    borderRadius: 14,
+    padding: 3,
+    overflow: 'hidden',
+  },
+  segmentedInner: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  segmentedBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedBtnActive: {
+    // Nền + shadow được set động theo isDark
+  },
   // Options
   sectionLabel: {fontSize: 11, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8},
   optionRow: {flexDirection: 'row', gap: 8},
   optionPill: {paddingVertical: 10, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1, alignItems: 'center'},
-  // Feedback
-  feedbackRow: {flexDirection: 'row', gap: 10},
-  feedbackCard: {flex: 1, paddingVertical: 16, paddingHorizontal: 12, borderRadius: 16, alignItems: 'center'},
 });

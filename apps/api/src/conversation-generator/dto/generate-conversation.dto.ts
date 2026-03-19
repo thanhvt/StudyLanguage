@@ -210,7 +210,7 @@ export class ContinueConversationDto {
   persona?: { name: string; role: string; systemPrompt: string };
 
   @ApiPropertyOptional({
-    description: 'Độ khó (Roleplay only)',
+    description: 'Độ khó ngôn ngữ (áp dụng cho cả Free Talk & Roleplay)',
     enum: ['easy', 'medium', 'hard'],
   })
   @IsOptional()

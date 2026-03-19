@@ -128,10 +128,10 @@ export default function ProgressDashboardScreen({navigation}: any) {
         ]);
         setCalendarData(progressRes.calendarHeatmap ?? []);
         setWeakSounds(progressRes.weakSounds ?? []);
-        setWeeklyReport(progressRes.weeklyReport ?? {avgScore: 0, totalMinutes: 0, totalSessions: 0, scoreTrend: []});
+        setWeeklyReport({avgScore: 0, totalMinutes: 0, totalSessions: 0, scoreTrend: [], ...(progressRes.weeklyReport ?? {})});
       }
 
-      setBadges(badgesRes.badges ?? []);
+      setBadges(badgesRes?.badges ?? []);
       console.log('✅ [Dashboard] Tải data thành công');
     } catch (err) {
       console.error('❌ [Dashboard] Lỗi tải data:', err);
@@ -286,7 +286,7 @@ export default function ProgressDashboardScreen({navigation}: any) {
         </View>
 
         {/* M4: Score Trend Mini Chart (7 ngày) */}
-        {weeklyReport.scoreTrend.length > 0 && (
+        {(weeklyReport.scoreTrend?.length ?? 0) > 0 && (
           <View style={{
             marginTop: 12,
             padding: 14,

@@ -79,8 +79,10 @@ export interface ConversationSession {
   isActive: boolean;
   /** Danh sách tin nhắn */
   messages: ConversationMessage[];
-  /** Thời gian còn lại — Free Talk (seconds) */
+  /** Thời gian còn lại — Free Talk countdown (seconds), 0 nếu unlimited */
   remainingTime: number;
+  /** Thời gian đã trôi qua — dùng cho unlimited mode (seconds) */
+  elapsedTime: number;
   /** Turn hiện tại — Roleplay */
   currentTurn: number;
   /** Chế độ input: voice hoặc text */
@@ -447,11 +449,16 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
       set(state => {
         if (!state.conversationSetup) return {};
         const setup = state.conversationSetup;
+        // Unlimited mode: durationMinutes === 0 → remainingTime = 0, đếm elapsed
+        const isUnlimited = setup.durationMinutes === 0;
         return {
           conversationSession: {
             isActive: true,
             messages: [],
-            remainingTime: setup.mode === 'free-talk' ? setup.durationMinutes * 60 : 0,
+            remainingTime: setup.mode === 'free-talk' && !isUnlimited
+              ? setup.durationMinutes * 60
+              : 0,
+            elapsedTime: 0,
             currentTurn: 0,
             inputMode: 'voice',
           },
@@ -498,12 +505,27 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
     tickConversationTimer: () =>
       set(state => {
         if (!state.conversationSession || !state.conversationSession.isActive) return {};
+        const setup = state.conversationSetup;
+        const isUnlimited = setup?.durationMinutes === 0;
+
+        // Unlimited mode: chỉ tăng elapsedTime, không giảm remainingTime
+        if (isUnlimited) {
+          return {
+            conversationSession: {
+              ...state.conversationSession,
+              elapsedTime: state.conversationSession.elapsedTime + 1,
+            },
+          };
+        }
+
+        // Countdown mode: giảm remainingTime + tăng elapsedTime
         const remaining = state.conversationSession.remainingTime - 1;
         if (remaining <= 0) {
           return {
             conversationSession: {
               ...state.conversationSession,
               remainingTime: 0,
+              elapsedTime: state.conversationSession.elapsedTime + 1,
               isActive: false,
             },
           };
@@ -512,6 +534,7 @@ export const useSpeakingStore = create<SpeakingState & SpeakingActions>()(
           conversationSession: {
             ...state.conversationSession,
             remainingTime: remaining,
+            elapsedTime: state.conversationSession.elapsedTime + 1,
           },
         };
       }),

@@ -75,6 +75,10 @@ export default function ConversationScreen() {
   // ===========================
   const {sendMessage, endSession} = useConversationSession();
   const [recorderState, recorderActions] = useAudioRecorder();
+  // Cải thiện 4: Warning state — còn 1 phút
+  const [showTimeWarning, setShowTimeWarning] = useState(false);
+  const isUnlimited = setup?.durationMinutes === 0;
+
   useConversationTimer(
     setup?.durationMinutes ?? 5,
     mode === 'free-talk' && isActive,
@@ -85,6 +89,12 @@ export default function ConversationScreen() {
         endingRef.current = true;
         handleEndAndNavigate();
       }
+    },
+    // Cải thiện 4: Warning callback — còn 60 giây
+    () => {
+      setShowTimeWarning(true);
+      // Tự ẩn warning sau 5 giây
+      setTimeout(() => setShowTimeWarning(false), 5000);
     },
   );
 
@@ -366,12 +376,29 @@ export default function ConversationScreen() {
 
   const statusBadge = useMemo(() => {
     if (mode === 'free-talk') {
-      const m = Math.floor((session?.remainingTime ?? 0) / 60);
-      const s = (session?.remainingTime ?? 0) % 60;
+      if (isUnlimited) {
+        // Unlimited mode: hiển thị elapsed time (đếm lên)
+        const elapsed = session?.elapsedTime ?? 0;
+        const m = Math.floor(elapsed / 60);
+        const s = elapsed % 60;
+        const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        return (
+          <View style={[styles.badge, {backgroundColor: `${accentColor}20`}]}>
+            <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
+              ∞ {formatted}
+            </AppText>
+          </View>
+        );
+      }
+      // Countdown mode
+      const remaining = session?.remainingTime ?? 0;
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
       const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const isLow = remaining <= 60;
       return (
-        <View style={[styles.badge, {backgroundColor: `${accentColor}20`}]}>
-          <AppText variant="bodySmall" weight="bold" style={{color: accentColor}} raw>
+        <View style={[styles.badge, {backgroundColor: isLow ? '#EF444420' : `${accentColor}20`}]}>
+          <AppText variant="bodySmall" weight="bold" style={{color: isLow ? '#EF4444' : accentColor}} raw>
             {formatted}
           </AppText>
         </View>
@@ -384,7 +411,7 @@ export default function ConversationScreen() {
         </AppText>
       </View>
     );
-  }, [mode, accentColor, session?.remainingTime, session?.currentTurn, setup?.maxTurns]);
+  }, [mode, isUnlimited, accentColor, session?.remainingTime, session?.elapsedTime, session?.currentTurn, setup?.maxTurns]);
 
   // ===========================
   // JSX
@@ -425,6 +452,15 @@ export default function ConversationScreen() {
             persona={setup.persona ? {name: setup.persona.name, avatar: setup.persona.avatar} : undefined}
             accentColor={accentColor}
           />
+        )}
+
+        {/* Cải thiện 4: Warning Banner — còn 1 phút */}
+        {showTimeWarning && (
+          <View style={styles.warningBanner}>
+            <AppText variant="bodySmall" weight="bold" style={{color: '#FBBF24'}} raw>
+              ⚠️ Còn 1 phút! Hãy kết thúc cuộc trò chuyện.
+            </AppText>
+          </View>
         )}
 
         {/* Chat List */}
@@ -578,5 +614,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  warningBanner: {
+    backgroundColor: '#78350F',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
 });

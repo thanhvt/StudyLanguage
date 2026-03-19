@@ -113,8 +113,7 @@ export default function SpeakingConfigScreen() {
   // Tổng scenarios
   const totalScenarios = getTotalScenarios();
 
-  // Sticky footer height tính toán
-  const footerHeight = 56 + 32 + Math.max(insets.bottom, 16);
+
 
   // Lấy scenarios theo category + subcategory hiện tại (max 3)
   const currentScenarios = useMemo(() => {
@@ -294,7 +293,7 @@ export default function SpeakingConfigScreen() {
 
       <RNAnimated.ScrollView
         className="flex-1"
-        contentContainerStyle={{paddingBottom: footerHeight + 20}}
+        contentContainerStyle={{paddingBottom: 20}}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         onScroll={RNAnimated.event(
@@ -317,7 +316,7 @@ export default function SpeakingConfigScreen() {
             </TouchableOpacity>
             <View className="flex-1 items-center">
               <AppText className="text-2xl font-sans-bold" style={{color: colors.foreground}}>
-                🎤 Practice Mode
+                Practice Mode
               </AppText>
             </View>
             <View style={{width: 24}} />
@@ -402,8 +401,8 @@ export default function SpeakingConfigScreen() {
       {/* ======================== */}
       {!keyboardVisible && (
         <View
-          className="absolute bottom-0 left-0 right-0 px-6 pt-0"
-          style={{paddingBottom: 8}}>
+          className="px-6 pt-0"
+          style={{paddingBottom: 8, paddingTop: 8}}>
           {/* Footer gradient — chỉ dark mode */}
           {isDark && (
             <LinearGradient
@@ -425,6 +424,23 @@ export default function SpeakingConfigScreen() {
               }}
             />
           )}
+          {!isDark && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -10,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'transparent',
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: -2},
+                shadowOpacity: 0.01,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            />
+          )}
           <View
             style={
               canStart
@@ -438,7 +454,7 @@ export default function SpeakingConfigScreen() {
                 : undefined
             }>
             <AppButton
-              variant="primary"
+              variant={canStart ? 'primary' : 'outline'}
               size="lg"
               className="w-full rounded-2xl"
               textClassname="font-sans-bold"
@@ -447,13 +463,15 @@ export default function SpeakingConfigScreen() {
                   ? speakingColor
                   : isDark
                     ? colors.neutrals900
-                    : `${SPEAKING_GREEN}18`,
+                    : 'transparent',
                 borderWidth: canStart ? 0 : 1.5,
                 borderColor: canStart
                   ? 'transparent'
                   : isDark
                     ? colors.glassBorder
-                    : `${SPEAKING_GREEN}30`,
+                    : `${SPEAKING_GREEN}40`,
+                // Override opacity — không muốn ghost outline bị mờ quá
+                ...(!canStart && !isDark ? {opacity: 0.85} : {}),
               }}
               disabled={!canStart}
               loading={isGenerating}

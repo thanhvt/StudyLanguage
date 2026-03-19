@@ -201,6 +201,8 @@ export function useConversationSession() {
     const setup = getSetup();
     const messages = session?.messages ?? [];
     const mode = setup?.mode ?? 'free-talk';
+    // Cải thiện: Dùng elapsedTime thực tế thay vì assume durationMinutes * 60
+    const actualTime = session?.elapsedTime ?? 0;
 
     endConversation();
 
@@ -209,12 +211,12 @@ export function useConversationSession() {
         messages.map(m => ({role: m.role, text: m.text})),
         mode,
         mode === 'free-talk'
-          ? (setup?.durationMinutes ?? 5) * 60
+          ? actualTime
           : messages.filter(m => m.role === 'user').length,
       );
 
       setSummary({
-        totalTime: mode === 'free-talk' ? (setup?.durationMinutes ?? 5) * 60 : 0,
+        totalTime: mode === 'free-talk' ? actualTime : 0,
         totalTurns: messages.filter(m => m.role === 'user').length,
         overallScore: summaryData.overallScore,
         grade: summaryData.grade,
@@ -227,7 +229,7 @@ export function useConversationSession() {
       console.error('❌ [ConversationSession] Lỗi sinh summary — dùng fallback');
       // EC-09: Fallback data để Summary screen không stuck
       setSummary({
-        totalTime: mode === 'free-talk' ? (setup?.durationMinutes ?? 5) * 60 : 0,
+        totalTime: mode === 'free-talk' ? actualTime : 0,
         totalTurns: messages.filter(m => m.role === 'user').length,
         overallScore: 0,
         grade: 'N/A',
