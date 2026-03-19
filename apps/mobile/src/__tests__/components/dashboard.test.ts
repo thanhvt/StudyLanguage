@@ -154,26 +154,75 @@ describe('Dashboard Logic', () => {
     });
   });
 
-  describe('Study Goal', () => {
-    it('progress tính đúng tỷ lệ phần trăm', () => {
-      const completed = 15;
-      const goal = 30;
-      const progress = Math.min(completed / goal, 1);
-      expect(progress).toBeCloseTo(0.5);
+  describe('Smart CTA', () => {
+    /**
+     * Mục đích: Xác định nội dung hiển thị Smart CTA dựa trên last session
+     * Tham số đầu vào: lastSession (LastSession | null)
+     * Tham số đầu ra: {type: 'resume' | 'start', title, subtitle}
+     * Khi nào sử dụng: Dashboard SmartCTA widget quyết định hiển thị gì
+     */
+    interface LastSession {
+      id: string;
+      type: 'listening' | 'speaking';
+      title: string;
+      progress: number;
+    }
+
+    function getSmartCTAContent(session: LastSession | null) {
+      if (!session || session.progress >= 100) {
+        return {
+          type: 'start' as const,
+          title: 'Bắt đầu bài đầu tiên!',
+          subtitle: 'Chọn kỹ năng và bắt đầu luyện tập',
+        };
+      }
+      return {
+        type: 'resume' as const,
+        title: `Tiếp tục: ${session.title}`,
+        subtitle: `${Math.min(session.progress, 100)}% hoàn thành`,
+      };
+    }
+
+    it('hiển thị resume khi có session dang dở', () => {
+      const session: LastSession = {
+        id: '1',
+        type: 'listening',
+        title: 'Coffee Shop Talk',
+        progress: 60,
+      };
+      const result = getSmartCTAContent(session);
+      expect(result.type).toBe('resume');
+      expect(result.title).toBe('Tiếp tục: Coffee Shop Talk');
+      expect(result.subtitle).toBe('60% hoàn thành');
     });
 
-    it('progress không vượt quá 1 (100%)', () => {
-      const completed = 40;
-      const goal = 30;
-      const progress = Math.min(completed / goal, 1);
-      expect(progress).toBe(1);
+    it('hiển thị start CTA khi chưa có session', () => {
+      const result = getSmartCTAContent(null);
+      expect(result.type).toBe('start');
+      expect(result.title).toContain('Bắt đầu');
     });
 
-    it('progress = 0 khi chưa học gì', () => {
-      const completed = 0;
-      const goal = 30;
-      const progress = Math.min(completed / goal, 1);
-      expect(progress).toBe(0);
+    it('hiển thị start CTA khi session đã hoàn thành 100%', () => {
+      const session: LastSession = {
+        id: '2',
+        type: 'speaking',
+        title: 'Tech Talk',
+        progress: 100,
+      };
+      const result = getSmartCTAContent(session);
+      expect(result.type).toBe('start');
+    });
+
+    it('progress không vượt quá 100%', () => {
+      const session: LastSession = {
+        id: '3',
+        type: 'listening',
+        title: 'Test Lesson',
+        progress: 120,
+      };
+      const result = getSmartCTAContent(session);
+      // Session progress >= 100 → start state
+      expect(result.type).toBe('start');
     });
   });
 

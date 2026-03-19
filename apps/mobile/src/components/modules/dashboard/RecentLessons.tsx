@@ -3,6 +3,7 @@ import {TouchableOpacity, View} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
+import {useColors} from '@/hooks/useColors';
 
 // Mock data — sẽ thay bằng API sau
 const RECENT_ITEMS = [
@@ -25,18 +26,19 @@ const RECENT_ITEMS = [
 ];
 
 /**
- * Mục đích: Widget danh sách bài học gần đây trên Dashboard
+ * Mục đích: Widget danh sách bài học gần đây — glassmorphism
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Phần cuối Dashboard
  *   - Header: "🕐 Bài học gần đây" + "Xem tất cả →"
  *   - 2 items mặc định: emoji + title + time info + play icon
- *   - Mock data tĩnh, nối API sau
+ *   - Glassmorphism card styling, hỗ trợ dark/light mode
  *   - "Xem tất cả" navigate tới History
  *   - Animated: mỗi lesson item xuất hiện staggered FadeInDown
  */
 export default function RecentLessons() {
   const navigation = useNavigation();
+  const colors = useColors();
 
   /**
    * Mục đích: Navigate tới History khi nhấn "Xem tất cả"
@@ -62,7 +64,9 @@ export default function RecentLessons() {
     <View className="px-4 py-2">
       {/* Header */}
       <View className="flex-row items-center justify-between mb-3">
-        <AppText className="text-foreground font-sans-bold text-base">
+        <AppText
+          className="font-sans-bold text-base"
+          style={{color: colors.foreground}}>
           🕐 BÀI HỌC GẦN ĐÂY
         </AppText>
         <TouchableOpacity onPress={handleViewAll} activeOpacity={0.7}>
@@ -72,23 +76,35 @@ export default function RecentLessons() {
         </TouchableOpacity>
       </View>
 
-      {/* Lesson items - staggered animation */}
+      {/* Lesson items - glassmorphism + staggered animation */}
       <View className="gap-2">
         {RECENT_ITEMS.map((item, index) => (
           <Animated.View
             key={item.id}
             entering={FadeInDown.delay(index * 100).duration(400).springify()}
-            className="flex-row items-center bg-neutrals900 rounded-xl p-3 border border-neutrals800"
-            style={{gap: 10}}>
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.glassBg,
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+              borderRadius: 12,
+              padding: 12,
+              gap: 10,
+            }}>
             {/* Emoji icon */}
             <AppText className="text-lg">{item.emoji}</AppText>
 
             {/* Nội dung */}
             <View className="flex-1">
-              <AppText className="text-foreground font-sans-semibold text-[13px]">
+              <AppText
+                className="font-sans-semibold text-[13px]"
+                style={{color: colors.foreground}}>
                 {item.title}
               </AppText>
-              <AppText className="text-neutrals400 text-[11px] mt-0.5">
+              <AppText
+                className="text-[11px] mt-0.5"
+                style={{color: colors.neutrals400}}>
                 {item.timeAgo} • {item.duration}
               </AppText>
             </View>
@@ -97,7 +113,14 @@ export default function RecentLessons() {
             <TouchableOpacity
               onPress={() => handlePlay(item.id)}
               activeOpacity={0.7}
-              className="w-8 h-8 bg-warning/20 rounded-full items-center justify-center">
+              style={{
+                width: 32,
+                height: 32,
+                backgroundColor: colors.glassBorderStrong,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <AppText className="text-warning text-sm">▶️</AppText>
             </TouchableOpacity>
           </Animated.View>

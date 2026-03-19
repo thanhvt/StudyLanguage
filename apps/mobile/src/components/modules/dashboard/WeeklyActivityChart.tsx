@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
+import {useColors} from '@/hooks/useColors';
 
 // Mock data — sẽ thay bằng API sau
 const WEEK_DATA = [
@@ -56,23 +57,34 @@ function AnimatedBar({
 }
 
 /**
- * Mục đích: Widget biểu đồ cột hoạt động trong tuần với animated bars
+ * Mục đích: Widget biểu đồ cột hoạt động trong tuần — glassmorphism container
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Phần "Tuần này" trên Dashboard
  *   - 7 cột bar chart (T2→CN)
  *   - Active days: bg amber/warning, Inactive: bg neutrals800
+ *   - Glassmorphism container card
  *   - Bars animate chiều cao từ 0 → target staggered
  */
 export default function WeeklyActivityChart() {
+  const colors = useColors();
   // Tìm giá trị lớn nhất để scale bars
   const maxMinutes = Math.max(...WEEK_DATA.map(d => d.minutes), 1);
 
   return (
     <View className="px-4 py-2">
-      <View className="bg-neutrals900 rounded-2xl p-4 border border-neutrals800">
+      <View
+        style={{
+          backgroundColor: colors.glassBg,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+          borderRadius: 16,
+          padding: 16,
+        }}>
         {/* Title */}
-        <AppText className="text-foreground font-sans-bold text-base mb-3">
+        <AppText
+          className="font-sans-bold text-base mb-3"
+          style={{color: colors.foreground}}>
           📈 TUẦN NÀY
         </AppText>
 
@@ -93,7 +105,9 @@ export default function WeeklyActivityChart() {
                   delay={500 + index * 80}
                 />
                 {/* Label ngày */}
-                <AppText className="text-neutrals500 text-[10px]">
+                <AppText
+                  className="text-[10px]"
+                  style={{color: colors.neutrals400}}>
                   {item.day}
                 </AppText>
               </View>

@@ -136,7 +136,7 @@ export function UserCategoryView({
   const renderScenarioItem = useCallback(
     ({item}: {item: CustomScenario}) => {
       const isSelected = selectedTopic?.id === item.id;
-      const isFav = favoriteIds.includes(item.id);
+      const isFav = item.isFavorite;
 
       return (
         <TouchableOpacity
@@ -169,27 +169,67 @@ export function UserCategoryView({
               </AppText>
             ) : null}
           </View>
-          {/* Favorite star */}
+          {/* Nút Favorite ⭐ — toggle qua backend API */}
+          <TouchableOpacity
+            onPress={async () => {
+              haptic.light();
+              try {
+                await customScenarioApi.toggleFavorite(item.id);
+                // Reload danh sách để cập nhật isFavorite
+                const updated = await customScenarioApi.list(category.id);
+                setScenarios(updated);
+              } catch (err) {
+                console.error('📂 [UserCategoryView] Lỗi toggle favorite:', err);
+              }
+            }}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            className="mr-2">
+            <AppText
+              className={isFav ? 'text-warning' : ''}
+              style={!isFav ? {color: colors.neutrals600} : undefined}>
+              {isFav ? '⭐' : '☆'}
+            </AppText>
+          </TouchableOpacity>
+          {/* Nút Xoá — Icon Trash2 đỏ, giống tab Tuỳ chỉnh */}
           <TouchableOpacity
             onPress={() => {
-              haptic.light();
-              toggleFavorite(item.id);
+              Alert.alert(
+                'Xoá chủ đề',
+                `Bạn muốn xoá "${item.name}" khỏi nhóm "${category.icon} ${category.name}"?`,
+                [
+                  {text: 'Huỷ', style: 'cancel'},
+                  {
+                    text: 'Xoá',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await customScenarioApi.delete(item.id);
+                        haptic.success();
+                        // Xoá khỏi danh sách local ngay
+                        setScenarios(prev => prev.filter(s => s.id !== item.id));
+                      } catch (err) {
+                        Alert.alert('Lỗi', 'Không thể xoá chủ đề. Thử lại.');
+                      }
+                    },
+                  },
+                ],
+              );
             }}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <AppText className="text-lg">{isFav ? '⭐' : '☆'}</AppText>
+            <Icon name="Trash2" className="w-4 h-4" style={{color: '#EF4444'}} />
           </TouchableOpacity>
         </TouchableOpacity>
       );
     },
     [
       selectedTopic,
-      favoriteIds,
       haptic,
       toTopicScenario,
       onSelectScenario,
       category.id,
+      category.icon,
+      category.name,
       disabled,
-      toggleFavorite,
       colors,
     ],
   );

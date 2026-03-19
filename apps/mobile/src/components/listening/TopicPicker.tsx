@@ -443,10 +443,10 @@ const FavoritesTab = React.memo(function FavoritesTab({
   >([]);
 
   /**
-   * Mục đích: Load custom scenarios từ API và lọc ra những cái có trong favoriteIds
-   * Tham số đầu vào: không (đọc favoriteIds từ props)
+   * Mục đích: Load custom scenarios từ API và lọc ra những cái đã được đánh dấu favorite trên backend
+   * Tham số đầu vào: không (backend trả isFavorite flag)
    * Tham số đầu ra: void (cập nhật customFavorites state)
-   * Khi nào sử dụng: Component mount hoặc favoriteIds thay đổi
+   * Khi nào sử dụng: Component mount — custom scenario favorites lưu trên server (isFavorite)
    */
   useEffect(() => {
     let mounted = true;
@@ -455,7 +455,7 @@ const FavoritesTab = React.memo(function FavoritesTab({
       .then(allCustom => {
         if (!mounted) return;
         const matched = allCustom
-          .filter(cs => favoriteIds.includes(cs.id))
+          .filter(cs => cs.isFavorite === true)
           .map(cs => ({
             scenario: {id: cs.id, name: cs.name, description: cs.description || ''} as TopicScenario,
             categoryIcon: '📝',
@@ -465,7 +465,7 @@ const FavoritesTab = React.memo(function FavoritesTab({
       })
       .catch(err => console.error('📂 [FavoritesTab] Lỗi load custom scenarios:', err));
     return () => { mounted = false; };
-  }, [favoriteIds]);
+  }, []);
 
   // Tìm tất cả built-in scenarios có trong favoriteIds
   const builtInFavorites = useMemo(() => {

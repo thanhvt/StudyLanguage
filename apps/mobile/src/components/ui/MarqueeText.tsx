@@ -109,7 +109,7 @@ export default function MarqueeText({
   if (!shouldScroll) {
     return (
       <View
-        style={{overflow: 'hidden', flex: 1}}
+        style={{overflow: 'hidden', flex: 1, justifyContent: 'center'}}
         onLayout={onContainerLayout}>
         <AppText
           className={textClassName}
@@ -125,7 +125,7 @@ export default function MarqueeText({
   // Text dài → marquee cuộn
   return (
     <View
-      style={{overflow: 'hidden', flex: 1}}
+      style={{overflow: 'hidden', flex: 1, justifyContent: 'center'}}
       onLayout={onContainerLayout}>
       {/* Text ẩn để đo kích thước */}
       <AppText

@@ -4,6 +4,8 @@ import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useNavigation} from '@react-navigation/native';
 import {SKILL_COLORS, type SkillType} from '@/config/skillColors';
+import {useColors} from '@/hooks/useColors';
+import {useAppStore} from '@/store/useAppStore';
 
 // Cấu hình 2 skill cards — horizontal layout theo mockup
 const SKILLS: {
@@ -30,22 +32,24 @@ const SKILLS: {
 ];
 
 /**
- * Mục đích: Widget 2 skill cards nằm ngang (Nghe, Nói) theo mockup mới
+ * Mục đích: Widget 2 skill cards nằm ngang (Nghe, Nói) — glassmorphism
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Phần "Luyện tập nhanh" trên Dashboard
- *   - 2 cards nằm ngang, mỗi card có màu nền riêng theo skill
+ *   - 2 cards nằm ngang, glassmorphism bg + skill color accent
  *   - Nhấn → navigate đến feature tương ứng
  *   - Animated: mỗi card xuất hiện staggered FadeInDown
  */
 export default function QuickActions() {
   const navigation = useNavigation();
+  const colors = useColors();
+  const theme = useAppStore(state => state.theme);
 
   /**
    * Mục đích: Xử lý khi user nhấn vào skill card
    * Tham số đầu vào: route (string) - tên screen
    * Tham số đầu ra: void
-   * Khi nào sử dụng: Khi user nhấn vào 1 trong 3 skill cards
+   * Khi nào sử dụng: Khi user nhấn vào 1 trong 2 skill cards
    */
   const handleSkillPress = (route: string) => {
     navigation.navigate(route as never);
@@ -54,38 +58,44 @@ export default function QuickActions() {
   return (
     <View className="px-4 py-2">
       {/* Section title */}
-      <AppText className="text-foreground font-sans-bold text-base mb-3">
+      <AppText
+        className="font-sans-bold text-base mb-3"
+        style={{color: colors.foreground}}>
         ⚡ Luyện tập nhanh
       </AppText>
 
-      {/* 3 horizontal skill cards - staggered animation */}
+      {/* 2 horizontal skill cards - glassmorphism + staggered animation */}
       <View className="flex-row gap-3">
         {SKILLS.map((skill, index) => {
-          const bgColor = SKILL_COLORS[skill.id].dark;
+          // Lấy màu skill theo theme hiện tại
+          const skillColor = SKILL_COLORS[skill.id][theme];
           return (
             <Animated.View
               key={skill.id}
               entering={FadeInDown.delay(index * 100).duration(400).springify()}
               className="flex-1">
               <TouchableOpacity
-                className="rounded-xl p-4"
                 style={{
-                  backgroundColor: `${bgColor}15`,
+                  backgroundColor: colors.glassBg,
                   borderWidth: 1,
-                  borderColor: `${bgColor}30`,
+                  borderColor: colors.glassBorder,
+                  borderRadius: 12,
+                  padding: 16,
                 }}
                 activeOpacity={0.7}
                 onPress={() => handleSkillPress(skill.route)}>
                 {/* Icon */}
                 <AppText className="text-[28px] mb-2">{skill.emoji}</AppText>
-                {/* Label */}
+                {/* Label — dùng skill color */}
                 <AppText
                   className="font-sans-bold text-sm"
-                  style={{color: bgColor}}>
+                  style={{color: skillColor}}>
                   {skill.label}
                 </AppText>
                 {/* Thời gian */}
-                <AppText className="text-neutrals400 text-[11px] mt-1">
+                <AppText
+                  className="text-[11px] mt-1"
+                  style={{color: colors.neutrals400}}>
                   {skill.time}
                 </AppText>
               </TouchableOpacity>

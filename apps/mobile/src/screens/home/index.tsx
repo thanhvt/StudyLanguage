@@ -2,7 +2,7 @@ import React, {useCallback, useState} from 'react';
 import {RefreshControl} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import StreakWidget from '@/components/modules/dashboard/StreakWidget';
-import StudyGoalCard from '@/components/modules/dashboard/StudyGoalCard';
+import SmartCTA from '@/components/modules/dashboard/SmartCTA';
 import QuickActions from '@/components/modules/dashboard/QuickActions';
 import WeeklyActivityChart from '@/components/modules/dashboard/WeeklyActivityChart';
 import RecentLessons from '@/components/modules/dashboard/RecentLessons';
@@ -63,7 +63,7 @@ export default function HomeScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-        <StudyGoalCard />
+        <SmartCTA />
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(200).duration(500)}>

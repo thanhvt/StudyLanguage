@@ -3,19 +3,21 @@ import {View} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AppText} from '@/components/ui';
 import {useAuthStore} from '@/store/useAuthStore';
+import {useColors} from '@/hooks/useColors';
 
 /**
- * Mục đích: Widget greeting + streak text + 3 stat pills (theo mockup mới)
+ * Mục đích: Widget greeting + streak text + 3 stat pills (glassmorphism)
  * Tham số đầu vào: không có
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: Phần đầu Dashboard HomeScreen
  *   - Greeting dạng inline bold: "Chào buổi sáng, {name}! 👋"
  *   - Streak subtitle: "Chuỗi X ngày liên tiếp 🔥"
  *   - Stats Row: 3 pill cards ngang (Streak, Tổng giờ, Từ mới)
- *   - Animated: stat pills xuất hiện staggered FadeInDown
+ *   - Glassmorphism styling + animated staggered FadeInDown
  */
 export default function StreakWidget() {
   const user = useAuthStore(state => state.user);
+  const colors = useColors();
   const displayName =
     user?.user_metadata?.full_name?.split(' ')[0] ||
     user?.email?.split('@')[0] ||
@@ -69,17 +71,30 @@ export default function StreakWidget() {
         </AppText>
       </View>
 
-      {/* Stats Row - 3 pills với staggered animation */}
+      {/* Stats Row - 3 pills glassmorphism + staggered animation */}
       <View className="flex-row gap-2 mt-4">
         {statPills.map(pill => (
           <Animated.View
             key={pill.label}
             entering={FadeInDown.delay(pill.delay).duration(400).springify()}
-            className="flex-1 bg-neutrals900 rounded-2xl py-3 px-3 items-center border border-neutrals800">
-            <AppText className="text-foreground font-sans-bold text-lg">
+            style={{
+              flex: 1,
+              backgroundColor: colors.glassBg,
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+              borderRadius: 16,
+              paddingVertical: 12,
+              paddingHorizontal: 12,
+              alignItems: 'center',
+            }}>
+            <AppText
+              className="font-sans-bold text-lg"
+              style={{color: colors.foreground}}>
               {pill.value}
             </AppText>
-            <AppText className="text-neutrals400 text-xs mt-1">
+            <AppText
+              className="text-xs mt-1"
+              style={{color: colors.neutrals400}}>
               {pill.label}
             </AppText>
           </Animated.View>
