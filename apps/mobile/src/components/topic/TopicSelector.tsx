@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Pressable} from 'react-native';
 import {AppText} from '@/components/ui';
 import Icon from '@/components/ui/Icon';
@@ -7,6 +7,10 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useAppStore} from '@/store/useAppStore';
 import {TOPIC_CATEGORIES, type TopicScenario} from '@/data/topic-data';
 import type {CustomScenario} from '@/services/api/customScenarios';
+import type {CustomCategory} from '@/services/api/customCategories';
+import {customCategoryApi} from '@/services/api/customCategories';
+import {customScenarioApi} from '@/services/api/customScenarios';
+import {useListeningStore} from '@/store/useListeningStore';
 
 // =======================
 // Types
@@ -126,6 +130,56 @@ export default function TopicSelector({
 
   // Màu cho scenario cards khi selected (Listening dùng LISTENING_ORANGE, còn lại = accentColor)
   const cardHighlight = scenarioHighlightColor ?? accentColor;
+
+  // === Custom Categories: đọc từ store + tự load nếu chưa có ===
+  const customCategories = useListeningStore(s => s.customCategories);
+  const customCategoriesLoaded = useListeningStore(s => s.customCategoriesLoaded);
+  const setCustomCategories = useListeningStore(s => s.setCustomCategories);
+
+  /**
+   * Mục đích: Auto-load custom categories từ API nếu chưa tải
+   * Tham số đầu vào: không
+   * Tham số đầu ra: void (cập nhật store)
+   * Khi nào sử dụng: Component mount lần đầu + categories chưa loaded
+   */
+  useEffect(() => {
+    if (customCategoriesLoaded) return;
+    customCategoryApi.list()
+      .then(res => setCustomCategories(res.categories))
+      .catch(err => console.error('📂 [TopicSelector] Lỗi load custom categories:', err));
+  }, [customCategoriesLoaded, setCustomCategories]);
+
+  // === State cho custom category scenarios (load từ API khi chọn tab) ===
+  const [customCatScenarios, setCustomCatScenarios] = useState<CustomScenario[]>([]);
+  const [isLoadingCustomCat, setIsLoadingCustomCat] = useState(false);
+
+  // Kiểm tra có đang ở tab custom category không
+  const activeCustomCategory = customCategories.find(c => c.id === selectedCategory);
+
+  /**
+   * Mục đích: Load scenarios khi user chọn tab custom category
+   * Tham số đầu vào: không (đọc selectedCategory từ props)
+   * Tham số đầu ra: void (cập nhật customCatScenarios state)
+   * Khi nào sử dụng: selectedCategory thay đổi và trùng với 1 custom category ID
+   */
+  useEffect(() => {
+    if (!activeCustomCategory) {
+      setCustomCatScenarios([]);
+      return;
+    }
+    let mounted = true;
+    setIsLoadingCustomCat(true);
+    customScenarioApi
+      .list(activeCustomCategory.id)
+      .then(data => {
+        if (mounted) setCustomCatScenarios(data);
+      })
+      .catch(err => console.error('📂 [TopicSelector] Lỗi load scenarios:', err))
+      .finally(() => {
+        if (mounted) setIsLoadingCustomCat(false);
+      });
+    return () => { mounted = false; };
+  }, [activeCustomCategory?.id]);
 
   /**
    * Mục đích: Xử lý nhấn nút Plus — dùng custom handler nếu có, hoặc mặc định mở modal tab custom
@@ -262,6 +316,35 @@ export default function TopicSelector({
               </TouchableOpacity>
             );
           })}
+          {/* Custom Category tabs — nhóm do user tạo */}
+          {customCategories.map(cat => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                className="flex-row items-center px-4 py-2.5 rounded-full border"
+                style={{
+                  backgroundColor: isActive ? accentColor : 'transparent',
+                  borderColor: isActive ? accentColor : colors.neutrals800,
+                }}
+                onPress={() => {
+                  haptic.light();
+                  onSelectCategory(cat.id);
+                  onSelectSubCategory('');
+                }}
+                accessibilityLabel={`Danh mục ${cat.name}${isActive ? ', đang chọn' : ''}`}
+                accessibilityRole="button">
+                {cat.icon && (
+                  <AppText className="text-[13px] mr-1">{cat.icon}</AppText>
+                )}
+                <AppText
+                  className="text-[13px] font-sans-medium"
+                  style={{color: isActive ? '#FFFFFF' : colors.foreground}}>
+                  {cat.name}
+                </AppText>
+              </TouchableOpacity>
+            );
+          })}
           {/* Tab Tuỳ chỉnh — chỉ hiện khi showCustomTab=true */}
           {showCustomTab && (() => {
             const isActive = selectedCategory === 'custom';
@@ -291,8 +374,8 @@ export default function TopicSelector({
         </View>
       </ScrollView>
 
-      {/* Subcategory Chips — ẩn khi tab Tuỳ chỉnh */}
-      {selectedCategory !== 'custom' && (() => {
+      {/* Subcategory Chips — ẩn khi tab Tuỳ chỉnh hoặc custom category */}
+      {selectedCategory !== 'custom' && !activeCustomCategory && (() => {
         const category = TOPIC_CATEGORIES.find(c => c.id === selectedCategory);
         if (!category?.subCategories?.length) {return null;}
         return (
@@ -398,8 +481,79 @@ export default function TopicSelector({
         )
       ) : null}
 
-      {/* Scenario Cards (2-3 cards) — ẩn khi tab Tuỳ chỉnh active */}
-      {selectedCategory !== 'custom' && currentScenarios.map(scenario => {
+      {/* Custom Category Scenarios — hiện khi tab custom category active */}
+      {activeCustomCategory ? (
+        isLoadingCustomCat ? (
+          <View className="items-center py-6">
+            <AppText className="text-sm" style={{color: colors.neutrals300}}>
+              Đang tải chủ đề...
+            </AppText>
+          </View>
+        ) : customCatScenarios.length === 0 ? (
+          <View className="items-center py-6">
+            <AppText className="text-2xl mb-2">{activeCustomCategory.icon || '📝'}</AppText>
+            <AppText className="text-sm" style={{color: colors.neutrals300}}>
+              Chưa có chủ đề nào trong nhóm này
+            </AppText>
+          </View>
+        ) : (
+          customCatScenarios.map(cs => {
+            const isSelected = selectedTopic?.id === cs.id;
+            return (
+              <TouchableOpacity
+                key={cs.id}
+                className="rounded-xl px-4 py-3.5 mb-3"
+                style={{
+                  backgroundColor: isSelected ? `${cardHighlight}15` : colors.neutrals900,
+                  borderColor: isSelected ? cardHighlight : colors.border,
+                  borderWidth: 1,
+                }}
+                onPress={() => {
+                  haptic.light();
+                  if (isSelected) {
+                    onSelectTopic(null);
+                  } else {
+                    onSelectTopic(
+                      {id: cs.id, name: cs.name, description: cs.description || ''},
+                      activeCustomCategory.id,
+                      '',
+                    );
+                  }
+                }}
+                accessibilityLabel={`${cs.name}${isSelected ? ', đang chọn' : ''}`}
+                accessibilityRole="button">
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 mr-3">
+                    <AppText
+                      className="font-sans-bold text-[15px]"
+                      style={{color: isSelected ? cardHighlight : colors.foreground}}>
+                      {cs.name}
+                    </AppText>
+                    {cs.description ? (
+                      <AppText
+                        className="text-xs mt-0.5"
+                        style={{color: colors.neutrals300}}
+                        numberOfLines={1}>
+                        {cs.description}
+                      </AppText>
+                    ) : null}
+                  </View>
+                  {isSelected && (
+                    <View
+                      className="w-5 h-5 items-center justify-center rounded-full"
+                      style={{backgroundColor: cardHighlight}}>
+                      <Icon name="Check" className="w-3 h-3" style={{color: '#FFFFFF'}} />
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )
+      ) : null}
+
+      {/* Scenario Cards (2-3 cards) — ẩn khi tab Tuỳ chỉnh hoặc custom category active */}
+      {selectedCategory !== 'custom' && !activeCustomCategory && currentScenarios.map(scenario => {
         const isSelected = selectedTopic?.id === scenario.id;
         const isFav = favoriteScenarioIds.includes(scenario.id);
         return (

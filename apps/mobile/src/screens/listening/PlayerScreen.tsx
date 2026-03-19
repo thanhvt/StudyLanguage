@@ -69,6 +69,7 @@ import {setupPlayer, addTrack} from '@/services/audio/trackPlayer';
 import {useToast} from '@/components/ui/ToastProvider';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useColors} from '@/hooks/useColors';
+import MarqueeText from '@/components/ui/MarqueeText';
 import {
   ExchangeItem,
   DictionaryPopup,
@@ -513,13 +514,16 @@ export default function ListeningPlayerScreen({
           <Icon name="ArrowLeft" className="w-6 h-6" style={{color: colors.foreground}} />
         </TouchableOpacity>
 
-        {/* Title */}
-        <AppText
-          className="font-sans-bold text-base flex-1 text-center mx-3"
-          style={{color: colors.foreground}}
-          numberOfLines={1}>
-          {conversation.title || config.topic || 'Bài nghe'}
-        </AppText>
+        {/* Title — marquee khi text dài */}
+        <View className="flex-1 mx-3">
+          <MarqueeText
+            text={conversation.title || config.topic || 'Bài nghe'}
+            textColor={colors.foreground}
+            textClassName="font-sans-bold text-base"
+            speed={35}
+            gap={60}
+          />
+        </View>
 
         {/* Right actions: View Toggle + Translation + Bookmark */}
         <View className="flex-row items-center gap-1">

@@ -305,6 +305,8 @@ export default function ListeningConfigScreen({
     }
 
     try {
+      // Lưu topic vào config để GeneratingScreen hiển thị đúng tên chủ đề
+      setConfig({topic});
       setGenerating(true);
       setGeneratingStep(0);
       setActiveSpeaker(undefined);

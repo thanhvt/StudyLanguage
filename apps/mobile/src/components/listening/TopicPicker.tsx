@@ -30,6 +30,7 @@ import {useListeningStore} from '@/store/useListeningStore';
 import {UserCategoryView} from './UserCategoryView';
 import {CreateCategorySheet} from './CreateCategorySheet';
 import {customCategoryApi} from '@/services/api/customCategories';
+import {customScenarioApi} from '@/services/api/customScenarios';
 
 const LISTENING_BLUE = '#2563EB';
 
@@ -423,6 +424,7 @@ interface FavoritesTabProps {
 
 /**
  * Mục đích: Render tab "Yêu thích" với danh sách favorites hoặc empty state
+ *           Bao gồm cả built-in scenarios VÀ custom user-created scenarios
  * Tham số đầu vào: favoriteIds, selectedTopicId, onSelectScenario, onToggleFavorite
  * Tham số đầu ra: JSX.Element
  * Khi nào sử dụng: TopicPicker → khi selectedCategory === 'favorites'
@@ -434,8 +436,39 @@ const FavoritesTab = React.memo(function FavoritesTab({
   onToggleFavorite,
 }: FavoritesTabProps) {
   const colors = useColors();
-  // Tìm tất cả scenarios có trong favoriteIds
-  const favoriteScenarios = useMemo(() => {
+
+  // State: custom scenarios đã favorite (load từ API)
+  const [customFavorites, setCustomFavorites] = useState<
+    {scenario: TopicScenario; categoryIcon: string; categoryName: string}[]
+  >([]);
+
+  /**
+   * Mục đích: Load custom scenarios từ API và lọc ra những cái có trong favoriteIds
+   * Tham số đầu vào: không (đọc favoriteIds từ props)
+   * Tham số đầu ra: void (cập nhật customFavorites state)
+   * Khi nào sử dụng: Component mount hoặc favoriteIds thay đổi
+   */
+  useEffect(() => {
+    let mounted = true;
+    customScenarioApi
+      .list()
+      .then(allCustom => {
+        if (!mounted) return;
+        const matched = allCustom
+          .filter(cs => favoriteIds.includes(cs.id))
+          .map(cs => ({
+            scenario: {id: cs.id, name: cs.name, description: cs.description || ''} as TopicScenario,
+            categoryIcon: '📝',
+            categoryName: 'Tuỳ chỉnh',
+          }));
+        setCustomFavorites(matched);
+      })
+      .catch(err => console.error('📂 [FavoritesTab] Lỗi load custom scenarios:', err));
+    return () => { mounted = false; };
+  }, [favoriteIds]);
+
+  // Tìm tất cả built-in scenarios có trong favoriteIds
+  const builtInFavorites = useMemo(() => {
     const results: {scenario: TopicScenario; categoryIcon: string; categoryName: string}[] = [];
     for (const category of TOPIC_CATEGORIES) {
       for (const sub of category.subCategories) {
@@ -453,7 +486,13 @@ const FavoritesTab = React.memo(function FavoritesTab({
     return results;
   }, [favoriteIds]);
 
-  if (favoriteScenarios.length === 0) {
+  // Gộp built-in + custom favorites
+  const allFavorites = useMemo(
+    () => [...builtInFavorites, ...customFavorites],
+    [builtInFavorites, customFavorites],
+  );
+
+  if (allFavorites.length === 0) {
     // Empty state
     return (
       <View className="items-center py-12 px-6">
@@ -471,9 +510,9 @@ const FavoritesTab = React.memo(function FavoritesTab({
   return (
     <View>
       <AppText className="text-xs mb-2" style={{color: colors.neutrals400}}>
-        {favoriteScenarios.length} kịch bản yêu thích
+        {allFavorites.length} kịch bản yêu thích
       </AppText>
-      {favoriteScenarios.map(({scenario, categoryIcon, categoryName}) => (
+      {allFavorites.map(({scenario, categoryIcon, categoryName}) => (
         <ScenarioItem
           key={scenario.id}
           scenario={scenario}
